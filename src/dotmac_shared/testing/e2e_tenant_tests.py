@@ -19,10 +19,13 @@ from uuid import uuid4
 
 import pytest
 import requests
+from playwright.async_api import Page, async_playwright
+
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import BusinessRuleError
-from dotmac_shared.container_monitoring.core.metrics_collector import ContainerMetricsCollector
-from playwright.async_api import Page, async_playwright
+from dotmac_shared.container_monitoring.core.metrics_collector import (
+    ContainerMetricsCollector,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +33,11 @@ logger = logging.getLogger(__name__)
 class TenantProvisioningE2E:
     """End-to-end test suite for tenant provisioning and bootstrap scenarios."""
 
-    def __init__(self, base_url: str = "http://localhost:8000", frontend_url: str = "http://localhost:3000"):
+    def __init__(
+        self,
+        base_url: str = "http://localhost:8000",
+        frontend_url: str = "http://localhost:3000",
+    ):
         self.base_url = base_url
         self.frontend_url = frontend_url
         self.test_tenant_id = None
@@ -69,7 +76,9 @@ class TenantProvisioningE2E:
             )
 
             if not container_result["success"]:
-                raise BusinessRuleError(f"Container creation failed: {container_result.get('error')}")
+                raise BusinessRuleError(
+                    f"Container creation failed: {container_result.get('error')}"
+                )
 
             self.container_id = container_result["container_id"]
 
@@ -154,7 +163,13 @@ class TenantProvisioningE2E:
         4. TLS certificate provisioning
         """
         test_start = time.time()
-        results = {"test_name": "first_login_branding", "status": "running", "steps": [], "duration": 0, "errors": []}
+        results = {
+            "test_name": "first_login_branding",
+            "status": "running",
+            "steps": [],
+            "duration": 0,
+            "errors": [],
+        }
 
         try:
             # Use Playwright for frontend testing
@@ -182,7 +197,9 @@ class TenantProvisioningE2E:
                 results["steps"].append(
                     {
                         "name": "branding_setup",
-                        "status": "completed" if branding_result["success"] else "failed",
+                        "status": "completed"
+                        if branding_result["success"]
+                        else "failed",
                         "duration": branding_result.get("duration", 0),
                         "details": branding_result,
                     }
@@ -226,7 +243,13 @@ class TenantProvisioningE2E:
         4. Test message delivery
         """
         test_start = time.time()
-        results = {"test_name": "smtp_sms_wiring", "status": "running", "steps": [], "duration": 0, "errors": []}
+        results = {
+            "test_name": "smtp_sms_wiring",
+            "status": "running",
+            "steps": [],
+            "duration": 0,
+            "errors": [],
+        }
 
         try:
             # Step 1: Configure SMTP service
@@ -316,14 +339,18 @@ class TenantProvisioningE2E:
 
             # Generate summary
             total_tests = len(suite_results["tests"])
-            passed_tests = sum(1 for t in suite_results["tests"] if t.get("success", False))
+            passed_tests = sum(
+                1 for t in suite_results["tests"] if t.get("success", False)
+            )
             failed_tests = total_tests - passed_tests
 
             suite_results["summary"] = {
                 "total": total_tests,
                 "passed": passed_tests,
                 "failed": failed_tests,
-                "success_rate": (passed_tests / total_tests) * 100 if total_tests > 0 else 0,
+                "success_rate": (passed_tests / total_tests) * 100
+                if total_tests > 0
+                else 0,
             }
 
             suite_results["status"] = "completed" if failed_tests == 0 else "failed"
@@ -356,7 +383,10 @@ class TenantProvisioningE2E:
                     "ENVIRONMENT": "test",
                 },
                 "ports": {"8000/tcp": None},  # Dynamic port allocation
-                "labels": {"dotmac.tenant_id": self.test_tenant_id, "dotmac.test": "true"},
+                "labels": {
+                    "dotmac.tenant_id": self.test_tenant_id,
+                    "dotmac.test": "true",
+                },
             }
 
             # Simulate container creation
@@ -372,7 +402,11 @@ class TenantProvisioningE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_container_health(self, container_id: str) -> dict[str, Any]:
         """Validate container health and readiness."""
@@ -413,7 +447,11 @@ class TenantProvisioningE2E:
             }
 
         except Exception as e:
-            return {"healthy": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "healthy": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _execute_database_migrations(self) -> dict[str, Any]:
         """Execute database migrations for tenant."""
@@ -433,7 +471,11 @@ class TenantProvisioningE2E:
                 # Simulate migration execution
                 await asyncio.sleep(0.5)
                 executed_migrations.append(
-                    {"name": migration, "status": "completed", "executed_at": datetime.now(timezone.utc).isoformat()}
+                    {
+                        "name": migration,
+                        "status": "completed",
+                        "executed_at": datetime.now(timezone.utc).isoformat(),
+                    }
                 )
 
             return {
@@ -444,7 +486,11 @@ class TenantProvisioningE2E:
             }
 
         except Exception as e:
-            return {"success": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _bootstrap_admin_user(self) -> dict[str, Any]:
         """Bootstrap initial admin user for tenant."""
@@ -472,7 +518,11 @@ class TenantProvisioningE2E:
             }
 
         except Exception as e:
-            return {"success": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _initialize_essential_services(self) -> dict[str, Any]:
         """Initialize essential services for tenant."""
@@ -497,7 +547,11 @@ class TenantProvisioningE2E:
             }
 
         except Exception as e:
-            return {"success": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _test_admin_first_login(self, page: Page) -> dict[str, Any]:
         """Test admin first login flow."""
@@ -528,7 +582,11 @@ class TenantProvisioningE2E:
             }
 
         except Exception as e:
-            return {"success": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _configure_tenant_branding(self, page: Page) -> dict[str, Any]:
         """Configure tenant branding and customization."""
@@ -539,9 +597,13 @@ class TenantProvisioningE2E:
             await page.goto(f"{self.frontend_url}/admin/settings/branding")
 
             # Configure branding
-            await page.fill('[data-testid="company-name"]', f"Test Company {self.test_tenant_id}")
+            await page.fill(
+                '[data-testid="company-name"]', f"Test Company {self.test_tenant_id}"
+            )
             await page.fill('[data-testid="primary-color"]', "#007bff")
-            await page.fill('[data-testid="custom-domain"]', f"{self.test_tenant_id}.example.com")
+            await page.fill(
+                '[data-testid="custom-domain"]', f"{self.test_tenant_id}.example.com"
+            )
 
             # Save branding
             await page.click('[data-testid="save-branding"]')
@@ -549,10 +611,18 @@ class TenantProvisioningE2E:
             # Wait for success message
             await page.wait_for_selector('[data-testid="success-message"]')
 
-            return {"success": True, "duration": time.time() - start_time, "branding_applied": True}
+            return {
+                "success": True,
+                "duration": time.time() - start_time,
+                "branding_applied": True,
+            }
 
         except Exception as e:
-            return {"success": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _provision_tls_certificate(self) -> dict[str, Any]:
         """Provision TLS certificate for tenant domain."""
@@ -563,16 +633,26 @@ class TenantProvisioningE2E:
             cert_data = {
                 "domain": f"{self.test_tenant_id}.example.com",
                 "cert_authority": "Let's Encrypt",
-                "expiry_date": (datetime.now(timezone.utc) + timedelta(days=90)).isoformat(),
+                "expiry_date": (
+                    datetime.now(timezone.utc) + timedelta(days=90)
+                ).isoformat(),
                 "status": "active",
             }
 
             await asyncio.sleep(3)  # Simulate certificate generation
 
-            return {"success": True, "duration": time.time() - start_time, "certificate": cert_data}
+            return {
+                "success": True,
+                "duration": time.time() - start_time,
+                "certificate": cert_data,
+            }
 
         except Exception as e:
-            return {"success": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _configure_smtp_service(self) -> dict[str, Any]:
         """Configure SMTP service for tenant."""
@@ -590,10 +670,18 @@ class TenantProvisioningE2E:
             # Mock SMTP configuration
             await asyncio.sleep(1)
 
-            return {"success": True, "duration": time.time() - start_time, "config": smtp_config}
+            return {
+                "success": True,
+                "duration": time.time() - start_time,
+                "config": smtp_config,
+            }
 
         except Exception as e:
-            return {"success": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _configure_sms_service(self) -> dict[str, Any]:
         """Configure SMS service for tenant."""
@@ -610,10 +698,18 @@ class TenantProvisioningE2E:
             # Mock SMS configuration
             await asyncio.sleep(1)
 
-            return {"success": True, "duration": time.time() - start_time, "config": sms_config}
+            return {
+                "success": True,
+                "duration": time.time() - start_time,
+                "config": sms_config,
+            }
 
         except Exception as e:
-            return {"success": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _test_email_delivery(self) -> dict[str, Any]:
         """Test email delivery functionality."""
@@ -629,10 +725,19 @@ class TenantProvisioningE2E:
 
             await asyncio.sleep(2)  # Simulate email sending
 
-            return {"success": True, "duration": time.time() - start_time, "email_sent": True, "test_email": test_email}
+            return {
+                "success": True,
+                "duration": time.time() - start_time,
+                "email_sent": True,
+                "test_email": test_email,
+            }
 
         except Exception as e:
-            return {"success": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _test_sms_delivery(self) -> dict[str, Any]:
         """Test SMS delivery functionality."""
@@ -647,10 +752,19 @@ class TenantProvisioningE2E:
 
             await asyncio.sleep(2)  # Simulate SMS sending
 
-            return {"success": True, "duration": time.time() - start_time, "sms_sent": True, "test_sms": test_sms}
+            return {
+                "success": True,
+                "duration": time.time() - start_time,
+                "sms_sent": True,
+                "test_sms": test_sms,
+            }
 
         except Exception as e:
-            return {"success": False, "duration": time.time() - start_time, "error": str(e)}
+            return {
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     async def _cleanup_test_container(self, container_id: str) -> None:
         """Clean up test container and resources."""
@@ -672,7 +786,9 @@ async def test_tenant_provisioning_e2e():
 
     # Assert overall success
     assert results["status"] == "completed", f"Test suite failed: {results}"
-    assert results["summary"]["success_rate"] >= 80, f"Success rate too low: {results['summary']}"
+    assert (
+        results["summary"]["success_rate"] >= 80
+    ), f"Success rate too low: {results['summary']}"
 
     # Log results for debugging
     logger.info("\nTest Results Summary:")

@@ -258,7 +258,9 @@ def get_default_config():
 
 
 # Quick setup functions for common use cases
-def create_lead_manager(database_session=None, config: Optional[dict] = None) -> "LeadService":
+def create_lead_manager(
+    database_session=None, config: Optional[dict] = None
+) -> "LeadService":
     """Create a configured lead management service."""
     if not LeadService:
         raise ImportError("Sales services not available")
@@ -267,7 +269,9 @@ def create_lead_manager(database_session=None, config: Optional[dict] = None) ->
     return LeadService(database_session, config.get("lead_scoring", {}))
 
 
-def create_opportunity_manager(database_session=None, config: Optional[dict] = None) -> "OpportunityService":
+def create_opportunity_manager(
+    database_session=None, config: Optional[dict] = None
+) -> "OpportunityService":
     """Create a configured opportunity management service."""
     if not OpportunityService:
         raise ImportError("Sales services not available")
@@ -276,7 +280,9 @@ def create_opportunity_manager(database_session=None, config: Optional[dict] = N
     return OpportunityService(database_session, config.get("opportunity", {}))
 
 
-def create_sales_analytics(database_session=None, config: Optional[dict] = None) -> "SalesAnalyticsService":
+def create_sales_analytics(
+    database_session=None, config: Optional[dict] = None
+) -> "SalesAnalyticsService":
     """Create a sales analytics service."""
     if not SalesAnalyticsService:
         raise ImportError("Sales analytics service not available")
@@ -293,7 +299,9 @@ def create_simple_lead_scorer() -> "LeadScoringEngine":
     return create_lead_scoring_engine(weighted=False)
 
 
-def create_weighted_lead_scorer(weights: Optional[dict] = None) -> "WeightedLeadScoringEngine":
+def create_weighted_lead_scorer(
+    weights: Optional[dict] = None,
+) -> "WeightedLeadScoringEngine":
     """Create a weighted lead scoring engine."""
     if not WeightedLeadScoringEngine:
         raise ImportError("Weighted lead scoring engine not available")

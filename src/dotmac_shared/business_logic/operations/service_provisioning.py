@@ -76,7 +76,12 @@ class AllocateResourcesStep(SagaStep):
     """Step to allocate resources for service"""
 
     def __init__(self):
-        super().__init__(name="allocate_resources", timeout_seconds=60, retry_count=2, compensation_required=True)
+        super().__init__(
+            name="allocate_resources",
+            timeout_seconds=60,
+            retry_count=2,
+            compensation_required=True,
+        )
 
     @standard_exception_handler
     async def execute(self, context: SagaContext) -> dict[str, Any]:
@@ -99,7 +104,9 @@ class AllocateResourcesStep(SagaStep):
             "allocation_id": str(uuid4()),
             "allocated_at": datetime.utcnow().isoformat(),
             "status": "allocated",
-            "expires_if_not_configured": (datetime.utcnow() + timedelta(hours=2)).isoformat(),
+            "expires_if_not_configured": (
+                datetime.utcnow() + timedelta(hours=2)
+            ).isoformat(),
         }
 
         context.set_shared_data("allocated_resources", allocated_resources)
@@ -126,14 +133,23 @@ class AllocateResourcesStep(SagaStep):
             },
             "voip": {
                 "basic": {"concurrent_calls": 5, "features": ["basic_forwarding"]},
-                "standard": {"concurrent_calls": 15, "features": ["forwarding", "voicemail"]},
-                "premium": {"concurrent_calls": 50, "features": ["forwarding", "voicemail", "conference"]},
+                "standard": {
+                    "concurrent_calls": 15,
+                    "features": ["forwarding", "voicemail"],
+                },
+                "premium": {
+                    "concurrent_calls": 50,
+                    "features": ["forwarding", "voicemail", "conference"],
+                },
                 "enterprise": {"concurrent_calls": 200, "features": ["all"]},
             },
             "security": {
                 "basic": {"endpoints": 10, "features": ["antivirus"]},
                 "standard": {"endpoints": 50, "features": ["antivirus", "firewall"]},
-                "premium": {"endpoints": 200, "features": ["antivirus", "firewall", "threat_detection"]},
+                "premium": {
+                    "endpoints": 200,
+                    "features": ["antivirus", "firewall", "threat_detection"],
+                },
                 "enterprise": {"endpoints": 1000, "features": ["all"]},
             },
         }
@@ -151,7 +167,10 @@ class AllocateResourcesStep(SagaStep):
 
             context.set_shared_data(
                 "resources_released",
-                {"allocation_id": allocated_resources["allocation_id"], "released_at": datetime.utcnow().isoformat()},
+                {
+                    "allocation_id": allocated_resources["allocation_id"],
+                    "released_at": datetime.utcnow().isoformat(),
+                },
             )
 
 
@@ -159,7 +178,12 @@ class ConfigureServiceStep(SagaStep):
     """Step to configure the allocated service"""
 
     def __init__(self):
-        super().__init__(name="configure_service", timeout_seconds=120, retry_count=2, compensation_required=True)
+        super().__init__(
+            name="configure_service",
+            timeout_seconds=120,
+            retry_count=2,
+            compensation_required=True,
+        )
 
     @standard_exception_handler
     async def execute(self, context: SagaContext) -> dict[str, Any]:
@@ -181,12 +205,18 @@ class ConfigureServiceStep(SagaStep):
                 "config_version": "1.0.0",
                 **allocated_resources["resources"],
             },
-            "network_settings": self._generate_network_settings(service_request["service_type"]),
+            "network_settings": self._generate_network_settings(
+                service_request["service_type"]
+            ),
             "billing_settings": {
                 "billing_period": service_request["billing_period"],
-                "next_billing_date": (datetime.utcnow() + timedelta(days=30)).date().isoformat(),
+                "next_billing_date": (datetime.utcnow() + timedelta(days=30))
+                .date()
+                .isoformat(),
                 "setup_fee": self._calculate_setup_fee(service_request["plan"]),
-                "monthly_fee": self._calculate_monthly_fee(service_request["service_type"], service_request["plan"]),
+                "monthly_fee": self._calculate_monthly_fee(
+                    service_request["service_type"], service_request["plan"]
+                ),
             },
             "configured_at": datetime.utcnow().isoformat(),
             "status": "configured",
@@ -219,17 +249,42 @@ class ConfigureServiceStep(SagaStep):
 
     def _calculate_setup_fee(self, plan: str) -> float:
         """Calculate setup fee based on plan"""
-        setup_fees = {"basic": 25.00, "standard": 50.00, "premium": 100.00, "enterprise": 250.00}
+        setup_fees = {
+            "basic": 25.00,
+            "standard": 50.00,
+            "premium": 100.00,
+            "enterprise": 250.00,
+        }
         return setup_fees.get(plan, 25.00)
 
     def _calculate_monthly_fee(self, service_type: str, plan: str) -> float:
         """Calculate monthly fee based on service type and plan"""
 
         pricing_matrix = {
-            "internet": {"basic": 49.99, "standard": 79.99, "premium": 129.99, "enterprise": 299.99},
-            "hosting": {"basic": 9.99, "standard": 24.99, "premium": 49.99, "enterprise": 199.99},
-            "voip": {"basic": 19.99, "standard": 39.99, "premium": 79.99, "enterprise": 199.99},
-            "security": {"basic": 14.99, "standard": 29.99, "premium": 59.99, "enterprise": 149.99},
+            "internet": {
+                "basic": 49.99,
+                "standard": 79.99,
+                "premium": 129.99,
+                "enterprise": 299.99,
+            },
+            "hosting": {
+                "basic": 9.99,
+                "standard": 24.99,
+                "premium": 49.99,
+                "enterprise": 199.99,
+            },
+            "voip": {
+                "basic": 19.99,
+                "standard": 39.99,
+                "premium": 79.99,
+                "enterprise": 199.99,
+            },
+            "security": {
+                "basic": 14.99,
+                "standard": 29.99,
+                "premium": 59.99,
+                "enterprise": 149.99,
+            },
         }
 
         return pricing_matrix.get(service_type, {}).get(plan, 49.99)
@@ -245,7 +300,10 @@ class ConfigureServiceStep(SagaStep):
 
             context.set_shared_data(
                 "service_unconfigured",
-                {"service_id": service_config["service_id"], "unconfigured_at": datetime.utcnow().isoformat()},
+                {
+                    "service_id": service_config["service_id"],
+                    "unconfigured_at": datetime.utcnow().isoformat(),
+                },
             )
 
 
@@ -253,7 +311,12 @@ class ActivateServiceStep(SagaStep):
     """Step to activate the configured service"""
 
     def __init__(self):
-        super().__init__(name="activate_service", timeout_seconds=60, retry_count=3, compensation_required=True)
+        super().__init__(
+            name="activate_service",
+            timeout_seconds=60,
+            retry_count=3,
+            compensation_required=True,
+        )
 
     @standard_exception_handler
     async def execute(self, context: SagaContext) -> dict[str, Any]:
@@ -336,7 +399,9 @@ class NotifyCustomerStep(SagaStep):
                 "activation_date": activation_result["activated_at"],
                 "access_details": activation_result["access_details"],
                 "billing_info": {
-                    "next_billing_date": service_config["billing_settings"]["next_billing_date"],
+                    "next_billing_date": service_config["billing_settings"][
+                        "next_billing_date"
+                    ],
                     "monthly_fee": service_config["billing_settings"]["monthly_fee"],
                 },
             },
@@ -366,7 +431,9 @@ class ServiceProvisioningCompensationHandler(CompensationHandler):
     """Custom compensation handler for service provisioning"""
 
     @standard_exception_handler
-    async def compensate(self, context: SagaContext, failed_step: str, completed_steps: list[str]) -> None:
+    async def compensate(
+        self, context: SagaContext, failed_step: str, completed_steps: list[str]
+    ) -> None:
         """Execute custom compensation logic"""
 
         service_request = context.get_shared_data("service_request")
@@ -391,7 +458,9 @@ class ServiceProvisioningCompensationHandler(CompensationHandler):
 
         context.set_shared_data("custom_compensation_completed", True)
 
-    async def _send_failure_notification(self, context: SagaContext, service_request: dict[str, Any]) -> None:
+    async def _send_failure_notification(
+        self, context: SagaContext, service_request: dict[str, Any]
+    ) -> None:
         """Send failure notification to customer"""
 
         failure_notification = {
@@ -452,10 +521,14 @@ class ServiceProvisioningOperation(IdempotentOperation[dict[str, Any]]):
         # Validate billing period
         valid_periods = ["monthly", "quarterly", "annual"]
         if operation_data["billing_period"] not in valid_periods:
-            raise ValueError(f"Invalid billing period: {operation_data['billing_period']}")
+            raise ValueError(
+                f"Invalid billing period: {operation_data['billing_period']}"
+            )
 
     @standard_exception_handler
-    async def execute(self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    async def execute(
+        self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
         """Execute service provisioning via saga orchestration"""
 
         context = context or {}
@@ -505,7 +578,10 @@ class ServiceProvisioningOperation(IdempotentOperation[dict[str, Any]]):
                     "billing_settings": service_config["billing_settings"],
                     "configuration": service_config["configuration"],
                 },
-                "saga_context": {"saga_id": saga_context.saga_id, "correlation_id": saga_context.correlation_id},
+                "saga_context": {
+                    "saga_id": saga_context.saga_id,
+                    "correlation_id": saga_context.correlation_id,
+                },
             }
 
         except Exception as e:

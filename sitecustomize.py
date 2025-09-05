@@ -14,6 +14,10 @@ import sys
 
 def _add_package_src_paths() -> None:
     repo_root = os.path.dirname(__file__)
+    # Ensure local src is first for test-time shims
+    src_path = os.path.join(repo_root, "src")
+    if os.path.isdir(src_path) and src_path not in sys.path:
+        sys.path.insert(0, src_path)
     patterns = [
         os.path.join(repo_root, "packages", "*", "src"),
         os.path.join(repo_root, "packages", "*", "*", "src"),

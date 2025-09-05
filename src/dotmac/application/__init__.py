@@ -24,7 +24,9 @@ class RouterFactory:
     def __init__(self, name: str):  # noqa: D401
         self.name = name
 
-    def create_router(self, prefix: str = "", tags: list[str] | None = None, **_: Any):  # noqa: D401
+    def create_router(
+        self, prefix: str = "", tags: list[str] | None = None, **_: Any
+    ):  # noqa: D401
         try:
             return APIRouter(prefix=prefix, tags=tags or [])  # type: ignore[misc]
         except Exception:
@@ -32,4 +34,3 @@ class RouterFactory:
 
 
 __all__ = ["RouterFactory", "standard_exception_handler"]
-

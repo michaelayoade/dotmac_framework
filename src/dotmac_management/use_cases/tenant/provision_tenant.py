@@ -10,14 +10,18 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
 
+from sqlalchemy.exc import SQLAlchemyError
+
 from dotmac.database.base import get_db_session
 from dotmac_shared.core.logging import get_logger
 from dotmac_shared.exceptions import ExceptionContext
 from dotmac_shared.security.secrets import SecretsManager
-from sqlalchemy.exc import SQLAlchemyError
 
 from ...infrastructure import get_adapter_factory
-from ...infrastructure.interfaces.deployment_provider import ApplicationConfig, ServiceConfig
+from ...infrastructure.interfaces.deployment_provider import (
+    ApplicationConfig,
+    ServiceConfig,
+)
 from ...models.tenant import CustomerTenant, TenantStatus
 from ...services.tenant_provisioning import TenantProvisioningService
 from ..base import TransactionalUseCase, UseCaseContext, UseCaseResult
@@ -62,7 +66,9 @@ class ProvisionTenantOutput:
     estimated_ready_time: Optional[str] = None
 
 
-class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, ProvisionTenantOutput]):
+class ProvisionTenantUseCase(
+    TransactionalUseCase[ProvisionTenantInput, ProvisionTenantOutput]
+):
     """
     Provision a new tenant with complete infrastructure setup.
 
@@ -105,7 +111,11 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
         if not input_data.subdomain or not input_data.subdomain.strip():
             return False
 
-        if not input_data.plan or input_data.plan not in ["starter", "professional", "enterprise"]:
+        if not input_data.plan or input_data.plan not in [
+            "starter",
+            "professional",
+            "enterprise",
+        ]:
             return False
 
         return True
@@ -128,12 +138,17 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
             # Check infrastructure health
             health_result = await self.adapter_factory.health_check_all()
             if not health_result.get("overall_healthy", False):
-                self.logger.warning("Infrastructure not healthy for tenant provisioning")
+                self.logger.warning(
+                    "Infrastructure not healthy for tenant provisioning"
+                )
                 return False
 
             return True
 
-        except (ExceptionContext.LIFECYCLE_EXCEPTIONS, ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS) as e:
+        except (
+            ExceptionContext.LIFECYCLE_EXCEPTIONS,
+            ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS,
+        ) as e:
             self.logger.error(f"Cannot execute tenant provisioning: {e}")
             return False
 
@@ -144,20 +159,30 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
 
         try:
             await self._ensure_dependencies()
-            correlation_id = context.correlation_id if context else f"provision-{secrets.token_hex(8)}"
+            correlation_id = (
+                context.correlation_id
+                if context
+                else f"provision-{secrets.token_hex(8)}"
+            )
 
             self.logger.info(
                 "Starting tenant provisioning",
-                extra={"tenant_id": input_data.tenant_id, "correlation_id": correlation_id},
+                extra={
+                    "tenant_id": input_data.tenant_id,
+                    "correlation_id": correlation_id,
+                },
             )
 
             # Step 1: Validate subdomain availability
             dns_adapter = await self.adapter_factory.get_dns_adapter()
-            subdomain_result = await dns_adapter.validate_subdomain_available(input_data.subdomain)
+            subdomain_result = await dns_adapter.validate_subdomain_available(
+                input_data.subdomain
+            )
 
             if not subdomain_result.available:
                 return self._create_error_result(
-                    f"Subdomain {input_data.subdomain} is not available", error_code="SUBDOMAIN_UNAVAILABLE"
+                    f"Subdomain {input_data.subdomain} is not available",
+                    error_code="SUBDOMAIN_UNAVAILABLE",
                 )
 
             # Step 2: Create tenant database record
@@ -165,13 +190,19 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
             self.add_rollback_action(lambda: self._rollback_tenant_record(tenant_db_id))
 
             # Step 3: Start background provisioning workflow
-            provisioning_result = await self._start_provisioning_workflow(tenant_db_id, correlation_id)
+            provisioning_result = await self._start_provisioning_workflow(
+                tenant_db_id, correlation_id
+            )
 
             if not provisioning_result["success"]:
-                return self._create_error_result(provisioning_result["error"], error_code="PROVISIONING_FAILED")
+                return self._create_error_result(
+                    provisioning_result["error"], error_code="PROVISIONING_FAILED"
+                )
 
             # Step 4: Generate response data
-            output_data = await self._create_output_data(tenant_db_id, input_data, provisioning_result, correlation_id)
+            output_data = await self._create_output_data(
+                tenant_db_id, input_data, provisioning_result, correlation_id
+            )
 
             self.logger.info(
                 "Tenant provisioning initiated successfully",
@@ -191,11 +222,16 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
                 },
             )
 
-        except (ExceptionContext.LIFECYCLE_EXCEPTIONS, ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS) as e:
+        except (
+            ExceptionContext.LIFECYCLE_EXCEPTIONS,
+            ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS,
+        ) as e:
             self.logger.error(f"Tenant provisioning transaction failed: {e}")
             return self._create_error_result(str(e), error_code="TRANSACTION_FAILED")
 
-    async def _create_tenant_record(self, input_data: ProvisionTenantInput, correlation_id: str) -> int:
+    async def _create_tenant_record(
+        self, input_data: ProvisionTenantInput, correlation_id: str
+    ) -> int:
         """Create the tenant database record"""
 
         with get_db_session() as db:
@@ -222,23 +258,32 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
             db.refresh(tenant)
 
             self.logger.info(
-                "Created tenant record", extra={"tenant_id": input_data.tenant_id, "tenant_db_id": tenant.id}
+                "Created tenant record",
+                extra={"tenant_id": input_data.tenant_id, "tenant_db_id": tenant.id},
             )
 
             return tenant.id
 
-    async def _start_provisioning_workflow(self, tenant_db_id: int, correlation_id: str) -> dict[str, Any]:
+    async def _start_provisioning_workflow(
+        self, tenant_db_id: int, correlation_id: str
+    ) -> dict[str, Any]:
         """Start the comprehensive provisioning workflow using orchestrated business logic"""
 
         try:
             with get_db_session() as db:
                 tenant = db.query(CustomerTenant).filter_by(id=tenant_db_id).first()
                 if not tenant:
-                    return {"success": False, "workflow_id": correlation_id, "error": "Tenant not found"}
+                    return {
+                        "success": False,
+                        "workflow_id": correlation_id,
+                        "error": "Tenant not found",
+                    }
 
                 # Step 1: Validate tenant configuration
-                validation_result = await self.provisioning_service.validate_tenant_configuration(
-                    tenant, correlation_id
+                validation_result = (
+                    await self.provisioning_service.validate_tenant_configuration(
+                        tenant, correlation_id
+                    )
                 )
                 if not validation_result.get("success", True):
                     return {
@@ -248,28 +293,40 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
                     }
 
                 # Step 2: Generate tenant secrets
-                tenant_secrets = await self.provisioning_service.generate_tenant_secrets(tenant, correlation_id)
+                tenant_secrets = (
+                    await self.provisioning_service.generate_tenant_secrets(
+                        tenant, correlation_id
+                    )
+                )
 
                 # Store encrypted secrets
-                tenant.environment_vars = await self.secrets_manager.encrypt(json.dumps(tenant_secrets))
+                tenant.environment_vars = await self.secrets_manager.encrypt(
+                    json.dumps(tenant_secrets)
+                )
 
                 # Step 3: Create database and Redis resources using infrastructure
                 await self._create_infrastructure_resources(tenant, correlation_id)
 
                 # Step 4: Deploy container stack
                 deployment_adapter = await self.adapter_factory.get_deployment_adapter()
-                compose_content = await self.provisioning_service.generate_docker_compose(tenant)
+                compose_content = (
+                    await self.provisioning_service.generate_docker_compose(tenant)
+                )
 
                 # Create application config
                 app_config = ApplicationConfig(
                     name=f"tenant-{tenant.subdomain}",
                     description=f"DotMac ISP tenant for {tenant.company_name}",
                     docker_compose=compose_content,
-                    domains=[f"{tenant.subdomain}.{os.getenv('BASE_DOMAIN', 'example.com')}"],
+                    domains=[
+                        f"{tenant.subdomain}.{os.getenv('BASE_DOMAIN', 'example.com')}"
+                    ],
                     environment=tenant_secrets,
                 )
 
-                deployment_result = await deployment_adapter.deploy_application(app_config)
+                deployment_result = await deployment_adapter.deploy_application(
+                    app_config
+                )
 
                 if not deployment_result.success:
                     return {
@@ -280,20 +337,34 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
 
                 # Store deployment info
                 tenant.container_id = deployment_result.deployment_id
-                tenant.domain = f"{tenant.subdomain}.{os.getenv('BASE_DOMAIN', 'example.com')}"
+                tenant.domain = (
+                    f"{tenant.subdomain}.{os.getenv('BASE_DOMAIN', 'example.com')}"
+                )
 
                 # Step 5: Wait for deployment to be ready and run health checks
                 await self._wait_for_deployment_ready(deployment_result.deployment_id)
 
-                health_check_passed = await self.provisioning_service.perform_health_checks(tenant, correlation_id)
+                health_check_passed = (
+                    await self.provisioning_service.perform_health_checks(
+                        tenant, correlation_id
+                    )
+                )
 
                 if not health_check_passed:
-                    return {"success": False, "workflow_id": correlation_id, "error": "Health checks failed"}
+                    return {
+                        "success": False,
+                        "workflow_id": correlation_id,
+                        "error": "Health checks failed",
+                    }
 
                 # Step 6: Create admin user and provision license
-                admin_info = await self.provisioning_service.create_tenant_admin_user(tenant, correlation_id)
+                admin_info = await self.provisioning_service.create_tenant_admin_user(
+                    tenant, correlation_id
+                )
 
-                license_info = await self.provisioning_service.provision_tenant_license(tenant, correlation_id)
+                license_info = await self.provisioning_service.provision_tenant_license(
+                    tenant, correlation_id
+                )
 
                 # Step 7: Update final status
                 tenant.status = TenantStatus.ACTIVE
@@ -309,7 +380,11 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
                     "deployment_id": deployment_result.deployment_id,
                 }
 
-        except (SQLAlchemyError, ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS, ExceptionContext.LIFECYCLE_EXCEPTIONS) as e:
+        except (
+            SQLAlchemyError,
+            ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS,
+            ExceptionContext.LIFECYCLE_EXCEPTIONS,
+        ) as e:
             self.logger.error(f"Provisioning workflow failed: {e}")
             return {"success": False, "workflow_id": correlation_id, "error": str(e)}
 
@@ -360,12 +435,17 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
                     tenant.settings["rollback_at"] = datetime.utcnow().isoformat()
                     db.commit()
 
-                    self.logger.info("Rolled back tenant record", extra={"tenant_db_id": tenant_db_id})
+                    self.logger.info(
+                        "Rolled back tenant record",
+                        extra={"tenant_db_id": tenant_db_id},
+                    )
 
         except (SQLAlchemyError, ExceptionContext.LIFECYCLE_EXCEPTIONS) as e:
             self.logger.error(f"Failed to rollback tenant record: {e}")
 
-    async def _create_infrastructure_resources(self, tenant: CustomerTenant, correlation_id: str):
+    async def _create_infrastructure_resources(
+        self, tenant: CustomerTenant, correlation_id: str
+    ):
         """Create database and cache resources using infrastructure layer"""
 
         # Create PostgreSQL database
@@ -385,7 +465,9 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
 
         # Store database URL
         if db_result.success:
-            tenant.database_url = await self.secrets_manager.encrypt(db_result.metadata.get("connection_url", ""))
+            tenant.database_url = await self.secrets_manager.encrypt(
+                db_result.metadata.get("connection_url", "")
+            )
 
         # Create Redis cache
         redis_config = ServiceConfig(
@@ -399,7 +481,9 @@ class ProvisionTenantUseCase(TransactionalUseCase[ProvisionTenantInput, Provisio
 
         # Store Redis URL
         if redis_result.success:
-            tenant.redis_url = await self.secrets_manager.encrypt(redis_result.metadata.get("connection_url", ""))
+            tenant.redis_url = await self.secrets_manager.encrypt(
+                redis_result.metadata.get("connection_url", "")
+            )
 
     async def _wait_for_deployment_ready(self, deployment_id: str):
         """Wait for deployment to be ready"""

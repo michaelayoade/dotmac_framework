@@ -131,7 +131,9 @@ class RequestState:
     @property
     def idempotency_key(self) -> str | None:
         """Legacy idempotency_key property."""
-        return self.operation_context.idempotency_key if self.operation_context else None
+        return (
+            self.operation_context.idempotency_key if self.operation_context else None
+        )
 
 
 class RequestStateManager:
@@ -221,7 +223,9 @@ class RequestStateManager:
         if hasattr(request.state, "tenant_context"):
             state.tenant_context = request.state.tenant_context
         elif hasattr(request.state, "tenant_id"):
-            state.tenant_context = TenantContext(tenant_id=request.state.tenant_id, source="legacy")
+            state.tenant_context = TenantContext(
+                tenant_id=request.state.tenant_id, source="legacy"
+            )
 
         # Legacy user context
         if hasattr(request.state, "user_context"):
@@ -237,13 +241,17 @@ class RequestStateManager:
                 status=getattr(version_info, "status", "current"),
             )
         elif hasattr(request.state, "api_version"):
-            state.api_version_context = APIVersionContext(version=request.state.api_version)
+            state.api_version_context = APIVersionContext(
+                version=request.state.api_version
+            )
 
         # Legacy operation context
         if hasattr(request.state, "operation_context"):
             state.operation_context = request.state.operation_context
         elif hasattr(request.state, "idempotency_key"):
-            state.operation_context = OperationContext(idempotency_key=request.state.idempotency_key)
+            state.operation_context = OperationContext(
+                idempotency_key=request.state.idempotency_key
+            )
 
         # Metadata
         if hasattr(request.state, "request_id"):
@@ -252,7 +260,9 @@ class RequestStateManager:
         return state
 
     @staticmethod
-    def update_tenant_context(request: Request, tenant_id: str, source: str = "unknown", **kwargs):
+    def update_tenant_context(
+        request: Request, tenant_id: str, source: str = "unknown", **kwargs
+    ):
         """Update tenant context in request state.
 
         Args:

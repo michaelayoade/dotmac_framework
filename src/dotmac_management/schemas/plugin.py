@@ -26,11 +26,21 @@ class PluginBase(BaseModel):
     is_official: bool = Field(default=False, description="Whether plugin is official")
     is_verified: bool = Field(default=False, description="Whether plugin is verified")
     is_active: bool = Field(default=True, description="Whether plugin is active")
-    configuration_schema: dict[str, Any] = Field(default_factory=dict, description="Configuration schema")
-    api_requirements: list[str] = Field(default_factory=list, description="Required API permissions")
-    dependencies: list[str] = Field(default_factory=list, description="Plugin dependencies")
-    supported_versions: list[str] = Field(default_factory=list, description="Supported platform versions")
-    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
+    configuration_schema: dict[str, Any] = Field(
+        default_factory=dict, description="Configuration schema"
+    )
+    api_requirements: list[str] = Field(
+        default_factory=list, description="Required API permissions"
+    )
+    dependencies: list[str] = Field(
+        default_factory=list, description="Plugin dependencies"
+    )
+    supported_versions: list[str] = Field(
+        default_factory=list, description="Supported platform versions"
+    )
+    metadata: Optional[dict[str, Any]] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class PluginCreate(PluginBase):
@@ -72,12 +82,16 @@ class PluginInstallationBase(BaseModel):
     plugin_id: UUID = Field(..., description="Plugin ID")
     status: str = Field(..., description="Installation status")
     installed_version: str = Field(..., description="Installed plugin version")
-    configuration: dict[str, Any] = Field(default_factory=dict, description="Plugin configuration")
+    configuration: dict[str, Any] = Field(
+        default_factory=dict, description="Plugin configuration"
+    )
     enabled: bool = Field(default=True, description="Whether plugin is enabled")
     auto_update: bool = Field(default=False, description="Auto-update setting")
     installed_at: Optional[datetime] = Field(None, description="Installation timestamp")
     last_updated: Optional[datetime] = Field(None, description="Last update timestamp")
-    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Installation metadata")
+    metadata: Optional[dict[str, Any]] = Field(
+        default_factory=dict, description="Installation metadata"
+    )
 
 
 class PluginInstallationCreate(PluginInstallationBase):
@@ -112,7 +126,9 @@ class PluginHookBase(BaseModel):
     hook_type: str = Field(..., description="Hook type (event, filter, action)")
     priority: int = Field(default=10, description="Hook priority")
     callback_url: Optional[str] = Field(None, description="Webhook callback URL")
-    configuration: dict[str, Any] = Field(default_factory=dict, description="Hook configuration")
+    configuration: dict[str, Any] = Field(
+        default_factory=dict, description="Hook configuration"
+    )
     is_active: bool = Field(default=True, description="Whether hook is active")
 
 
@@ -177,7 +193,9 @@ class PluginEventBase(BaseModel):
     event_data: dict[str, Any] = Field(..., description="Event data")
     processed: bool = Field(default=False, description="Whether event was processed")
     processed_at: Optional[datetime] = Field(None, description="Processing timestamp")
-    error_message: Optional[str] = Field(None, description="Error message if processing failed")
+    error_message: Optional[str] = Field(
+        None, description="Error message if processing failed"
+    )
     retry_count: int = Field(default=0, description="Number of retry attempts")
 
 
@@ -230,7 +248,9 @@ class PluginInstallRequest(BaseModel):
 
     plugin_id: UUID = Field(..., description="Plugin to install")
     version: Optional[str] = Field(None, description="Specific version to install")
-    configuration: dict[str, Any] = Field(default_factory=dict, description="Initial configuration")
+    configuration: dict[str, Any] = Field(
+        default_factory=dict, description="Initial configuration"
+    )
     auto_update: bool = Field(default=False, description="Enable auto-updates")
 
 
@@ -238,22 +258,30 @@ class PluginUpdateRequest(BaseModel):
     """PluginUpdateRequest implementation."""
 
     version: Optional[str] = Field(None, description="Target version")
-    configuration: Optional[dict[str, Any]] = Field(None, description="Updated configuration")
+    configuration: Optional[dict[str, Any]] = Field(
+        None, description="Updated configuration"
+    )
 
 
 class PluginConfigurationUpdate(BaseModel):
     """PluginConfigurationUpdate implementation."""
 
     configuration: dict[str, Any] = Field(..., description="Updated configuration")
-    restart_required: bool = Field(default=False, description="Whether restart is required")
+    restart_required: bool = Field(
+        default=False, description="Whether restart is required"
+    )
 
 
 class BulkPluginOperation(BaseModel):
     """BulkPluginOperation implementation."""
 
     plugin_ids: list[UUID] = Field(..., description="Plugin IDs to operate on")
-    operation: str = Field(..., description="Operation (enable, disable, update, uninstall)")
-    parameters: Optional[dict[str, Any]] = Field(default_factory=dict, description="Operation parameters")
+    operation: str = Field(
+        ..., description="Operation (enable, disable, update, uninstall)"
+    )
+    parameters: Optional[dict[str, Any]] = Field(
+        default_factory=dict, description="Operation parameters"
+    )
 
 
 # Plugin marketplace schemas
@@ -316,7 +344,9 @@ class PluginSubmission(BaseModel):
     source_url: str = Field(..., description="Source repository URL")
     documentation_url: Optional[str] = None
     license: str = Field(..., description="License")
-    configuration_schema: dict[str, Any] = Field(..., description="Configuration schema")
+    configuration_schema: dict[str, Any] = Field(
+        ..., description="Configuration schema"
+    )
     api_requirements: list[str] = Field(..., description="Required permissions")
 
 

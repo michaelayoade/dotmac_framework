@@ -154,7 +154,9 @@ The Partner Review Team
         }
 
     @staticmethod
-    def application_approved(application: ResellerApplication, reseller: Reseller) -> dict[str, str]:
+    def application_approved(
+        application: ResellerApplication, reseller: Reseller
+    ) -> dict[str, str]:
         """Application approval email template"""
         return {
             "subject": f"🎉 Welcome to Our Partner Program - {reseller.reseller_id}",
@@ -253,7 +255,9 @@ The Partner Team
         }
 
     @staticmethod
-    def application_rejected(application: ResellerApplication, reason: str) -> dict[str, str]:
+    def application_rejected(
+        application: ResellerApplication, reason: str
+    ) -> dict[str, str]:
         """Application rejection email template"""
         return {
             "subject": f"Application Update - {application.application_id}",
@@ -450,7 +454,9 @@ class EnhancedEmailService:
         self.smtp_config = smtp_config or {}
         self.templates = EmailTemplates()
 
-    async def send_application_confirmation(self, application: ResellerApplication) -> bool:
+    async def send_application_confirmation(
+        self, application: ResellerApplication
+    ) -> bool:
         """Send professional application confirmation email"""
         template = self.templates.application_confirmation(application)
         return await self._send_email(
@@ -461,7 +467,9 @@ class EnhancedEmailService:
             text_body=template["text_body"],
         )
 
-    async def send_application_under_review(self, application: ResellerApplication) -> bool:
+    async def send_application_under_review(
+        self, application: ResellerApplication
+    ) -> bool:
         """Send application under review notification"""
         template = self.templates.application_under_review(application)
         return await self._send_email(
@@ -472,7 +480,9 @@ class EnhancedEmailService:
             text_body=template["text_body"],
         )
 
-    async def send_application_approved(self, application: ResellerApplication, reseller: Reseller) -> bool:
+    async def send_application_approved(
+        self, application: ResellerApplication, reseller: Reseller
+    ) -> bool:
         """Send application approval notification"""
         template = self.templates.application_approved(application, reseller)
         return await self._send_email(
@@ -483,7 +493,9 @@ class EnhancedEmailService:
             text_body=template["text_body"],
         )
 
-    async def send_application_rejected(self, application: ResellerApplication, reason: str) -> bool:
+    async def send_application_rejected(
+        self, application: ResellerApplication, reason: str
+    ) -> bool:
         """Send application rejection notification"""
         template = self.templates.application_rejected(application, reason)
         return await self._send_email(
@@ -505,7 +517,9 @@ class EnhancedEmailService:
             text_body=template["text_body"],
         )
 
-    async def _send_email(self, to_email: str, to_name: str, subject: str, html_body: str, text_body: str) -> bool:
+    async def _send_email(
+        self, to_email: str, to_name: str, subject: str, html_body: str, text_body: str
+    ) -> bool:
         """Send email using configured SMTP or email service"""
 
         # For development/testing, log the email
@@ -529,12 +543,16 @@ class EnhancedEmailService:
 
         return True
 
-    async def _send_via_ses(self, to_email: str, subject: str, html_body: str, text_body: str) -> bool:
+    async def _send_via_ses(
+        self, to_email: str, subject: str, html_body: str, text_body: str
+    ) -> bool:
         """Send via AWS SES (example implementation)"""
         # Implementation would go here
         pass
 
-    async def _send_via_sendgrid(self, to_email: str, subject: str, html_body: str, text_body: str) -> bool:
+    async def _send_via_sendgrid(
+        self, to_email: str, subject: str, html_body: str, text_body: str
+    ) -> bool:
         """Send via SendGrid (example implementation)"""
         # Implementation would go here
         pass

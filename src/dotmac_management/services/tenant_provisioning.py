@@ -12,15 +12,24 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 import httpx
+from jinja2 import Template
+from sqlalchemy.orm import Session
+
 from dotmac.platform.auth.jwt_service import JWTService
-from dotmac_management.models.tenant import CustomerTenant, TenantProvisioningEvent, TenantStatus
-from dotmac_management.services.auto_license_provisioning import AutoLicenseProvisioningService
-from dotmac_management.services.tenant_admin_provisioning import TenantAdminProvisioningService
+from dotmac_management.models.tenant import (
+    CustomerTenant,
+    TenantProvisioningEvent,
+    TenantStatus,
+)
+from dotmac_management.services.auto_license_provisioning import (
+    AutoLicenseProvisioningService,
+)
+from dotmac_management.services.tenant_admin_provisioning import (
+    TenantAdminProvisioningService,
+)
 from dotmac_shared.core.error_utils import service_operation
 from dotmac_shared.core.logging import get_logger
 from dotmac_shared.security.secrets import SecretsManager
-from jinja2 import Template
-from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 
@@ -105,7 +114,9 @@ class TenantProvisioningService:
         """Provision license for tenant (business logic)"""
         return await self._provision_tenant_license(None, tenant, correlation_id)
 
-    async def perform_health_checks(self, tenant: CustomerTenant, correlation_id: Optional[str] = None) -> bool:
+    async def perform_health_checks(
+        self, tenant: CustomerTenant, correlation_id: Optional[str] = None
+    ) -> bool:
         """Perform tenant health checks (business logic)"""
         return await self._run_health_checks(None, tenant, correlation_id)
 
@@ -144,12 +155,19 @@ class TenantProvisioningService:
 
         logger.info(f"Tenant {tenant.tenant_id}: {status} - {message}")
 
-    async def _validate_tenant_config(self, db: Session, tenant: CustomerTenant, correlation_id: str) -> bool:
+    async def _validate_tenant_config(
+        self, db: Session, tenant: CustomerTenant, correlation_id: str
+    ) -> bool:
         """Validate tenant configuration before provisioning"""
 
         try:
             await self._update_tenant_status(
-                db, tenant, TenantStatus.VALIDATING, "Validating tenant configuration", correlation_id, 1
+                db,
+                tenant,
+                TenantStatus.VALIDATING,
+                "Validating tenant configuration",
+                correlation_id,
+                1,
             )
 
             # Validate subdomain availability
@@ -167,20 +185,31 @@ class TenantProvisioningService:
             return True
 
         except Exception as e:
-            await self._log_provisioning_error(db, tenant, "validation_failed", str(e), correlation_id, 1)
+            await self._log_provisioning_error(
+                db, tenant, "validation_failed", str(e), correlation_id, 1
+            )
             return False
 
-    async def _create_database_resources(self, db: Session, tenant: CustomerTenant, correlation_id: str) -> bool:
+    async def _create_database_resources(
+        self, db: Session, tenant: CustomerTenant, correlation_id: str
+    ) -> bool:
         """Create database and Redis resources for tenant"""
 
         try:
             await self._update_tenant_status(
-                db, tenant, TenantStatus.PROVISIONING, "Creating database resources", correlation_id, 2
+                db,
+                tenant,
+                TenantStatus.PROVISIONING,
+                "Creating database resources",
+                correlation_id,
+                2,
             )
 
             # Create dedicated database for tenant
             database_config = await self._create_tenant_database(tenant)
-            tenant.database_url = await self.secrets_manager.encrypt(database_config["url"])
+            tenant.database_url = await self.secrets_manager.encrypt(
+                database_config["url"]
+            )
 
             # Create dedicated Redis instance
             redis_config = await self._create_tenant_redis(tenant)
@@ -189,16 +218,25 @@ class TenantProvisioningService:
             # values already assigned to tenant; transaction commit handled at higher-level writes if any
 
             await self._log_provisioning_event(
-                db, tenant, "database_created", "Database and Redis created", correlation_id, 2
+                db,
+                tenant,
+                "database_created",
+                "Database and Redis created",
+                correlation_id,
+                2,
             )
 
             return True
 
         except Exception as e:
-            await self._log_provisioning_error(db, tenant, "database_creation_failed", str(e), correlation_id, 2)
+            await self._log_provisioning_error(
+                db, tenant, "database_creation_failed", str(e), correlation_id, 2
+            )
             return False
 
-    async def _generate_tenant_secrets(self, db: Session, tenant: CustomerTenant, correlation_id: str) -> bool:
+    async def _generate_tenant_secrets(
+        self, db: Session, tenant: CustomerTenant, correlation_id: str
+    ) -> bool:
         """Generate tenant-specific secrets"""
 
         try:
@@ -226,26 +264,42 @@ class TenantProvisioningService:
             }
 
             # Encrypt and store environment variables
-            tenant.environment_vars = await self.secrets_manager.encrypt(json.dumps(tenant_secrets))
+            tenant.environment_vars = await self.secrets_manager.encrypt(
+                json.dumps(tenant_secrets)
+            )
 
             # values already assigned to tenant; transaction commit handled at higher-level writes if any
 
             await self._log_provisioning_event(
-                db, tenant, "secrets_generated", "Tenant secrets generated", correlation_id, 3
+                db,
+                tenant,
+                "secrets_generated",
+                "Tenant secrets generated",
+                correlation_id,
+                3,
             )
 
             return True
 
         except Exception as e:
-            await self._log_provisioning_error(db, tenant, "secret_generation_failed", str(e), correlation_id, 3)
+            await self._log_provisioning_error(
+                db, tenant, "secret_generation_failed", str(e), correlation_id, 3
+            )
             return False
 
-    async def _deploy_container_stack(self, db: Session, tenant: CustomerTenant, correlation_id: str) -> bool:
+    async def _deploy_container_stack(
+        self, db: Session, tenant: CustomerTenant, correlation_id: str
+    ) -> bool:
         """Deploy tenant container stack via Coolify API"""
 
         try:
             await self._update_tenant_status(
-                db, tenant, TenantStatus.PROVISIONING, "Deploying container stack", correlation_id, 4
+                db,
+                tenant,
+                TenantStatus.PROVISIONING,
+                "Deploying container stack",
+                correlation_id,
+                4,
             )
 
             # Generate docker-compose from template
@@ -265,14 +319,24 @@ class TenantProvisioningService:
                 "name": app_config["name"],
                 "docker_compose": app_config["docker_compose"],
                 "environment": app_config["environment"],
-                "domains": [f"{tenant.subdomain}.{os.getenv('BASE_DOMAIN', 'example.com')}"],
+                "domains": [
+                    f"{tenant.subdomain}.{os.getenv('BASE_DOMAIN', 'example.com')}"
+                ],
             }
 
-            deployment_result = await self.infrastructure_service.deploy_tenant_application(tenant_config)
+            deployment_result = (
+                await self.infrastructure_service.deploy_tenant_application(
+                    tenant_config
+                )
+            )
 
             # Store container/deployment ID
-            tenant.container_id = deployment_result.get("deployment_id") or deployment_result.get("application_id")
-            tenant.domain = f"{tenant.subdomain}.{os.getenv('BASE_DOMAIN', 'example.com')}"
+            tenant.container_id = deployment_result.get(
+                "deployment_id"
+            ) or deployment_result.get("application_id")
+            tenant.domain = (
+                f"{tenant.subdomain}.{os.getenv('BASE_DOMAIN', 'example.com')}"
+            )
 
             # values already assigned to tenant; transaction commit handled at higher-level writes if any
 
@@ -281,16 +345,25 @@ class TenantProvisioningService:
                 raise Exception("Deployment timeout")
 
             await self._log_provisioning_event(
-                db, tenant, "container_deployed", "Container stack deployed", correlation_id, 4
+                db,
+                tenant,
+                "container_deployed",
+                "Container stack deployed",
+                correlation_id,
+                4,
             )
 
             return True
 
         except Exception as e:
-            await self._log_provisioning_error(db, tenant, "deployment_failed", str(e), correlation_id, 4)
+            await self._log_provisioning_error(
+                db, tenant, "deployment_failed", str(e), correlation_id, 4
+            )
             return False
 
-    async def _run_tenant_migrations(self, db: Session, tenant: CustomerTenant, correlation_id: str) -> bool:
+    async def _run_tenant_migrations(
+        self, db: Session, tenant: CustomerTenant, correlation_id: str
+    ) -> bool:
         """Run database migrations for tenant"""
 
         try:
@@ -303,17 +376,26 @@ class TenantProvisioningService:
                 raise Exception("Migration job failed")
 
             await self._log_provisioning_event(
-                db, tenant, "migrations_completed", "Database migrations completed", correlation_id, 5
+                db,
+                tenant,
+                "migrations_completed",
+                "Database migrations completed",
+                correlation_id,
+                5,
             )
 
             return True
 
         except Exception as e:
-            await self._log_provisioning_error(db, tenant, "migration_failed", str(e), correlation_id, 5)
+            await self._log_provisioning_error(
+                db, tenant, "migration_failed", str(e), correlation_id, 5
+            )
             return False
 
     @service_operation("tenant_provisioning")
-    async def _seed_tenant_data(self, db: Session, tenant: CustomerTenant, correlation_id: str) -> bool:
+    async def _seed_tenant_data(
+        self, db: Session, tenant: CustomerTenant, correlation_id: str
+    ) -> bool:
         """Seed initial data for tenant"""
 
         try:
@@ -346,16 +428,22 @@ class TenantProvisioningService:
 
             # values already assigned to tenant; transaction commit handled at higher-level writes if any
 
-            await self._log_provisioning_event(db, tenant, "data_seeded", "Initial data seeded", correlation_id, 6)
+            await self._log_provisioning_event(
+                db, tenant, "data_seeded", "Initial data seeded", correlation_id, 6
+            )
 
             return True
 
         except Exception as e:
-            await self._log_provisioning_error(db, tenant, "seeding_failed", str(e), correlation_id, 6)
+            await self._log_provisioning_error(
+                db, tenant, "seeding_failed", str(e), correlation_id, 6
+            )
             return False
 
     @service_operation("tenant_provisioning")
-    async def _run_health_checks(self, db: Session, tenant: CustomerTenant, correlation_id: str) -> bool:
+    async def _run_health_checks(
+        self, db: Session, tenant: CustomerTenant, correlation_id: str
+    ) -> bool:
         """Run health checks on deployed tenant"""
 
         try:
@@ -367,13 +455,17 @@ class TenantProvisioningService:
                 health_response = await client.get(f"{tenant_url}/health", timeout=30)
 
                 if health_response.status_code != 200:
-                    raise Exception(f"Health check failed: {health_response.status_code}")
+                    raise Exception(
+                        f"Health check failed: {health_response.status_code}"
+                    )
 
                 # Check login page loads
                 login_response = await client.get(f"{tenant_url}/login", timeout=30)
 
                 if login_response.status_code != 200:
-                    raise Exception(f"Login page check failed: {login_response.status_code}")
+                    raise Exception(
+                        f"Login page check failed: {login_response.status_code}"
+                    )
 
             # Update health status
             from dotmac_shared.core.error_utils import db_transaction
@@ -383,16 +475,25 @@ class TenantProvisioningService:
                 tenant.last_health_check = datetime.now(timezone.utc)
 
             await self._log_provisioning_event(
-                db, tenant, "health_check_passed", "Health checks passed", correlation_id, 7
+                db,
+                tenant,
+                "health_check_passed",
+                "Health checks passed",
+                correlation_id,
+                7,
             )
 
             return True
 
         except Exception as e:
-            await self._log_provisioning_error(db, tenant, "health_check_failed", str(e), correlation_id, 7)
+            await self._log_provisioning_error(
+                db, tenant, "health_check_failed", str(e), correlation_id, 7
+            )
             return False
 
-    async def _create_tenant_admin(self, db: Session, tenant: CustomerTenant, correlation_id: str) -> dict[str, Any]:
+    async def _create_tenant_admin(
+        self, db: Session, tenant: CustomerTenant, correlation_id: str
+    ) -> dict[str, Any]:
         """Create admin account for ISP instance"""
 
         try:
@@ -408,12 +509,16 @@ class TenantProvisioningService:
                 tenant.settings["admin_username"] = admin_info["username"]
                 tenant.settings["admin_portal_url"] = admin_info["portal_url"]
 
-            await self._log_provisioning_event(db, tenant, "admin_created", "Admin account created", correlation_id, 7)
+            await self._log_provisioning_event(
+                db, tenant, "admin_created", "Admin account created", correlation_id, 7
+            )
 
             return admin_info
 
         except Exception as e:
-            await self._log_provisioning_error(db, tenant, "admin_creation_failed", str(e), correlation_id, 7)
+            await self._log_provisioning_error(
+                db, tenant, "admin_creation_failed", str(e), correlation_id, 7
+            )
             # Don't fail provisioning if admin creation fails - can be done manually
             return {}
 
@@ -423,7 +528,9 @@ class TenantProvisioningService:
         """Provision license contract for tenant"""
 
         try:
-            license_info = await self.license_provisioning.provision_license_for_tenant(tenant, db)
+            license_info = await self.license_provisioning.provision_license_for_tenant(
+                tenant, db
+            )
 
             # Store license info in tenant settings
             from dotmac_shared.core.error_utils import db_transaction
@@ -435,13 +542,20 @@ class TenantProvisioningService:
                 tenant.settings["license_plan"] = license_info["plan"]
 
             await self._log_provisioning_event(
-                db, tenant, "license_provisioned", f"License {license_info['contract_id']} created", correlation_id, 8
+                db,
+                tenant,
+                "license_provisioned",
+                f"License {license_info['contract_id']} created",
+                correlation_id,
+                8,
             )
 
             return license_info
 
         except Exception as e:
-            await self._log_provisioning_error(db, tenant, "license_provisioning_failed", str(e), correlation_id, 8)
+            await self._log_provisioning_error(
+                db, tenant, "license_provisioning_failed", str(e), correlation_id, 8
+            )
             # Don't fail provisioning if license creation fails - can be done manually
             return {}
 
@@ -457,7 +571,12 @@ class TenantProvisioningService:
 
         # Update final status
         await self._update_tenant_status(
-            db, tenant, TenantStatus.READY, "Provisioning completed successfully", correlation_id, 9
+            db,
+            tenant,
+            TenantStatus.READY,
+            "Provisioning completed successfully",
+            correlation_id,
+            9,
         )
 
         from dotmac_shared.core.error_utils import db_transaction
@@ -470,7 +589,12 @@ class TenantProvisioningService:
 
         # Set tenant to active
         await self._update_tenant_status(
-            db, tenant, TenantStatus.ACTIVE, "Tenant is now active and ready for use", correlation_id, 10
+            db,
+            tenant,
+            TenantStatus.ACTIVE,
+            "Tenant is now active and ready for use",
+            correlation_id,
+            10,
         )
 
     async def _generate_tenant_compose(self, tenant: CustomerTenant) -> str:
@@ -503,7 +627,13 @@ class TenantProvisioningService:
             raise
 
     async def _log_provisioning_event(
-        self, db: Session, tenant: CustomerTenant, event_type: str, message: str, correlation_id: str, step_number: int
+        self,
+        db: Session,
+        tenant: CustomerTenant,
+        event_type: str,
+        message: str,
+        correlation_id: str,
+        step_number: int,
     ):
         """Log successful provisioning event"""
 
@@ -543,7 +673,10 @@ class TenantProvisioningService:
             step_number=step_number,
             correlation_id=correlation_id,
             operator="system",
-            error_details={"error": error_message, "timestamp": datetime.now(timezone.utc).isoformat()},
+            error_details={
+                "error": error_message,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
         )
 
         with db_transaction(db):
@@ -563,9 +696,13 @@ class TenantProvisioningService:
                     tenant.status = TenantStatus.FAILED
                     tenant.settings = tenant.settings or {}
                     tenant.settings["last_error"] = error_message
-                    tenant.settings["failed_at"] = datetime.now(timezone.utc).isoformat()
+                    tenant.settings["failed_at"] = datetime.now(
+                        timezone.utc
+                    ).isoformat()
 
-                logger.error(f"Tenant provisioning failed: {tenant.tenant_id} - {error_message}")
+                logger.error(
+                    f"Tenant provisioning failed: {tenant.tenant_id} - {error_message}"
+                )
         except Exception as e:
             logger.error(f"Failed to handle provisioning failure: {e}")
 
@@ -599,7 +736,9 @@ class TenantProvisioningService:
                 "version": "15",
             }
 
-            db_service = await self.infrastructure_service.create_database_service(db_config)
+            db_service = await self.infrastructure_service.create_database_service(
+                db_config
+            )
 
             # Return connection URL
             return {
@@ -627,7 +766,9 @@ class TenantProvisioningService:
                 "version": "7",
             }
 
-            redis_service = await self.infrastructure_service.create_redis_service(redis_config)
+            redis_service = await self.infrastructure_service.create_redis_service(
+                redis_config
+            )
 
             # Return connection URL
             return {
@@ -639,7 +780,9 @@ class TenantProvisioningService:
             logger.error(f"Failed to create tenant Redis: {e}")
             raise
 
-    async def _get_tenant_environment_vars(self, tenant: CustomerTenant) -> dict[str, str]:
+    async def _get_tenant_environment_vars(
+        self, tenant: CustomerTenant
+    ) -> dict[str, str]:
         # Decrypt and return tenant environment variables
         encrypted_vars = tenant.environment_vars
         if encrypted_vars:
@@ -658,16 +801,22 @@ class TenantProvisioningService:
         try:
             while time.time() - start_time < max_wait_time:
                 # Check deployment status via infrastructure service
-                status = await self.infrastructure_service.get_deployment_status(container_id)
+                status = await self.infrastructure_service.get_deployment_status(
+                    container_id
+                )
 
                 if status.get("status") == "running":
-                    logger.info(f"✅ Deployment completed for application {container_id}")
+                    logger.info(
+                        f"✅ Deployment completed for application {container_id}"
+                    )
                     return True
                 elif status.get("status") == "failed":
                     logger.error(f"❌ Deployment failed for application {container_id}")
                     return False
 
-                logger.info(f"⏳ Deployment in progress for {container_id}, status: {status.get('status')}")
+                logger.info(
+                    f"⏳ Deployment in progress for {container_id}, status: {status.get('status')}"
+                )
                 await asyncio.sleep(poll_interval)
 
             logger.error(f"❌ Deployment timeout for application {container_id}")
@@ -694,18 +843,24 @@ class TenantProvisioningService:
                 # In Docker Compose, a service with restart: "no" that exits 0 means success
                 # Note: Log retrieval depends on provider capabilities
                 logs = []
-                provider = self.infrastructure_service.infrastructure_manager.get_deployment_provider()
+                provider = (
+                    self.infrastructure_service.infrastructure_manager.get_deployment_provider()
+                )
                 if hasattr(provider, "get_deployment_logs"):
                     logs = await provider.get_deployment_logs(container_id)
 
                 # Look for migration completion marker
                 if any("migration_complete" in log for log in logs):
-                    logger.info(f"✅ Migration job completed for application {container_id}")
+                    logger.info(
+                        f"✅ Migration job completed for application {container_id}"
+                    )
                     return True
 
                 # Look for migration failure indicators
                 if any("migration failed" in log.lower() for log in logs):
-                    logger.error(f"❌ Migration job failed for application {container_id}")
+                    logger.error(
+                        f"❌ Migration job failed for application {container_id}"
+                    )
                     return False
 
                 logger.info(f"⏳ Waiting for migration completion for {container_id}")
@@ -719,7 +874,10 @@ class TenantProvisioningService:
             return False
 
     async def _send_welcome_notification(
-        self, tenant: CustomerTenant, admin_info: dict[str, Any], license_info: dict[str, Any]
+        self,
+        tenant: CustomerTenant,
+        admin_info: dict[str, Any],
+        license_info: dict[str, Any],
     ):
         # Would send welcome email via email service
         logger.info(f"Welcome notification sent to {tenant.admin_email}")

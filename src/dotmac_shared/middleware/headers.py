@@ -117,7 +117,9 @@ class HeaderExtractor:
 
         # Extract standard headers
         for field_name, header_variations in self.config.STANDARD_HEADERS.items():
-            value, source = self._extract_header_with_fallback(request, header_variations)
+            value, source = self._extract_header_with_fallback(
+                request, header_variations
+            )
             if value:
                 setattr(extracted, field_name, value)
                 extracted.sources[field_name] = source
@@ -126,7 +128,9 @@ class HeaderExtractor:
         extracted.client_ip = self._extract_client_ip(request)
 
         # Extract content info
-        extracted.content_type = self._normalize_content_type(request.headers.get("content-type", ""))
+        extracted.content_type = self._normalize_content_type(
+            request.headers.get("content-type", "")
+        )
         extracted.content_length = self._safe_int(request.headers.get("content-length"))
         extracted.accept = request.headers.get("accept")
         extracted.user_agent = request.headers.get("user-agent")
@@ -134,7 +138,9 @@ class HeaderExtractor:
         # Validate extracted headers
         extracted.validation_errors = self._validate_headers(extracted)
 
-        logger.debug(f"Extracted headers: {len([f for f in extracted.__dict__ if getattr(extracted, f)])}")
+        logger.debug(
+            f"Extracted headers: {len([f for f in extracted.__dict__ if getattr(extracted, f)])}"
+        )
 
         return extracted
 
@@ -149,13 +155,17 @@ class HeaderExtractor:
             Header value if found, None otherwise
         """
         if header_key in self.config.STANDARD_HEADERS:
-            value, _ = self._extract_header_with_fallback(request, self.config.STANDARD_HEADERS[header_key])
+            value, _ = self._extract_header_with_fallback(
+                request, self.config.STANDARD_HEADERS[header_key]
+            )
             return value
         else:
             # Direct header lookup
             return request.headers.get(header_key)
 
-    def extract_multiple(self, request: Request, header_keys: list[str]) -> dict[str, str | None]:
+    def extract_multiple(
+        self, request: Request, header_keys: list[str]
+    ) -> dict[str, str | None]:
         """Extract multiple headers at once.
 
         Args:
@@ -170,7 +180,9 @@ class HeaderExtractor:
             result[key] = self.extract(request, key)
         return result
 
-    def extract_tenant_context(self, request: Request) -> tuple[str | None, str, dict[str, str]]:
+    def extract_tenant_context(
+        self, request: Request
+    ) -> tuple[str | None, str, dict[str, str]]:
         """Extract tenant context with source tracking.
 
         Args:
@@ -184,7 +196,9 @@ class HeaderExtractor:
         # Priority order: gateway header > container > subdomain > JWT
 
         # 1. Gateway header (highest priority)
-        gateway_tenant, gateway_source = self._extract_header_with_fallback(request, ["X-Tenant-ID", "x-tenant-id"])
+        gateway_tenant, gateway_source = self._extract_header_with_fallback(
+            request, ["X-Tenant-ID", "x-tenant-id"]
+        )
         if gateway_tenant:
             sources["gateway"] = gateway_tenant
 
@@ -229,7 +243,9 @@ class HeaderExtractor:
         # Priority: header > query param > path
 
         # 1. Header (preferred)
-        version, source = self._extract_header_with_fallback(request, ["X-API-Version", "x-api-version", "API-Version"])
+        version, source = self._extract_header_with_fallback(
+            request, ["X-API-Version", "x-api-version", "API-Version"]
+        )
         if version:
             return self._normalize_version(version), "header"
 
@@ -443,7 +459,9 @@ class HeaderExtractor:
             errors.append("Tenant ID too short")
 
         # Validate API version format
-        if extracted.api_version and not re.match(r"^v\d+(\.\d+)?$", extracted.api_version):
+        if extracted.api_version and not re.match(
+            r"^v\d+(\.\d+)?$", extracted.api_version
+        ):
             errors.append("Invalid API version format")
 
         # Validate idempotency key format

@@ -81,7 +81,9 @@ async def setup_observability(
 
         # 2. Initialize unified metrics registry
         logger.info("Setting up unified metrics registry...")
-        metrics_registry = initialize_metrics_registry(service_name, enable_prometheus=True)
+        metrics_registry = initialize_metrics_registry(
+            service_name, enable_prometheus=True
+        )
 
         # Connect OTEL meter to metrics registry
         if otel_bootstrap and otel_bootstrap.get_meter():
@@ -110,12 +112,18 @@ async def setup_observability(
 
         # 5. Configure service-to-service authentication
         logger.info("Setting up service authentication...")
-        service_signing_secret = os.getenv("SERVICE_SIGNING_SECRET", "dev-secret-key-change-in-production")
+        service_signing_secret = os.getenv(
+            "SERVICE_SIGNING_SECRET", "dev-secret-key-change-in-production"
+        )
         service_token_manager = configure_service_auth(service_signing_secret)
 
         # Register service capabilities
         _register_service_capabilities(
-            service_token_manager, service_name, service_version, environment, platform_config
+            service_token_manager,
+            service_name,
+            service_version,
+            environment,
+            platform_config,
         )
 
         components["service_token_manager"] = service_token_manager
@@ -129,7 +137,9 @@ async def setup_observability(
         # 7. Configure edge authentication
         logger.info("Setting up edge JWT validation...")
         jwt_secret = os.getenv("JWT_SECRET", "dev-jwt-secret-change-in-production")
-        edge_validator = EdgeJWTValidator(jwt_secret=jwt_secret, tenant_resolver=tenant_resolver)
+        edge_validator = EdgeJWTValidator(
+            jwt_secret=jwt_secret, tenant_resolver=tenant_resolver
+        )
         _configure_route_sensitivity(edge_validator, platform_config)
         components["edge_validator"] = edge_validator
 
@@ -146,18 +156,26 @@ async def setup_observability(
         # 11. Set up platform dashboards and alerts
         logger.info("Setting up platform dashboards...")
         tenant_id = None
-        if platform_config.deployment_context and hasattr(platform_config.deployment_context, "tenant_id"):
+        if platform_config.deployment_context and hasattr(
+            platform_config.deployment_context, "tenant_id"
+        ):
             tenant_id = platform_config.deployment_context.tenant_id
 
-        dashboard_results = await setup_platform_dashboards(app, platform_config, tenant_id)
+        dashboard_results = await setup_platform_dashboards(
+            app, platform_config, tenant_id
+        )
         components["dashboards"] = dashboard_results
 
         logger.info("✅ Observability system setup complete")
         logger.info(f"   Service: {service_name}")
         logger.info(f"   Environment: {environment}")
         logger.info("   OTEL Enabled: True")
-        logger.info(f"   Metrics Registry: {len(metrics_registry.metric_definitions)} metrics")
-        logger.info(f"   Business SLOs: {'Enabled' if enable_business_slos else 'Disabled'}")
+        logger.info(
+            f"   Metrics Registry: {len(metrics_registry.metric_definitions)} metrics"
+        )
+        logger.info(
+            f"   Business SLOs: {'Enabled' if enable_business_slos else 'Disabled'}"
+        )
 
         return components
 
@@ -184,11 +202,16 @@ def _get_service_name(platform_config: PlatformConfig) -> str:
 
 def _get_resource_attributes(platform_config: PlatformConfig) -> dict[str, str]:
     """Get OpenTelemetry resource attributes."""
-    attributes = {"service.namespace": "dotmac", "deployment.environment": os.getenv("ENVIRONMENT", "production")}
+    attributes = {
+        "service.namespace": "dotmac",
+        "deployment.environment": os.getenv("ENVIRONMENT", "production"),
+    }
 
     if platform_config.deployment_context:
         mode = platform_config.deployment_context.mode
-        attributes["deployment.mode"] = mode.value if hasattr(mode, "value") else str(mode)
+        attributes["deployment.mode"] = (
+            mode.value if hasattr(mode, "value") else str(mode)
+        )
 
         if hasattr(platform_config.deployment_context, "tenant_id"):
             attributes["tenant.id"] = platform_config.deployment_context.tenant_id
@@ -198,7 +221,11 @@ def _get_resource_attributes(platform_config: PlatformConfig) -> dict[str, str]:
 
 def _register_business_slo_metrics(metrics_registry, platform_config: PlatformConfig):
     """Register business SLO metrics."""
-    from ..observability.metrics_schema import MetricCategory, MetricDefinition, MetricType
+    from ..observability.metrics_schema import (
+        MetricCategory,
+        MetricDefinition,
+        MetricType,
+    )
 
     # Core business SLOs
     business_metrics = [
@@ -284,7 +311,9 @@ def _register_business_slo_metrics(metrics_registry, platform_config: PlatformCo
             logger.debug(f"Registered business SLO metric: {metric.name}")
 
 
-def _register_platform_business_metrics(tenant_metrics, platform_config: PlatformConfig):
+def _register_platform_business_metrics(
+    tenant_metrics, platform_config: PlatformConfig
+):
     """Register platform-specific business metrics."""
     if not platform_config.deployment_context:
         return
@@ -293,7 +322,10 @@ def _register_platform_business_metrics(tenant_metrics, platform_config: Platfor
 
     if mode == DeploymentMode.MANAGEMENT_PLATFORM:
         # Management Platform metrics
-        from ..observability.tenant_metrics import BusinessMetricSpec, BusinessMetricType
+        from ..observability.tenant_metrics import (
+            BusinessMetricSpec,
+            BusinessMetricType,
+        )
 
         management_metrics = [
             BusinessMetricSpec(
@@ -324,7 +356,10 @@ def _register_platform_business_metrics(tenant_metrics, platform_config: Platfor
 
     elif mode == DeploymentMode.TENANT_CONTAINER:
         # ISP Framework metrics
-        from ..observability.tenant_metrics import BusinessMetricSpec, BusinessMetricType
+        from ..observability.tenant_metrics import (
+            BusinessMetricSpec,
+            BusinessMetricType,
+        )
 
         isp_metrics = [
             BusinessMetricSpec(
@@ -355,7 +390,11 @@ def _register_platform_business_metrics(tenant_metrics, platform_config: Platfor
 
 
 def _register_service_capabilities(
-    service_token_manager, service_name: str, version: str, environment: str, platform_config: PlatformConfig
+    service_token_manager,
+    service_name: str,
+    version: str,
+    environment: str,
+    platform_config: PlatformConfig,
 ):
     """Register service capabilities for inter-service communication."""
     capabilities = ["health_checks", "metrics", "monitoring"]
@@ -366,21 +405,39 @@ def _register_service_capabilities(
 
         if mode == DeploymentMode.MANAGEMENT_PLATFORM:
             capabilities.extend(
-                ["tenant_management", "partner_management", "billing", "container_orchestration", "plugin_management"]
+                [
+                    "tenant_management",
+                    "partner_management",
+                    "billing",
+                    "container_orchestration",
+                    "plugin_management",
+                ]
             )
-            allowed_targets.extend(["isp-customer", "isp-billing", "isp-network", "isp-support"])
+            allowed_targets.extend(
+                ["isp-customer", "isp-billing", "isp-network", "isp-support"]
+            )
         elif mode == DeploymentMode.TENANT_CONTAINER:
-            capabilities.extend(["customer_management", "billing", "network_services", "support"])
-            allowed_targets.extend(["dotmac-management", "isp-billing", "isp-network", "isp-support"])
+            capabilities.extend(
+                ["customer_management", "billing", "network_services", "support"]
+            )
+            allowed_targets.extend(
+                ["dotmac-management", "isp-billing", "isp-network", "isp-support"]
+            )
 
     service_token_manager.register_service(
         service_name=service_name,
-        service_info={"version": version, "environment": environment, "capabilities": capabilities},
+        service_info={
+            "version": version,
+            "environment": environment,
+            "capabilities": capabilities,
+        },
         allowed_targets=allowed_targets,
     )
 
 
-def _configure_tenant_patterns(tenant_resolver: TenantIdentityResolver, platform_config: PlatformConfig):
+def _configure_tenant_patterns(
+    tenant_resolver: TenantIdentityResolver, platform_config: PlatformConfig
+):
     """Configure tenant identity patterns based on platform."""
     if not platform_config.deployment_context:
         # Default patterns for development
@@ -408,7 +465,9 @@ def _configure_tenant_patterns(tenant_resolver: TenantIdentityResolver, platform
         )
 
 
-def _configure_route_sensitivity(edge_validator: EdgeJWTValidator, platform_config: PlatformConfig):
+def _configure_route_sensitivity(
+    edge_validator: EdgeJWTValidator, platform_config: PlatformConfig
+):
     """Configure route sensitivity patterns based on platform."""
     base_patterns = {
         # Public routes
@@ -533,7 +592,9 @@ async def setup_platform_dashboards(
 
         # Provision dashboards
         dashboard_results = await provision_platform_dashboards(
-            platform_type=platform_type, tenant_id=tenant_id, custom_variables=custom_variables
+            platform_type=platform_type,
+            tenant_id=tenant_id,
+            custom_variables=custom_variables,
         )
 
         # Store dashboard configs in app state
@@ -541,8 +602,12 @@ async def setup_platform_dashboards(
 
         logger.info("✅ Platform dashboards provisioned successfully")
         logger.info(f"   Platform: {platform_type}")
-        logger.info(f"   Grafana dashboards: {len(dashboard_results.get('grafana_dashboards', []))}")
-        logger.info(f"   Signoz dashboards: {len(dashboard_results.get('signoz_dashboards', []))}")
+        logger.info(
+            f"   Grafana dashboards: {len(dashboard_results.get('grafana_dashboards', []))}"
+        )
+        logger.info(
+            f"   Signoz dashboards: {len(dashboard_results.get('signoz_dashboards', []))}"
+        )
         logger.info(f"   Alert rules: {len(dashboard_results.get('alerts', []))}")
 
         return dashboard_results
@@ -574,7 +639,9 @@ def _get_service_name_from_components(components: dict[str, Any]) -> str:
     """Extract service name from components."""
     if "otel_bootstrap" in components:
         otel_bootstrap = components["otel_bootstrap"]
-        if hasattr(otel_bootstrap, "config") and hasattr(otel_bootstrap.config, "service_name"):
+        if hasattr(otel_bootstrap, "config") and hasattr(
+            otel_bootstrap.config, "service_name"
+        ):
             return otel_bootstrap.config.service_name
 
     return "dotmac-service"

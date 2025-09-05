@@ -4,8 +4,9 @@ Onboarding data models: requests, steps, and artifacts.
 
 from enum import Enum
 
-from sqlalchemy import JSON, Column, DateTime, ForeignKey, String
+from sqlalchemy import JSON, Column, DateTime
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import relationship
 
 from .base import UUID as GUID
@@ -37,7 +38,9 @@ class OnboardingRequest(BaseModel):
     tenant_name = Column(String(100), nullable=False)
     tenant_slug = Column(String(100), nullable=False, index=True)
 
-    status = Column(SQLEnum(OnboardingStatus), default=OnboardingStatus.PENDING, index=True)
+    status = Column(
+        SQLEnum(OnboardingStatus), default=OnboardingStatus.PENDING, index=True
+    )
     error_message = Column(String(500), nullable=True)
 
     # Summary/links
@@ -45,8 +48,12 @@ class OnboardingRequest(BaseModel):
     metadata_json = Column(JSON, default=dict, nullable=False)
 
     # Relationships
-    steps = relationship("OnboardingStep", back_populates="request", cascade="all, delete-orphan")
-    artifacts = relationship("OnboardingArtifact", back_populates="request", cascade="all, delete-orphan")
+    steps = relationship(
+        "OnboardingStep", back_populates="request", cascade="all, delete-orphan"
+    )
+    artifacts = relationship(
+        "OnboardingArtifact", back_populates="request", cascade="all, delete-orphan"
+    )
 
 
 class OnboardingStep(BaseModel):
@@ -54,8 +61,15 @@ class OnboardingStep(BaseModel):
 
     __tablename__ = "onboarding_steps"
 
-    request_id = Column(GUID(as_uuid=True), ForeignKey("onboarding_requests.id"), nullable=False, index=True)
-    step_key = Column(String(100), nullable=False, index=True)  # e.g., provision_container
+    request_id = Column(
+        GUID(as_uuid=True),
+        ForeignKey("onboarding_requests.id"),
+        nullable=False,
+        index=True,
+    )
+    step_key = Column(
+        String(100), nullable=False, index=True
+    )  # e.g., provision_container
     name = Column(String(200), nullable=False)
     status = Column(SQLEnum(StepStatus), default=StepStatus.PENDING, index=True)
     started_at = Column(DateTime, nullable=True)
@@ -71,7 +85,12 @@ class OnboardingArtifact(BaseModel):
 
     __tablename__ = "onboarding_artifacts"
 
-    request_id = Column(GUID(as_uuid=True), ForeignKey("onboarding_requests.id"), nullable=False, index=True)
+    request_id = Column(
+        GUID(as_uuid=True),
+        ForeignKey("onboarding_requests.id"),
+        nullable=False,
+        index=True,
+    )
     artifact_type = Column(String(100), nullable=False)
     data = Column(JSON, default=dict, nullable=False)
 

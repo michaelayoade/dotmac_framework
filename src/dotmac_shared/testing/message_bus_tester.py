@@ -44,7 +44,9 @@ class MessageBusTester:
             del self._queue_connections[queue_name]
             logger.info(f"Disconnected from queue: {queue_name}")
 
-    async def collect_events_by_correlation(self, correlation_id: str, timeout: int = 30) -> list[dict[str, Any]]:
+    async def collect_events_by_correlation(
+        self, correlation_id: str, timeout: int = 30
+    ) -> list[dict[str, Any]]:
         """Collect all events with a specific correlation ID"""
         events = []
         start_time = asyncio.get_event_loop().time()
@@ -56,7 +58,9 @@ class MessageBusTester:
 
             # For testing, return mock events
             if correlation_id not in self._collected_events:
-                self._collected_events[correlation_id] = self._generate_mock_events(correlation_id)
+                self._collected_events[correlation_id] = self._generate_mock_events(
+                    correlation_id
+                )
 
             events = self._collected_events[correlation_id]
             if len(events) > 0:
@@ -82,16 +86,22 @@ class MessageBusTester:
         ]
         return mock_events
 
-    async def query_downstream_state(self, service_name: str, query_params: dict[str, Any]) -> list[dict[str, Any]]:
+    async def query_downstream_state(
+        self, service_name: str, query_params: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Query downstream service state"""
         # Mock implementation for testing
         if service_name == "customer_service":
             return [{"id": "customer_123", "email": query_params.get("email")}]
         elif service_name == "billing_service":
-            return [{"id": "billing_123", "customer_id": query_params.get("customer_id")}]
+            return [
+                {"id": "billing_123", "customer_id": query_params.get("customer_id")}
+            ]
         return []
 
-    async def get_event_processing_logs(self, correlation_id: str) -> list[dict[str, Any]]:
+    async def get_event_processing_logs(
+        self, correlation_id: str
+    ) -> list[dict[str, Any]]:
         """Get event processing logs for debugging"""
         logs = [
             {
@@ -158,7 +168,11 @@ class MessageBusTester:
     async def get_saga_compensation_events(self, saga_id: str) -> list[dict[str, Any]]:
         """Get compensation events for a saga"""
         compensation_events = [
-            {"type": "service_provisioning_rollback", "saga_id": saga_id, "executed_at": datetime.utcnow().isoformat()},
+            {
+                "type": "service_provisioning_rollback",
+                "saga_id": saga_id,
+                "executed_at": datetime.utcnow().isoformat(),
+            },
             {
                 "type": "customer_account_rollback",
                 "saga_id": saga_id,
@@ -178,7 +192,11 @@ class MessageBusTester:
                 "rejected_at": datetime.utcnow().isoformat(),
             }
         else:
-            return {"event_id": event_id, "status": "completed", "processed_at": datetime.utcnow().isoformat()}
+            return {
+                "event_id": event_id,
+                "status": "completed",
+                "processed_at": datetime.utcnow().isoformat(),
+            }
 
     async def capture_system_state(self, entity_id: str) -> dict[str, Any]:
         """Capture current system state for an entity"""
@@ -186,7 +204,10 @@ class MessageBusTester:
         state = {
             "customer": {"id": entity_id, "tier": "premium", "status": "active"},
             "service": {"status": "suspended", "bandwidth_allocated": 1000},
-            "billing": {"last_payment": "2023-01-15T10:00:00Z", "outstanding_amount": 0.0},
+            "billing": {
+                "last_payment": "2023-01-15T10:00:00Z",
+                "outstanding_amount": 0.0,
+            },
             "captured_at": datetime.utcnow().isoformat(),
         }
 

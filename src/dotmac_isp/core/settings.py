@@ -15,7 +15,9 @@ class Settings(BaseSettings):
     """ISP Framework specific settings that extend base configuration."""
 
     # Override defaults for ISP Framework
-    app_name: str = Field(default="DotMac ISP Framework", description="Application name")
+    app_name: str = Field(
+        default="DotMac ISP Framework", description="Application name"
+    )
     app_version: str = Field(default="1.0.0", description="Application version")
     port: int = Field(
         default_factory=lambda: int(os.getenv("PORT", "8001")),
@@ -28,7 +30,9 @@ class Settings(BaseSettings):
 
     # Database configuration
     database_url: str = Field(
-        default_factory=lambda: os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./isp_framework.db"),
+        default_factory=lambda: os.getenv(
+            "DATABASE_URL", "sqlite+aiosqlite:///./isp_framework.db"
+        ),
         description="Database connection URL",
     )
     # External services (optional)
@@ -36,25 +40,49 @@ class Settings(BaseSettings):
     sendgrid_api_key: Optional[str] = Field(None, description="SendGrid API key")
 
     # Multi-tenancy settings
-    enable_multi_tenancy: bool = Field(default=True, description="Enable multi-tenant features")
-    max_tenants_per_instance: int = Field(default=100, description="Maximum tenants per instance")
+    enable_multi_tenancy: bool = Field(
+        default=True, description="Enable multi-tenant features"
+    )
+    max_tenants_per_instance: int = Field(
+        default=100, description="Maximum tenants per instance"
+    )
 
     # File upload settings
-    max_upload_size: int = Field(default=10485760, description="Maximum upload size in bytes")
-    upload_directory: str = Field(default="uploads", description="Upload directory path")
+    max_upload_size: int = Field(
+        default=10485760, description="Maximum upload size in bytes"
+    )
+    upload_directory: str = Field(
+        default="uploads", description="Upload directory path"
+    )
 
     # DNS management settings (ISP specific)
-    base_domain: str = Field(default="dotmac.io", description="Base domain for tenant subdomains")
+    base_domain: str = Field(
+        default="dotmac.io", description="Base domain for tenant subdomains"
+    )
     dns_strategy: str = Field(default="auto", description="DNS management strategy")
-    dns_health_check_interval: int = Field(default=300, description="DNS health check interval")
+    dns_health_check_interval: int = Field(
+        default=300, description="DNS health check interval"
+    )
 
     # Rate limiting settings
-    rate_limiting_enabled: bool = Field(default=True, description="Enable rate limiting")
-    rate_limit_storage_backend: str = Field(default="redis", description="Rate limit storage backend (redis/memory)")
-    rate_limit_default_per_minute: int = Field(default=100, description="Default rate limit per minute")
-    rate_limit_auth_per_minute: int = Field(default=10, description="Auth endpoint rate limit per minute")
-    rate_limit_lockout_threshold: int = Field(default=5, description="Failed attempts before lockout")
-    rate_limit_lockout_duration: int = Field(default=900, description="Lockout duration in seconds")
+    rate_limiting_enabled: bool = Field(
+        default=True, description="Enable rate limiting"
+    )
+    rate_limit_storage_backend: str = Field(
+        default="redis", description="Rate limit storage backend (redis/memory)"
+    )
+    rate_limit_default_per_minute: int = Field(
+        default=100, description="Default rate limit per minute"
+    )
+    rate_limit_auth_per_minute: int = Field(
+        default=10, description="Auth endpoint rate limit per minute"
+    )
+    rate_limit_lockout_threshold: int = Field(
+        default=5, description="Failed attempts before lockout"
+    )
+    rate_limit_lockout_duration: int = Field(
+        default=900, description="Lockout duration in seconds"
+    )
 
     @model_validator(mode="after")
     def validate_isp_settings(self):

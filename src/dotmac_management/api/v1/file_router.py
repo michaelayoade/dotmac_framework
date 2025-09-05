@@ -13,9 +13,15 @@ Follows DRY patterns using dotmac packages for consistent API structure.
 from typing import Optional
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, File, Path, Query, UploadFile
+from fastapi.responses import FileResponse
+
 from dotmac.application import standard_exception_handler
 from dotmac.application.api.router_factory import RouterFactory
-from dotmac.application.dependencies.dependencies import StandardDependencies, get_standard_deps
+from dotmac.application.dependencies.dependencies import (
+    StandardDependencies,
+    get_standard_deps,
+)
 from dotmac.core.schemas.base_schemas import PaginatedResponseSchema
 from dotmac.platform.observability.logging import get_logger
 from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
@@ -30,8 +36,6 @@ from dotmac_shared.file_management.schemas import (
     FileValidationResponse,
     TenantFileStatsResponse,
 )
-from fastapi import APIRouter, Depends, File, Path, Query, UploadFile
-from fastapi.responses import FileResponse
 
 from ...services.file_service import FileService
 
@@ -60,7 +64,9 @@ async def upload_file(
     category: Optional[str] = Query(None, description="File category"),
     description: Optional[str] = Query(None, description="File description"),
     tags: Optional[str] = Query(None, description="Comma-separated tags"),
-    access_level: Optional[str] = Query("private", description="Access level (private, shared, public)"),
+    access_level: Optional[str] = Query(
+        "private", description="Access level (private, shared, public)"
+    ),
     expiration_days: Optional[int] = Query(None, description="Days until expiration"),
     related_entity_type: Optional[str] = Query(None, description="Related entity type"),
     related_entity_id: Optional[str] = Query(None, description="Related entity ID"),
@@ -236,7 +242,9 @@ async def delete_file(
     if not success:
         from dotmac.core.exceptions import BusinessRuleError
 
-        raise BusinessRuleError("File cannot be deleted (may be referenced by other entities)")
+        raise BusinessRuleError(
+            "File cannot be deleted (may be referenced by other entities)"
+        )
 
     return {
         "success": True,

@@ -7,9 +7,10 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac.platform.observability.logging import get_logger
 from dotmac_shared.common.exceptions import standard_exception_handler
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.rbac_models import RoleModel, RolePermissionModel, UserRoleModel
 from ..repositories.rbac_repository import (
@@ -50,7 +51,9 @@ class RBACService(BaseService):
 
     # Role Management
     @standard_exception_handler
-    async def create_role(self, role_data: RoleCreateSchema, created_by: Optional[UUID] = None) -> RoleResponseSchema:
+    async def create_role(
+        self, role_data: RoleCreateSchema, created_by: Optional[UUID] = None
+    ) -> RoleResponseSchema:
         """
         Create new role with permissions.
 
@@ -85,12 +88,17 @@ class RBACService(BaseService):
 
         role = await self.role_repo.create_role(role_data, created_by)
 
-        logger.info(f"Created role {role.name} with {len(role_data.permission_ids or [])} permissions")
+        logger.info(
+            f"Created role {role.name} with {len(role_data.permission_ids or [])} permissions"
+        )
         return RoleResponseSchema.model_validate(role)
 
     @standard_exception_handler
     async def update_role(
-        self, role_id: UUID, role_data: RoleUpdateSchema, updated_by: Optional[UUID] = None
+        self,
+        role_id: UUID,
+        role_data: RoleUpdateSchema,
+        updated_by: Optional[UUID] = None,
     ) -> RoleResponseSchema:
         """Update existing role."""
         role = await self.role_repo.get_by_id(role_id)
@@ -115,7 +123,9 @@ class RBACService(BaseService):
             if not parent_role:
                 raise ValueError("Parent role not found")
 
-        updated_role = await self.role_repo.update(role_id, **role_data.model_dump(exclude_unset=True))
+        updated_role = await self.role_repo.update(
+            role_id, **role_data.model_dump(exclude_unset=True)
+        )
 
         logger.info(f"Updated role {updated_role.name}")
         return RoleResponseSchema.model_validate(updated_role)
@@ -129,10 +139,14 @@ class RBACService(BaseService):
 
         # Get permissions
         permissions = await self.role_permission_repo.get_role_permissions(role_id)
-        permission_schemas = [PermissionResponseSchema.model_validate(p) for p in permissions]
+        permission_schemas = [
+            PermissionResponseSchema.model_validate(p) for p in permissions
+        ]
 
         # Get child roles
-        child_roles = [RoleResponseSchema.model_validate(child) for child in role.child_roles]
+        child_roles = [
+            RoleResponseSchema.model_validate(child) for child in role.child_roles
+        ]
 
         # Get parent role
         parent_role = None
@@ -142,11 +156,16 @@ class RBACService(BaseService):
         role_schema = RoleResponseSchema.model_validate(role)
 
         return RoleDetailResponseSchema(
-            **role_schema.model_dump(), permissions=permission_schemas, child_roles=child_roles, parent_role=parent_role
+            **role_schema.model_dump(),
+            permissions=permission_schemas,
+            child_roles=child_roles,
+            parent_role=parent_role,
         )
 
     @standard_exception_handler
-    async def search_roles(self, search_params: RoleSearchSchema) -> tuple[list[RoleResponseSchema], int]:
+    async def search_roles(
+        self, search_params: RoleSearchSchema
+    ) -> tuple[list[RoleResponseSchema], int]:
         """Search roles with filters and pagination."""
         roles, total_count = await self.role_repo.search_roles(search_params)
 
@@ -178,17 +197,23 @@ class RBACService(BaseService):
     ) -> PermissionResponseSchema:
         """Create new permission."""
         # Check if permission name already exists
-        existing_permission = await self.permission_repo.get_permission_by_name(permission_data.name)
+        existing_permission = await self.permission_repo.get_permission_by_name(
+            permission_data.name
+        )
         if existing_permission:
             raise ValueError(f"Permission '{permission_data.name}' already exists")
 
         # Validate parent permission if specified
         if permission_data.parent_permission_id:
-            parent_permission = await self.permission_repo.get_by_id(permission_data.parent_permission_id)
+            parent_permission = await self.permission_repo.get_by_id(
+                permission_data.parent_permission_id
+            )
             if not parent_permission:
                 raise ValueError("Parent permission not found")
 
-        permission = await self.permission_repo.create_permission(permission_data, created_by)
+        permission = await self.permission_repo.create_permission(
+            permission_data, created_by
+        )
 
         logger.info(f"Created permission {permission.name}")
         return PermissionResponseSchema.model_validate(permission)
@@ -198,7 +223,9 @@ class RBACService(BaseService):
         self, search_params: PermissionSearchSchema
     ) -> tuple[list[PermissionResponseSchema], int]:
         """Search permissions with filters and pagination."""
-        permissions, total_count = await self.permission_repo.search_permissions(search_params)
+        permissions, total_count = await self.permission_repo.search_permissions(
+            search_params
+        )
 
         permission_schemas = []
         for permission in permissions:
@@ -231,7 +258,9 @@ class RBACService(BaseService):
             raise ValueError("Permission not found")
 
         # Check if assignment already exists
-        existing_permissions = await self.role_permission_repo.get_role_permissions(role_id)
+        existing_permissions = await self.role_permission_repo.get_role_permissions(
+            role_id
+        )
         if permission in existing_permissions:
             return True  # Already assigned
 
@@ -247,9 +276,13 @@ class RBACService(BaseService):
         return True
 
     @standard_exception_handler
-    async def revoke_permission_from_role(self, role_id: UUID, permission_id: UUID) -> bool:
+    async def revoke_permission_from_role(
+        self, role_id: UUID, permission_id: UUID
+    ) -> bool:
         """Revoke permission from role."""
-        success = await self.role_permission_repo.revoke_permission_from_role(role_id, permission_id)
+        success = await self.role_permission_repo.revoke_permission_from_role(
+            role_id, permission_id
+        )
         if success:
             logger.info(f"Revoked permission {permission_id} from role {role_id}")
         return success
@@ -386,7 +419,9 @@ class RBACService(BaseService):
             Permission check result with details
         """
         # Get user's effective permissions
-        effective_permissions = await self.user_role_repo.get_user_effective_permissions(user_id)
+        effective_permissions = (
+            await self.user_role_repo.get_user_effective_permissions(user_id)
+        )
 
         has_permission = permission_name in effective_permissions
 
@@ -398,7 +433,9 @@ class RBACService(BaseService):
             # Find which roles granted this permission
             user_roles = await self.role_repo.get_user_roles(user_id)
             for role in user_roles:
-                role_permissions = await self.role_permission_repo.get_role_permissions(role.id)
+                role_permissions = await self.role_permission_repo.get_role_permissions(
+                    role.id
+                )
                 for permission in role_permissions:
                     if permission.name == permission_name:
                         granted_by_roles.append(role.name)
@@ -419,22 +456,30 @@ class RBACService(BaseService):
         )
 
     @standard_exception_handler
-    async def get_user_permission_summary(self, user_id: UUID) -> UserPermissionSummarySchema:
+    async def get_user_permission_summary(
+        self, user_id: UUID
+    ) -> UserPermissionSummarySchema:
         """Get comprehensive permission summary for user."""
         # Get user's roles
         user_roles = await self.role_repo.get_user_roles(user_id)
         role_schemas = [RoleResponseSchema.model_validate(role) for role in user_roles]
 
         # Get effective permissions
-        effective_permissions = await self.user_role_repo.get_user_effective_permissions(user_id)
+        effective_permissions = (
+            await self.user_role_repo.get_user_effective_permissions(user_id)
+        )
         effective_permissions_list = list(effective_permissions)
 
         # Get detailed permission information
         permission_details = []
         for permission_name in effective_permissions_list:
-            permission = await self.permission_repo.get_permission_by_name(permission_name)
+            permission = await self.permission_repo.get_permission_by_name(
+                permission_name
+            )
             if permission:
-                permission_details.append(PermissionResponseSchema.model_validate(permission))
+                permission_details.append(
+                    PermissionResponseSchema.model_validate(permission)
+                )
 
         return UserPermissionSummarySchema(
             user_id=user_id,
@@ -453,7 +498,9 @@ class RBACService(BaseService):
             return False
 
         success = await self.assign_role_to_user(
-            user_id=user_id, role_id=default_role.id, assignment_reason="Default role for new user"
+            user_id=user_id,
+            role_id=default_role.id,
+            assignment_reason="Default role for new user",
         )
 
         if success:
@@ -475,7 +522,9 @@ class RBACService(BaseService):
                 "name": role_model.name,
                 "display_name": role_model.display_name,
                 "permission_count": len(role_model.permissions),
-                "child_roles": [build_hierarchy(child) for child in role_model.child_roles],
+                "child_roles": [
+                    build_hierarchy(child) for child in role_model.child_roles
+                ],
             }
 
         return build_hierarchy(role)

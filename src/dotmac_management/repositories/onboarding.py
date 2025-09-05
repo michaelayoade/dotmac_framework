@@ -32,10 +32,14 @@ class OnboardingRequestRepository(BaseRepository[OnboardingRequest]):
         query = select(OnboardingRequest).where(OnboardingRequest.is_deleted is False)
         if partner_id:
             query = query.where(OnboardingRequest.partner_id == partner_id)
-        total_result = await self.db.execute(query.with_only_columns(OnboardingRequest.id))
+        total_result = await self.db.execute(
+            query.with_only_columns(OnboardingRequest.id)
+        )
         total = len(total_result.scalars().all())
         result = await self.db.execute(
-            query.order_by(OnboardingRequest.created_at.desc()).offset((page - 1) * size).limit(size)
+            query.order_by(OnboardingRequest.created_at.desc())
+            .offset((page - 1) * size)
+            .limit(size)
         )
         return result.scalars().all(), total
 
@@ -53,7 +57,9 @@ class OnboardingStepRepository(BaseRepository[OnboardingStep]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, OnboardingStep)
 
-    async def upsert_step(self, request_id: UUID, step_key: str, name: str) -> OnboardingStep:
+    async def upsert_step(
+        self, request_id: UUID, step_key: str, name: str
+    ) -> OnboardingStep:
         query = select(OnboardingStep).where(
             OnboardingStep.request_id == request_id, OnboardingStep.step_key == step_key
         )
@@ -96,7 +102,9 @@ class OnboardingStepRepository(BaseRepository[OnboardingStep]):
         await self.db.refresh(step)
         return step
 
-    async def set_status_by_key(self, step_key: str, status: StepStatus, reason: Optional[str] = None) -> int:
+    async def set_status_by_key(
+        self, step_key: str, status: StepStatus, reason: Optional[str] = None
+    ) -> int:
         """Update all steps with a given key across requests."""
         # Fetch steps by key; perform python-side updates to set timestamps correctly
         query = select(OnboardingStep).where(OnboardingStep.step_key == step_key)

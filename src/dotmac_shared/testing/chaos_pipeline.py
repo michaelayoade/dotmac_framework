@@ -123,7 +123,9 @@ class ChaosPipeline:
             raise RuntimeError("Pipeline is already running")
 
         run_id = f"chaos_run_{utc_now().strftime('%Y%m%d_%H%M%S')}"
-        self.current_run = PipelineRun(id=run_id, config_name=self.config.name, start_time=utc_now())
+        self.current_run = PipelineRun(
+            id=run_id, config_name=self.config.name, start_time=utc_now()
+        )
 
         logger.info(f"Starting chaos pipeline: {run_id}")
 
@@ -190,7 +192,10 @@ class ChaosPipeline:
             raise RuntimeError("Monitoring system failed to start")
 
         # Initialize experiment tracking
-        self.current_run.metrics["preparation"] = {"monitoring_started": True, "system_health": health}
+        self.current_run.metrics["preparation"] = {
+            "monitoring_started": True,
+            "system_health": health,
+        }
 
     async def _stage_baseline(self):
         """Baseline stage - collect baseline metrics"""
@@ -200,7 +205,9 @@ class ChaosPipeline:
         baseline_start = utc_now()
 
         # Record baseline metrics
-        self.chaos_monitor.record_metric("pipeline_baseline_start", 1, experiment_id=self.current_run.id)
+        self.chaos_monitor.record_metric(
+            "pipeline_baseline_start", 1, experiment_id=self.current_run.id
+        )
 
         await asyncio.sleep(30)
 
@@ -211,7 +218,9 @@ class ChaosPipeline:
         key_metrics = ["error_rate", "response_time_avg", "throughput", "availability"]
 
         for metric in key_metrics:
-            summary = self.chaos_monitor.metrics_collector.get_metric_summary(metric, since=baseline_start)
+            summary = self.chaos_monitor.metrics_collector.get_metric_summary(
+                metric, since=baseline_start
+            )
             baseline_metrics[metric] = summary
 
         self.current_run.metrics["baseline"] = {
@@ -236,11 +245,19 @@ class ChaosPipeline:
                 try:
                     result = await self._run_scenario(scenario_name)
                     self.current_run.experiments_completed += 1
-                    return {"scenario": scenario_name, "status": "success", "result": result}
+                    return {
+                        "scenario": scenario_name,
+                        "status": "success",
+                        "result": result,
+                    }
                 except Exception as e:
                     self.current_run.experiments_failed += 1
                     logger.error(f"Experiment {scenario_name} failed: {e}")
-                    return {"scenario": scenario_name, "status": "failed", "error": str(e)}
+                    return {
+                        "scenario": scenario_name,
+                        "status": "failed",
+                        "error": str(e),
+                    }
 
         tasks = [run_experiment(scenario) for scenario in experiments]
         experiment_results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -261,7 +278,9 @@ class ChaosPipeline:
 
         # Check for critical alerts
         alerts = self.chaos_monitor.alert_manager.get_active_alerts()
-        critical_alerts = [a for a in alerts if a.severity.value in ["critical", "fatal"]]
+        critical_alerts = [
+            a for a in alerts if a.severity.value in ["critical", "fatal"]
+        ]
 
         if critical_alerts and self.config.abort_on_critical_failure:
             raise RuntimeError(f"Critical alerts detected: {len(critical_alerts)}")
@@ -275,7 +294,9 @@ class ChaosPipeline:
         key_metrics = ["error_rate", "response_time_avg", "throughput", "availability"]
 
         for metric in key_metrics:
-            summary = self.chaos_monitor.metrics_collector.get_metric_summary(metric, since=monitoring_start)
+            summary = self.chaos_monitor.metrics_collector.get_metric_summary(
+                metric, since=monitoring_start
+            )
             post_chaos_metrics[metric] = summary
 
         self.current_run.metrics["monitoring"] = {
@@ -291,10 +312,14 @@ class ChaosPipeline:
         logger.info("Pipeline stage: Validation")
 
         # Run resilience validation
-        validation_results = await self.resilience_validator.validate_resilience(level=self.config.resilience_level)
+        validation_results = await self.resilience_validator.validate_resilience(
+            level=self.config.resilience_level
+        )
 
         # Generate validation report
-        report = self.resilience_validator.generate_resilience_report(validation_results)
+        report = self.resilience_validator.generate_resilience_report(
+            validation_results
+        )
 
         self.current_run.metrics["validation"] = {
             "validation_results": [r.__dict__ for r in validation_results],
@@ -302,9 +327,13 @@ class ChaosPipeline:
         }
 
         # Check if validation passed
-        failed_validations = [r for r in validation_results if r.result.value == "failed"]
+        failed_validations = [
+            r for r in validation_results if r.result.value == "failed"
+        ]
         if failed_validations and self.config.abort_on_critical_failure:
-            raise RuntimeError(f"Validation failed: {len(failed_validations)} tests failed")
+            raise RuntimeError(
+                f"Validation failed: {len(failed_validations)} tests failed"
+            )
 
     async def _stage_recovery(self):
         """Recovery stage - verify system recovery"""
@@ -321,8 +350,12 @@ class ChaosPipeline:
             recovery_checks += 1
 
             # Check if system has recovered
-            current_error_rate = self.chaos_monitor.metrics_collector.get_current_value("error_rate")
-            current_availability = self.chaos_monitor.metrics_collector.get_current_value("availability")
+            current_error_rate = self.chaos_monitor.metrics_collector.get_current_value(
+                "error_rate"
+            )
+            current_availability = (
+                self.chaos_monitor.metrics_collector.get_current_value("availability")
+            )
 
             if (
                 current_error_rate is not None
@@ -370,7 +403,10 @@ class ChaosPipeline:
         # Clean up old reports
         await self._cleanup_old_reports()
 
-        self.current_run.metrics["cleanup"] = {"monitoring_stopped": True, "cleanup_completed": True}
+        self.current_run.metrics["cleanup"] = {
+            "monitoring_stopped": True,
+            "cleanup_completed": True,
+        }
 
     async def _count_planned_experiments(self) -> int:
         """Count total planned experiments"""
@@ -407,15 +443,31 @@ class ChaosPipeline:
 
         elif scenario_name == "isp_service_disruption_scenario":
             results = await self.chaos_scenarios.run_isp_service_disruption_scenario()
-            return {"experiments": [r.to_dict() if hasattr(r, "to_dict") else str(r) for r in results]}
+            return {
+                "experiments": [
+                    r.to_dict() if hasattr(r, "to_dict") else str(r) for r in results
+                ]
+            }
 
         elif scenario_name == "billing_resilience_scenario":
             results = await self.chaos_scenarios.run_billing_resilience_scenario()
-            return {"experiments": [r.to_dict() if hasattr(r, "to_dict") else str(r) for r in results]}
+            return {
+                "experiments": [
+                    r.to_dict() if hasattr(r, "to_dict") else str(r) for r in results
+                ]
+            }
 
         elif scenario_name == "multi_tenant_database_partition_scenario":
-            tenant_ids = [self.config.tenant_filter] if self.config.tenant_filter else ["tenant-1", "tenant-2"]
-            result = await self.chaos_scenarios.run_multi_tenant_database_partition_scenario(tenant_ids)
+            tenant_ids = (
+                [self.config.tenant_filter]
+                if self.config.tenant_filter
+                else ["tenant-1", "tenant-2"]
+            )
+            result = (
+                await self.chaos_scenarios.run_multi_tenant_database_partition_scenario(
+                    tenant_ids
+                )
+            )
             return result.to_dict() if hasattr(result, "to_dict") else str(result)
 
         else:
@@ -428,7 +480,9 @@ class ChaosPipeline:
 
         duration = 0
         if self.current_run.start_time and self.current_run.end_time:
-            duration = (self.current_run.end_time - self.current_run.start_time).total_seconds()
+            duration = (
+                self.current_run.end_time - self.current_run.start_time
+            ).total_seconds()
 
         return {
             "pipeline_run": self.current_run.to_dict(),
@@ -438,7 +492,10 @@ class ChaosPipeline:
                 "experiments_planned": self.current_run.total_experiments,
                 "experiments_completed": self.current_run.experiments_completed,
                 "experiments_failed": self.current_run.experiments_failed,
-                "success_rate": (self.current_run.experiments_completed / max(1, self.current_run.total_experiments))
+                "success_rate": (
+                    self.current_run.experiments_completed
+                    / max(1, self.current_run.total_experiments)
+                )
                 * 100,
             },
             "system_health": self.chaos_monitor.get_system_health(),
@@ -471,7 +528,9 @@ class ChaosPipeline:
         }
 
         # In real implementation, this would send HTTP requests to webhooks
-        logger.info(f"Would send notifications to {len(self.config.notification_webhooks)} webhooks")
+        logger.info(
+            f"Would send notifications to {len(self.config.notification_webhooks)} webhooks"
+        )
 
     async def _cleanup_old_reports(self):
         """Clean up old report files"""
@@ -625,7 +684,9 @@ class ChaosPipelineScheduler:
         return {
             "name": pipeline_name,
             "config": asdict(pipeline.config),
-            "current_run": pipeline.current_run.to_dict() if pipeline.current_run else None,
+            "current_run": pipeline.current_run.to_dict()
+            if pipeline.current_run
+            else None,
             "recent_runs": [run.to_dict() for run in pipeline.run_history[-5:]],
             "is_scheduled": pipeline_name in self.scheduled_tasks,
         }

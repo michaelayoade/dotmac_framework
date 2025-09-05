@@ -27,10 +27,10 @@ from .models import (
     ProjectPhase,
     ProjectStatus,
     ProjectType,
-    ProjectUpdate,
-    UpdateCreate,
 )
+from .models import ProjectUpdate
 from .models import ProjectUpdate as ProjectUpdateSchema
+from .models import UpdateCreate
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,9 @@ class ProjectManager:
             ],
         }
 
-    def generate_project_number(self, tenant_id: str, project_type: ProjectType = None) -> str:
+    def generate_project_number(
+        self, tenant_id: str, project_type: ProjectType = None
+    ) -> str:
         """Generate unique project number."""
         timestamp = int(datetime.now(timezone.utc).timestamp())
 
@@ -87,7 +89,9 @@ class ProjectManager:
         # Add tenant prefix
         tenant_prefix = tenant_id[:3].upper() if tenant_id else "GEN"
 
-        random_chars = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+        random_chars = "".join(
+            secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4)
+        )
 
         return f"{tenant_prefix}-{type_prefix}-{timestamp}-{random_chars}"
 
@@ -101,7 +105,9 @@ class ProjectManager:
         """Create a new project with optional default phases."""
         try:
             # Generate project number
-            project_number = self.generate_project_number(tenant_id, project_data.project_type)
+            project_number = self.generate_project_number(
+                tenant_id, project_data.project_type
+            )
 
             # Create project
             project = Project(
@@ -137,12 +143,16 @@ class ProjectManager:
 
             # Create default phases if available for this project type
             if project_data.project_type in self.default_phases:
-                await self._create_default_phases(db, project, project_data.project_type)
+                await self._create_default_phases(
+                    db, project, project_data.project_type
+                )
 
             await db.commit()
             await db.refresh(project)
 
-            logger.info(f"Created project {project.project_number} for tenant {tenant_id}")
+            logger.info(
+                f"Created project {project.project_number} for tenant {tenant_id}"
+            )
 
             # Trigger project creation events
             await self._trigger_project_created_events(project)
@@ -154,7 +164,9 @@ class ProjectManager:
             logger.error(f"Error creating project: {str(e)}")
             raise
 
-    async def get_project(self, db: AsyncSession, tenant_id: str, project_id: str) -> Optional[Project]:
+    async def get_project(
+        self, db: AsyncSession, tenant_id: str, project_id: str
+    ) -> Optional[Project]:
         """Get project by ID with related data."""
         query = (
             select(Project)
@@ -170,7 +182,9 @@ class ProjectManager:
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_project_by_number(self, db: AsyncSession, tenant_id: str, project_number: str) -> Optional[Project]:
+    async def get_project_by_number(
+        self, db: AsyncSession, tenant_id: str, project_number: str
+    ) -> Optional[Project]:
         """Get project by project number."""
         query = (
             select(Project)
@@ -218,10 +232,15 @@ class ProjectManager:
 
             # Handle status changes
             if update_data.project_status and update_data.project_status != old_status:
-                await self._handle_status_change(project, old_status, update_data.project_status)
+                await self._handle_status_change(
+                    project, old_status, update_data.project_status
+                )
 
             # Recalculate completion if needed
-            if hasattr(update_data, "completion_percentage") and update_data.completion_percentage is not None:
+            if (
+                hasattr(update_data, "completion_percentage")
+                and update_data.completion_percentage is not None
+            ):
                 project.calculate_completion_percentage()
 
             await db.commit()
@@ -258,15 +277,23 @@ class ProjectManager:
             if filters:
                 if "project_status" in filters:
                     if isinstance(filters["project_status"], list):
-                        query = query.where(Project.project_status.in_(filters["project_status"]))
+                        query = query.where(
+                            Project.project_status.in_(filters["project_status"])
+                        )
                     else:
-                        query = query.where(Project.project_status == filters["project_status"])
+                        query = query.where(
+                            Project.project_status == filters["project_status"]
+                        )
 
                 if "project_type" in filters:
                     if isinstance(filters["project_type"], list):
-                        query = query.where(Project.project_type.in_(filters["project_type"]))
+                        query = query.where(
+                            Project.project_type.in_(filters["project_type"])
+                        )
                     else:
-                        query = query.where(Project.project_type == filters["project_type"])
+                        query = query.where(
+                            Project.project_type == filters["project_type"]
+                        )
 
                 if "priority" in filters:
                     if isinstance(filters["priority"], list):
@@ -275,13 +302,17 @@ class ProjectManager:
                         query = query.where(Project.priority == filters["priority"])
 
                 if "project_manager" in filters:
-                    query = query.where(Project.project_manager == filters["project_manager"])
+                    query = query.where(
+                        Project.project_manager == filters["project_manager"]
+                    )
 
                 if "customer_id" in filters:
                     query = query.where(Project.customer_id == filters["customer_id"])
 
                 if "assigned_team" in filters:
-                    query = query.where(Project.assigned_team == filters["assigned_team"])
+                    query = query.where(
+                        Project.assigned_team == filters["assigned_team"]
+                    )
 
                 if "search" in filters and filters["search"]:
                     search_term = f"%{filters['search']}%"
@@ -297,7 +328,9 @@ class ProjectManager:
                     query = query.where(
                         and_(
                             Project.planned_end_date < date.today(),
-                            Project.project_status.notin_([ProjectStatus.COMPLETED, ProjectStatus.CANCELLED]),
+                            Project.project_status.notin_(
+                                [ProjectStatus.COMPLETED, ProjectStatus.CANCELLED]
+                            ),
                         )
                     )
 
@@ -370,7 +403,9 @@ class ProjectManager:
             await db.commit()
             await db.refresh(phase)
 
-            logger.info(f"Created phase {phase.phase_name} for project {project.project_number}")
+            logger.info(
+                f"Created phase {phase.phase_name} for project {project.project_number}"
+            )
 
             return phase
 
@@ -414,7 +449,10 @@ class ProjectManager:
             phase.updated_at = datetime.now(timezone.utc)
 
             # Handle completion
-            if update_data.phase_status == PhaseStatus.COMPLETED and old_status != PhaseStatus.COMPLETED:
+            if (
+                update_data.phase_status == PhaseStatus.COMPLETED
+                and old_status != PhaseStatus.COMPLETED
+            ):
                 phase.actual_end_date = date.today()
 
                 # Update project phases completed count
@@ -466,7 +504,9 @@ class ProjectManager:
             await db.commit()
             await db.refresh(milestone)
 
-            logger.info(f"Created milestone {milestone.milestone_name} for project {project.project_number}")
+            logger.info(
+                f"Created milestone {milestone.milestone_name} for project {project.project_number}"
+            )
 
             return milestone
 
@@ -544,7 +584,9 @@ class ProjectManager:
                     )
 
             # Total projects
-            total_result = await db.execute(select(func.count()).select_from(base_query.subquery()))
+            total_result = await db.execute(
+                select(func.count()).select_from(base_query.subquery())
+            )
             total_projects = total_result.scalar()
 
             # Status breakdown
@@ -557,7 +599,9 @@ class ProjectManager:
             if filters and "date_range" in filters:
                 start_date, end_date = filters["date_range"]
                 status_query = status_query.where(
-                    and_(Project.created_at >= start_date, Project.created_at <= end_date)
+                    and_(
+                        Project.created_at >= start_date, Project.created_at <= end_date
+                    )
                 )
 
             status_result = await db.execute(status_query)
@@ -572,16 +616,23 @@ class ProjectManager:
 
             if filters and "date_range" in filters:
                 start_date, end_date = filters["date_range"]
-                type_query = type_query.where(and_(Project.created_at >= start_date, Project.created_at <= end_date))
+                type_query = type_query.where(
+                    and_(
+                        Project.created_at >= start_date, Project.created_at <= end_date
+                    )
+                )
 
             type_result = await db.execute(type_query)
             type_breakdown = {row.project_type: row.count for row in type_result}
 
             # Average completion time
             completion_query = select(
-                func.avg(func.extract("epoch", Project.actual_end_date - Project.actual_start_date) / 86400).label(
-                    "avg_days"
-                )
+                func.avg(
+                    func.extract(
+                        "epoch", Project.actual_end_date - Project.actual_start_date
+                    )
+                    / 86400
+                ).label("avg_days")
             ).where(
                 and_(
                     Project.tenant_id == tenant_id,
@@ -598,7 +649,9 @@ class ProjectManager:
                 and_(
                     Project.tenant_id == tenant_id,
                     Project.planned_end_date < date.today(),
-                    Project.project_status.notin_([ProjectStatus.COMPLETED, ProjectStatus.CANCELLED]),
+                    Project.project_status.notin_(
+                        [ProjectStatus.COMPLETED, ProjectStatus.CANCELLED]
+                    ),
                 )
             )
             overdue_result = await db.execute(overdue_query)
@@ -624,7 +677,9 @@ class ProjectManager:
             logger.error(f"Error getting project analytics: {str(e)}")
             raise
 
-    async def _create_default_phases(self, db: AsyncSession, project: Project, project_type: ProjectType):
+    async def _create_default_phases(
+        self, db: AsyncSession, project: Project, project_type: ProjectType
+    ):
         """Create default phases for a project type."""
         phase_templates = self.default_phases.get(project_type, [])
 
@@ -643,13 +698,21 @@ class ProjectManager:
         # Update total phases
         project.total_phases = len(phase_templates)
 
-    async def _handle_status_change(self, project: Project, old_status: ProjectStatus, new_status: ProjectStatus):
+    async def _handle_status_change(
+        self, project: Project, old_status: ProjectStatus, new_status: ProjectStatus
+    ):
         """Handle project status changes."""
-        if new_status == ProjectStatus.IN_PROGRESS and old_status != ProjectStatus.IN_PROGRESS:
+        if (
+            new_status == ProjectStatus.IN_PROGRESS
+            and old_status != ProjectStatus.IN_PROGRESS
+        ):
             if not project.actual_start_date:
                 project.actual_start_date = date.today()
 
-        elif new_status == ProjectStatus.COMPLETED and old_status != ProjectStatus.COMPLETED:
+        elif (
+            new_status == ProjectStatus.COMPLETED
+            and old_status != ProjectStatus.COMPLETED
+        ):
             if not project.actual_end_date:
                 project.actual_end_date = date.today()
             project.completion_percentage = 100
@@ -663,7 +726,9 @@ class ProjectManager:
         logger.info(f"Project created events triggered for {project.project_number}")
         # This would integrate with event system, notifications, etc.
 
-    async def _trigger_project_updated_events(self, project: Project, old_status: ProjectStatus):
+    async def _trigger_project_updated_events(
+        self, project: Project, old_status: ProjectStatus
+    ):
         """Trigger events when project is updated."""
         logger.info(f"Project updated events triggered for {project.project_number}")
 

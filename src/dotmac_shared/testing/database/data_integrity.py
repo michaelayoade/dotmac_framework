@@ -111,7 +111,9 @@ class DataIntegrityTester:
             echo=echo,
             poolclass=StaticPool,
             pool_pre_ping=True,
-            connect_args={"check_same_thread": False} if "sqlite" in database_url else {},
+            connect_args={"check_same_thread": False}
+            if "sqlite" in database_url
+            else {},
         )
         self.SessionLocal = sessionmaker(bind=self.engine)
         self.test_results: list[IntegrityTestResult] = []
@@ -167,7 +169,9 @@ class DataIntegrityTester:
                 operations_completed = 0
                 for model_class in model_classes:
                     if model_class in test_data:
-                        for data in test_data[model_class][:2]:  # Only use first 2 records
+                        for data in test_data[model_class][
+                            :2
+                        ]:  # Only use first 2 records
                             record = model_class(**data)
                             session.add(record)
                             operations_completed += 1
@@ -213,7 +217,9 @@ class DataIntegrityTester:
         return IntegrityTestResult(
             test_name="acid_atomicity_test",
             test_type=IntegrityTestType.ACID_ATOMICITY,
-            result=IntegrityTestResult.PASS if not violations else IntegrityTestResult.FAIL,
+            result=IntegrityTestResult.PASS
+            if not violations
+            else IntegrityTestResult.FAIL,
             violations=violations,
             execution_time=execution_time,
         )
@@ -276,7 +282,9 @@ class DataIntegrityTester:
         return IntegrityTestResult(
             test_name="acid_consistency_test",
             test_type=IntegrityTestType.ACID_CONSISTENCY,
-            result=IntegrityTestResult.PASS if not violations else IntegrityTestResult.FAIL,
+            result=IntegrityTestResult.PASS
+            if not violations
+            else IntegrityTestResult.FAIL,
             violations=violations,
             execution_time=execution_time,
         )
@@ -293,7 +301,9 @@ class DataIntegrityTester:
             # Run concurrent transactions to test isolation
             async def transaction1():
                 with self.SessionLocal() as session:
-                    session.execute(text("SET TRANSACTION ISOLATION LEVEL READ COMMITTED"))
+                    session.execute(
+                        text("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
+                    )
                     if model_classes and model_classes[0] in test_data:
                         data = test_data[model_classes[0]][0]
                         record = model_classes[0](**data)
@@ -306,7 +316,9 @@ class DataIntegrityTester:
             async def transaction2():
                 await asyncio.sleep(0.1)  # Start after transaction1
                 with self.SessionLocal() as session:
-                    session.execute(text("SET TRANSACTION ISOLATION LEVEL READ COMMITTED"))
+                    session.execute(
+                        text("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
+                    )
                     if model_classes:
                         # Try to read data from transaction1 before it commits
                         count = session.query(func.count(model_classes[0].id)).scalar()
@@ -339,7 +351,9 @@ class DataIntegrityTester:
         return IntegrityTestResult(
             test_name="acid_isolation_test",
             test_type=IntegrityTestType.ACID_ISOLATION,
-            result=IntegrityTestResult.PASS if not violations else IntegrityTestResult.FAIL,
+            result=IntegrityTestResult.PASS
+            if not violations
+            else IntegrityTestResult.FAIL,
             violations=violations,
             execution_time=execution_time,
         )
@@ -362,13 +376,17 @@ class DataIntegrityTester:
                         record = model_class(**data)
                         session.add(record)
                         session.commit()
-                        record_ids.append((model_class, record.id if hasattr(record, "id") else None))
+                        record_ids.append(
+                            (model_class, record.id if hasattr(record, "id") else None)
+                        )
 
             # Simulate connection loss/restart (close all connections)
             self.engine.dispose()
 
             # Recreate engine and verify data persists
-            self.engine = create_engine(self.database_url, poolclass=StaticPool, pool_pre_ping=True)
+            self.engine = create_engine(
+                self.database_url, poolclass=StaticPool, pool_pre_ping=True
+            )
             self.SessionLocal = sessionmaker(bind=self.engine)
 
             # Verify records still exist
@@ -407,14 +425,21 @@ class DataIntegrityTester:
         return IntegrityTestResult(
             test_name="acid_durability_test",
             test_type=IntegrityTestType.ACID_DURABILITY,
-            result=IntegrityTestResult.PASS if not violations else IntegrityTestResult.FAIL,
+            result=IntegrityTestResult.PASS
+            if not violations
+            else IntegrityTestResult.FAIL,
             violations=violations,
             execution_time=execution_time,
         )
 
     @standard_exception_handler
     async def test_referential_integrity(
-        self, parent_model: type, child_model: type, parent_data: dict, child_data: dict, foreign_key_field: str
+        self,
+        parent_model: type,
+        child_model: type,
+        parent_data: dict,
+        child_data: dict,
+        foreign_key_field: str,
     ) -> IntegrityTestResult:
         """Test referential integrity between related models"""
 
@@ -500,7 +525,9 @@ class DataIntegrityTester:
         result = IntegrityTestResult(
             test_name=f"referential_integrity_{parent_model.__name__}_{child_model.__name__}",
             test_type=IntegrityTestType.REFERENTIAL_INTEGRITY,
-            result=IntegrityTestResult.PASS if not violations else IntegrityTestResult.FAIL,
+            result=IntegrityTestResult.PASS
+            if not violations
+            else IntegrityTestResult.FAIL,
             violations=violations,
             execution_time=execution_time,
         )
@@ -562,7 +589,13 @@ class DataIntegrityTester:
 
                     except Exception as e:
                         session.rollback()
-                        results.append({"operation_id": operation_id, "error": str(e), "success": False})
+                        results.append(
+                            {
+                                "operation_id": operation_id,
+                                "error": str(e),
+                                "success": False,
+                            }
+                        )
 
                 return results
 
@@ -615,7 +648,9 @@ class DataIntegrityTester:
         result = IntegrityTestResult(
             test_name=f"concurrent_integrity_{model_class.__name__}",
             test_type=IntegrityTestType.CONCURRENT_ACCESS,
-            result=IntegrityTestResult.PASS if not violations else IntegrityTestResult.FAIL,
+            result=IntegrityTestResult.PASS
+            if not violations
+            else IntegrityTestResult.FAIL,
             violations=violations,
             execution_time=execution_time,
         )
@@ -625,7 +660,10 @@ class DataIntegrityTester:
 
     @standard_exception_handler
     async def validate_business_rules(
-        self, model_class: type, business_rules: list[tuple[str, Callable[[Any], bool]]], test_data: list[dict]
+        self,
+        model_class: type,
+        business_rules: list[tuple[str, Callable[[Any], bool]]],
+        test_data: list[dict],
     ) -> IntegrityTestResult:
         """Validate business rule integrity"""
 
@@ -688,7 +726,9 @@ class DataIntegrityTester:
         result = IntegrityTestResult(
             test_name=f"business_rules_{model_class.__name__}",
             test_type=IntegrityTestType.BUSINESS_RULES,
-            result=IntegrityTestResult.PASS if not violations else IntegrityTestResult.FAIL,
+            result=IntegrityTestResult.PASS
+            if not violations
+            else IntegrityTestResult.FAIL,
             violations=violations,
             execution_time=execution_time,
         )
@@ -703,9 +743,15 @@ class DataIntegrityTester:
             return {"total": 0, "summary": "No integrity tests run"}
 
         total = len(self.test_results)
-        passed = sum(1 for r in self.test_results if r.result == IntegrityTestResult.PASS)
-        failed = sum(1 for r in self.test_results if r.result == IntegrityTestResult.FAIL)
-        errors = sum(1 for r in self.test_results if r.result == IntegrityTestResult.ERROR)
+        passed = sum(
+            1 for r in self.test_results if r.result == IntegrityTestResult.PASS
+        )
+        failed = sum(
+            1 for r in self.test_results if r.result == IntegrityTestResult.FAIL
+        )
+        errors = sum(
+            1 for r in self.test_results if r.result == IntegrityTestResult.ERROR
+        )
 
         total_violations = sum(len(r.violations) for r in self.test_results)
         avg_execution_time = sum(r.execution_time for r in self.test_results) / total

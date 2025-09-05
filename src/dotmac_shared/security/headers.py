@@ -25,7 +25,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # HSTS (HTTP Strict Transport Security)
         if self.is_production:
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+            response.headers[
+                "Strict-Transport-Security"
+            ] = "max-age=31536000; includeSubDomains; preload"
 
         # CSP (Content Security Policy) - Restrict to known origins
         csp_policy = self._build_csp_policy(request)
@@ -78,16 +80,24 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if cors_origins:
             connect_sources = ["'self'"] + cors_origins
             policy_parts = [
-                p if not p.startswith("connect-src") else f"connect-src {' '.join(connect_sources)}"
+                p
+                if not p.startswith("connect-src")
+                else f"connect-src {' '.join(connect_sources)}"
                 for p in policy_parts
             ]
 
         # In development, be more permissive
         if not self.is_production:
             # Allow localhost and development servers
-            dev_sources = ["http://localhost:*", "http://127.0.0.1:*", "ws://localhost:*"]
+            dev_sources = [
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "ws://localhost:*",
+            ]
             policy_parts = [
-                p.replace("'self'", "'self' " + " ".join(dev_sources)) if "connect-src" in p else p
+                p.replace("'self'", "'self' " + " ".join(dev_sources))
+                if "connect-src" in p
+                else p
                 for p in policy_parts
             ]
 
@@ -128,7 +138,12 @@ class CORSConfig:
                     "X-Tenant-ID",
                     "X-Correlation-ID",
                 ],
-                "expose_headers": ["X-Total-Count", "X-Page-Count", "X-Rate-Limit-Remaining", "X-Rate-Limit-Reset"],
+                "expose_headers": [
+                    "X-Total-Count",
+                    "X-Page-Count",
+                    "X-Rate-Limit-Remaining",
+                    "X-Rate-Limit-Reset",
+                ],
             }
         else:
             # Development: More permissive
@@ -153,7 +168,9 @@ class CookieConfig:
         is_production = environment == "production"
 
         # For multi-tenant cross-origin scenarios, SameSite policy needs consideration
-        samesite_policy = "none" if is_production else "lax"  # None requires Secure=True
+        samesite_policy = (
+            "none" if is_production else "lax"
+        )  # None requires Secure=True
 
         return {
             "secure": is_production,  # Only send over HTTPS in production
@@ -182,7 +199,9 @@ def validate_security_config():
         missing_vars = [var for var in required_vars if not os.getenv(var)]
 
         if missing_vars:
-            raise ValueError(f"Missing required production environment variables: {missing_vars}")
+            raise ValueError(
+                f"Missing required production environment variables: {missing_vars}"
+            )
 
         # Validate SECRET_KEY length
         secret_key = os.getenv("SECRET_KEY", "")
@@ -201,12 +220,21 @@ def validate_security_config():
         base_domain = os.getenv("BASE_DOMAIN", "")
         if base_domain:
             # Check it's a valid domain format (basic validation)
-            if not base_domain.replace("-", "").replace(".", "").replace("_", "").isalnum():
+            if (
+                not base_domain.replace("-", "")
+                .replace(".", "")
+                .replace("_", "")
+                .isalnum()
+            ):
                 raise ValueError(f"Invalid BASE_DOMAIN format: {base_domain}")
             if base_domain.startswith(".") or base_domain.endswith("."):
-                raise ValueError(f"BASE_DOMAIN cannot start or end with dot: {base_domain}")
+                raise ValueError(
+                    f"BASE_DOMAIN cannot start or end with dot: {base_domain}"
+                )
             if ".." in base_domain:
-                raise ValueError(f"BASE_DOMAIN cannot contain consecutive dots: {base_domain}")
+                raise ValueError(
+                    f"BASE_DOMAIN cannot contain consecutive dots: {base_domain}"
+                )
     import logging
 
     logging.getLogger(__name__).info("✅ Security configuration validated")

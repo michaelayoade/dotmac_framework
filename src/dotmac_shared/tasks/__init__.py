@@ -19,4 +19,3 @@ class NotificationChannelProvider:
 
 
 __all__ = ["NotificationChannel", "NotificationChannelProvider"]
-

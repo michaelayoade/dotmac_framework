@@ -7,8 +7,9 @@ from decimal import Decimal
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, Column, DateTime
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import relationship
 
@@ -106,7 +107,9 @@ class Plugin(BaseModel):
     download_url = Column(String(500), nullable=True)
 
     # Plugin status
-    status = Column(SQLEnum(PluginStatus), default=PluginStatus.ACTIVE, nullable=False, index=True)
+    status = Column(
+        SQLEnum(PluginStatus), default=PluginStatus.ACTIVE, nullable=False, index=True
+    )
     is_featured = Column(Boolean, default=False, nullable=False, index=True)
 
     # Plugin metrics
@@ -172,15 +175,26 @@ class PluginLicense(BaseModel):
 
     __tablename__ = "plugin_licenses"
 
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=False, index=True)
-    plugin_id = Column(UUID(as_uuid=True), ForeignKey("plugins.id"), nullable=False, index=True)
+    tenant_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("customer_tenants.id"),
+        nullable=False,
+        index=True,
+    )
+    plugin_id = Column(
+        UUID(as_uuid=True), ForeignKey("plugins.id"), nullable=False, index=True
+    )
 
     # License details
     license_tier = Column(SQLEnum(LicenseTier), nullable=False, index=True)
-    status = Column(SQLEnum(LicenseStatus), default=LicenseStatus.TRIAL, nullable=False, index=True)
+    status = Column(
+        SQLEnum(LicenseStatus), default=LicenseStatus.TRIAL, nullable=False, index=True
+    )
 
     # License period
-    activated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    activated_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
     expires_at = Column(DateTime, nullable=True, index=True)
     trial_ends_at = Column(DateTime, nullable=True)
 
@@ -193,7 +207,9 @@ class PluginLicense(BaseModel):
     feature_flags = Column(JSON, default=dict, nullable=False)
 
     # Billing integration
-    subscription_id = Column(UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=True)
+    subscription_id = Column(
+        UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=True
+    )
     last_billing_date = Column(DateTime, nullable=True)
     next_billing_date = Column(DateTime, nullable=True)
 
@@ -212,9 +228,7 @@ class PluginLicense(BaseModel):
     subscription = relationship("Subscription")
 
     def __repr__(self) -> str:
-        return (
-            f"<PluginLicense(tenant_id='{self.tenant_id}', plugin_id='{self.plugin_id}', tier='{self.license_tier}')>"
-        )
+        return f"<PluginLicense(tenant_id='{self.tenant_id}', plugin_id='{self.plugin_id}', tier='{self.license_tier}')>"
 
     @property
     def is_active(self) -> bool:
@@ -285,12 +299,20 @@ class PluginUsage(BaseModel):
 
     __tablename__ = "plugin_usage"
 
-    license_id = Column(UUID(as_uuid=True), ForeignKey("plugin_licenses.id"), nullable=False, index=True)
-    plugin_id = Column(UUID(as_uuid=True), ForeignKey("plugins.id"), nullable=False, index=True)
+    license_id = Column(
+        UUID(as_uuid=True), ForeignKey("plugin_licenses.id"), nullable=False, index=True
+    )
+    plugin_id = Column(
+        UUID(as_uuid=True), ForeignKey("plugins.id"), nullable=False, index=True
+    )
 
     # Usage details
-    usage_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
-    usage_type = Column(String(100), nullable=False, index=True)  # api_call, feature_use, etc.
+    usage_date = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True
+    )
+    usage_type = Column(
+        String(100), nullable=False, index=True
+    )  # api_call, feature_use, etc.
     quantity = Column(Integer, default=1, nullable=False)
 
     # Usage metadata

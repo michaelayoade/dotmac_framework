@@ -61,7 +61,9 @@ class StandardDependencies:
             raise ValidationError("Invalid user context")
 
         required_fields = ["user_id", "email", "is_active"]
-        missing_fields = [field for field in required_fields if field not in current_user]
+        missing_fields = [
+            field for field in required_fields if field not in current_user
+        ]
         if missing_fields:
             raise ValidationError(f"Missing user fields: {missing_fields}")
 
@@ -76,7 +78,9 @@ class StandardDependencies:
         self.tenant_id = tenant_id
         self.user_id = current_user["user_id"]
 
-        logger.debug(f"Dependencies created for user {self.user_id} in tenant {tenant_id}")
+        logger.debug(
+            f"Dependencies created for user {self.user_id} in tenant {tenant_id}"
+        )
 
 
 class PaginatedDependencies(StandardDependencies):
@@ -122,7 +126,9 @@ async def get_admin_deps(
 ) -> StandardDependencies:
     """Get dependencies with admin permission validation."""
     if not current_user.get("is_admin", False):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin permissions required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin permissions required"
+        )
     return StandardDependencies(current_user, db, tenant_id)
 
 
@@ -134,9 +140,13 @@ class SearchParams:
 
     def __init__(
         self,
-        search: Optional[str] = Query(None, description="Search by name, email, or description"),
+        search: Optional[str] = Query(
+            None, description="Search by name, email, or description"
+        ),
         status_filter: Optional[str] = Query(None, description="Filter by status"),
-        date_from: Optional[str] = Query(None, description="Filter from date (YYYY-MM-DD)"),
+        date_from: Optional[str] = Query(
+            None, description="Filter from date (YYYY-MM-DD)"
+        ),
         date_to: Optional[str] = Query(None, description="Filter to date (YYYY-MM-DD)"),
         sort_by: Optional[str] = Query("created_at", description="Sort field"),
         sort_order: Optional[str] = Query("desc", description="Sort order: asc/desc"),
@@ -158,10 +168,14 @@ class FileUploadParams:
     def __init__(
         self,
         max_size_mb: int = Query(10, description="Maximum file size in MB"),
-        allowed_types: str = Query("pdf,doc,docx,jpg,png", description="Allowed file types"),
+        allowed_types: str = Query(
+            "pdf,doc,docx,jpg,png", description="Allowed file types"
+        ),
     ):
         self.max_size_bytes = max_size_mb * 1024 * 1024
-        self.allowed_extensions = [ext.strip() for ext in allowed_types.split(",") if ext.strip()]
+        self.allowed_extensions = [
+            ext.strip() for ext in allowed_types.split(",") if ext.strip()
+        ]
 
 
 # === Entity ID Dependencies ===
@@ -191,7 +205,9 @@ class BulkOperationParams:
         self,
         batch_size: int = Query(100, le=1000, description="Batch size (max 1000)"),
         dry_run: bool = Query(False, description="Preview changes without applying"),
-        force: bool = Query(False, description="Force operation even if warnings exist"),
+        force: bool = Query(
+            False, description="Force operation even if warnings exist"
+        ),
     ):
         self.batch_size = batch_size
         self.dry_run = dry_run

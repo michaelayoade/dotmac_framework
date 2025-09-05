@@ -13,6 +13,8 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import BusinessRuleError
 from dotmac_management.user_management.core.user_repository import UserRepository
@@ -21,7 +23,6 @@ from dotmac_management.user_management.schemas.lifecycle_schemas import (
     UserRegistration,
 )
 from dotmac_management.user_management.schemas.user_schemas import UserStatus
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,9 @@ class CustomerLifecycleManager:
         self.lifecycle_hooks: dict[str, list[callable]] = {}
 
     @standard_exception_handler
-    async def register_lifecycle_hook(self, stage: CustomerLifecycleStage, hook_function: callable) -> None:
+    async def register_lifecycle_hook(
+        self, stage: CustomerLifecycleStage, hook_function: callable
+    ) -> None:
         """Register lifecycle hook for specific stage."""
         if stage not in self.lifecycle_hooks:
             self.lifecycle_hooks[stage] = []
@@ -101,7 +104,9 @@ class CustomerLifecycleManager:
         logger.info(f"Registered lifecycle hook for stage: {stage}")
 
     @standard_exception_handler
-    async def execute_lifecycle_hooks(self, stage: CustomerLifecycleStage, customer_data: dict[str, Any]) -> None:
+    async def execute_lifecycle_hooks(
+        self, stage: CustomerLifecycleStage, customer_data: dict[str, Any]
+    ) -> None:
         """Execute all hooks for a lifecycle stage."""
         if stage not in self.lifecycle_hooks:
             return
@@ -117,7 +122,9 @@ class CustomerLifecycleManager:
                 logger.error(f"Lifecycle hook failed for {stage}: {e}")
 
     @standard_exception_handler
-    async def process_new_registration(self, registration_data: UserRegistration) -> dict[str, Any]:
+    async def process_new_registration(
+        self, registration_data: UserRegistration
+    ) -> dict[str, Any]:
         """Process new customer registration with automated workflows."""
 
         # Create user account
@@ -131,7 +138,9 @@ class CustomerLifecycleManager:
             event_data={
                 "registration_source": registration_data.registration_source,
                 "user_type": registration_data.user_type,
-                "tenant_id": str(registration_data.tenant_id) if registration_data.tenant_id else None,
+                "tenant_id": str(registration_data.tenant_id)
+                if registration_data.tenant_id
+                else None,
                 "requires_approval": registration_data.requires_approval,
             },
             source_platform="lifecycle_manager",
@@ -148,15 +157,24 @@ class CustomerLifecycleManager:
             "registration_data": registration_data,
         }
 
-        await self.execute_lifecycle_hooks(CustomerLifecycleStage.REGISTRATION, customer_data)
+        await self.execute_lifecycle_hooks(
+            CustomerLifecycleStage.REGISTRATION, customer_data
+        )
 
         # Determine next steps based on configuration
         next_actions = []
 
         if registration_data.requires_approval:
-            next_actions.append({"action": "require_approval", "message": "Account created, pending approval"})
+            next_actions.append(
+                {
+                    "action": "require_approval",
+                    "message": "Account created, pending approval",
+                }
+            )
         else:
-            next_actions.append({"action": "send_verification", "message": "Verification email sent"})
+            next_actions.append(
+                {"action": "send_verification", "message": "Verification email sent"}
+            )
 
         return {
             "user_id": user_response.id,
@@ -167,7 +185,9 @@ class CustomerLifecycleManager:
         }
 
     @standard_exception_handler
-    async def verify_customer_account(self, user_id: UUID, verification_data: dict[str, Any]) -> dict[str, Any]:
+    async def verify_customer_account(
+        self, user_id: UUID, verification_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Verify customer account and advance lifecycle."""
 
         # Update user verification status
@@ -196,18 +216,27 @@ class CustomerLifecycleManager:
             "verification_data": verification_data,
         }
 
-        await self.execute_lifecycle_hooks(CustomerLifecycleStage.VERIFICATION, customer_data)
+        await self.execute_lifecycle_hooks(
+            CustomerLifecycleStage.VERIFICATION, customer_data
+        )
 
         return {
             "user_id": user_id,
             "status": "verified",
             "lifecycle_stage": CustomerLifecycleStage.VERIFICATION,
-            "next_actions": [{"action": "begin_onboarding", "message": "Account verified, starting onboarding"}],
+            "next_actions": [
+                {
+                    "action": "begin_onboarding",
+                    "message": "Account verified, starting onboarding",
+                }
+            ],
             "verified_at": datetime.now(timezone.utc).isoformat(),
         }
 
     @standard_exception_handler
-    async def onboard_customer(self, user_id: UUID, onboarding_data: dict[str, Any]) -> dict[str, Any]:
+    async def onboard_customer(
+        self, user_id: UUID, onboarding_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Complete customer onboarding process."""
 
         user = await self.user_repository.get_user_by_id(user_id)
@@ -215,7 +244,9 @@ class CustomerLifecycleManager:
             raise BusinessRuleError(f"User {user_id} not found")
 
         if user.status != UserStatus.ACTIVE:
-            raise BusinessRuleError(f"User {user_id} must be active to complete onboarding")
+            raise BusinessRuleError(
+                f"User {user_id} must be active to complete onboarding"
+            )
 
         # Create lifecycle event
         lifecycle_event = UserLifecycleEvent(
@@ -236,7 +267,9 @@ class CustomerLifecycleManager:
             "onboarding_data": onboarding_data,
         }
 
-        await self.execute_lifecycle_hooks(CustomerLifecycleStage.ONBOARDING, customer_data)
+        await self.execute_lifecycle_hooks(
+            CustomerLifecycleStage.ONBOARDING, customer_data
+        )
 
         return {
             "user_id": user_id,
@@ -247,7 +280,10 @@ class CustomerLifecycleManager:
 
     @standard_exception_handler
     async def suspend_customer(
-        self, user_id: UUID, suspension_reason: str, suspension_data: Optional[dict[str, Any]] = None
+        self,
+        user_id: UUID,
+        suspension_reason: str,
+        suspension_data: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         """Suspend customer account and services."""
 
@@ -281,7 +317,9 @@ class CustomerLifecycleManager:
             "suspension_data": suspension_data or {},
         }
 
-        await self.execute_lifecycle_hooks(CustomerLifecycleStage.SUSPENDED, customer_data)
+        await self.execute_lifecycle_hooks(
+            CustomerLifecycleStage.SUSPENDED, customer_data
+        )
 
         return {
             "user_id": user_id,
@@ -298,7 +336,9 @@ class CustomerLifecycleManager:
         """Reactivate suspended customer account."""
 
         # Activate user account
-        success = await self.user_repository.activate_user(user_id, reactivation_data or {})
+        success = await self.user_repository.activate_user(
+            user_id, reactivation_data or {}
+        )
 
         if not success:
             raise BusinessRuleError(f"Failed to reactivate user account {user_id}")
@@ -333,7 +373,9 @@ class CustomerLifecycleManager:
         }
 
     @standard_exception_handler
-    async def delete_customer(self, user_id: UUID, deletion_reason: str, hard_delete: bool = False) -> dict[str, Any]:
+    async def delete_customer(
+        self, user_id: UUID, deletion_reason: str, hard_delete: bool = False
+    ) -> dict[str, Any]:
         """Delete customer account and data."""
 
         # Create lifecycle event before deletion
@@ -360,7 +402,9 @@ class CustomerLifecycleManager:
             "hard_delete": hard_delete,
         }
 
-        await self.execute_lifecycle_hooks(CustomerLifecycleStage.DELETED, customer_data)
+        await self.execute_lifecycle_hooks(
+            CustomerLifecycleStage.DELETED, customer_data
+        )
 
         # Delete user account
         success = await self.user_repository.delete_user(user_id, not hard_delete)
@@ -411,11 +455,15 @@ class CustomerLifecycleManager:
             return CustomerLifecycleStage.REGISTRATION
         elif user.status == UserStatus.ACTIVE:
             # Check if onboarding completed
-            onboarding_events = [e for e in events if e.get("event_type") == "customer_onboarding"]
+            onboarding_events = [
+                e for e in events if e.get("event_type") == "customer_onboarding"
+            ]
             if onboarding_events:
                 return CustomerLifecycleStage.ACTIVE
             else:
-                verification_events = [e for e in events if e.get("event_type") == "customer_verification"]
+                verification_events = [
+                    e for e in events if e.get("event_type") == "customer_verification"
+                ]
                 if verification_events:
                     return CustomerLifecycleStage.ONBOARDING
                 else:
@@ -460,7 +508,10 @@ class ServiceProvisioningAutomation:
 
     @standard_exception_handler
     async def provision_service(
-        self, customer_id: UUID, service_name: str, custom_config: Optional[dict[str, Any]] = None
+        self,
+        customer_id: UUID,
+        service_name: str,
+        custom_config: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         """Provision service for customer."""
 
@@ -496,11 +547,14 @@ class ServiceProvisioningAutomation:
         return {
             "request_id": str(provisioning_request["request_id"]),
             "status": ServiceStatus.PENDING,
-            "message": "Service provisioning queued" + (" (approval required)" if template.requires_approval else ""),
+            "message": "Service provisioning queued"
+            + (" (approval required)" if template.requires_approval else ""),
         }
 
     @standard_exception_handler
-    async def _execute_provisioning(self, provisioning_request: dict[str, Any]) -> dict[str, Any]:
+    async def _execute_provisioning(
+        self, provisioning_request: dict[str, Any]
+    ) -> dict[str, Any]:
         """Execute service provisioning."""
 
         try:
@@ -562,7 +616,9 @@ class ServiceProvisioningAutomation:
     async def get_provisioning_status(self, request_id: UUID) -> dict[str, Any]:
         """Get provisioning request status."""
 
-        request = next((r for r in self.provisioning_queue if r["request_id"] == request_id), None)
+        request = next(
+            (r for r in self.provisioning_queue if r["request_id"] == request_id), None
+        )
 
         if not request:
             raise BusinessRuleError(f"Provisioning request not found: {request_id}")
@@ -573,15 +629,21 @@ class ServiceProvisioningAutomation:
             "service_name": request["service_name"],
             "status": request["status"],
             "created_at": request["created_at"].isoformat(),
-            "provisioning_started_at": request.get("provisioning_started_at", {}).isoformat()
+            "provisioning_started_at": request.get(
+                "provisioning_started_at", {}
+            ).isoformat()
             if request.get("provisioning_started_at")
             else None,
-            "provisioned_at": request.get("provisioned_at", {}).isoformat() if request.get("provisioned_at") else None,
+            "provisioned_at": request.get("provisioned_at", {}).isoformat()
+            if request.get("provisioned_at")
+            else None,
             "error": request.get("error"),
         }
 
     @standard_exception_handler
-    async def suspend_service(self, customer_id: UUID, service_name: str, reason: str) -> dict[str, Any]:
+    async def suspend_service(
+        self, customer_id: UUID, service_name: str, reason: str
+    ) -> dict[str, Any]:
         """Suspend customer service."""
 
         # Find active provisioning request
@@ -597,14 +659,18 @@ class ServiceProvisioningAutomation:
         )
 
         if not request:
-            raise BusinessRuleError(f"Active service not found: {service_name} for customer {customer_id}")
+            raise BusinessRuleError(
+                f"Active service not found: {service_name} for customer {customer_id}"
+            )
 
         # Update status
         request["status"] = ServiceStatus.SUSPENDED
         request["suspended_at"] = datetime.now(timezone.utc)
         request["suspension_reason"] = reason
 
-        logger.info(f"Suspended service {service_name} for customer {customer_id}: {reason}")
+        logger.info(
+            f"Suspended service {service_name} for customer {customer_id}: {reason}"
+        )
 
         return {
             "customer_id": str(customer_id),
@@ -615,7 +681,9 @@ class ServiceProvisioningAutomation:
         }
 
     @standard_exception_handler
-    async def terminate_service(self, customer_id: UUID, service_name: str, reason: str) -> dict[str, Any]:
+    async def terminate_service(
+        self, customer_id: UUID, service_name: str, reason: str
+    ) -> dict[str, Any]:
         """Terminate customer service."""
 
         # Find provisioning request
@@ -629,7 +697,9 @@ class ServiceProvisioningAutomation:
         )
 
         if not request:
-            raise BusinessRuleError(f"Service not found: {service_name} for customer {customer_id}")
+            raise BusinessRuleError(
+                f"Service not found: {service_name} for customer {customer_id}"
+            )
 
         # Update status
         request["status"] = ServiceStatus.DEPROVISIONING
@@ -642,7 +712,9 @@ class ServiceProvisioningAutomation:
         request["status"] = ServiceStatus.TERMINATED
         request["terminated_at"] = datetime.now(timezone.utc)
 
-        logger.info(f"Terminated service {service_name} for customer {customer_id}: {reason}")
+        logger.info(
+            f"Terminated service {service_name} for customer {customer_id}: {reason}"
+        )
 
         return {
             "customer_id": str(customer_id),

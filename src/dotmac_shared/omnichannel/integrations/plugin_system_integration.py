@@ -45,7 +45,9 @@ class OmnichannelCommunicationPlugin(CommunicationPlugin):
         super().__init__(metadata, config)
 
         # Omnichannel-specific properties
-        self.channel_type: ChannelType = ChannelType(metadata.category_data.get("channel_type", "webhook"))
+        self.channel_type: ChannelType = ChannelType(
+            metadata.category_data.get("channel_type", "webhook")
+        )
         self.supports_interactions = config.get("supports_interactions", True)
         self.supports_agent_assignment = config.get("supports_agent_assignment", False)
         self.max_concurrent_messages = config.get("max_concurrent_messages", 100)
@@ -129,7 +131,9 @@ class OmnichannelCommunicationPlugin(CommunicationPlugin):
 
                 result.metadata.update(
                     {
-                        "interaction_id": (str(interaction_id) if interaction_id else None),
+                        "interaction_id": (
+                            str(interaction_id) if interaction_id else None
+                        ),
                         "agent_id": str(agent_id) if agent_id else None,
                         "tenant_id": str(tenant_id) if tenant_id else None,
                         "channel_type": self.channel_type.value,
@@ -205,7 +209,9 @@ class OmnichannelPluginManager:
             await self._load_communication_plugins()
 
             self.is_initialized = True
-            logger.info(f"Omnichannel plugin manager initialized for tenant {self.tenant_id}")
+            logger.info(
+                f"Omnichannel plugin manager initialized for tenant {self.tenant_id}"
+            )
             return True
 
         except Exception as e:
@@ -382,15 +388,21 @@ class OmnichannelPluginManager:
         """Load communication plugins from the plugin system"""
         try:
             # Get all communication plugins from the registry
-            plugins = await self.plugin_registry.get_plugins_by_category("communication")
+            plugins = await self.plugin_registry.get_plugins_by_category(
+                "communication"
+            )
 
             for plugin_id, plugin_instance in plugins.items():
                 try:
                     # Ensure it's a communication plugin
                     if isinstance(plugin_instance, CommunicationPlugin):
                         # Wrap as omnichannel plugin if needed
-                        if not isinstance(plugin_instance, OmnichannelCommunicationPlugin):
-                            plugin_instance = self._wrap_as_omnichannel_plugin(plugin_instance)
+                        if not isinstance(
+                            plugin_instance, OmnichannelCommunicationPlugin
+                        ):
+                            plugin_instance = self._wrap_as_omnichannel_plugin(
+                                plugin_instance
+                            )
 
                         # Initialize plugin
                         await plugin_instance.initialize()
@@ -404,19 +416,25 @@ class OmnichannelPluginManager:
                             self.plugins_by_channel[channel_type] = []
                         self.plugins_by_channel[channel_type].append(plugin_id)
 
-                        logger.info(f"Loaded communication plugin: {plugin_id} ({channel_type.value})")
+                        logger.info(
+                            f"Loaded communication plugin: {plugin_id} ({channel_type.value})"
+                        )
 
                 except Exception as e:
                     logger.error(f"Failed to load plugin {plugin_id}: {e}")
                     continue
 
-            logger.info(f"Loaded {len(self.communication_plugins)} communication plugins")
+            logger.info(
+                f"Loaded {len(self.communication_plugins)} communication plugins"
+            )
 
         except Exception as e:
             logger.error(f"Failed to load communication plugins: {e}")
             raise
 
-    def _wrap_as_omnichannel_plugin(self, plugin: CommunicationPlugin) -> OmnichannelCommunicationPlugin:
+    def _wrap_as_omnichannel_plugin(
+        self, plugin: CommunicationPlugin
+    ) -> OmnichannelCommunicationPlugin:
         """Wrap a standard communication plugin as an omnichannel plugin"""
 
         class WrappedOmnichannelPlugin(OmnichannelCommunicationPlugin):
@@ -431,7 +449,9 @@ class OmnichannelPluginManager:
                 """Delegate to wrapped plugin"""
                 return await self.wrapped_plugin.send_message(message)
 
-            async def send_bulk_messages(self, messages: list[Message]) -> BulkMessageResult:
+            async def send_bulk_messages(
+                self, messages: list[Message]
+            ) -> BulkMessageResult:
                 """Delegate to wrapped plugin if supported"""
                 if hasattr(self.wrapped_plugin, "send_bulk_messages"):
                     return await self.wrapped_plugin.send_bulk_messages(messages)

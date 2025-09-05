@@ -10,11 +10,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
+from sqlalchemy import and_, desc
+from sqlalchemy.orm import Session
+
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import EntityNotFoundError, ValidationError
 from dotmac_shared.services.base import BaseTenantService
-from sqlalchemy import and_, desc
-from sqlalchemy.orm import Session
 
 from ..models.alarms import Alarm, AlarmRule, AlarmStatus
 from ..models.events import EventSeverity, EventType, NetworkEvent
@@ -27,7 +28,12 @@ class AlarmManagementService(BaseTenantService):
 
     def __init__(self, db: Session, tenant_id: str):
         super().__init__(
-            db=db, model_class=Alarm, create_schema=None, update_schema=None, response_schema=None, tenant_id=tenant_id
+            db=db,
+            model_class=Alarm,
+            create_schema=None,
+            update_schema=None,
+            response_schema=None,
+            tenant_id=tenant_id,
         )
 
     @standard_exception_handler
@@ -89,7 +95,11 @@ class AlarmManagementService(BaseTenantService):
         self, alarm_id: str, acknowledged_by: str, notes: Optional[str] = None
     ) -> dict[str, Any]:
         """Acknowledge an active alarm."""
-        alarm = self.db.query(Alarm).filter(and_(Alarm.alarm_id == alarm_id, Alarm.tenant_id == self.tenant_id)).first()
+        alarm = (
+            self.db.query(Alarm)
+            .filter(and_(Alarm.alarm_id == alarm_id, Alarm.tenant_id == self.tenant_id))
+            .first()
+        )
 
         if not alarm:
             raise EntityNotFoundError(f"Alarm not found: {alarm_id}")
@@ -115,15 +125,23 @@ class AlarmManagementService(BaseTenantService):
 
         # Create event
         await self._create_alarm_event(
-            alarm, "alarm_acknowledged", {"acknowledged_by": acknowledged_by, "notes": notes}
+            alarm,
+            "alarm_acknowledged",
+            {"acknowledged_by": acknowledged_by, "notes": notes},
         )
 
         return alarm.to_dict()
 
     @standard_exception_handler
-    async def clear_alarm(self, alarm_id: str, cleared_by: str, clear_reason: Optional[str] = None) -> dict[str, Any]:
+    async def clear_alarm(
+        self, alarm_id: str, cleared_by: str, clear_reason: Optional[str] = None
+    ) -> dict[str, Any]:
         """Clear an alarm (mark as resolved)."""
-        alarm = self.db.query(Alarm).filter(and_(Alarm.alarm_id == alarm_id, Alarm.tenant_id == self.tenant_id)).first()
+        alarm = (
+            self.db.query(Alarm)
+            .filter(and_(Alarm.alarm_id == alarm_id, Alarm.tenant_id == self.tenant_id))
+            .first()
+        )
 
         if not alarm:
             raise EntityNotFoundError(f"Alarm not found: {alarm_id}")
@@ -152,17 +170,29 @@ class AlarmManagementService(BaseTenantService):
         await self._create_alarm_event(
             alarm,
             "alarm_cleared",
-            {"cleared_by": cleared_by, "clear_reason": clear_reason, "previous_status": previous_status},
+            {
+                "cleared_by": cleared_by,
+                "clear_reason": clear_reason,
+                "previous_status": previous_status,
+            },
         )
 
         return alarm.to_dict()
 
     @standard_exception_handler
     async def escalate_alarm(
-        self, alarm_id: str, new_severity: str, escalated_by: str, escalation_reason: Optional[str] = None
+        self,
+        alarm_id: str,
+        new_severity: str,
+        escalated_by: str,
+        escalation_reason: Optional[str] = None,
     ) -> dict[str, Any]:
         """Escalate alarm to higher severity."""
-        alarm = self.db.query(Alarm).filter(and_(Alarm.alarm_id == alarm_id, Alarm.tenant_id == self.tenant_id)).first()
+        alarm = (
+            self.db.query(Alarm)
+            .filter(and_(Alarm.alarm_id == alarm_id, Alarm.tenant_id == self.tenant_id))
+            .first()
+        )
 
         if not alarm:
             raise EntityNotFoundError(f"Alarm not found: {alarm_id}")
@@ -201,7 +231,9 @@ class AlarmManagementService(BaseTenantService):
 
         self.db.commit()
 
-        logger.info(f"Escalated alarm {alarm_id} from {previous_severity} to {new_severity} by {escalated_by}")
+        logger.info(
+            f"Escalated alarm {alarm_id} from {previous_severity} to {new_severity} by {escalated_by}"
+        )
 
         # Create event
         await self._create_alarm_event(
@@ -226,7 +258,11 @@ class AlarmManagementService(BaseTenantService):
         suppression_reason: Optional[str] = None,
     ) -> dict[str, Any]:
         """Temporarily suppress an alarm."""
-        alarm = self.db.query(Alarm).filter(and_(Alarm.alarm_id == alarm_id, Alarm.tenant_id == self.tenant_id)).first()
+        alarm = (
+            self.db.query(Alarm)
+            .filter(and_(Alarm.alarm_id == alarm_id, Alarm.tenant_id == self.tenant_id))
+            .first()
+        )
 
         if not alarm:
             raise EntityNotFoundError(f"Alarm not found: {alarm_id}")
@@ -248,7 +284,9 @@ class AlarmManagementService(BaseTenantService):
         }
 
         if suppression_duration_hours:
-            suppression_until = datetime.now(timezone.utc) + timedelta(hours=suppression_duration_hours)
+            suppression_until = datetime.now(timezone.utc) + timedelta(
+                hours=suppression_duration_hours
+            )
             suppression_data["suppressed_until"] = suppression_until.isoformat()
 
         alarm.context_data["suppression"] = suppression_data
@@ -300,7 +338,12 @@ class AlarmManagementService(BaseTenantService):
         total_count = query.count()
 
         # Apply pagination and ordering
-        alarms = query.order_by(desc(Alarm.severity), desc(Alarm.last_occurrence)).offset(offset).limit(limit).all()
+        alarms = (
+            query.order_by(desc(Alarm.severity), desc(Alarm.last_occurrence))
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
 
         return {
             "alarms": [alarm.to_dict() for alarm in alarms],
@@ -350,7 +393,9 @@ class AlarmManagementService(BaseTenantService):
         }
 
     @standard_exception_handler
-    async def evaluate_alarm_rules(self, device_metrics: dict[str, Any]) -> list[dict[str, Any]]:
+    async def evaluate_alarm_rules(
+        self, device_metrics: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Evaluate alarm rules against device metrics and generate alarms."""
         device_id = device_metrics.get("device_id")
         if not device_id:
@@ -359,7 +404,12 @@ class AlarmManagementService(BaseTenantService):
         # Get active alarm rules
         rules = (
             self.db.query(AlarmRule)
-            .filter(and_(AlarmRule.tenant_id == self.tenant_id, AlarmRule.is_enabled == "true"))
+            .filter(
+                and_(
+                    AlarmRule.tenant_id == self.tenant_id,
+                    AlarmRule.is_enabled == "true",
+                )
+            )
             .all()
         )
 
@@ -367,7 +417,9 @@ class AlarmManagementService(BaseTenantService):
 
         for rule in rules:
             try:
-                alarm_data = await self._evaluate_rule_against_metrics(rule, device_metrics)
+                alarm_data = await self._evaluate_rule_against_metrics(
+                    rule, device_metrics
+                )
                 if alarm_data:
                     created_alarm = await self.create_alarm(alarm_data)
                     generated_alarms.append(created_alarm)
@@ -390,14 +442,18 @@ class AlarmManagementService(BaseTenantService):
                     Alarm.interface_id == alarm_data.get("interface_id"),
                     Alarm.status.in_([AlarmStatus.ACTIVE, AlarmStatus.ACKNOWLEDGED]),
                     # Look for alarms within last hour to avoid duplicates
-                    Alarm.last_occurrence >= datetime.now(timezone.utc) - timedelta(hours=1),
+                    Alarm.last_occurrence
+                    >= datetime.now(timezone.utc) - timedelta(hours=1),
                 )
             )
             .first()
         )
 
     async def _create_alarm_event(
-        self, alarm: Alarm, event_type: str, additional_context: Optional[dict[str, Any]] = None
+        self,
+        alarm: Alarm,
+        event_type: str,
+        additional_context: Optional[dict[str, Any]] = None,
     ) -> None:
         """Create network event for alarm state change."""
         context_data = {
@@ -414,7 +470,9 @@ class AlarmManagementService(BaseTenantService):
             event_id=str(uuid4()),
             tenant_id=self.tenant_id,
             event_type=EventType.SYSTEM_EVENT,
-            severity=EventSeverity.MEDIUM if alarm.severity in ["minor", "warning"] else EventSeverity.HIGH,
+            severity=EventSeverity.MEDIUM
+            if alarm.severity in ["minor", "warning"]
+            else EventSeverity.HIGH,
             category="alarm_management",
             source_system="noc",
             device_id=alarm.device_id,
@@ -463,7 +521,8 @@ class AlarmManagementService(BaseTenantService):
         title = title.replace("{threshold}", str(threshold_value))
 
         description = (
-            rule.alarm_description_template or f"{rule.metric_name} is {metric_value}, threshold: {threshold_value}"
+            rule.alarm_description_template
+            or f"{rule.metric_name} is {metric_value}, threshold: {threshold_value}"
         )
         description = description.replace("{metric_name}", rule.metric_name)
         description = description.replace("{value}", str(metric_value))

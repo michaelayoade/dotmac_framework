@@ -8,12 +8,7 @@ import re
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class DeviceCreateRequest(BaseModel):
@@ -31,8 +26,12 @@ class DeviceCreateRequest(BaseModel):
     location: Optional[str] = Field(None, description="Physical location")
     description: Optional[str] = Field(None, description="Device description")
     status: str = Field(default="active", description="Device status")
-    properties: dict[str, Any] = Field(default_factory=dict, description="Additional properties")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    properties: dict[str, Any] = Field(
+        default_factory=dict, description="Additional properties"
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -90,8 +89,12 @@ class ConfigIntentRequest(BaseModel):
     device_id: str = Field(..., description="Target device identifier")
     intent_type: str = Field(..., description="Type of configuration intent")
     config_data: dict[str, Any] = Field(..., description="Configuration data")
-    apply_immediately: bool = Field(default=False, description="Apply configuration immediately")
-    validate_only: bool = Field(default=False, description="Only validate configuration")
+    apply_immediately: bool = Field(
+        default=False, description="Apply configuration immediately"
+    )
+    validate_only: bool = Field(
+        default=False, description="Only validate configuration"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -106,6 +109,8 @@ class ConfigIntentResponse(BaseModel):
     result: Optional[dict[str, Any]] = Field(None, description="Processing result")
     errors: list[str] = Field(default_factory=list, description="Processing errors")
     warnings: list[str] = Field(default_factory=list, description="Processing warnings")
-    applied_at: Optional[datetime] = Field(None, description="When configuration was applied")
+    applied_at: Optional[datetime] = Field(
+        None, description="When configuration was applied"
+    )
 
     model_config = ConfigDict(from_attributes=True)

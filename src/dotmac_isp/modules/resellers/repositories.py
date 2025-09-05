@@ -58,7 +58,9 @@ class ResellerApplicationRepository(BaseRepository):
 
     async def get_by_id(self, application_id: str) -> Optional[ResellerApplication]:
         """Get application by application_id"""
-        query = select(ResellerApplication).where(ResellerApplication.application_id == application_id)
+        query = select(ResellerApplication).where(
+            ResellerApplication.application_id == application_id
+        )
         if self.tenant_id:
             query = query.where(ResellerApplication.tenant_id == self.tenant_id)
 
@@ -67,7 +69,9 @@ class ResellerApplicationRepository(BaseRepository):
 
     async def get_by_email(self, email: str) -> Optional[ResellerApplication]:
         """Get application by contact email"""
-        query = select(ResellerApplication).where(ResellerApplication.contact_email == email)
+        query = select(ResellerApplication).where(
+            ResellerApplication.contact_email == email
+        )
         if self.tenant_id:
             query = query.where(ResellerApplication.tenant_id == self.tenant_id)
 
@@ -88,7 +92,9 @@ class ResellerApplicationRepository(BaseRepository):
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def list_pending_review(self, limit: int = 50, offset: int = 0) -> list[ResellerApplication]:
+    async def list_pending_review(
+        self, limit: int = 50, offset: int = 0
+    ) -> list[ResellerApplication]:
         """List applications pending review"""
         return await self.list_by_status(ApplicationStatus.SUBMITTED, limit, offset)
 
@@ -137,7 +143,11 @@ class ResellerApplicationRepository(BaseRepository):
         return application
 
     async def search(
-        self, search_term: str, status: Optional[ApplicationStatus] = None, limit: int = 50, offset: int = 0
+        self,
+        search_term: str,
+        status: Optional[ApplicationStatus] = None,
+        limit: int = 50,
+        offset: int = 0,
     ) -> list[ResellerApplication]:
         """Search applications by company name, contact name, or email"""
         query = select(ResellerApplication)
@@ -207,7 +217,9 @@ class ResellerRepository(BaseRepository):
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def list_by_status(self, status: ResellerStatus, limit: int = 50, offset: int = 0) -> list[Reseller]:
+    async def list_by_status(
+        self, status: ResellerStatus, limit: int = 50, offset: int = 0
+    ) -> list[Reseller]:
         """List resellers by status"""
         query = select(Reseller).where(Reseller.status == status)
         if self.tenant_id:
@@ -219,7 +231,9 @@ class ResellerRepository(BaseRepository):
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def update_metrics(self, reseller_id: str, metrics: dict[str, Any]) -> Optional[Reseller]:
+    async def update_metrics(
+        self, reseller_id: str, metrics: dict[str, Any]
+    ) -> Optional[Reseller]:
         """Update reseller performance metrics"""
         reseller = await self.get_by_id(reseller_id)
         if not reseller:
@@ -269,11 +283,19 @@ class ResellerRepository(BaseRepository):
                 "ytd_sales": float(reseller.ytd_sales or 0),
                 "lifetime_sales": float(reseller.lifetime_sales or 0),
             },
-            "recent_customers": len([c for c in reseller.customers if c.relationship_status == "active"]),
-            "active_opportunities": len([o for o in reseller.opportunities if o.is_active]),
-            "pending_commissions": len([c for c in reseller.commissions if c.payment_status == "pending"]),
+            "recent_customers": len(
+                [c for c in reseller.customers if c.relationship_status == "active"]
+            ),
+            "active_opportunities": len(
+                [o for o in reseller.opportunities if o.is_active]
+            ),
+            "pending_commissions": len(
+                [c for c in reseller.commissions if c.payment_status == "pending"]
+            ),
             "commission_total_pending": sum(
-                float(c.commission_amount) for c in reseller.commissions if c.payment_status == "pending"
+                float(c.commission_amount)
+                for c in reseller.commissions
+                if c.payment_status == "pending"
             ),
         }
 
@@ -299,7 +321,10 @@ class ResellerCustomerRepository(BaseRepository):
     async def get_by_customer(self, customer_id: UUID) -> Optional[ResellerCustomer]:
         """Get reseller assignment for a customer"""
         query = select(ResellerCustomer).where(
-            and_(ResellerCustomer.customer_id == customer_id, ResellerCustomer.relationship_status == "active")
+            and_(
+                ResellerCustomer.customer_id == customer_id,
+                ResellerCustomer.relationship_status == "active",
+            )
         )
         if self.tenant_id:
             query = query.where(ResellerCustomer.tenant_id == self.tenant_id)
@@ -307,9 +332,13 @@ class ResellerCustomerRepository(BaseRepository):
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def list_for_reseller(self, reseller_id: UUID, limit: int = 50, offset: int = 0) -> list[ResellerCustomer]:
+    async def list_for_reseller(
+        self, reseller_id: UUID, limit: int = 50, offset: int = 0
+    ) -> list[ResellerCustomer]:
         """List customers for a reseller"""
-        query = select(ResellerCustomer).where(ResellerCustomer.reseller_id == reseller_id)
+        query = select(ResellerCustomer).where(
+            ResellerCustomer.reseller_id == reseller_id
+        )
         if self.tenant_id:
             query = query.where(ResellerCustomer.tenant_id == self.tenant_id)
 
@@ -336,7 +365,9 @@ class ResellerOpportunityRepository(BaseRepository):
 
     async def get_by_id(self, opportunity_id: str) -> Optional[ResellerOpportunity]:
         """Get opportunity by ID"""
-        query = select(ResellerOpportunity).where(ResellerOpportunity.opportunity_id == opportunity_id)
+        query = select(ResellerOpportunity).where(
+            ResellerOpportunity.opportunity_id == opportunity_id
+        )
         if self.tenant_id:
             query = query.where(ResellerOpportunity.tenant_id == self.tenant_id)
 
@@ -344,10 +375,16 @@ class ResellerOpportunityRepository(BaseRepository):
         return result.scalar_one_or_none()
 
     async def list_for_reseller(
-        self, reseller_id: UUID, stage: Optional[str] = None, limit: int = 50, offset: int = 0
+        self,
+        reseller_id: UUID,
+        stage: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
     ) -> list[ResellerOpportunity]:
         """List opportunities for a reseller"""
-        query = select(ResellerOpportunity).where(ResellerOpportunity.reseller_id == reseller_id)
+        query = select(ResellerOpportunity).where(
+            ResellerOpportunity.reseller_id == reseller_id
+        )
 
         if stage:
             query = query.where(ResellerOpportunity.stage == stage)
@@ -397,7 +434,9 @@ class ResellerCommissionRepository(BaseRepository):
 
     async def get_by_id(self, commission_id: str) -> Optional[ResellerCommission]:
         """Get commission by ID"""
-        query = select(ResellerCommission).where(ResellerCommission.commission_id == commission_id)
+        query = select(ResellerCommission).where(
+            ResellerCommission.commission_id == commission_id
+        )
         if self.tenant_id:
             query = query.where(ResellerCommission.tenant_id == self.tenant_id)
 
@@ -409,7 +448,10 @@ class ResellerCommissionRepository(BaseRepository):
     ) -> list[ResellerCommission]:
         """List pending commissions for a reseller"""
         query = select(ResellerCommission).where(
-            and_(ResellerCommission.reseller_id == reseller_id, ResellerCommission.payment_status == "pending")
+            and_(
+                ResellerCommission.reseller_id == reseller_id,
+                ResellerCommission.payment_status == "pending",
+            )
         )
         if self.tenant_id:
             query = query.where(ResellerCommission.tenant_id == self.tenant_id)
@@ -421,7 +463,10 @@ class ResellerCommissionRepository(BaseRepository):
         return result.scalars().all()
 
     async def mark_paid(
-        self, commission_id: str, payment_reference: str, payment_method: str = "bank_transfer"
+        self,
+        commission_id: str,
+        payment_reference: str,
+        payment_method: str = "bank_transfer",
     ) -> Optional[ResellerCommission]:
         """Mark commission as paid"""
         commission = await self.get_by_id(commission_id)

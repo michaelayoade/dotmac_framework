@@ -74,7 +74,9 @@ class FastDeploymentOptimizer:
             await warmup_task
 
             # Monitor and optimize ongoing provisioning
-            asyncio.create_task(self._monitor_and_optimize_provisioning(workflow_id, start_time))
+            asyncio.create_task(
+                self._monitor_and_optimize_provisioning(workflow_id, start_time)
+            )
 
             logger.info(
                 f"Fast provisioning started for tenant {tenant_db_id}",
@@ -90,7 +92,9 @@ class FastDeploymentOptimizer:
     @standard_exception_handler
     async def _pre_warm_resources(self, tenant_db_id: int) -> None:
         """Pre-warm container images and database templates."""
-        async with TaskExecutionContext(task_name="pre_warm_resources", progress_callback=None) as ctx:
+        async with TaskExecutionContext(
+            task_name="pre_warm_resources", progress_callback=None
+        ) as ctx:
             await ctx.update_progress(10, "Starting resource pre-warming")
 
             # Pre-warm container images
@@ -114,13 +118,20 @@ class FastDeploymentOptimizer:
             await self.enhanced_provisioning.adapter_factory.get_deployment_adapter()
 
             # Pre-pull common images
-            images_to_warm = ["dotmac/isp-framework:latest", "postgres:15-alpine", "redis:7-alpine"]
+            images_to_warm = [
+                "dotmac/isp-framework:latest",
+                "postgres:15-alpine",
+                "redis:7-alpine",
+            ]
 
             for image in images_to_warm:
                 try:
                     # Pre-pull image (simulated - in production would call Docker API)
                     await asyncio.sleep(0.1)  # Simulate image pull
-                    self.image_cache[image] = {"pre_warmed_at": datetime.now(timezone.utc), "status": "ready"}
+                    self.image_cache[image] = {
+                        "pre_warmed_at": datetime.now(timezone.utc),
+                        "status": "ready",
+                    }
                     logger.debug(f"Pre-warmed container image: {image}")
                 except Exception as e:
                     logger.warning(f"Failed to pre-warm image {image}: {e}")
@@ -133,8 +144,18 @@ class FastDeploymentOptimizer:
                 template_config = {
                     "template_name": "tenant_template_v1",
                     "schema_version": "1.0.0",
-                    "tables": ["users", "customers", "services", "billing", "analytics"],
-                    "indexes": ["idx_customer_email", "idx_service_status", "idx_billing_date"],
+                    "tables": [
+                        "users",
+                        "customers",
+                        "services",
+                        "billing",
+                        "analytics",
+                    ],
+                    "indexes": [
+                        "idx_customer_email",
+                        "idx_service_status",
+                        "idx_billing_date",
+                    ],
                     "seed_data": True,
                 }
 
@@ -165,7 +186,9 @@ class FastDeploymentOptimizer:
         except Exception as e:
             logger.warning(f"Failed to pre-warm networking: {e}")
 
-    async def _monitor_and_optimize_provisioning(self, workflow_id: str, start_time: float) -> None:
+    async def _monitor_and_optimize_provisioning(
+        self, workflow_id: str, start_time: float
+    ) -> None:
         """Monitor provisioning progress and apply optimizations."""
         target_time = 240  # 4 minutes
         check_interval = 15  # Check every 15 seconds
@@ -175,7 +198,9 @@ class FastDeploymentOptimizer:
                 await asyncio.sleep(check_interval)
 
                 # Get current status from enhanced provisioning service
-                status = await self.enhanced_provisioning.get_provisioning_status(workflow_id)
+                status = await self.enhanced_provisioning.get_provisioning_status(
+                    workflow_id
+                )
                 if not status:
                     break
 
@@ -192,7 +217,11 @@ class FastDeploymentOptimizer:
                 if elapsed > target_time * 0.75 and progress < 75:
                     logger.warning(
                         "Provisioning may exceed 4-minute target",
-                        extra={"workflow_id": workflow_id, "elapsed": elapsed, "progress": progress},
+                        extra={
+                            "workflow_id": workflow_id,
+                            "elapsed": elapsed,
+                            "progress": progress,
+                        },
                     )
 
                 # Check if completed
@@ -202,7 +231,11 @@ class FastDeploymentOptimizer:
 
                     logger.info(
                         f"Fast provisioning {'completed' if success else 'failed'} in {final_time:.1f}s",
-                        extra={"workflow_id": workflow_id, "target_met": final_time <= target_time, "success": success},
+                        extra={
+                            "workflow_id": workflow_id,
+                            "target_met": final_time <= target_time,
+                            "success": success,
+                        },
                     )
                     break
 
@@ -219,7 +252,10 @@ class FastDeploymentOptimizer:
 
         Uses DRY principles to extend existing provisioning logic.
         """
-        from dotmac_shared.deployment.tenant_provisioning import TenantProvisioningRequest, TenantResourceCalculator
+        from dotmac_shared.deployment.tenant_provisioning import (
+            TenantProvisioningRequest,
+            TenantResourceCalculator,
+        )
 
         # Create provisioning request using existing models
         provisioning_request = TenantProvisioningRequest(
@@ -238,13 +274,19 @@ class FastDeploymentOptimizer:
         )
 
         # Use existing resource calculator
-        resource_limits = TenantResourceCalculator.calculate_resources(provisioning_request)
+        resource_limits = TenantResourceCalculator.calculate_resources(
+            provisioning_request
+        )
 
         # Enhance for fast deployment
         if self.enhanced_provisioning.provisioning_config.get("fast_deployment"):
             # Optimize resource allocation for speed
-            resource_limits.cpu_limit = self._optimize_cpu_for_speed(resource_limits.cpu_limit)
-            resource_limits.memory_limit = self._optimize_memory_for_speed(resource_limits.memory_limit)
+            resource_limits.cpu_limit = self._optimize_cpu_for_speed(
+                resource_limits.cpu_limit
+            )
+            resource_limits.memory_limit = self._optimize_memory_for_speed(
+                resource_limits.memory_limit
+            )
 
         # Use existing tenant engine for provisioning
         await self.tenant_engine.provision_tenant(provisioning_request)

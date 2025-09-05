@@ -112,9 +112,13 @@ class UserOverview(BaseModel):
 class SystemComponentHealth(BaseModel):
     """System component health schema."""
 
-    status: str = Field(..., description="Component status (healthy, degraded, unhealthy)")
+    status: str = Field(
+        ..., description="Component status (healthy, degraded, unhealthy)"
+    )
     last_checked: datetime = Field(..., description="Last health check timestamp")
-    response_time_ms: Optional[float] = Field(None, description="Response time in milliseconds")
+    response_time_ms: Optional[float] = Field(
+        None, description="Response time in milliseconds"
+    )
     error: Optional[str] = Field(None, description="Error message if unhealthy")
     metrics: Optional[dict[str, Any]] = Field(None, description="Additional metrics")
 
@@ -124,7 +128,9 @@ class SystemHealth(BaseModel):
 
     overall_status: str = Field(..., description="Overall system status")
     timestamp: datetime = Field(..., description="Health check timestamp")
-    components: dict[str, SystemComponentHealth] = Field(..., description="Component health status")
+    components: dict[str, SystemComponentHealth] = Field(
+        ..., description="Component health status"
+    )
     metrics: Optional[dict[str, Any]] = Field(None, description="System-wide metrics")
 
 
@@ -137,7 +143,9 @@ class UserActivity(BaseModel):
     timestamp: datetime = Field(..., description="Activity timestamp")
     ip_address: Optional[str] = Field(None, description="IP address")
     user_agent: Optional[str] = Field(None, description="User agent")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional activity data")
+    metadata: Optional[dict[str, Any]] = Field(
+        None, description="Additional activity data"
+    )
 
 
 class RevenueMetrics(BaseModel):
@@ -147,7 +155,9 @@ class RevenueMetrics(BaseModel):
     revenue: float = Field(..., description="Revenue amount")
     payment_count: int = Field(..., description="Number of payments")
     average_payment: float = Field(..., description="Average payment amount")
-    growth_rate: Optional[float] = Field(None, description="Growth rate from previous period")
+    growth_rate: Optional[float] = Field(
+        None, description="Growth rate from previous period"
+    )
 
 
 class InfrastructureMetrics(BaseModel):
@@ -169,7 +179,9 @@ class NotificationMetrics(BaseModel):
     delivered: int = Field(..., description="Successfully delivered")
     failed: int = Field(..., description="Failed deliveries")
     delivery_rate: float = Field(..., description="Delivery success rate")
-    average_response_time: float = Field(..., description="Average delivery time in seconds")
+    average_response_time: float = Field(
+        ..., description="Average delivery time in seconds"
+    )
 
 
 class ActivityLog(BaseModel):
@@ -194,7 +206,9 @@ class TenantActionRequest(BaseModel):
     """Tenant action request schema."""
 
     reason: Optional[str] = Field(None, description="Reason for the action")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional action data")
+    metadata: Optional[dict[str, Any]] = Field(
+        None, description="Additional action data"
+    )
 
 
 class TenantActionResponse(BaseModel):
@@ -205,7 +219,9 @@ class TenantActionResponse(BaseModel):
     status: str = Field(..., description="Action status")
     timestamp: datetime = Field(..., description="Action timestamp")
     performed_by: str = Field(..., description="Admin user who performed the action")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional response data")
+    metadata: Optional[dict[str, Any]] = Field(
+        None, description="Additional response data"
+    )
 
 
 class SystemMetrics(BaseModel):
@@ -214,7 +230,9 @@ class SystemMetrics(BaseModel):
     cpu_usage_percentage: float = Field(..., description="CPU usage percentage")
     memory_usage_percentage: float = Field(..., description="Memory usage percentage")
     disk_usage_percentage: float = Field(..., description="Disk usage percentage")
-    network_throughput_mbps: float = Field(..., description="Network throughput in Mbps")
+    network_throughput_mbps: float = Field(
+        ..., description="Network throughput in Mbps"
+    )
     active_connections: int = Field(..., description="Number of active connections")
     request_rate_per_second: float = Field(..., description="Request rate per second")
     error_rate_percentage: float = Field(..., description="Error rate percentage")
@@ -232,7 +250,9 @@ class AlertConfiguration(BaseModel):
     severity: str = Field(..., description="Alert severity")
     is_active: bool = Field(default=True, description="Whether alert is active")
     notification_channels: list[str] = Field(..., description="Notification channels")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional alert data")
+    metadata: Optional[dict[str, Any]] = Field(
+        None, description="Additional alert data"
+    )
 
 
 class Alert(AlertConfiguration, BaseSchema):
@@ -246,12 +266,16 @@ class AlertHistory(BaseModel):
 
     alert_id: UUID = Field(..., description="Alert identifier")
     triggered_at: datetime = Field(..., description="Alert trigger timestamp")
-    resolved_at: Optional[datetime] = Field(None, description="Alert resolution timestamp")
+    resolved_at: Optional[datetime] = Field(
+        None, description="Alert resolution timestamp"
+    )
     severity: str = Field(..., description="Alert severity")
     message: str = Field(..., description="Alert message")
     value: float = Field(..., description="Metric value that triggered alert")
     threshold: float = Field(..., description="Alert threshold")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional alert data")
+    metadata: Optional[dict[str, Any]] = Field(
+        None, description="Additional alert data"
+    )
 
 
 class MaintenanceWindow(BaseModel):
@@ -265,8 +289,12 @@ class MaintenanceWindow(BaseModel):
     affected_services: list[str] = Field(..., description="Affected services")
     status: str = Field(..., description="Maintenance status")
     created_by: str = Field(..., description="User who created the maintenance")
-    notifications_sent: bool = Field(default=False, description="Whether notifications were sent")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional maintenance data")
+    notifications_sent: bool = Field(
+        default=False, description="Whether notifications were sent"
+    )
+    metadata: Optional[dict[str, Any]] = Field(
+        None, description="Additional maintenance data"
+    )
 
 
 class BackupStatus(BaseModel):
@@ -280,7 +308,9 @@ class BackupStatus(BaseModel):
     size_bytes: Optional[int] = Field(None, description="Backup size in bytes")
     location: str = Field(..., description="Backup storage location")
     retention_days: int = Field(..., description="Backup retention period")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional backup data")
+    metadata: Optional[dict[str, Any]] = Field(
+        None, description="Additional backup data"
+    )
 
 
 class SecurityEvent(BaseModel):
@@ -295,7 +325,9 @@ class SecurityEvent(BaseModel):
     tenant_id: Optional[UUID] = Field(None, description="Associated tenant")
     description: str = Field(..., description="Event description")
     action_taken: Optional[str] = Field(None, description="Action taken in response")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional event data")
+    metadata: Optional[dict[str, Any]] = Field(
+        None, description="Additional event data"
+    )
 
 
 class PerformanceMetrics(BaseModel):
@@ -307,10 +339,14 @@ class PerformanceMetrics(BaseModel):
     response_time_ms: float = Field(..., description="Response time in milliseconds")
     status_code: int = Field(..., description="HTTP status code")
     request_size_bytes: Optional[int] = Field(None, description="Request size in bytes")
-    response_size_bytes: Optional[int] = Field(None, description="Response size in bytes")
+    response_size_bytes: Optional[int] = Field(
+        None, description="Response size in bytes"
+    )
     user_id: Optional[UUID] = Field(None, description="User making the request")
     tenant_id: Optional[UUID] = Field(None, description="Associated tenant")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional metrics data")
+    metadata: Optional[dict[str, Any]] = Field(
+        None, description="Additional metrics data"
+    )
 
 
 class ConfigurationChange(BaseModel):
@@ -324,5 +360,9 @@ class ConfigurationChange(BaseModel):
     changed_by: str = Field(..., description="User who made the change")
     timestamp: datetime = Field(..., description="Change timestamp")
     approved_by: Optional[str] = Field(None, description="User who approved the change")
-    rollback_available: bool = Field(default=True, description="Whether rollback is available")
-    metadata: Optional[dict[str, Any]] = Field(None, description="Additional change data")
+    rollback_available: bool = Field(
+        default=True, description="Whether rollback is available"
+    )
+    metadata: Optional[dict[str, Any]] = Field(
+        None, description="Additional change data"
+    )

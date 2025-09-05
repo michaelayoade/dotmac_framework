@@ -5,6 +5,9 @@ System monitoring endpoints using RouterFactory patterns.
 
 from typing import Any
 
+from fastapi import Depends, Query
+from pydantic import BaseModel, Field
+
 from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
@@ -12,8 +15,6 @@ from dotmac_shared.api.dependencies import (
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import Depends, Query
-from pydantic import BaseModel, Field
 
 # === Monitoring Schemas ===
 

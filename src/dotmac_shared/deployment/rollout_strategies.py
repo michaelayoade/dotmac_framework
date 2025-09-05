@@ -71,7 +71,9 @@ class RolloutConfig:
     strategy: RolloutStrategy
     service_name: str
     deployment_spec: DeploymentSpec
-    phases: list[int] = field(default_factory=lambda: [10, 25, 50, 100])  # Traffic percentages
+    phases: list[int] = field(
+        default_factory=lambda: [10, 25, 50, 100]
+    )  # Traffic percentages
     phase_duration_minutes: int = 15
     validation_duration_minutes: int = 5
     metrics_thresholds: RolloutMetrics = field(default_factory=RolloutMetrics)
@@ -94,7 +96,9 @@ class RolloutState:
     phase_index: int
     start_time: datetime
     phase_start_time: Optional[datetime] = None
-    deployment_ids: dict[str, str] = field(default_factory=dict)  # version -> deployment_id
+    deployment_ids: dict[str, str] = field(
+        default_factory=dict
+    )  # version -> deployment_id
     metrics_history: list[dict[str, Any]] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     rollback_reason: Optional[str] = None
@@ -104,7 +108,9 @@ class MetricsCollector(ABC):
     """Abstract base class for collecting rollout metrics."""
 
     @abstractmethod
-    async def collect_metrics(self, service_name: str, version: str, duration_minutes: int) -> dict[str, float]:
+    async def collect_metrics(
+        self, service_name: str, version: str, duration_minutes: int
+    ) -> dict[str, float]:
         """Collect metrics for a service version."""
         pass
 
@@ -117,7 +123,9 @@ class PrometheusMetricsCollector(MetricsCollector):
         self.monitoring = monitoring
         self.logger = logging.getLogger(__name__)
 
-    async def collect_metrics(self, service_name: str, version: str, duration_minutes: int) -> dict[str, float]:
+    async def collect_metrics(
+        self, service_name: str, version: str, duration_minutes: int
+    ) -> dict[str, float]:
         """Collect metrics from Prometheus."""
         try:
             import aiohttp
@@ -151,11 +159,15 @@ class PrometheusMetricsCollector(MetricsCollector):
                 ),
             }
 
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as session:
                 for metric_name, query in queries.items():
                     try:
                         params = {"query": query}
-                        async with session.get(f"{self.prometheus_url}/api/v1/query", params=params) as response:
+                        async with session.get(
+                            f"{self.prometheus_url}/api/v1/query", params=params
+                        ) as response:
                             if response.status == 200:
                                 data = await response.json()
                                 result = data.get("data", {}).get("result", [])
@@ -164,7 +176,9 @@ class PrometheusMetricsCollector(MetricsCollector):
                                 else:
                                     metrics[metric_name] = 0.0
                             else:
-                                self.logger.warning(f"Failed to query {metric_name}: HTTP {response.status}")
+                                self.logger.warning(
+                                    f"Failed to query {metric_name}: HTTP {response.status}"
+                                )
                                 metrics[metric_name] = 0.0
                     except Exception as e:
                         self.logger.error(f"Error collecting {metric_name}: {str(e)}")
@@ -181,7 +195,9 @@ class TrafficManager(ABC):
     """Abstract base class for managing traffic splits."""
 
     @abstractmethod
-    async def set_traffic_split(self, service_name: str, version_weights: dict[str, int]):
+    async def set_traffic_split(
+        self, service_name: str, version_weights: dict[str, int]
+    ):
         """Set traffic split between service versions."""
         pass
 
@@ -198,20 +214,31 @@ class IstioTrafficManager(TrafficManager):
         self.namespace = namespace
         self.logger = logging.getLogger(__name__)
 
-    async def set_traffic_split(self, service_name: str, version_weights: dict[str, int]):
+    async def set_traffic_split(
+        self, service_name: str, version_weights: dict[str, int]
+    ):
         """Set traffic split using Istio VirtualService."""
         try:
             # Generate Istio VirtualService manifest
             virtual_service = {
                 "apiVersion": "networking.istio.io/v1beta1",
                 "kind": "VirtualService",
-                "metadata": {"name": f"{service_name}-traffic-split", "namespace": self.namespace},
+                "metadata": {
+                    "name": f"{service_name}-traffic-split",
+                    "namespace": self.namespace,
+                },
                 "spec": {
                     "hosts": [service_name],
                     "http": [
                         {
                             "route": [
-                                {"destination": {"host": service_name, "subset": version}, "weight": weight}
+                                {
+                                    "destination": {
+                                        "host": service_name,
+                                        "subset": version,
+                                    },
+                                    "weight": weight,
+                                }
                                 for version, weight in version_weights.items()
                             ]
                         }
@@ -224,7 +251,9 @@ class IstioTrafficManager(TrafficManager):
 
             import yaml
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".yaml", delete=False
+            ) as f:
                 yaml.dump(virtual_service, f)
                 manifest_file = f.name
 
@@ -238,7 +267,9 @@ class IstioTrafficManager(TrafficManager):
                 if process.returncode != 0:
                     raise Exception(f"kubectl failed: {stderr.decode()}")
 
-                self.logger.info(f"Traffic split applied for {service_name}: {version_weights}")
+                self.logger.info(
+                    f"Traffic split applied for {service_name}: {version_weights}"
+                )
 
             finally:
                 import os
@@ -246,7 +277,9 @@ class IstioTrafficManager(TrafficManager):
                 os.unlink(manifest_file)
 
         except Exception as e:
-            self.logger.error(f"Failed to set traffic split for {service_name}: {str(e)}")
+            self.logger.error(
+                f"Failed to set traffic split for {service_name}: {str(e)}"
+            )
             raise
 
     async def get_current_split(self, service_name: str) -> dict[str, int]:
@@ -286,7 +319,9 @@ class IstioTrafficManager(TrafficManager):
             return splits
 
         except Exception as e:
-            self.logger.error(f"Failed to get current split for {service_name}: {str(e)}")
+            self.logger.error(
+                f"Failed to get current split for {service_name}: {str(e)}"
+            )
             return {}
 
 
@@ -294,7 +329,9 @@ class FeatureFlagManager(ABC):
     """Abstract base class for feature flag management."""
 
     @abstractmethod
-    async def enable_flag(self, flag_name: str, percentage: int, filters: Optional[dict[str, Any]] = None):
+    async def enable_flag(
+        self, flag_name: str, percentage: int, filters: Optional[dict[str, Any]] = None
+    ):
         """Enable feature flag for specified percentage of users."""
         pass
 
@@ -318,13 +355,18 @@ class LaunchDarklyFeatureFlagManager(FeatureFlagManager):
         self.environment_key = environment_key
         self.logger = logging.getLogger(__name__)
 
-    async def enable_flag(self, flag_name: str, percentage: int, filters: Optional[dict[str, Any]] = None):
+    async def enable_flag(
+        self, flag_name: str, percentage: int, filters: Optional[dict[str, Any]] = None
+    ):
         """Enable feature flag via LaunchDarkly API."""
         try:
             import aiohttp
 
             url = f"https://app.launchdarkly.com/api/v2/flags/{self.project_key}/{flag_name}"
-            headers = {"Authorization": self.api_token, "Content-Type": "application/json"}
+            headers = {
+                "Authorization": self.api_token,
+                "Content-Type": "application/json",
+            }
 
             # Construct flag update payload
             payload = {
@@ -336,7 +378,10 @@ class LaunchDarklyFeatureFlagManager(FeatureFlagManager):
                                 "variation": 1,  # Enabled variation
                                 "rollout": {
                                     "variations": [
-                                        {"variation": 0, "weight": 100000 - (percentage * 1000)},
+                                        {
+                                            "variation": 0,
+                                            "weight": 100000 - (percentage * 1000),
+                                        },
                                         {"variation": 1, "weight": percentage * 1000},
                                     ]
                                 },
@@ -346,10 +391,16 @@ class LaunchDarklyFeatureFlagManager(FeatureFlagManager):
                 }
             }
 
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                async with session.patch(url, json=payload, headers=headers) as response:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as session:
+                async with session.patch(
+                    url, json=payload, headers=headers
+                ) as response:
                     if response.status == 200:
-                        self.logger.info(f"Feature flag {flag_name} enabled at {percentage}%")
+                        self.logger.info(
+                            f"Feature flag {flag_name} enabled at {percentage}%"
+                        )
                     else:
                         raise Exception(f"API request failed: HTTP {response.status}")
 
@@ -363,12 +414,19 @@ class LaunchDarklyFeatureFlagManager(FeatureFlagManager):
             import aiohttp
 
             url = f"https://app.launchdarkly.com/api/v2/flags/{self.project_key}/{flag_name}"
-            headers = {"Authorization": self.api_token, "Content-Type": "application/json"}
+            headers = {
+                "Authorization": self.api_token,
+                "Content-Type": "application/json",
+            }
 
             payload = {"environments": {self.environment_key: {"on": False}}}
 
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                async with session.patch(url, json=payload, headers=headers) as response:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as session:
+                async with session.patch(
+                    url, json=payload, headers=headers
+                ) as response:
                     if response.status == 200:
                         self.logger.info(f"Feature flag {flag_name} disabled")
                     else:
@@ -394,7 +452,9 @@ class LaunchDarklyFeatureFlagManager(FeatureFlagManager):
                         raise Exception(f"API request failed: HTTP {response.status}")
 
         except Exception as e:
-            self.logger.error(f"Failed to get feature flag status {flag_name}: {str(e)}")
+            self.logger.error(
+                f"Failed to get feature flag status {flag_name}: {str(e)}"
+            )
             return {}
 
 
@@ -475,7 +535,9 @@ class RolloutOrchestrator:
     async def _execute_rollout(self, state: RolloutState):
         """Execute the complete rollout process."""
         try:
-            with self.monitoring.create_span("rollout_execution", state.config.service_name) as span:
+            with self.monitoring.create_span(
+                "rollout_execution", state.config.service_name
+            ) as span:
                 span.set_tag("rollout_id", state.rollout_id)
                 span.set_tag("strategy", state.config.strategy)
 
@@ -501,7 +563,11 @@ class RolloutOrchestrator:
                 self.monitoring.record_histogram(
                     "rollout_duration_seconds",
                     duration,
-                    {"service": state.config.service_name, "strategy": state.config.strategy, "status": "success"},
+                    {
+                        "service": state.config.service_name,
+                        "strategy": state.config.strategy,
+                        "status": "success",
+                    },
                 )
 
                 self.logger.info(f"Rollout {state.rollout_id} completed successfully")
@@ -517,14 +583,20 @@ class RolloutOrchestrator:
                 try:
                     await self._rollback_rollout(state)
                 except Exception as rollback_error:
-                    self.logger.error(f"Rollback failed for {state.rollout_id}: {str(rollback_error)}")
+                    self.logger.error(
+                        f"Rollback failed for {state.rollout_id}: {str(rollback_error)}"
+                    )
 
             # Record failure metrics
             duration = (datetime.now() - state.start_time).total_seconds()
             self.monitoring.record_histogram(
                 "rollout_duration_seconds",
                 duration,
-                {"service": state.config.service_name, "strategy": state.config.strategy, "status": "failure"},
+                {
+                    "service": state.config.service_name,
+                    "strategy": state.config.strategy,
+                    "status": "failure",
+                },
             )
 
         finally:
@@ -538,12 +610,16 @@ class RolloutOrchestrator:
 
         try:
             # Deploy new version
-            new_deployment = await self.deployment.deploy_service(state.config.deployment_spec)
+            new_deployment = await self.deployment.deploy_service(
+                state.config.deployment_spec
+            )
 
             new_version = f"v{state.config.deployment_spec.tag}"
             state.deployment_ids[new_version] = new_deployment.deployment_id
 
-            self.logger.info(f"Deployed new version {new_version} for rollout {state.rollout_id}")
+            self.logger.info(
+                f"Deployed new version {new_version} for rollout {state.rollout_id}"
+            )
 
         except Exception as e:
             raise Exception(f"Failed to deploy new version: {str(e)}") from e
@@ -556,7 +632,9 @@ class RolloutOrchestrator:
             state.phase_start_time = datetime.now()
             state.current_phase = RolloutPhase.MONITORING
 
-            self.logger.info(f"Rollout {state.rollout_id} phase {phase_index + 1}: {target_percentage}% traffic")
+            self.logger.info(
+                f"Rollout {state.rollout_id} phase {phase_index + 1}: {target_percentage}% traffic"
+            )
 
             # Update traffic split
             if self.traffic_manager:
@@ -582,14 +660,18 @@ class RolloutOrchestrator:
         state.phase_start_time = datetime.now()
         state.current_phase = RolloutPhase.MONITORING
 
-        self.logger.info(f"Rollout {state.rollout_id} canary phase: {canary_percentage}% traffic")
+        self.logger.info(
+            f"Rollout {state.rollout_id} canary phase: {canary_percentage}% traffic"
+        )
 
         # Update traffic split
         if self.traffic_manager:
             await self._update_traffic_split(state, canary_percentage)
 
         # Extended monitoring for canary
-        monitoring_duration = state.config.phase_duration_minutes * 2  # Double the monitoring time
+        monitoring_duration = (
+            state.config.phase_duration_minutes * 2
+        )  # Double the monitoring time
         for _ in range(monitoring_duration):
             await asyncio.sleep(60)  # Check every minute
 
@@ -676,7 +758,9 @@ class RolloutOrchestrator:
             if not await self._validate_phase_metrics(state):
                 # Disable flag and rollback
                 await self.feature_flag_manager.disable_flag(flag_name)
-                raise Exception(f"Feature flag phase {phase_index + 1} validation failed")
+                raise Exception(
+                    f"Feature flag phase {phase_index + 1} validation failed"
+                )
 
             # Wait for phase duration
             if phase_index < len(state.config.phases) - 1:
@@ -691,9 +775,13 @@ class RolloutOrchestrator:
 
         version_weights = {"old": old_percentage, "new": new_percentage}
 
-        await self.traffic_manager.set_traffic_split(state.config.service_name, version_weights)
+        await self.traffic_manager.set_traffic_split(
+            state.config.service_name, version_weights
+        )
 
-        self.logger.info(f"Updated traffic split for {state.config.service_name}: {version_weights}")
+        self.logger.info(
+            f"Updated traffic split for {state.config.service_name}: {version_weights}"
+        )
 
     async def _monitor_phase(self, state: RolloutState):
         """Monitor current rollout phase."""
@@ -730,14 +818,18 @@ class RolloutOrchestrator:
 
             # Collect metrics for new version
             new_metrics = await self.metrics_collector.collect_metrics(
-                state.config.service_name, new_version, state.config.validation_duration_minutes
+                state.config.service_name,
+                new_version,
+                state.config.validation_duration_minutes,
             )
 
             # Also collect metrics for old version if traffic is split
             old_metrics = {}
             if state.current_traffic_percentage < 100:
                 old_metrics = await self.metrics_collector.collect_metrics(
-                    state.config.service_name, "old", state.config.validation_duration_minutes
+                    state.config.service_name,
+                    "old",
+                    state.config.validation_duration_minutes,
                 )
 
             return {
@@ -773,7 +865,10 @@ class RolloutOrchestrator:
 
             # Validate response time
             if "response_time_p95" in new_version_metrics:
-                if new_version_metrics["response_time_p95"] > thresholds.response_time_p95_threshold:
+                if (
+                    new_version_metrics["response_time_p95"]
+                    > thresholds.response_time_p95_threshold
+                ):
                     self.logger.error(
                         f"Response time too high: {new_version_metrics['response_time_p95']} > {thresholds.response_time_p95_threshold}"
                     )
@@ -781,7 +876,10 @@ class RolloutOrchestrator:
 
             # Validate success rate
             if "success_rate" in new_version_metrics:
-                if new_version_metrics["success_rate"] < thresholds.success_rate_threshold:
+                if (
+                    new_version_metrics["success_rate"]
+                    < thresholds.success_rate_threshold
+                ):
                     self.logger.error(
                         f"Success rate too low: {new_version_metrics['success_rate']} < {thresholds.success_rate_threshold}"
                     )
@@ -815,7 +913,9 @@ class RolloutOrchestrator:
             return True
 
         except Exception as e:
-            self.logger.error(f"Validation error for rollout {state.rollout_id}: {str(e)}")
+            self.logger.error(
+                f"Validation error for rollout {state.rollout_id}: {str(e)}"
+            )
             return False
 
     async def _validate_deployment(self, state: RolloutState) -> bool:
@@ -828,8 +928,13 @@ class RolloutOrchestrator:
                 return False
 
             # Check deployment status
-            deployment_result = await self.deployment.get_deployment_status(deployment_id)
-            if not deployment_result or deployment_result.status != DeploymentStatus.SUCCEEDED:
+            deployment_result = await self.deployment.get_deployment_status(
+                deployment_id
+            )
+            if (
+                not deployment_result
+                or deployment_result.status != DeploymentStatus.SUCCEEDED
+            ):
                 return False
 
             # Run health checks
@@ -839,9 +944,12 @@ class RolloutOrchestrator:
                         if health_check.type.value == "http":
                             import aiohttp
 
-                            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+                            async with aiohttp.ClientSession(
+                                timeout=aiohttp.ClientTimeout(total=30)
+                            ) as session:
                                 async with session.get(
-                                    health_check.endpoint, timeout=health_check.timeout_seconds
+                                    health_check.endpoint,
+                                    timeout=health_check.timeout_seconds,
                                 ) as response:
                                     if response.status != health_check.expected_status:
                                         return False
@@ -877,18 +985,25 @@ class RolloutOrchestrator:
                 return "old"
 
             # Compare key metrics
-            new_avg_error_rate = sum(m.get("error_rate", 0) for m in new_version_metrics) / len(new_version_metrics)
-            old_avg_error_rate = sum(m.get("error_rate", 0) for m in old_version_metrics) / len(old_version_metrics)
+            new_avg_error_rate = sum(
+                m.get("error_rate", 0) for m in new_version_metrics
+            ) / len(new_version_metrics)
+            old_avg_error_rate = sum(
+                m.get("error_rate", 0) for m in old_version_metrics
+            ) / len(old_version_metrics)
 
-            new_avg_response_time = sum(m.get("response_time_p95", 0) for m in new_version_metrics) / len(
-                new_version_metrics
-            )
-            old_avg_response_time = sum(m.get("response_time_p95", 0) for m in old_version_metrics) / len(
-                old_version_metrics
-            )
+            new_avg_response_time = sum(
+                m.get("response_time_p95", 0) for m in new_version_metrics
+            ) / len(new_version_metrics)
+            old_avg_response_time = sum(
+                m.get("response_time_p95", 0) for m in old_version_metrics
+            ) / len(old_version_metrics)
 
             # Simple scoring: new version wins if it has lower error rate AND lower response time
-            if new_avg_error_rate < old_avg_error_rate and new_avg_response_time < old_avg_response_time:
+            if (
+                new_avg_error_rate < old_avg_error_rate
+                and new_avg_response_time < old_avg_response_time
+            ):
                 self.logger.info(
                     f"A/B test winner: new version (error_rate: {new_avg_error_rate:.4f} vs {old_avg_error_rate:.4f}, response_time: {new_avg_response_time:.2f} vs {old_avg_response_time:.2f})"
                 )
@@ -912,10 +1027,15 @@ class RolloutOrchestrator:
 
             # Revert traffic to old version
             if self.traffic_manager:
-                await self.traffic_manager.set_traffic_split(state.config.service_name, {"old": 100, "new": 0})
+                await self.traffic_manager.set_traffic_split(
+                    state.config.service_name, {"old": 100, "new": 0}
+                )
 
             # Disable feature flags if used
-            if state.config.strategy == RolloutStrategy.FEATURE_FLAG and self.feature_flag_manager:
+            if (
+                state.config.strategy == RolloutStrategy.FEATURE_FLAG
+                and self.feature_flag_manager
+            ):
                 flag_name = f"{state.config.service_name}_rollout"
                 await self.feature_flag_manager.disable_flag(flag_name)
 
@@ -932,7 +1052,9 @@ class RolloutOrchestrator:
             self.logger.info(f"Rollback completed for rollout {state.rollout_id}")
 
         except Exception as e:
-            self.logger.error(f"Rollback failed for rollout {state.rollout_id}: {str(e)}")
+            self.logger.error(
+                f"Rollback failed for rollout {state.rollout_id}: {str(e)}"
+            )
             raise
 
 
@@ -989,6 +1111,10 @@ async def setup_advanced_rollout(
     factory = RolloutFactory()
 
     if use_istio:
-        return factory.create_istio_integrated_rollout(deployment, monitoring, prometheus_url, namespace)
+        return factory.create_istio_integrated_rollout(
+            deployment, monitoring, prometheus_url, namespace
+        )
     else:
-        return factory.create_prometheus_based_rollout(deployment, monitoring, prometheus_url)
+        return factory.create_prometheus_based_rollout(
+            deployment, monitoring, prometheus_url
+        )

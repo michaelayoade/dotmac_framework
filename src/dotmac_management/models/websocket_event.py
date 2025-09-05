@@ -3,12 +3,14 @@
 from datetime import datetime, timezone
 from enum import Enum
 
-from dotmac.database.base import AuditableMixin, TenantModel
-from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Column, DateTime
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Index, Integer, String, Text
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+from dotmac.database.base import AuditableMixin, TenantModel
 
 
 class EventType(str, Enum):
@@ -105,7 +107,9 @@ class WebSocketEvent(TenantModel, AuditableMixin):
     # Event identification
     event_id = Column(String(100), nullable=False, unique=True, index=True)
     event_type = Column(SQLEnum(EventType), nullable=False, index=True)
-    event_category = Column(String(50), nullable=False, index=True)  # system, billing, network, etc.
+    event_category = Column(
+        String(50), nullable=False, index=True
+    )  # system, billing, network, etc.
 
     # Event content
     title = Column(String(200), nullable=False)
@@ -114,18 +118,29 @@ class WebSocketEvent(TenantModel, AuditableMixin):
     metadata = Column(JSON, nullable=True)
 
     # Event properties
-    priority = Column(SQLEnum(EventPriority), default=EventPriority.NORMAL, nullable=False, index=True)
-    is_persistent = Column(Boolean, default=False, nullable=False)  # Store for offline users
+    priority = Column(
+        SQLEnum(EventPriority), default=EventPriority.NORMAL, nullable=False, index=True
+    )
+    is_persistent = Column(
+        Boolean, default=False, nullable=False
+    )  # Store for offline users
     requires_acknowledgment = Column(Boolean, default=False, nullable=False)
 
     # Targeting
     target_user_id = Column(String(100), nullable=True, index=True)
-    target_user_ids = Column(JSON, nullable=True)  # List of user IDs for multi-user events
+    target_user_ids = Column(
+        JSON, nullable=True
+    )  # List of user IDs for multi-user events
     target_roles = Column(JSON, nullable=True)  # List of roles
     broadcast_to_tenant = Column(Boolean, default=False, nullable=False)
 
     # Delivery tracking
-    delivery_status = Column(SQLEnum(DeliveryStatus), default=DeliveryStatus.PENDING, nullable=False, index=True)
+    delivery_status = Column(
+        SQLEnum(DeliveryStatus),
+        default=DeliveryStatus.PENDING,
+        nullable=False,
+        index=True,
+    )
     delivery_attempts = Column(Integer, default=0, nullable=False)
     max_delivery_attempts = Column(Integer, default=3, nullable=False)
     last_delivery_attempt = Column(DateTime, nullable=True)
@@ -153,14 +168,23 @@ class WebSocketEvent(TenantModel, AuditableMixin):
     custom_fields = Column(JSON, nullable=True)
 
     # Relationships
-    deliveries = relationship("WebSocketDelivery", back_populates="event", cascade="all, delete-orphan")
+    deliveries = relationship(
+        "WebSocketDelivery", back_populates="event", cascade="all, delete-orphan"
+    )
     subscriptions = relationship("WebSocketSubscription", back_populates="event")
 
     __table_args__ = (
         Index("ix_websocket_events_type_priority", "event_type", "priority"),
-        Index("ix_websocket_events_delivery_status", "delivery_status", "scheduled_for"),
+        Index(
+            "ix_websocket_events_delivery_status", "delivery_status", "scheduled_for"
+        ),
         Index("ix_websocket_events_tenant_user", "tenant_id", "target_user_id"),
-        Index("ix_websocket_events_source", "source_service", "source_entity_type", "source_entity_id"),
+        Index(
+            "ix_websocket_events_source",
+            "source_service",
+            "source_entity_type",
+            "source_entity_id",
+        ),
         Index("ix_websocket_events_expires", "expires_at"),
         Index("ix_websocket_events_scheduled", "scheduled_for"),
     )
@@ -213,7 +237,9 @@ class WebSocketConnection(TenantModel):
     origin = Column(String(200), nullable=True)
 
     # Connection lifecycle
-    connected_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), index=True)
+    connected_at = Column(
+        DateTime(timezone=True), nullable=False, default=func.now(), index=True
+    )
     last_ping = Column(DateTime(timezone=True), nullable=True)
     last_activity = Column(DateTime(timezone=True), nullable=True)
     disconnected_at = Column(DateTime, nullable=True, index=True)
@@ -278,7 +304,12 @@ class WebSocketSubscription(TenantModel, AuditableMixin):
     __tablename__ = "websocket_subscriptions"
 
     # Subscription identification
-    connection_id = Column(String(100), ForeignKey("websocket_connections.connection_id"), nullable=False, index=True)
+    connection_id = Column(
+        String(100),
+        ForeignKey("websocket_connections.connection_id"),
+        nullable=False,
+        index=True,
+    )
     subscription_name = Column(String(100), nullable=False, index=True)
     subscription_type = Column(SQLEnum(SubscriptionType), nullable=False, index=True)
 
@@ -309,7 +340,12 @@ class WebSocketSubscription(TenantModel, AuditableMixin):
 
     __table_args__ = (
         Index("ix_websocket_subscriptions_user_type", "user_id", "subscription_type"),
-        Index("ix_websocket_subscriptions_connection_name", "connection_id", "subscription_name", unique=True),
+        Index(
+            "ix_websocket_subscriptions_connection_name",
+            "connection_id",
+            "subscription_name",
+            unique=True,
+        ),
         Index("ix_websocket_subscriptions_active", "is_active", "subscribed_at"),
         Index("ix_websocket_subscriptions_event_types", "event_types"),
     )
@@ -346,8 +382,15 @@ class WebSocketDelivery(TenantModel):
     __tablename__ = "websocket_deliveries"
 
     # Delivery identification
-    event_id = Column(String(100), ForeignKey("websocket_events.event_id"), nullable=False, index=True)
-    connection_id = Column(String(100), ForeignKey("websocket_connections.connection_id"), nullable=False, index=True)
+    event_id = Column(
+        String(100), ForeignKey("websocket_events.event_id"), nullable=False, index=True
+    )
+    connection_id = Column(
+        String(100),
+        ForeignKey("websocket_connections.connection_id"),
+        nullable=False,
+        index=True,
+    )
     delivery_id = Column(String(100), nullable=False, unique=True, index=True)
 
     # Delivery details
@@ -357,7 +400,12 @@ class WebSocketDelivery(TenantModel):
     acknowledged_at = Column(DateTime, nullable=True, index=True)
 
     # Delivery status
-    status = Column(SQLEnum(DeliveryStatus), default=DeliveryStatus.PENDING, nullable=False, index=True)
+    status = Column(
+        SQLEnum(DeliveryStatus),
+        default=DeliveryStatus.PENDING,
+        nullable=False,
+        index=True,
+    )
     attempt_count = Column(Integer, default=1, nullable=False)
 
     # Delivery metrics
@@ -381,7 +429,12 @@ class WebSocketDelivery(TenantModel):
     connection = relationship("WebSocketConnection", back_populates="deliveries")
 
     __table_args__ = (
-        Index("ix_websocket_deliveries_event_connection", "event_id", "connection_id", unique=True),
+        Index(
+            "ix_websocket_deliveries_event_connection",
+            "event_id",
+            "connection_id",
+            unique=True,
+        ),
         Index("ix_websocket_deliveries_user_status", "user_id", "status"),
         Index("ix_websocket_deliveries_attempted", "attempted_at"),
         Index("ix_websocket_deliveries_retry", "retry_after"),
@@ -397,13 +450,13 @@ class WebSocketDelivery(TenantModel):
     def needs_retry(self):
         """Check if delivery needs retry."""
         return (
-            self.status == DeliveryStatus.FAILED and self.retry_after and datetime.now(timezone.utc) >= self.retry_after
+            self.status == DeliveryStatus.FAILED
+            and self.retry_after
+            and datetime.now(timezone.utc) >= self.retry_after
         )
 
     def __repr__(self):
-        return (
-            f"<WebSocketDelivery(event='{self.event_id}', connection='{self.connection_id}', status='{self.status}')>"
-        )
+        return f"<WebSocketDelivery(event='{self.event_id}', connection='{self.connection_id}', status='{self.status}')>"
 
 
 class WebSocketMetrics(TenantModel):
@@ -447,7 +500,9 @@ class WebSocketMetrics(TenantModel):
     custom_fields = Column(JSON, nullable=True)
 
     __table_args__ = (
-        Index("ix_websocket_metrics_date_hour", "metric_date", "metric_hour", unique=True),
+        Index(
+            "ix_websocket_metrics_date_hour", "metric_date", "metric_hour", unique=True
+        ),
         Index("ix_websocket_metrics_tenant_date", "tenant_id", "metric_date"),
         Index("ix_websocket_metrics_user_date", "user_id", "metric_date"),
     )
@@ -462,7 +517,9 @@ class WebSocketMetrics(TenantModel):
     def messages_per_connection(self):
         """Calculate average messages per connection."""
         if self.total_connections > 0:
-            total_messages = (self.total_messages_sent or 0) + (self.total_messages_received or 0)
+            total_messages = (self.total_messages_sent or 0) + (
+                self.total_messages_received or 0
+            )
             return round(total_messages / self.total_connections, 2)
         return 0
 

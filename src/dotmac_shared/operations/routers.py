@@ -12,7 +12,9 @@ class OperationsRouterFactory:
     """
 
     @classmethod
-    def create_network_monitoring_router(cls, service_class, prefix: str = "/network-monitoring") -> APIRouter:
+    def create_network_monitoring_router(
+        cls, service_class, prefix: str = "/network-monitoring"
+    ) -> APIRouter:
         router = APIRouter(prefix=prefix, tags=["operations", "network-monitoring"])
 
         @router.get("/health")
@@ -26,7 +28,9 @@ class OperationsRouterFactory:
         return router
 
     @classmethod
-    def create_customer_lifecycle_router(cls, service_class, prefix: str = "/customer-lifecycle") -> APIRouter:
+    def create_customer_lifecycle_router(
+        cls, service_class, prefix: str = "/customer-lifecycle"
+    ) -> APIRouter:
         router = APIRouter(prefix=prefix, tags=["operations", "customer-lifecycle"])
 
         @router.get("/health")

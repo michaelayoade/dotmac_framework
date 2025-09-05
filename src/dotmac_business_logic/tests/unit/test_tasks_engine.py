@@ -30,7 +30,9 @@ class TestTaskEngine:
     @pytest.mark.asyncio
     async def test_task_submission(self, mock_task_queue, sample_task_data):
         """Test task submission to queue."""
-        task_id = await mock_task_queue.enqueue(task_name="test_task", payload=sample_task_data)
+        task_id = await mock_task_queue.enqueue(
+            task_name="test_task", payload=sample_task_data
+        )
 
         assert task_id == "task-123"
         mock_task_queue.enqueue.assert_called_once()
@@ -73,7 +75,9 @@ class TestTaskQueue:
     async def test_queue_enqueue_dequeue(self, mock_task_queue, sample_task_data):
         """Test enqueue and dequeue operations."""
         # Test enqueue
-        task_id = await mock_task_queue.enqueue(task_name="process_data", payload=sample_task_data)
+        task_id = await mock_task_queue.enqueue(
+            task_name="process_data", payload=sample_task_data
+        )
         assert task_id is not None
 
         # Test dequeue
@@ -82,11 +86,17 @@ class TestTaskQueue:
 
     def test_queue_priority_handling(self):
         """Test priority queue handling."""
-        tasks = [{"id": "1", "priority": "high"}, {"id": "2", "priority": "normal"}, {"id": "3", "priority": "low"}]
+        tasks = [
+            {"id": "1", "priority": "high"},
+            {"id": "2", "priority": "normal"},
+            {"id": "3", "priority": "low"},
+        ]
 
         # Sort by priority (high > normal > low)
         priority_order = {"high": 3, "normal": 2, "low": 1}
-        sorted_tasks = sorted(tasks, key=lambda x: priority_order[x["priority"]], reverse=True)
+        sorted_tasks = sorted(
+            tasks, key=lambda x: priority_order[x["priority"]], reverse=True
+        )
 
         assert sorted_tasks[0]["priority"] == "high"
         assert sorted_tasks[-1]["priority"] == "low"
@@ -243,7 +253,11 @@ class TestJobScheduler:
                 self.jobs = {}
 
             def schedule_job(self, job_id, cron_expr, handler):
-                self.jobs[job_id] = {"cron": cron_expr, "handler": handler, "next_run": datetime.now(timezone.utc)}
+                self.jobs[job_id] = {
+                    "cron": cron_expr,
+                    "handler": handler,
+                    "next_run": datetime.now(timezone.utc),
+                }
 
         scheduler = MockScheduler()
         scheduler.schedule_job("daily_report", "0 9 * * *", lambda: "report")
@@ -283,7 +297,11 @@ class TestTaskMonitor:
         class MockTaskMonitor:
             def __init__(self, redis_client):
                 self.redis = redis_client
-                self.metrics = {"tasks_completed": 0, "tasks_failed": 0, "average_execution_time": 0.0}
+                self.metrics = {
+                    "tasks_completed": 0,
+                    "tasks_failed": 0,
+                    "average_execution_time": 0.0,
+                }
 
         monitor = MockTaskMonitor(mock_redis)
         assert monitor.redis is not None

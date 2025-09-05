@@ -227,7 +227,9 @@ class ContainerHealthMonitor:
 
             # Calculate memory usage
             memory_usage = self._calculate_memory_usage(stats)
-            memory_status = self._evaluate_threshold(memory_usage, self.memory_threshold, "Memory")
+            memory_status = self._evaluate_threshold(
+                memory_usage, self.memory_threshold, "Memory"
+            )
 
             report.add_check(
                 HealthCheck(
@@ -278,7 +280,9 @@ class ContainerHealthMonitor:
                         start_time = datetime.now(timezone.utc)
                         try:
                             response = await client.get(url)
-                            response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
+                            response_time = (
+                                datetime.now(timezone.utc) - start_time
+                            ).total_seconds()
 
                             if response.status_code == 200:
                                 status = HealthStatus.HEALTHY
@@ -373,7 +377,9 @@ class ContainerHealthMonitor:
                 )
             )
 
-    def _extract_isp_id(self, container: docker.models.containers.Container) -> Optional[UUID]:
+    def _extract_isp_id(
+        self, container: docker.models.containers.Container
+    ) -> Optional[UUID]:
         """Extract ISP/tenant ID from container labels"""
         try:
             labels = container.labels or {}
@@ -385,12 +391,17 @@ class ContainerHealthMonitor:
             pass
         return None
 
-    def _calculate_uptime(self, container: docker.models.containers.Container) -> timedelta:
+    def _calculate_uptime(
+        self, container: docker.models.containers.Container
+    ) -> timedelta:
         """Calculate container uptime"""
         try:
             started_at = container.attrs["State"]["StartedAt"]
             start_time = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
-            return datetime.now(timezone.utc).replace(tzinfo=start_time.tzinfo) - start_time
+            return (
+                datetime.now(timezone.utc).replace(tzinfo=start_time.tzinfo)
+                - start_time
+            )
         except (KeyError, ValueError):
             return timedelta(0)
 
@@ -400,8 +411,13 @@ class ContainerHealthMonitor:
             cpu_stats = stats["cpu_stats"]
             precpu_stats = stats["precpu_stats"]
 
-            cpu_delta = cpu_stats["cpu_usage"]["total_usage"] - precpu_stats["cpu_usage"]["total_usage"]
-            system_delta = cpu_stats["system_cpu_usage"] - precpu_stats["system_cpu_usage"]
+            cpu_delta = (
+                cpu_stats["cpu_usage"]["total_usage"]
+                - precpu_stats["cpu_usage"]["total_usage"]
+            )
+            system_delta = (
+                cpu_stats["system_cpu_usage"] - precpu_stats["system_cpu_usage"]
+            )
 
             if system_delta > 0 and cpu_delta > 0:
                 cpu_count = len(cpu_stats["cpu_usage"]["percpu_usage"])
@@ -423,7 +439,9 @@ class ContainerHealthMonitor:
             pass
         return 0.0
 
-    def _evaluate_threshold(self, value: float, threshold: float, metric_name: str) -> HealthStatus:
+    def _evaluate_threshold(
+        self, value: float, threshold: float, metric_name: str
+    ) -> HealthStatus:
         """Evaluate metric against threshold"""
         if value >= threshold * 1.1:  # 110% of threshold
             return HealthStatus.CRITICAL
@@ -445,7 +463,9 @@ class ContainerHealthMonitor:
             pass
         return "localhost"
 
-    def _get_port_mappings(self, container: docker.models.containers.Container) -> list[int]:
+    def _get_port_mappings(
+        self, container: docker.models.containers.Container
+    ) -> list[int]:
         """Get exposed port mappings"""
         try:
             ports = container.attrs["NetworkSettings"]["Ports"]

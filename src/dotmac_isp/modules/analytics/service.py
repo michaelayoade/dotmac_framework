@@ -14,18 +14,13 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
+from sqlalchemy.orm import Session
+
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import BusinessLogicError, NotFoundError
 from dotmac_shared.services.base import BaseService, BaseTenantService
-from sqlalchemy.orm import Session
 
-from .models import (
-    Alert,
-    Dashboard,
-    Metric,
-    Report,
-    Widget,
-)
+from .models import Alert, Dashboard, Metric, Report, Widget
 from .repository import (
     AlertEventRepository,
     AlertRepository,
@@ -75,11 +70,15 @@ from .schemas import (
 # =================================================================
 
 
-class MetricService(BaseTenantService[Metric, MetricCreate, MetricUpdate, MetricResponse]):
+class MetricService(
+    BaseTenantService[Metric, MetricCreate, MetricUpdate, MetricResponse]
+):
     """Service for metric management - leverages BaseTenantService for 90% of operations."""
 
     def __init__(self, db: Session, tenant_id: str):
-        super().__init__(db, Metric, MetricCreate, MetricUpdate, MetricResponse, tenant_id)
+        super().__init__(
+            db, Metric, MetricCreate, MetricUpdate, MetricResponse, tenant_id
+        )
         self.metric_repo = MetricRepository(db, tenant_id)
 
     @standard_exception_handler
@@ -90,7 +89,9 @@ class MetricService(BaseTenantService[Metric, MetricCreate, MetricUpdate, Metric
             raise BusinessLogicError(f"Metric with name '{data.name}' already exists")
 
     @standard_exception_handler
-    async def get_metrics_by_type(self, metric_type: MetricType) -> list[MetricResponse]:
+    async def get_metrics_by_type(
+        self, metric_type: MetricType
+    ) -> list[MetricResponse]:
         """Get metrics filtered by type."""
         return await self.list(filters={"metric_type": metric_type})
 
@@ -100,13 +101,17 @@ class MetricService(BaseTenantService[Metric, MetricCreate, MetricUpdate, Metric
         return await self.list(filters={"is_active": True})
 
     @standard_exception_handler
-    async def record_metric_value(self, metric_id: UUID, data: MetricValueCreate, user_id: UUID) -> MetricValueResponse:
+    async def record_metric_value(
+        self, metric_id: UUID, data: MetricValueCreate, user_id: UUID
+    ) -> MetricValueResponse:
         """Record a new value for a metric."""
         metric = await self.get_by_id_or_raise(metric_id)
 
         # Business rule validation
         if not metric.is_active:
-            raise BusinessLogicError(f"Cannot record value for inactive metric: {metric.name}")
+            raise BusinessLogicError(
+                f"Cannot record value for inactive metric: {metric.name}"
+            )
 
         value_repo = MetricValueRepository(self.db, self.tenant_id)
         metric_value = await value_repo.create_value(
@@ -130,12 +135,17 @@ class MetricService(BaseTenantService[Metric, MetricCreate, MetricUpdate, Metric
         """Get values for a specific metric."""
         await self.get_by_id_or_raise(metric_id)  # Validate metric exists
         value_repo = MetricValueRepository(self.db, self.tenant_id)
-        values = await value_repo.get_values_for_metric(metric_id, start_date, end_date, limit)
+        values = await value_repo.get_values_for_metric(
+            metric_id, start_date, end_date, limit
+        )
         return [MetricValueResponse.model_validate(value) for value in values]
 
     @standard_exception_handler
     async def get_metric_statistics(
-        self, metric_id: UUID, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+        self,
+        metric_id: UUID,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> dict[str, Any]:
         """Get statistical summary for a metric."""
         metric = await self.get_by_id_or_raise(metric_id)
@@ -153,7 +163,9 @@ class MetricService(BaseTenantService[Metric, MetricCreate, MetricUpdate, Metric
         }
 
     @standard_exception_handler
-    async def aggregate_metrics(self, request: MetricAggregationRequest) -> MetricAggregationResponse:
+    async def aggregate_metrics(
+        self, request: MetricAggregationRequest
+    ) -> MetricAggregationResponse:
         """Aggregate metric data for analysis."""
         await self.get_by_id_or_raise(UUID(request.metric_id))  # Validate metric exists
 
@@ -178,7 +190,9 @@ class MetricService(BaseTenantService[Metric, MetricCreate, MetricUpdate, Metric
 
         summary = {
             "total_points": len(data_points),
-            "avg_value": sum(p["value"] for p in data_points) / len(data_points) if data_points else 0,
+            "avg_value": sum(p["value"] for p in data_points) / len(data_points)
+            if data_points
+            else 0,
             "min_value": min(p["value"] for p in data_points) if data_points else 0,
             "max_value": max(p["value"] for p in data_points) if data_points else 0,
         }
@@ -194,11 +208,15 @@ class MetricService(BaseTenantService[Metric, MetricCreate, MetricUpdate, Metric
         )
 
 
-class ReportService(BaseTenantService[Report, ReportCreate, ReportUpdate, ReportResponse]):
+class ReportService(
+    BaseTenantService[Report, ReportCreate, ReportUpdate, ReportResponse]
+):
     """Service for report management - leverages BaseTenantService for 90% of operations."""
 
     def __init__(self, db: Session, tenant_id: str):
-        super().__init__(db, Report, ReportCreate, ReportUpdate, ReportResponse, tenant_id)
+        super().__init__(
+            db, Report, ReportCreate, ReportUpdate, ReportResponse, tenant_id
+        )
         self.report_repo = ReportRepository(db, tenant_id)
 
     @standard_exception_handler
@@ -208,19 +226,27 @@ class ReportService(BaseTenantService[Report, ReportCreate, ReportUpdate, Report
         await self.update(entity.id, {"duration_days": duration_days, "data": {}})
 
     @standard_exception_handler
-    async def generate_report_data(self, report_id: UUID, user_id: UUID) -> ReportResponse:
+    async def generate_report_data(
+        self, report_id: UUID, user_id: UUID
+    ) -> ReportResponse:
         """Generate data for an existing report."""
         report = await self.get_by_id_or_raise(report_id)
         data = await self._generate_report_content(report)
-        return await self.update(report_id, {"data": data, "generated_at": datetime.now(timezone.utc)})
+        return await self.update(
+            report_id, {"data": data, "generated_at": datetime.now(timezone.utc)}
+        )
 
     @standard_exception_handler
-    async def get_reports_by_type(self, report_type: ReportType) -> list[ReportResponse]:
+    async def get_reports_by_type(
+        self, report_type: ReportType
+    ) -> list[ReportResponse]:
         """Get reports filtered by type."""
         return await self.list(filters={"report_type": report_type})
 
     @standard_exception_handler
-    async def export_report(self, request: ReportExportRequest, user_id: UUID) -> ReportExportResponse:
+    async def export_report(
+        self, request: ReportExportRequest, user_id: UUID
+    ) -> ReportExportResponse:
         """Export a report in the specified format."""
         await self.get_by_id_or_raise(UUID(request.report_id))  # Validate report exists
         export_id = UUID()
@@ -268,11 +294,20 @@ class ReportService(BaseTenantService[Report, ReportCreate, ReportUpdate, Report
         )()
 
 
-class DashboardService(BaseTenantService[Dashboard, DashboardCreate, DashboardUpdate, DashboardResponse]):
+class DashboardService(
+    BaseTenantService[Dashboard, DashboardCreate, DashboardUpdate, DashboardResponse]
+):
     """Service for dashboard management - leverages BaseTenantService for 90% of operations."""
 
     def __init__(self, db: Session, tenant_id: str):
-        super().__init__(db, Dashboard, DashboardCreate, DashboardUpdate, DashboardResponse, tenant_id)
+        super().__init__(
+            db,
+            Dashboard,
+            DashboardCreate,
+            DashboardUpdate,
+            DashboardResponse,
+            tenant_id,
+        )
         self.dashboard_repo = DashboardRepository(db, tenant_id)
 
     @standard_exception_handler
@@ -280,7 +315,9 @@ class DashboardService(BaseTenantService[Dashboard, DashboardCreate, DashboardUp
         """Business rule: Dashboard names must be unique within tenant."""
         existing = await self.dashboard_repo.find_by_name(data.name)
         if existing:
-            raise BusinessLogicError(f"Dashboard with name '{data.name}' already exists")
+            raise BusinessLogicError(
+                f"Dashboard with name '{data.name}' already exists"
+            )
 
     @standard_exception_handler
     async def get_dashboard_with_widgets(self, dashboard_id: UUID) -> dict[str, Any]:
@@ -291,7 +328,9 @@ class DashboardService(BaseTenantService[Dashboard, DashboardCreate, DashboardUp
         return {"dashboard": dashboard, "widgets": widgets}
 
     @standard_exception_handler
-    async def get_dashboard_metrics(self, dashboard_id: UUID) -> DashboardMetricsResponse:
+    async def get_dashboard_metrics(
+        self, dashboard_id: UUID
+    ) -> DashboardMetricsResponse:
         """Get usage metrics for a dashboard."""
         await self.get_by_id_or_raise(dashboard_id)  # Validate dashboard exists
         session_repo = AnalyticsSessionRepository(self.db, self.tenant_id)
@@ -308,7 +347,9 @@ class DashboardService(BaseTenantService[Dashboard, DashboardCreate, DashboardUp
     async def get_dashboard_overview(self, user_id: UUID) -> DashboardOverviewResponse:
         """Get dashboard overview with key metrics."""
         current_time = datetime.now(timezone.utc)
-        start_of_month = current_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_of_month = current_time.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
 
         return DashboardOverviewResponse(
             total_customers=1250,
@@ -319,7 +360,11 @@ class DashboardService(BaseTenantService[Dashboard, DashboardCreate, DashboardUp
             bandwidth_usage=1234.5,
             period_start=start_of_month,
             period_end=current_time,
-            trends={"customer_growth": 12.5, "revenue_growth": 8.3, "service_growth": 15.2},
+            trends={
+                "customer_growth": 12.5,
+                "revenue_growth": 8.3,
+                "service_growth": 15.2,
+            },
             alerts=[
                 {
                     "id": "alert-1",
@@ -352,7 +397,9 @@ class WidgetService(BaseService[Widget]):
 
         return WidgetResponse.model_validate(widget)
 
-    async def update_widget(self, widget_id: UUID, data: WidgetUpdate, user_id: UUID) -> WidgetResponse:
+    async def update_widget(
+        self, widget_id: UUID, data: WidgetUpdate, user_id: UUID
+    ) -> WidgetResponse:
         """Update an existing widget."""
         widget = await self.repository.get_by_id(widget_id)
         if not widget:
@@ -363,12 +410,16 @@ class WidgetService(BaseService[Widget]):
 
         return WidgetResponse.model_validate(widget)
 
-    async def get_widgets_by_dashboard(self, dashboard_id: UUID) -> list[WidgetResponse]:
+    async def get_widgets_by_dashboard(
+        self, dashboard_id: UUID
+    ) -> list[WidgetResponse]:
         """Get widgets for a specific dashboard."""
         widgets = await self.repository.find_by_dashboard(dashboard_id)
         return [WidgetResponse.model_validate(widget) for widget in widgets]
 
-    async def reorder_widgets(self, dashboard_id: UUID, widget_positions: dict[str, int], user_id: UUID) -> bool:
+    async def reorder_widgets(
+        self, dashboard_id: UUID, widget_positions: dict[str, int], user_id: UUID
+    ) -> bool:
         """Reorder widgets in a dashboard."""
         positions = {UUID(k): v for k, v in widget_positions.items()}
         return await self.repository.reorder_widgets(dashboard_id, positions)
@@ -404,12 +455,16 @@ class AlertService(BaseService[Alert]):
             raise NotFoundError(f"Metric with ID {data.metric_id} not found")
 
         alert_data = data.model_dump()
-        alert_data["priority_score"] = self._calculate_priority_score(data.severity, data.threshold)
+        alert_data["priority_score"] = self._calculate_priority_score(
+            data.severity, data.threshold
+        )
 
         alert = await self.repository.create(alert_data)
         return AlertResponse.model_validate(alert)
 
-    async def update_alert(self, alert_id: UUID, data: AlertUpdate, user_id: UUID) -> AlertResponse:
+    async def update_alert(
+        self, alert_id: UUID, data: AlertUpdate, user_id: UUID
+    ) -> AlertResponse:
         """Update an existing alert."""
         alert = await self.repository.get_by_id(alert_id)
         if not alert:
@@ -420,7 +475,9 @@ class AlertService(BaseService[Alert]):
         if "severity" in update_data or "threshold" in update_data:
             severity = data.severity or alert.severity
             threshold = data.threshold or alert.threshold
-            update_data["priority_score"] = self._calculate_priority_score(severity, threshold)
+            update_data["priority_score"] = self._calculate_priority_score(
+                severity, threshold
+            )
 
         alert = await self.repository.update(alert_id, update_data)
         return AlertResponse.model_validate(alert)
@@ -431,7 +488,9 @@ class AlertService(BaseService[Alert]):
         if not alert:
             raise NotFoundError(f"Alert with ID {alert_id} not found")
 
-        would_trigger = self._evaluate_condition(alert.condition, test_value, alert.threshold)
+        would_trigger = self._evaluate_condition(
+            alert.condition, test_value, alert.threshold
+        )
 
         return AlertTestResponse(
             alert_id=str(alert_id),
@@ -453,7 +512,9 @@ class AlertService(BaseService[Alert]):
 
         for alert in alerts:
             latest_value = await value_repo.get_latest_value(alert.metric_id)
-            if latest_value and self._evaluate_condition(alert.condition, latest_value.value, alert.threshold):
+            if latest_value and self._evaluate_condition(
+                alert.condition, latest_value.value, alert.threshold
+            ):
                 event = await event_repo.create_event(
                     alert_id=alert.id,
                     metric_value=latest_value.value,
@@ -476,7 +537,9 @@ class AlertService(BaseService[Alert]):
 
         return triggered_alerts
 
-    def _calculate_priority_score(self, severity: AlertSeverity, threshold: float) -> int:
+    def _calculate_priority_score(
+        self, severity: AlertSeverity, threshold: float
+    ) -> int:
         """Calculate priority score for alert ordering."""
         severity_scores = {
             AlertSeverity.LOW: 10,
@@ -490,7 +553,9 @@ class AlertService(BaseService[Alert]):
 
         return base_score + threshold_factor
 
-    def _evaluate_condition(self, condition: str, value: float, threshold: float) -> bool:
+    def _evaluate_condition(
+        self, condition: str, value: float, threshold: float
+    ) -> bool:
         """Evaluate alert condition."""
         if condition == "greater_than":
             return value > threshold
@@ -544,7 +609,9 @@ class AnalyticsService(BaseService):
                 {
                     "type": "alert_triggered",
                     "description": "High CPU usage alert triggered",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=15)).isoformat(),
+                    "timestamp": (
+                        datetime.now(timezone.utc) - timedelta(minutes=15)
+                    ).isoformat(),
                 },
             ],
         )
@@ -569,7 +636,9 @@ class AnalyticsService(BaseService):
     async def generate_executive_report(self, user_id: UUID) -> ExecutiveReportResponse:
         """Generate executive-level analytics report."""
         current_time = datetime.now(timezone.utc)
-        start_of_month = current_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_of_month = current_time.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
 
         return ExecutiveReportResponse(
             report_id=str(UUID()),

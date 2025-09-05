@@ -18,7 +18,9 @@ class TestBillingPerformance:
     """Performance tests for billing operations."""
 
     @pytest.mark.asyncio
-    async def test_invoice_creation_performance(self, performance_timer, mock_db_session):
+    async def test_invoice_creation_performance(
+        self, performance_timer, mock_db_session
+    ):
         """Test invoice creation performance."""
 
         class MockBillingPerformance:
@@ -117,7 +119,9 @@ class TestBillingPerformance:
 
         # Concurrent processing
         performance_timer.start()
-        concurrent_results = await processor.process_concurrent_payments(payments, max_concurrent=5)
+        concurrent_results = await processor.process_concurrent_payments(
+            payments, max_concurrent=5
+        )
         performance_timer.stop()
         concurrent_time = performance_timer.elapsed_ms()
 
@@ -140,7 +144,11 @@ class TestBillingPerformance:
                     tax_rate = Decimal("0.10")
                 subtotal = sum(item["amount"] for item in line_items)
                 tax_amount = subtotal * tax_rate
-                return {"subtotal": subtotal, "tax_amount": tax_amount, "total": subtotal + tax_amount}
+                return {
+                    "subtotal": subtotal,
+                    "tax_amount": tax_amount,
+                    "total": subtotal + tax_amount,
+                }
 
             def calculate_bulk_invoices(self, invoices_data):
                 results = []
@@ -191,7 +199,9 @@ class TestTasksPerformance:
                 # Simulate Redis operation
                 await asyncio.sleep(0.0001)  # 0.1ms per enqueue
                 task_id = f"task-{len(self.queue)}"
-                self.queue.append({"id": task_id, "name": task_name, "payload": payload})
+                self.queue.append(
+                    {"id": task_id, "name": task_name, "payload": payload}
+                )
                 return task_id
 
             async def dequeue(self):
@@ -265,8 +275,12 @@ class TestTasksPerformance:
                     async with semaphore:
                         return await self.process_task(task)
 
-                tasks_to_process = [{"id": f"task-{i}", "data": i} for i in range(len(tasks))]
-                return await asyncio.gather(*[process_single(task) for task in tasks_to_process])
+                tasks_to_process = [
+                    {"id": f"task-{i}", "data": i} for i in range(len(tasks))
+                ]
+                return await asyncio.gather(
+                    *[process_single(task) for task in tasks_to_process]
+                )
 
         # Test different worker counts
         task_count = 50
@@ -278,7 +292,9 @@ class TestTasksPerformance:
             tasks = list(range(task_count))
 
             performance_timer.start()
-            processed = await worker.process_tasks_concurrent(tasks, max_workers=worker_count)
+            processed = await worker.process_tasks_concurrent(
+                tasks, max_workers=worker_count
+            )
             performance_timer.stop()
 
             execution_time = performance_timer.elapsed_ms()
@@ -292,8 +308,12 @@ class TestTasksPerformance:
 
         # Verify scaling characteristics
         assert results[1]["throughput_per_sec"] > 10  # Baseline throughput
-        assert results[4]["throughput_per_sec"] > results[1]["throughput_per_sec"] * 2  # 2x with 4 workers
-        assert results[8]["throughput_per_sec"] > results[4]["throughput_per_sec"] * 1.2  # Some improvement with 8
+        assert (
+            results[4]["throughput_per_sec"] > results[1]["throughput_per_sec"] * 2
+        )  # 2x with 4 workers
+        assert (
+            results[8]["throughput_per_sec"] > results[4]["throughput_per_sec"] * 1.2
+        )  # Some improvement with 8
 
     def test_workflow_execution_performance(self, performance_timer):
         """Test workflow execution performance."""
@@ -318,10 +338,16 @@ class TestTasksPerformance:
                     def execute_step(step_data):
                         step_index, step = step_data
                         time.sleep(0.0005)  # 0.5ms per step (optimized)
-                        return {"step": step_index, "result": f"step_{step_index}_completed"}
+                        return {
+                            "step": step_index,
+                            "result": f"step_{step_index}_completed",
+                        }
 
                     # Use asyncio-style parallel execution for better performance
-                    futures = [executor.submit(execute_step, (i, step)) for i, step in enumerate(steps)]
+                    futures = [
+                        executor.submit(execute_step, (i, step))
+                        for i, step in enumerate(steps)
+                    ]
                     results = [future.result() for future in futures]
 
                 return sorted(results, key=lambda x: x["step"])
@@ -386,9 +412,13 @@ class TestFilesPerformance:
                 results = []
                 for data in template_data_list:
                     if use_cache:
-                        result = self.render_cached_template(data["name"], data["template"], data["variables"])
+                        result = self.render_cached_template(
+                            data["name"], data["template"], data["variables"]
+                        )
                     else:
-                        result = self.render_template(data["template"], data["variables"])
+                        result = self.render_template(
+                            data["template"], data["variables"]
+                        )
 
                     results.append({"name": data["name"], "rendered": result})
 
@@ -431,7 +461,9 @@ class TestFilesPerformance:
         assert cache_throughput > 100  # At least 100 renders per second
 
     @pytest.mark.asyncio
-    async def test_file_processing_performance(self, performance_timer, mock_file_storage):
+    async def test_file_processing_performance(
+        self, performance_timer, mock_file_storage
+    ):
         """Test file processing performance."""
 
         class MockFileProcessor:
@@ -452,9 +484,13 @@ class TestFilesPerformance:
 
                 async def process_file(file_data):
                     async with semaphore:
-                        return await self.process_single_file(file_data["filename"], file_data["content"])
+                        return await self.process_single_file(
+                            file_data["filename"], file_data["content"]
+                        )
 
-                return await asyncio.gather(*[process_file(file_data) for file_data in files_data])
+                return await asyncio.gather(
+                    *[process_file(file_data) for file_data in files_data]
+                )
 
         processor = MockFileProcessor(mock_file_storage)
 
@@ -472,14 +508,18 @@ class TestFilesPerformance:
         performance_timer.start()
         sequential_results = []
         for file_data in files_data:
-            result = await processor.process_single_file(file_data["filename"], file_data["content"])
+            result = await processor.process_single_file(
+                file_data["filename"], file_data["content"]
+            )
             sequential_results.append(result)
         performance_timer.stop()
         sequential_time = performance_timer.elapsed_ms()
 
         # Test concurrent processing
         performance_timer.start()
-        concurrent_results = await processor.process_batch_files(files_data, max_concurrent=5)
+        concurrent_results = await processor.process_batch_files(
+            files_data, max_concurrent=5
+        )
         performance_timer.stop()
         concurrent_time = performance_timer.elapsed_ms()
 

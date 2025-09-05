@@ -47,7 +47,9 @@ class HardenedSecretFactory:
             self._secrets_manager = None
             self._environment_validated = False
 
-    async def initialize(self, deployment_context: Optional[DeploymentContext] = None) -> None:
+    async def initialize(
+        self, deployment_context: Optional[DeploymentContext] = None
+    ) -> None:
         """
         Initialize the secrets manager based on deployment context.
 
@@ -62,7 +64,9 @@ class HardenedSecretFactory:
 
         try:
             self._secrets_manager = create_secrets_manager(
-                environment=environment.value, vault_url=os.getenv("VAULT_URL"), vault_token=os.getenv("VAULT_TOKEN")
+                environment=environment.value,
+                vault_url=os.getenv("VAULT_URL"),
+                vault_token=os.getenv("VAULT_TOKEN"),
             )
 
             # Validate environment compliance
@@ -98,20 +102,29 @@ class HardenedSecretFactory:
             # In production, initialization failure is critical
             if environment == Environment.PRODUCTION:
                 raise SecretsEnvironmentError(
-                    f"Critical: Cannot initialize secrets in production: {e}", environment, SecretType.JWT_SECRET
+                    f"Critical: Cannot initialize secrets in production: {e}",
+                    environment,
+                    SecretType.JWT_SECRET,
                 ) from e
 
             # In development, log warning but continue
-            logger.warning("Using fallback secret management in development", error=str(e))
+            logger.warning(
+                "Using fallback secret management in development", error=str(e)
+            )
 
-    def _determine_environment(self, deployment_context: Optional[DeploymentContext]) -> Environment:
+    def _determine_environment(
+        self, deployment_context: Optional[DeploymentContext]
+    ) -> Environment:
         """Determine environment from deployment context or environment variables."""
 
         # Check deployment context first
         if deployment_context:
             if deployment_context.mode == DeploymentMode.DEVELOPMENT:
                 return Environment.DEVELOPMENT
-            elif deployment_context.mode in [DeploymentMode.TENANT_CONTAINER, DeploymentMode.MANAGEMENT_PLATFORM]:
+            elif deployment_context.mode in [
+                DeploymentMode.TENANT_CONTAINER,
+                DeploymentMode.MANAGEMENT_PLATFORM,
+            ]:
                 # Check if this is production deployment
                 env_name = os.getenv("ENVIRONMENT", "").lower()
                 if env_name in ["production", "prod"]:
@@ -126,7 +139,9 @@ class HardenedSecretFactory:
         try:
             return Environment(env_name)
         except ValueError:
-            logger.warning(f"Unknown environment '{env_name}', defaulting to development")
+            logger.warning(
+                f"Unknown environment '{env_name}', defaulting to development"
+            )
             return Environment.DEVELOPMENT
 
     async def get_jwt_secret(self, tenant_id: Optional[UUID] = None) -> str:
@@ -154,7 +169,8 @@ class HardenedSecretFactory:
                 secret_value = os.getenv("JWT_SECRET_KEY")
                 if secret_value:
                     logger.warning(
-                        "Using environment fallback for JWT secret", environment=self._secrets_manager.environment.value
+                        "Using environment fallback for JWT secret",
+                        environment=self._secrets_manager.environment.value,
                     )
 
             if not secret_value:
@@ -185,7 +201,10 @@ class HardenedSecretFactory:
 
         # Get database password
         password = await self._secrets_manager.get_secret(
-            SecretType.DATABASE_CREDENTIAL, f"database/{database_name}", "password", tenant_id
+            SecretType.DATABASE_CREDENTIAL,
+            f"database/{database_name}",
+            "password",
+            tenant_id,
         )
 
         if not password:
@@ -210,7 +229,10 @@ class HardenedSecretFactory:
 
         # Get username (often not secret, but may be stored in vault)
         username = await self._secrets_manager.get_secret(
-            SecretType.DATABASE_CREDENTIAL, f"database/{database_name}", "username", tenant_id
+            SecretType.DATABASE_CREDENTIAL,
+            f"database/{database_name}",
+            "username",
+            tenant_id,
         )
 
         if not username:
@@ -221,7 +243,9 @@ class HardenedSecretFactory:
 
         return credentials
 
-    async def get_service_api_key(self, service_name: str, tenant_id: Optional[UUID] = None) -> str:
+    async def get_service_api_key(
+        self, service_name: str, tenant_id: Optional[UUID] = None
+    ) -> str:
         """
         Retrieve service API key with production enforcement.
 
@@ -258,7 +282,9 @@ class HardenedSecretFactory:
 
         return api_key
 
-    async def get_encryption_key(self, purpose: str = "default", tenant_id: Optional[UUID] = None) -> str:
+    async def get_encryption_key(
+        self, purpose: str = "default", tenant_id: Optional[UUID] = None
+    ) -> str:
         """
         Retrieve encryption key with strict production enforcement.
 
@@ -288,7 +314,9 @@ class HardenedSecretFactory:
         return encryption_key
 
     async def rotate_secrets(
-        self, secret_types: Optional[list[SecretType]] = None, tenant_id: Optional[UUID] = None
+        self,
+        secret_types: Optional[list[SecretType]] = None,
+        tenant_id: Optional[UUID] = None,
     ) -> dict[str, bool]:
         """
         Rotate specified secrets or all rotatable secrets.
@@ -304,7 +332,11 @@ class HardenedSecretFactory:
 
         if secret_types is None:
             # Rotate commonly rotated secret types
-            secret_types = [SecretType.JWT_SECRET, SecretType.API_KEY, SecretType.DATABASE_CREDENTIAL]
+            secret_types = [
+                SecretType.JWT_SECRET,
+                SecretType.API_KEY,
+                SecretType.DATABASE_CREDENTIAL,
+            ]
 
         results = {}
 
@@ -360,17 +392,25 @@ async def get_hardened_jwt_secret(tenant_id: Optional[UUID] = None) -> str:
     return await hardened_secret_factory.get_jwt_secret(tenant_id)
 
 
-async def get_hardened_db_credentials(database_name: str = "main", tenant_id: Optional[UUID] = None) -> dict[str, str]:
+async def get_hardened_db_credentials(
+    database_name: str = "main", tenant_id: Optional[UUID] = None
+) -> dict[str, str]:
     """Get database credentials with hardened security enforcement."""
-    return await hardened_secret_factory.get_database_credentials(database_name, tenant_id)
+    return await hardened_secret_factory.get_database_credentials(
+        database_name, tenant_id
+    )
 
 
-async def get_hardened_service_api_key(service_name: str, tenant_id: Optional[UUID] = None) -> str:
+async def get_hardened_service_api_key(
+    service_name: str, tenant_id: Optional[UUID] = None
+) -> str:
     """Get service API key with hardened security enforcement."""
     return await hardened_secret_factory.get_service_api_key(service_name, tenant_id)
 
 
-async def initialize_hardened_secrets(deployment_context: Optional[DeploymentContext] = None) -> None:
+async def initialize_hardened_secrets(
+    deployment_context: Optional[DeploymentContext] = None,
+) -> None:
     """Initialize hardened secret management for application startup."""
     await hardened_secret_factory.initialize(deployment_context)
 

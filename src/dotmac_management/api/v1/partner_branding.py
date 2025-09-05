@@ -15,11 +15,15 @@ import colorsys
 from datetime import datetime, timezone
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, Path, status
+
 from dotmac.application import standard_exception_handler
-from dotmac.application.dependencies.dependencies import StandardDependencies, get_standard_deps
+from dotmac.application.dependencies.dependencies import (
+    StandardDependencies,
+    get_standard_deps,
+)
 from dotmac.platform.observability.logging import get_logger
 from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
-from fastapi import APIRouter, Depends, Path, status
 
 from ...models.partner import Partner
 from ...models.partner_branding import (
@@ -71,7 +75,11 @@ async def create_brand_config(
         raise EntityNotFoundError(f"Partner {partner_id} not found")
 
     # Check if brand config already exists
-    existing_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
+    existing_config = (
+        deps.db.query(PartnerBrandConfig)
+        .filter(PartnerBrandConfig.partner_id == partner_id)
+        .first()
+    )
 
     if existing_config:
         from dotmac.core.exceptions import BusinessRuleError
@@ -126,7 +134,11 @@ async def get_brand_config(
 ) -> BrandConfigResponse:
     """Retrieve the current brand configuration for a partner."""
 
-    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
+    brand_config = (
+        deps.db.query(PartnerBrandConfig)
+        .filter(PartnerBrandConfig.partner_id == partner_id)
+        .first()
+    )
 
     if not brand_config:
         from dotmac.core.exceptions import EntityNotFoundError
@@ -151,7 +163,11 @@ async def update_brand_config(
 ) -> BrandConfigResponse:
     """Update an existing brand configuration."""
 
-    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
+    brand_config = (
+        deps.db.query(PartnerBrandConfig)
+        .filter(PartnerBrandConfig.partner_id == partner_id)
+        .first()
+    )
 
     if not brand_config:
         from dotmac.core.exceptions import EntityNotFoundError
@@ -164,8 +180,12 @@ async def update_brand_config(
     # Regenerate theme if colors changed
     if any(key in update_data for key in ["primary_color", "secondary_color"]):
         primary_color = update_data.get("primary_color", brand_config.primary_color)
-        secondary_color = update_data.get("secondary_color", brand_config.secondary_color or primary_color)
-        update_data["theme_config"] = _generate_theme_colors(primary_color, secondary_color)
+        secondary_color = update_data.get(
+            "secondary_color", brand_config.secondary_color or primary_color
+        )
+        update_data["theme_config"] = _generate_theme_colors(
+            primary_color, secondary_color
+        )
 
     for field, value in update_data.items():
         if hasattr(brand_config, field):
@@ -197,7 +217,11 @@ async def delete_brand_config(
 ) -> dict:
     """Delete brand configuration for a partner."""
 
-    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
+    brand_config = (
+        deps.db.query(PartnerBrandConfig)
+        .filter(PartnerBrandConfig.partner_id == partner_id)
+        .first()
+    )
 
     if not brand_config:
         from dotmac.core.exceptions import EntityNotFoundError
@@ -232,7 +256,11 @@ async def verify_domain(
 ) -> dict:
     """Verify ownership of a custom domain for partner branding."""
 
-    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
+    brand_config = (
+        deps.db.query(PartnerBrandConfig)
+        .filter(PartnerBrandConfig.partner_id == partner_id)
+        .first()
+    )
 
     if not brand_config or not brand_config.domain_name:
         from dotmac.core.exceptions import BusinessRuleError
@@ -337,7 +365,11 @@ async def generate_brand_css(
 ) -> str:
     """Generate CSS variables and styles for the partner brand."""
 
-    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
+    brand_config = (
+        deps.db.query(PartnerBrandConfig)
+        .filter(PartnerBrandConfig.partner_id == partner_id)
+        .first()
+    )
 
     if not brand_config:
         from dotmac.core.exceptions import EntityNotFoundError

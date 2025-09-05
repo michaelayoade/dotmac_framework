@@ -79,7 +79,9 @@ class ProcessBillingOutput:
             self.processing_details = {}
 
 
-class ProcessBillingUseCase(TransactionalUseCase[ProcessBillingInput, ProcessBillingOutput]):
+class ProcessBillingUseCase(
+    TransactionalUseCase[ProcessBillingInput, ProcessBillingOutput]
+):
     """
     Process billing operations for tenant services.
 
@@ -106,14 +108,18 @@ class ProcessBillingUseCase(TransactionalUseCase[ProcessBillingInput, ProcessBil
             return False
 
         try:
-            datetime.fromisoformat(input_data.billing_period_start.replace("Z", "+00:00"))
+            datetime.fromisoformat(
+                input_data.billing_period_start.replace("Z", "+00:00")
+            )
             datetime.fromisoformat(input_data.billing_period_end.replace("Z", "+00:00"))
         except ValueError:
             return False
 
         return True
 
-    async def can_execute(self, input_data: dict[str, Any], context: Optional[UseCaseContext] = None) -> bool:
+    async def can_execute(
+        self, input_data: dict[str, Any], context: Optional[UseCaseContext] = None
+    ) -> bool:
         """Check if billing operation can be executed"""
 
         # Check permissions
@@ -146,13 +152,18 @@ class ProcessBillingUseCase(TransactionalUseCase[ProcessBillingInput, ProcessBil
             billing_result = await self._execute_billing_operation(input_data)
 
             if not billing_result["success"]:
-                return self._create_error_result(billing_result["error"], error_code="BILLING_OPERATION_FAILED")
+                return self._create_error_result(
+                    billing_result["error"], error_code="BILLING_OPERATION_FAILED"
+                )
 
             # Create output data
             output_data = ProcessBillingOutput(
                 tenant_id=input_data.tenant_id,
                 operation=input_data.operation,
-                billing_period={"start": input_data.billing_period_start, "end": input_data.billing_period_end},
+                billing_period={
+                    "start": input_data.billing_period_start,
+                    "end": input_data.billing_period_end,
+                },
                 line_items=billing_result["line_items"],
                 subtotal=billing_result["subtotal"],
                 taxes=billing_result["taxes"],
@@ -167,9 +178,13 @@ class ProcessBillingUseCase(TransactionalUseCase[ProcessBillingInput, ProcessBil
 
         except ExceptionContext.LIFECYCLE_EXCEPTIONS as e:
             self.logger.error(f"Billing transaction failed: {e}")
-            return self._create_error_result(str(e), error_code="BILLING_TRANSACTION_FAILED")
+            return self._create_error_result(
+                str(e), error_code="BILLING_TRANSACTION_FAILED"
+            )
 
-    async def _execute_billing_operation(self, input_data: ProcessBillingInput) -> dict[str, Any]:
+    async def _execute_billing_operation(
+        self, input_data: ProcessBillingInput
+    ) -> dict[str, Any]:
         """Execute the specific billing operation"""
 
         operation_map = {
@@ -182,7 +197,10 @@ class ProcessBillingUseCase(TransactionalUseCase[ProcessBillingInput, ProcessBil
 
         operation_func = operation_map.get(input_data.operation)
         if not operation_func:
-            return {"success": False, "error": f"Unsupported billing operation: {input_data.operation}"}
+            return {
+                "success": False,
+                "error": f"Unsupported billing operation: {input_data.operation}",
+            }
 
         return await operation_func(input_data)
 
@@ -229,13 +247,18 @@ class ProcessBillingUseCase(TransactionalUseCase[ProcessBillingInput, ProcessBil
                 "taxes": taxes,
                 "credits_applied": credits_applied,
                 "total": total,
-                "details": {"calculation_method": "usage_based", "calculated_at": datetime.utcnow().isoformat()},
+                "details": {
+                    "calculation_method": "usage_based",
+                    "calculated_at": datetime.utcnow().isoformat(),
+                },
             }
 
         except (ValueError, TypeError) as e:
             return {"success": False, "error": f"Usage calculation failed: {e}"}
 
-    async def _generate_invoice(self, input_data: ProcessBillingInput) -> dict[str, Any]:
+    async def _generate_invoice(
+        self, input_data: ProcessBillingInput
+    ) -> dict[str, Any]:
         """Generate invoice for tenant"""
         try:
             # First calculate usage
@@ -244,7 +267,9 @@ class ProcessBillingUseCase(TransactionalUseCase[ProcessBillingInput, ProcessBil
                 return usage_result
 
             # Generate invoice ID
-            invoice_id = f"INV-{input_data.tenant_id}-{int(datetime.utcnow().timestamp())}"
+            invoice_id = (
+                f"INV-{input_data.tenant_id}-{int(datetime.utcnow().timestamp())}"
+            )
 
             return {
                 **usage_result,
@@ -301,7 +326,9 @@ class ProcessBillingUseCase(TransactionalUseCase[ProcessBillingInput, ProcessBil
                 "total": -credit_amount,
                 "details": {
                     "credit_applied_at": datetime.utcnow().isoformat(),
-                    "credit_reason": input_data.parameters.get("reason", "Manual credit"),
+                    "credit_reason": input_data.parameters.get(
+                        "reason", "Manual credit"
+                    ),
                 },
             }
 

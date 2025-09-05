@@ -139,7 +139,9 @@ class RegressionDetector:
         self._update_baseline(key)
 
     @standard_exception_handler
-    def detect_regression(self, test_name: str, metric_name: str, environment: str = "default") -> RegressionAnalysis:
+    def detect_regression(
+        self, test_name: str, metric_name: str, environment: str = "default"
+    ) -> RegressionAnalysis:
         """Detect performance regression for a specific test metric"""
         key = f"{test_name}:{metric_name}:{environment}"
 
@@ -166,13 +168,19 @@ class RegressionDetector:
         trend = self._analyze_trend(data_points)
 
         # Calculate statistical significance
-        statistical_significance = self._calculate_statistical_significance(data_points, baseline_value)
+        statistical_significance = self._calculate_statistical_significance(
+            data_points, baseline_value
+        )
 
         # Calculate confidence level
-        confidence_level = self._calculate_confidence_level(data_points, baseline_value, current_value)
+        confidence_level = self._calculate_confidence_level(
+            data_points, baseline_value, current_value
+        )
 
         # Generate recommendations
-        recommendations = self._generate_regression_recommendations(severity, trend, percentage_change, data_points)
+        recommendations = self._generate_regression_recommendations(
+            severity, trend, percentage_change, data_points
+        )
 
         return RegressionAnalysis(
             test_name=test_name,
@@ -205,7 +213,9 @@ class RegressionDetector:
             analyses.append(analysis)
 
         # Sort by severity and confidence
-        analyses.sort(key=lambda x: (x.severity.value, x.confidence_level), reverse=True)
+        analyses.sort(
+            key=lambda x: (x.severity.value, x.confidence_level), reverse=True
+        )
 
         return analyses
 
@@ -220,7 +230,9 @@ class RegressionDetector:
         # Count by severity
         severity_counts = {}
         for severity in RegressionSeverity:
-            severity_counts[severity.value] = sum(1 for a in analyses if a.severity == severity)
+            severity_counts[severity.value] = sum(
+                1 for a in analyses if a.severity == severity
+            )
 
         # Count by trend
         trend_counts = {}
@@ -229,12 +241,20 @@ class RegressionDetector:
 
         # Calculate overall health score (0-100)
         total_tests = len(analyses)
-        regression_tests = sum(1 for a in analyses if a.severity != RegressionSeverity.NONE)
-        health_score = ((total_tests - regression_tests) / total_tests) * 100 if total_tests > 0 else 100
+        regression_tests = sum(
+            1 for a in analyses if a.severity != RegressionSeverity.NONE
+        )
+        health_score = (
+            ((total_tests - regression_tests) / total_tests) * 100
+            if total_tests > 0
+            else 100
+        )
 
         # Get worst regressions
         worst_regressions = [
-            a for a in analyses if a.severity in [RegressionSeverity.HIGH, RegressionSeverity.CRITICAL]
+            a
+            for a in analyses
+            if a.severity in [RegressionSeverity.HIGH, RegressionSeverity.CRITICAL]
         ][:5]
 
         return {
@@ -258,7 +278,9 @@ class RegressionDetector:
     def _cleanup_old_data(self, key: str):
         """Remove data points older than the retention period"""
         cutoff_date = datetime.utcnow() - timedelta(days=self.config.baseline_days * 2)
-        self.historical_data[key] = [dp for dp in self.historical_data[key] if dp.timestamp >= cutoff_date]
+        self.historical_data[key] = [
+            dp for dp in self.historical_data[key] if dp.timestamp >= cutoff_date
+        ]
 
     def _update_baseline(self, key: str):
         """Update baseline value for a metric"""
@@ -279,7 +301,9 @@ class RegressionDetector:
                 values = self._remove_outliers(values)
 
             # Use median for more robust baseline
-            self.baselines[key] = statistics.median(values) if values else data_points[0].metric_value
+            self.baselines[key] = (
+                statistics.median(values) if values else data_points[0].metric_value
+            )
         else:
             # Use all available data if insufficient baseline data
             values = [dp.metric_value for dp in data_points]
@@ -299,7 +323,9 @@ class RegressionDetector:
 
         return statistics.median(values)
 
-    def _calculate_regression_severity(self, percentage_change: float) -> RegressionSeverity:
+    def _calculate_regression_severity(
+        self, percentage_change: float
+    ) -> RegressionSeverity:
         """Determine regression severity based on percentage change"""
         abs_change = abs(percentage_change)
 
@@ -343,7 +369,9 @@ class RegressionDetector:
         elif abs(slope) < 0.01:  # Very small slope
             return PerformanceTrend.STABLE
         elif slope > 0:
-            return PerformanceTrend.DEGRADING  # Assuming higher values = worse performance
+            return (
+                PerformanceTrend.DEGRADING
+            )  # Assuming higher values = worse performance
         else:
             return PerformanceTrend.IMPROVING
 
@@ -361,7 +389,9 @@ class RegressionDetector:
         slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)
         return slope
 
-    def _calculate_statistical_significance(self, data_points: list[BenchmarkDataPoint], baseline: float) -> float:
+    def _calculate_statistical_significance(
+        self, data_points: list[BenchmarkDataPoint], baseline: float
+    ) -> float:
         """Calculate statistical significance of observed change"""
         if len(data_points) < 3:
             return 0.0
@@ -387,7 +417,9 @@ class RegressionDetector:
                 return max(0.0, 1.0 - (t_stat / 1.645) * 0.90)
         except (ZeroDivisionError, ValueError, TypeError, OverflowError) as e:
             # Return conservative confidence on calculation errors
-            logger.warning(f"Statistical calculation error in confidence detection: {e}")
+            logger.warning(
+                f"Statistical calculation error in confidence detection: {e}"
+            )
             return 0.0
 
     def _calculate_confidence_level(
@@ -401,14 +433,22 @@ class RegressionDetector:
         factors.append(data_factor)
 
         # Change magnitude factor
-        change_percent = abs(((current - baseline) / baseline) * 100) if baseline != 0 else 0
-        magnitude_factor = min(1.0, change_percent / self.config.regression_threshold_percent)
+        change_percent = (
+            abs(((current - baseline) / baseline) * 100) if baseline != 0 else 0
+        )
+        magnitude_factor = min(
+            1.0, change_percent / self.config.regression_threshold_percent
+        )
         factors.append(magnitude_factor)
 
         # Consistency factor (low variance = higher confidence)
         values = [dp.metric_value for dp in data_points]
         if len(values) > 1:
-            cv = statistics.stdev(values) / statistics.mean(values) if statistics.mean(values) != 0 else 1.0
+            cv = (
+                statistics.stdev(values) / statistics.mean(values)
+                if statistics.mean(values) != 0
+                else 1.0
+            )
             consistency_factor = max(0.0, 1.0 - cv)
         else:
             consistency_factor = 0.5
@@ -427,7 +467,9 @@ class RegressionDetector:
         std_dev = statistics.stdev(values)
         threshold = self.config.outlier_threshold_std_devs
 
-        filtered_values = [v for v in values if abs(v - mean_val) <= threshold * std_dev]
+        filtered_values = [
+            v for v in values if abs(v - mean_val) <= threshold * std_dev
+        ]
 
         return filtered_values if len(filtered_values) >= 3 else values
 
@@ -442,14 +484,22 @@ class RegressionDetector:
         recommendations = []
 
         if severity == RegressionSeverity.CRITICAL:
-            recommendations.append("🚨 CRITICAL: Immediate investigation required - performance degraded significantly")
-            recommendations.append("Consider rolling back recent changes or implementing emergency fixes")
+            recommendations.append(
+                "🚨 CRITICAL: Immediate investigation required - performance degraded significantly"
+            )
+            recommendations.append(
+                "Consider rolling back recent changes or implementing emergency fixes"
+            )
 
         if severity in [RegressionSeverity.HIGH, RegressionSeverity.MEDIUM]:
-            recommendations.append("⚠️ Performance regression detected - review recent code changes")
+            recommendations.append(
+                "⚠️ Performance regression detected - review recent code changes"
+            )
 
         if trend == PerformanceTrend.DEGRADING:
-            recommendations.append("📉 Consistent performance decline - investigate underlying causes")
+            recommendations.append(
+                "📉 Consistent performance decline - investigate underlying causes"
+            )
 
         if trend == PerformanceTrend.VOLATILE:
             recommendations.append(
@@ -457,40 +507,64 @@ class RegressionDetector:
             )
 
         if percentage_change > 0:  # Performance got worse
-            recommendations.append("🔍 Analyze recent deployments, database changes, or infrastructure modifications")
+            recommendations.append(
+                "🔍 Analyze recent deployments, database changes, or infrastructure modifications"
+            )
 
         if len(data_points) < 20:
-            recommendations.append("📈 Increase benchmark frequency for better trend analysis")
+            recommendations.append(
+                "📈 Increase benchmark frequency for better trend analysis"
+            )
 
         return recommendations
 
-    def _get_summary_recommendations(self, analyses: list[RegressionAnalysis]) -> list[str]:
+    def _get_summary_recommendations(
+        self, analyses: list[RegressionAnalysis]
+    ) -> list[str]:
         """Get high-level recommendations across all analyses"""
         recommendations = []
 
-        critical_count = sum(1 for a in analyses if a.severity == RegressionSeverity.CRITICAL)
+        critical_count = sum(
+            1 for a in analyses if a.severity == RegressionSeverity.CRITICAL
+        )
         high_count = sum(1 for a in analyses if a.severity == RegressionSeverity.HIGH)
 
         if critical_count > 0:
-            recommendations.append(f"🚨 {critical_count} CRITICAL performance regressions require immediate attention")
+            recommendations.append(
+                f"🚨 {critical_count} CRITICAL performance regressions require immediate attention"
+            )
 
         if high_count > 0:
-            recommendations.append(f"⚠️ {high_count} HIGH severity regressions need investigation")
+            recommendations.append(
+                f"⚠️ {high_count} HIGH severity regressions need investigation"
+            )
 
-        volatile_count = sum(1 for a in analyses if a.trend == PerformanceTrend.VOLATILE)
+        volatile_count = sum(
+            1 for a in analyses if a.trend == PerformanceTrend.VOLATILE
+        )
         if volatile_count > 3:
-            recommendations.append("📊 Multiple metrics showing volatility - check infrastructure stability")
+            recommendations.append(
+                "📊 Multiple metrics showing volatility - check infrastructure stability"
+            )
 
-        degrading_count = sum(1 for a in analyses if a.trend == PerformanceTrend.DEGRADING)
+        degrading_count = sum(
+            1 for a in analyses if a.trend == PerformanceTrend.DEGRADING
+        )
         if degrading_count > 2:
-            recommendations.append("📉 Multiple metrics trending downward - review recent changes")
+            recommendations.append(
+                "📉 Multiple metrics trending downward - review recent changes"
+            )
 
         if not recommendations:
-            recommendations.append("✅ Performance is stable across all monitored metrics")
+            recommendations.append(
+                "✅ Performance is stable across all monitored metrics"
+            )
 
         return recommendations
 
-    def _create_insufficient_data_analysis(self, test_name: str, metric_name: str) -> RegressionAnalysis:
+    def _create_insufficient_data_analysis(
+        self, test_name: str, metric_name: str
+    ) -> RegressionAnalysis:
         """Create analysis result for insufficient data scenarios"""
         return RegressionAnalysis(
             test_name=test_name,
@@ -506,5 +580,7 @@ class RegressionDetector:
             analysis_period_days=self.config.baseline_days,
             data_points_analyzed=0,
             statistical_significance=0.0,
-            recommendations=["📊 Insufficient data for regression analysis - collect more benchmark data"],
+            recommendations=[
+                "📊 Insufficient data for regression analysis - collect more benchmark data"
+            ],
         )

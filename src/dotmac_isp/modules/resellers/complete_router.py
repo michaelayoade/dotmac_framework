@@ -7,6 +7,9 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
+from fastapi import Body, Depends, Query
+from pydantic import BaseModel, EmailStr, Field
+
 from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
@@ -14,8 +17,6 @@ from dotmac_shared.api.dependencies import (
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import Body, Depends, Query
-from pydantic import BaseModel, EmailStr, Field
 
 from .schemas import (
     ResellerApplicationCreateSchema,
@@ -79,7 +80,9 @@ application_router = RouterFactory.create_crud_router(
 )
 
 
-@application_router.post("/{application_id}/approve", response_model=ResellerApplicationResponseSchema)
+@application_router.post(
+    "/{application_id}/approve", response_model=ResellerApplicationResponseSchema
+)
 @standard_exception_handler
 async def approve_application(
     application_id: UUID,
@@ -88,10 +91,14 @@ async def approve_application(
 ) -> ResellerApplicationResponseSchema:
     """Approve a reseller application."""
     service = ResellerApplicationService(deps.db, deps.tenant_id)
-    return await service.approve_application(application_id, deps.user_id, approval_notes)
+    return await service.approve_application(
+        application_id, deps.user_id, approval_notes
+    )
 
 
-@application_router.post("/{application_id}/reject", response_model=ResellerApplicationResponseSchema)
+@application_router.post(
+    "/{application_id}/reject", response_model=ResellerApplicationResponseSchema
+)
 @standard_exception_handler
 async def reject_application(
     application_id: UUID,
@@ -100,7 +107,9 @@ async def reject_application(
 ) -> ResellerApplicationResponseSchema:
     """Reject a reseller application."""
     service = ResellerApplicationService(deps.db, deps.tenant_id)
-    return await service.reject_application(application_id, deps.user_id, rejection_reason)
+    return await service.reject_application(
+        application_id, deps.user_id, rejection_reason
+    )
 
 
 # === Reseller Customer Management ===
@@ -138,7 +147,9 @@ async def create_reseller_customer(
     )
 
 
-@reseller_router.get("/{reseller_id}/customers/{customer_id}", response_model=dict[str, Any])
+@reseller_router.get(
+    "/{reseller_id}/customers/{customer_id}", response_model=dict[str, Any]
+)
 @standard_exception_handler
 async def get_reseller_customer(
     reseller_id: UUID,
@@ -174,7 +185,9 @@ async def get_reseller_commissions(
     )
 
 
-@reseller_router.post("/{reseller_id}/commissions/calculate", response_model=dict[str, Any])
+@reseller_router.post(
+    "/{reseller_id}/commissions/calculate", response_model=dict[str, Any]
+)
 @standard_exception_handler
 async def calculate_commissions(
     reseller_id: UUID,
@@ -229,7 +242,9 @@ onboarding_router = RouterFactory.create_standard_router(
 @onboarding_router.post("/initiate", response_model=dict[str, Any])
 @standard_exception_handler
 async def initiate_onboarding(
-    application_id: UUID = Body(..., embed=True, description="Application ID to onboard"),
+    application_id: UUID = Body(
+        ..., embed=True, description="Application ID to onboard"
+    ),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> dict[str, Any]:
     """Initiate onboarding process for approved application."""
@@ -253,12 +268,16 @@ async def get_onboarding_status(
 async def complete_onboarding_step(
     onboarding_id: UUID,
     step_name: str = Body(..., embed=True, description="Step name to complete"),
-    step_data: dict[str, Any] = Body(..., embed=True, description="Step completion data"),
+    step_data: dict[str, Any] = Body(
+        ..., embed=True, description="Step completion data"
+    ),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> dict[str, Any]:
     """Complete a specific onboarding step."""
     service = ResellerOnboardingService(deps.db, deps.tenant_id)
-    return await service.complete_step(onboarding_id, step_name, step_data, deps.user_id)
+    return await service.complete_step(
+        onboarding_id, step_name, step_data, deps.user_id
+    )
 
 
 # === Include sub-routers ===

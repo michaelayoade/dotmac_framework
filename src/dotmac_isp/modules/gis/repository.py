@@ -8,10 +8,11 @@ data access patterns across the GIS module.
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.db.operations import DatabaseOperations
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+from dotmac_shared.db.operations import DatabaseOperations
 
 from .models import (
     CoverageGap,
@@ -51,12 +52,18 @@ class ServiceAreaRepository:
         """Delete service area."""
         return await self.db_ops.delete(self.model, id)
 
-    async def get_all(self, limit: Optional[int] = None, offset: Optional[int] = None) -> list[ServiceArea]:
+    async def get_all(
+        self, limit: Optional[int] = None, offset: Optional[int] = None
+    ) -> list[ServiceArea]:
         """Get all service areas for tenant."""
-        areas = await self.db_ops.find_by(self.model, limit=limit, tenant_id=self.tenant_id, is_active=True)
+        areas = await self.db_ops.find_by(
+            self.model, limit=limit, tenant_id=self.tenant_id, is_active=True
+        )
         return areas
 
-    async def find_by_service_types(self, service_types: list[str], active_only: bool = True) -> list[ServiceArea]:
+    async def find_by_service_types(
+        self, service_types: list[str], active_only: bool = True
+    ) -> list[ServiceArea]:
         """Find service areas that support specific service types."""
         query = select(ServiceArea).where(ServiceArea.tenant_id == self.tenant_id)
 
@@ -68,13 +75,19 @@ class ServiceAreaRepository:
             # Using JSONB containment for PostgreSQL or JSON_CONTAINS for MySQL
             conditions = []
             for service_type in service_types:
-                conditions.append(func.json_extract(ServiceArea.service_types, "$[*]").like(f"%{service_type}%"))
+                conditions.append(
+                    func.json_extract(ServiceArea.service_types, "$[*]").like(
+                        f"%{service_type}%"
+                    )
+                )
             query = query.where(or_(*conditions))
 
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def find_areas_needing_analysis(self, days_since_analysis: int = 90) -> list[ServiceArea]:
+    async def find_areas_needing_analysis(
+        self, days_since_analysis: int = 90
+    ) -> list[ServiceArea]:
         """Find service areas that need coverage analysis."""
         from datetime import datetime, timedelta
 
@@ -83,13 +96,18 @@ class ServiceAreaRepository:
         query = select(ServiceArea).where(
             ServiceArea.tenant_id == self.tenant_id,
             ServiceArea.is_active is True,
-            or_(ServiceArea.last_analyzed_at.is_(None), ServiceArea.last_analyzed_at < cutoff_date),
+            or_(
+                ServiceArea.last_analyzed_at.is_(None),
+                ServiceArea.last_analyzed_at < cutoff_date,
+            ),
         )
 
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def find_areas_with_low_coverage(self, coverage_threshold: float = 80.0) -> list[ServiceArea]:
+    async def find_areas_with_low_coverage(
+        self, coverage_threshold: float = 80.0
+    ) -> list[ServiceArea]:
         """Find service areas with coverage below threshold."""
         query = select(ServiceArea).where(
             ServiceArea.tenant_id == self.tenant_id,
@@ -166,32 +184,49 @@ class NetworkNodeRepository:
 
     async def get_all(self, limit: Optional[int] = None) -> list[NetworkNode]:
         """Get all network nodes for tenant."""
-        return await self.db_ops.find_by(self.model, limit=limit, tenant_id=self.tenant_id, is_active=True)
+        return await self.db_ops.find_by(
+            self.model, limit=limit, tenant_id=self.tenant_id, is_active=True
+        )
 
-    async def find_by_node_type(self, node_type: NetworkNodeTypeEnum, active_only: bool = True) -> list[NetworkNode]:
+    async def find_by_node_type(
+        self, node_type: NetworkNodeTypeEnum, active_only: bool = True
+    ) -> list[NetworkNode]:
         """Find network nodes by type."""
-        query = select(NetworkNode).where(NetworkNode.tenant_id == self.tenant_id, NetworkNode.node_type == node_type)
+        query = select(NetworkNode).where(
+            NetworkNode.tenant_id == self.tenant_id, NetworkNode.node_type == node_type
+        )
 
         if active_only:
-            query = query.where(NetworkNode.is_active is True, NetworkNode.operational_status == "active")
+            query = query.where(
+                NetworkNode.is_active is True,
+                NetworkNode.operational_status == "active",
+            )
 
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def find_nodes_in_area(self, service_area_id: UUID, active_only: bool = True) -> list[NetworkNode]:
+    async def find_nodes_in_area(
+        self, service_area_id: UUID, active_only: bool = True
+    ) -> list[NetworkNode]:
         """Find network nodes in a specific service area."""
         query = select(NetworkNode).where(
-            NetworkNode.tenant_id == self.tenant_id, NetworkNode.service_area_id == service_area_id
+            NetworkNode.tenant_id == self.tenant_id,
+            NetworkNode.service_area_id == service_area_id,
         )
 
         if active_only:
-            query = query.where(NetworkNode.is_active is True, NetworkNode.operational_status == "active")
+            query = query.where(
+                NetworkNode.is_active is True,
+                NetworkNode.operational_status == "active",
+            )
 
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
     async def find_nodes_with_capacity(
-        self, min_bandwidth_mbps: int, node_types: Optional[list[NetworkNodeTypeEnum]] = None
+        self,
+        min_bandwidth_mbps: int,
+        node_types: Optional[list[NetworkNodeTypeEnum]] = None,
     ) -> list[NetworkNode]:
         """Find nodes with minimum bandwidth capacity."""
         query = select(NetworkNode).where(
@@ -215,7 +250,10 @@ class NetworkNodeRepository:
         query = select(NetworkNode).where(
             NetworkNode.tenant_id == self.tenant_id,
             NetworkNode.is_active is True,
-            or_(NetworkNode.last_seen_at.is_(None), NetworkNode.last_seen_at < cutoff_time),
+            or_(
+                NetworkNode.last_seen_at.is_(None),
+                NetworkNode.last_seen_at < cutoff_time,
+            ),
         )
 
         result = await self.db.execute(query)
@@ -228,11 +266,15 @@ class NetworkNodeRepository:
                 NetworkNode.node_type,
                 func.count(NetworkNode.id).label("count"),
                 func.avg(NetworkNode.bandwidth_mbps).label("avg_bandwidth"),
-                func.count(func.case((NetworkNode.operational_status == "active", 1), else_=None)).label(
-                    "active_count"
-                ),
+                func.count(
+                    func.case(
+                        (NetworkNode.operational_status == "active", 1), else_=None
+                    )
+                ).label("active_count"),
             )
-            .where(NetworkNode.tenant_id == self.tenant_id, NetworkNode.is_active is True)
+            .where(
+                NetworkNode.tenant_id == self.tenant_id, NetworkNode.is_active is True
+            )
             .group_by(NetworkNode.node_type)
         )
 
@@ -273,10 +315,13 @@ class CoverageGapRepository:
     async def delete(self, id: UUID) -> bool:
         return await self.db_ops.delete(self.model, id)
 
-    async def find_by_service_area(self, service_area_id: UUID, active_only: bool = True) -> list[CoverageGap]:
+    async def find_by_service_area(
+        self, service_area_id: UUID, active_only: bool = True
+    ) -> list[CoverageGap]:
         """Find coverage gaps for a service area."""
         query = select(CoverageGap).where(
-            CoverageGap.tenant_id == self.tenant_id, CoverageGap.service_area_id == service_area_id
+            CoverageGap.tenant_id == self.tenant_id,
+            CoverageGap.service_area_id == service_area_id,
         )
 
         if active_only:
@@ -305,9 +350,13 @@ class CoverageGapRepository:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def find_by_severity(self, severity: str, active_only: bool = True) -> list[CoverageGap]:
+    async def find_by_severity(
+        self, severity: str, active_only: bool = True
+    ) -> list[CoverageGap]:
         """Find coverage gaps by severity level."""
-        query = select(CoverageGap).where(CoverageGap.tenant_id == self.tenant_id, CoverageGap.severity == severity)
+        query = select(CoverageGap).where(
+            CoverageGap.tenant_id == self.tenant_id, CoverageGap.severity == severity
+        )
 
         if active_only:
             query = query.where(CoverageGap.is_active is True)
@@ -339,10 +388,13 @@ class TerritoryRepository:
     async def delete(self, id: UUID) -> bool:
         return await self.db_ops.delete(self.model, id)
 
-    async def find_by_territory_type(self, territory_type: str, active_only: bool = True) -> list[Territory]:
+    async def find_by_territory_type(
+        self, territory_type: str, active_only: bool = True
+    ) -> list[Territory]:
         """Find territories by type."""
         query = select(Territory).where(
-            Territory.tenant_id == self.tenant_id, Territory.territory_type == territory_type
+            Territory.tenant_id == self.tenant_id,
+            Territory.territory_type == territory_type,
         )
 
         if active_only:
@@ -351,9 +403,13 @@ class TerritoryRepository:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def find_by_assigned_user(self, user_id: UUID, active_only: bool = True) -> list[Territory]:
+    async def find_by_assigned_user(
+        self, user_id: UUID, active_only: bool = True
+    ) -> list[Territory]:
         """Find territories assigned to a user."""
-        query = select(Territory).where(Territory.tenant_id == self.tenant_id, Territory.assigned_user_id == user_id)
+        query = select(Territory).where(
+            Territory.tenant_id == self.tenant_id, Territory.assigned_user_id == user_id
+        )
 
         if active_only:
             query = query.where(Territory.is_active is True)
@@ -361,13 +417,16 @@ class TerritoryRepository:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def find_underperforming_territories(self, performance_threshold: float = 80.0) -> list[Territory]:
+    async def find_underperforming_territories(
+        self, performance_threshold: float = 80.0
+    ) -> list[Territory]:
         """Find territories with revenue performance below threshold."""
         query = select(Territory).where(
             Territory.tenant_id == self.tenant_id,
             Territory.is_active is True,
             Territory.revenue_target > 0,
-            (Territory.actual_revenue / Territory.revenue_target * 100) < performance_threshold,
+            (Territory.actual_revenue / Territory.revenue_target * 100)
+            < performance_threshold,
         )
 
         result = await self.db.execute(query)
@@ -382,7 +441,11 @@ class TerritoryRepository:
             func.sum(Territory.customer_count).label("total_customers"),
             func.avg(
                 func.case(
-                    (Territory.revenue_target > 0, Territory.actual_revenue / Territory.revenue_target * 100), else_=0
+                    (
+                        Territory.revenue_target > 0,
+                        Territory.actual_revenue / Territory.revenue_target * 100,
+                    ),
+                    else_=0,
                 )
             ).label("avg_performance"),
         ).where(Territory.tenant_id == self.tenant_id, Territory.is_active is True)
@@ -427,7 +490,9 @@ class RouteOptimizationRepository:
     async def delete(self, id: UUID) -> bool:
         return await self.db_ops.delete(self.model, id)
 
-    async def find_recent_optimizations(self, days: int = 30, limit: Optional[int] = None) -> list[RouteOptimization]:
+    async def find_recent_optimizations(
+        self, days: int = 30, limit: Optional[int] = None
+    ) -> list[RouteOptimization]:
         """Find recent route optimizations."""
         from datetime import datetime, timedelta, timezone
 
@@ -435,7 +500,10 @@ class RouteOptimizationRepository:
 
         query = (
             select(RouteOptimization)
-            .where(RouteOptimization.tenant_id == self.tenant_id, RouteOptimization.calculated_at >= cutoff_date)
+            .where(
+                RouteOptimization.tenant_id == self.tenant_id,
+                RouteOptimization.calculated_at >= cutoff_date,
+            )
             .order_by(RouteOptimization.calculated_at.desc())
         )
 
@@ -450,7 +518,8 @@ class RouteOptimizationRepository:
     ) -> list[RouteOptimization]:
         """Find routes by optimization type."""
         query = select(RouteOptimization).where(
-            RouteOptimization.tenant_id == self.tenant_id, RouteOptimization.optimization_type == optimization_type
+            RouteOptimization.tenant_id == self.tenant_id,
+            RouteOptimization.optimization_type == optimization_type,
         )
 
         if active_only:
@@ -464,9 +533,16 @@ class RouteOptimizationRepository:
         query = select(
             func.count(RouteOptimization.id).label("total_routes"),
             func.avg(RouteOptimization.total_distance_km).label("avg_distance"),
-            func.avg(RouteOptimization.estimated_duration_minutes).label("avg_duration"),
-            func.count(func.distinct(RouteOptimization.optimization_type)).label("optimization_types"),
-        ).where(RouteOptimization.tenant_id == self.tenant_id, RouteOptimization.is_active is True)
+            func.avg(RouteOptimization.estimated_duration_minutes).label(
+                "avg_duration"
+            ),
+            func.count(func.distinct(RouteOptimization.optimization_type)).label(
+                "optimization_types"
+            ),
+        ).where(
+            RouteOptimization.tenant_id == self.tenant_id,
+            RouteOptimization.is_active is True,
+        )
 
         result = await self.db.execute(query)
         row = result.first()
@@ -502,10 +578,13 @@ class CoverageRecommendationRepository:
     async def delete(self, id: UUID) -> bool:
         return await self.db_ops.delete(self.model, id)
 
-    async def find_by_priority(self, priority: str, active_only: bool = True) -> list[CoverageRecommendation]:
+    async def find_by_priority(
+        self, priority: str, active_only: bool = True
+    ) -> list[CoverageRecommendation]:
         """Find recommendations by priority level."""
         query = select(CoverageRecommendation).where(
-            CoverageRecommendation.tenant_id == self.tenant_id, CoverageRecommendation.priority == priority
+            CoverageRecommendation.tenant_id == self.tenant_id,
+            CoverageRecommendation.priority == priority,
         )
 
         if active_only:
@@ -514,10 +593,13 @@ class CoverageRecommendationRepository:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def find_by_status(self, status: str, active_only: bool = True) -> list[CoverageRecommendation]:
+    async def find_by_status(
+        self, status: str, active_only: bool = True
+    ) -> list[CoverageRecommendation]:
         """Find recommendations by implementation status."""
         query = select(CoverageRecommendation).where(
-            CoverageRecommendation.tenant_id == self.tenant_id, CoverageRecommendation.status == status
+            CoverageRecommendation.tenant_id == self.tenant_id,
+            CoverageRecommendation.status == status,
         )
 
         if active_only:
@@ -526,7 +608,9 @@ class CoverageRecommendationRepository:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def find_pending_recommendations(self, limit: Optional[int] = None) -> list[CoverageRecommendation]:
+    async def find_pending_recommendations(
+        self, limit: Optional[int] = None
+    ) -> list[CoverageRecommendation]:
         """Find pending recommendations ordered by priority."""
         # Priority order: critical, high, medium, low
         priority_order = func.case(

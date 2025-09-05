@@ -194,10 +194,18 @@ class ScalingAdvisor:
 
             # Perform comprehensive analysis
             analyses = await asyncio.gather(
-                self._analyze_resource_utilization(metrics, historical_metrics, recommendation),
-                self._analyze_application_performance(metrics, historical_metrics, recommendation),
-                self._analyze_growth_trends(metrics, historical_metrics, recommendation),
-                self._analyze_cost_optimization(metrics, historical_metrics, recommendation),
+                self._analyze_resource_utilization(
+                    metrics, historical_metrics, recommendation
+                ),
+                self._analyze_application_performance(
+                    metrics, historical_metrics, recommendation
+                ),
+                self._analyze_growth_trends(
+                    metrics, historical_metrics, recommendation
+                ),
+                self._analyze_cost_optimization(
+                    metrics, historical_metrics, recommendation
+                ),
                 return_exceptions=True,
             )
 
@@ -208,7 +216,9 @@ class ScalingAdvisor:
             await self._store_recommendation(recommendation)
 
         except Exception as e:
-            self.logger.error(f"Scaling analysis failed for {metrics.container_id}: {e}")
+            self.logger.error(
+                f"Scaling analysis failed for {metrics.container_id}: {e}"
+            )
             recommendation.action = ScalingAction.NO_ACTION
             recommendation.confidence = 0.0
             recommendation.suggested_implementation = f"Analysis failed: {str(e)}"
@@ -245,7 +255,11 @@ class ScalingAdvisor:
 
         # CPU Analysis
         cpu_trend = self._calculate_trend(
-            [m.system_metrics.cpu_percent for m in historical_metrics[-10:] if m.system_metrics]
+            [
+                m.system_metrics.cpu_percent
+                for m in historical_metrics[-10:]
+                if m.system_metrics
+            ]
         )
 
         analysis["cpu_analysis"] = {
@@ -265,7 +279,11 @@ class ScalingAdvisor:
 
         # Memory Analysis
         memory_trend = self._calculate_trend(
-            [m.system_metrics.memory_percent for m in historical_metrics[-10:] if m.system_metrics]
+            [
+                m.system_metrics.memory_percent
+                for m in historical_metrics[-10:]
+                if m.system_metrics
+            ]
         )
 
         analysis["memory_analysis"] = {
@@ -341,7 +359,11 @@ class ScalingAdvisor:
             # Check for rapid growth
             if len(request_rates) >= 5:
                 recent_avg = statistics.mean(request_rates[-3:])
-                older_avg = statistics.mean(request_rates[-6:-3]) if len(request_rates) >= 6 else request_rates[0]
+                older_avg = (
+                    statistics.mean(request_rates[-6:-3])
+                    if len(request_rates) >= 6
+                    else request_rates[0]
+                )
 
                 if older_avg > 0:
                     growth_rate = ((recent_avg - older_avg) / older_avg) * 100
@@ -367,8 +389,14 @@ class ScalingAdvisor:
             return analysis
 
         # Analyze resource usage trends over time
-        cpu_values = [m.system_metrics.cpu_percent for m in historical_metrics if m.system_metrics]
-        memory_values = [m.system_metrics.memory_percent for m in historical_metrics if m.system_metrics]
+        cpu_values = [
+            m.system_metrics.cpu_percent for m in historical_metrics if m.system_metrics
+        ]
+        memory_values = [
+            m.system_metrics.memory_percent
+            for m in historical_metrics
+            if m.system_metrics
+        ]
 
         if cpu_values:
             cpu_trend = self._calculate_trend(cpu_values)
@@ -378,7 +406,9 @@ class ScalingAdvisor:
         if memory_values:
             memory_trend = self._calculate_trend(memory_values)
             analysis["growth_indicators"]["memory_trend"] = memory_trend
-            recommendation.trend_analysis["memory"] = self._trend_to_string(memory_trend)
+            recommendation.trend_analysis["memory"] = self._trend_to_string(
+                memory_trend
+            )
 
         # Predictive analysis for next period
         if self.enable_predictive_scaling and len(historical_metrics) >= 10:
@@ -392,9 +422,15 @@ class ScalingAdvisor:
                 }
 
                 # Check if predictions exceed thresholds
-                if predicted_cpu and predicted_cpu >= self.thresholds.cpu_scale_up_threshold:
+                if (
+                    predicted_cpu
+                    and predicted_cpu >= self.thresholds.cpu_scale_up_threshold
+                ):
                     analysis["growth_indicators"]["predicted_cpu_violation"] = True
-                if predicted_memory and predicted_memory >= self.thresholds.memory_scale_up_threshold:
+                if (
+                    predicted_memory
+                    and predicted_memory >= self.thresholds.memory_scale_up_threshold
+                ):
                     analysis["growth_indicators"]["predicted_memory_violation"] = True
 
             except Exception as e:
@@ -419,7 +455,8 @@ class ScalingAdvisor:
         # Identify underutilized resources
         if (
             sys_metrics.cpu_percent <= self.thresholds.cpu_scale_down_threshold
-            and sys_metrics.memory_percent <= self.thresholds.memory_scale_down_threshold
+            and sys_metrics.memory_percent
+            <= self.thresholds.memory_scale_down_threshold
         ):
             analysis["optimization_opportunities"].append("underutilized_resources")
 
@@ -438,10 +475,18 @@ class ScalingAdvisor:
         # Check for over-provisioning
         if len(historical_metrics) >= 10:
             recent_cpu_avg = statistics.mean(
-                [m.system_metrics.cpu_percent for m in historical_metrics[-10:] if m.system_metrics]
+                [
+                    m.system_metrics.cpu_percent
+                    for m in historical_metrics[-10:]
+                    if m.system_metrics
+                ]
             )
             recent_memory_avg = statistics.mean(
-                [m.system_metrics.memory_percent for m in historical_metrics[-10:] if m.system_metrics]
+                [
+                    m.system_metrics.memory_percent
+                    for m in historical_metrics[-10:]
+                    if m.system_metrics
+                ]
             )
 
             if recent_cpu_avg <= 30 and recent_memory_avg <= 40:
@@ -449,7 +494,9 @@ class ScalingAdvisor:
 
         return analysis
 
-    async def _determine_final_recommendation(self, recommendation: ScalingRecommendation, analyses: list[Any]) -> None:
+    async def _determine_final_recommendation(
+        self, recommendation: ScalingRecommendation, analyses: list[Any]
+    ) -> None:
         """Determine final scaling recommendation based on all analyses"""
 
         # Extract valid analyses
@@ -509,11 +556,19 @@ class ScalingAdvisor:
         # Generate implementation guidance
         await self._generate_implementation_guidance(recommendation, valid_analyses)
 
-    def _should_scale_down(self, violations: list[str], trend_analysis: dict[str, str]) -> bool:
+    def _should_scale_down(
+        self, violations: list[str], trend_analysis: dict[str, str]
+    ) -> bool:
         """Determine if scaling down is appropriate"""
         # Check for sustained low utilization
-        low_cpu = any("cpu" in trend and "decreasing" in trend.lower() for trend in trend_analysis.values())
-        low_memory = any("memory" in trend and "decreasing" in trend.lower() for trend in trend_analysis.values())
+        low_cpu = any(
+            "cpu" in trend and "decreasing" in trend.lower()
+            for trend in trend_analysis.values()
+        )
+        low_memory = any(
+            "memory" in trend and "decreasing" in trend.lower()
+            for trend in trend_analysis.values()
+        )
 
         no_high_violations = not any(
             v in violations
@@ -546,7 +601,8 @@ class ScalingAdvisor:
                     "Consider horizontal scaling if vertical scaling is limited."
                 )
                 recommendation.rollback_plan = (
-                    "Monitor for 30 minutes. If issues persist, " "scale back and investigate application bottlenecks."
+                    "Monitor for 30 minutes. If issues persist, "
+                    "scale back and investigate application bottlenecks."
                 )
             else:
                 recommendation.suggested_implementation = (
@@ -564,7 +620,8 @@ class ScalingAdvisor:
                 "Monitor closely for performance degradation."
             )
             recommendation.rollback_plan = (
-                "Immediately restore previous resource levels if " "performance metrics deteriorate."
+                "Immediately restore previous resource levels if "
+                "performance metrics deteriorate."
             )
 
         elif recommendation.action == ScalingAction.OPTIMIZE:
@@ -573,7 +630,8 @@ class ScalingAdvisor:
                 "and implement caching where appropriate."
             )
             recommendation.rollback_plan = (
-                "Keep backup of current configuration. " "Revert optimizations if stability is affected."
+                "Keep backup of current configuration. "
+                "Revert optimizations if stability is affected."
             )
 
         # Add monitoring recommendations
@@ -593,7 +651,9 @@ class ScalingAdvisor:
                 ]
             )
 
-    async def _store_recommendation(self, recommendation: ScalingRecommendation) -> None:
+    async def _store_recommendation(
+        self, recommendation: ScalingRecommendation
+    ) -> None:
         """Store recommendation in history"""
         container_id = recommendation.container_id
 
@@ -605,16 +665,24 @@ class ScalingAdvisor:
         # Keep only recent recommendations (last 30 days)
         cutoff_time = datetime.now(timezone.utc) - timedelta(days=30)
         self._historical_recommendations[container_id] = [
-            rec for rec in self._historical_recommendations[container_id] if rec.timestamp > cutoff_time
+            rec
+            for rec in self._historical_recommendations[container_id]
+            if rec.timestamp > cutoff_time
         ]
 
-    def get_recommendation_history(self, container_id: str, days: int = 7) -> list[ScalingRecommendation]:
+    def get_recommendation_history(
+        self, container_id: str, days: int = 7
+    ) -> list[ScalingRecommendation]:
         """Get historical recommendations for container"""
         if container_id not in self._historical_recommendations:
             return []
 
         cutoff_time = datetime.now(timezone.utc) - timedelta(days=days)
-        return [rec for rec in self._historical_recommendations[container_id] if rec.timestamp > cutoff_time]
+        return [
+            rec
+            for rec in self._historical_recommendations[container_id]
+            if rec.timestamp > cutoff_time
+        ]
 
     # Utility methods
     def _calculate_trend(self, values: list[float]) -> float:
@@ -629,7 +697,9 @@ class ScalingAdvisor:
             x_mean = statistics.mean(x_values)
             y_mean = statistics.mean(values)
 
-            numerator = sum((x - x_mean) * (y - y_mean) for x, y in zip(x_values, values))
+            numerator = sum(
+                (x - x_mean) * (y - y_mean) for x, y in zip(x_values, values)
+            )
             denominator = sum((x - x_mean) ** 2 for x in x_values)
 
             return numerator / denominator if denominator != 0 else 0.0
@@ -677,7 +747,9 @@ class ScalingAdvisor:
         # This would be implemented with actual pricing models
         # For now, return a placeholder calculation
         cpu_cost = sys_metrics.cpu_count * 0.05  # $0.05 per vCPU per hour
-        memory_cost = (sys_metrics.memory_limit_bytes / (1024**3)) * 0.01  # $0.01 per GB per hour
+        memory_cost = (
+            sys_metrics.memory_limit_bytes / (1024**3)
+        ) * 0.01  # $0.01 per GB per hour
         return cpu_cost + memory_cost
 
 

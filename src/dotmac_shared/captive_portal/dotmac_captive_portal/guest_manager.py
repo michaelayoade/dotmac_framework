@@ -82,20 +82,28 @@ class GuestNetwork:
         self.guest_to_guest = kwargs.get("guest_to_guest", False)
 
         # Bandwidth controls
-        self.bandwidth_limit_down = kwargs.get("bandwidth_limit_down", 0)  # 0 = unlimited
+        self.bandwidth_limit_down = kwargs.get(
+            "bandwidth_limit_down", 0
+        )  # 0 = unlimited
         self.bandwidth_limit_up = kwargs.get("bandwidth_limit_up", 0)
         self.per_user_bandwidth = kwargs.get("per_user_bandwidth", True)
 
         # Access controls
-        self.allowed_protocols = kwargs.get("allowed_protocols", ["http", "https", "dns"])
+        self.allowed_protocols = kwargs.get(
+            "allowed_protocols", ["http", "https", "dns"]
+        )
         self.blocked_ports = kwargs.get("blocked_ports", [22, 23, 135, 139, 445])
         self.content_filtering = kwargs.get("content_filtering", False)
 
         # Time-based access
-        self.access_schedule = kwargs.get("access_schedule", {})  # Day/time restrictions
+        self.access_schedule = kwargs.get(
+            "access_schedule", {}
+        )  # Day/time restrictions
 
         # Security settings
-        self.captive_portal_bypass = kwargs.get("captive_portal_bypass", [])  # MAC addresses
+        self.captive_portal_bypass = kwargs.get(
+            "captive_portal_bypass", []
+        )  # MAC addresses
         self.device_isolation = kwargs.get("device_isolation", True)
 
         # Monitoring
@@ -191,7 +199,9 @@ class GuestNetwork:
         """Validate VLAN configuration."""
         issues = []
 
-        if self.vlan_config and (self.vlan_config.vlan_id < 1 or self.vlan_config.vlan_id > MAX_VLAN_ID):
+        if self.vlan_config and (
+            self.vlan_config.vlan_id < 1 or self.vlan_config.vlan_id > MAX_VLAN_ID
+        ):
             issues.append("VLAN ID must be between 1 and 4094")
 
         return issues
@@ -280,9 +290,15 @@ class NetworkDeviceManager:
         device = {
             "mac_address": mac_address.lower(),
             "ip_address": ip_address,
-            "hostname": (device_info.get("hostname", "unknown") if device_info else "unknown"),
-            "vendor": (device_info.get("vendor", "unknown") if device_info else "unknown"),
-            "device_type": (device_info.get("device_type", "unknown") if device_info else "unknown"),
+            "hostname": (
+                device_info.get("hostname", "unknown") if device_info else "unknown"
+            ),
+            "vendor": (
+                device_info.get("vendor", "unknown") if device_info else "unknown"
+            ),
+            "device_type": (
+                device_info.get("device_type", "unknown") if device_info else "unknown"
+            ),
             "first_seen": datetime.now(UTC),
             "last_seen": datetime.now(UTC),
             "status": "online",
@@ -302,7 +318,9 @@ class NetworkDeviceManager:
 
         return device
 
-    def update_device_activity(self, mac_address: str, bytes_down: int = 0, bytes_up: int = 0):
+    def update_device_activity(
+        self, mac_address: str, bytes_down: int = 0, bytes_up: int = 0
+    ):
         """Update device network activity."""
         mac_lower = mac_address.lower()
         if mac_lower in self._devices:
@@ -337,8 +355,16 @@ class NetworkDeviceManager:
         usage = self._bandwidth_usage[mac_lower]
 
         # Calculate usage in time window
-        download_bytes = sum(bytes_count for timestamp, bytes_count in usage["downloads"] if timestamp >= cutoff_time)
-        upload_bytes = sum(bytes_count for timestamp, bytes_count in usage["uploads"] if timestamp >= cutoff_time)
+        download_bytes = sum(
+            bytes_count
+            for timestamp, bytes_count in usage["downloads"]
+            if timestamp >= cutoff_time
+        )
+        upload_bytes = sum(
+            bytes_count
+            for timestamp, bytes_count in usage["uploads"]
+            if timestamp >= cutoff_time
+        )
 
         # Convert to Mbps
         time_window_seconds = time_window_minutes * 60
@@ -351,7 +377,9 @@ class NetworkDeviceManager:
             "total_bytes": download_bytes + upload_bytes,
         }
 
-    def list_online_devices(self, inactive_threshold_minutes: int = 5) -> list[dict[str, Any]]:
+    def list_online_devices(
+        self, inactive_threshold_minutes: int = 5
+    ) -> list[dict[str, Any]]:
         """List devices that are currently online."""
         cutoff_time = datetime.now(UTC) - timedelta(minutes=inactive_threshold_minutes)
 
@@ -404,7 +432,9 @@ class GuestNetworkManager:
             network=network_cidr,
             gateway=gateway_ip,
             dns_servers=dns_servers or ["8.8.8.8", "8.8.4.4"],
-            dhcp_start=kwargs.get("dhcp_start", self._calculate_dhcp_start(network_cidr)),
+            dhcp_start=kwargs.get(
+                "dhcp_start", self._calculate_dhcp_start(network_cidr)
+            ),
             dhcp_end=kwargs.get("dhcp_end", self._calculate_dhcp_end(network_cidr)),
             lease_time=kwargs.get("lease_time", 3600),
         )
@@ -415,7 +445,9 @@ class GuestNetworkManager:
             vlan_config = VLANConfig(
                 vlan_id=vlan_id,
                 name=kwargs.get("vlan_name", f"guest_vlan_{vlan_id}"),
-                description=kwargs.get("vlan_description", f"Guest network VLAN {vlan_id}"),
+                description=kwargs.get(
+                    "vlan_description", f"Guest network VLAN {vlan_id}"
+                ),
                 isolation_enabled=kwargs.get("vlan_isolation", True),
                 inter_vlan_routing=kwargs.get("inter_vlan_routing", False),
                 bandwidth_limit_mbps=kwargs.get("vlan_bandwidth_limit"),
@@ -495,7 +527,9 @@ class GuestNetworkManager:
             msg = f"Invalid updated configuration: {validation['issues']}"
             raise ValueError(msg)
 
-        logger.info("Guest network updated", network_id=network_id, updates=list(updates.keys()))
+        logger.info(
+            "Guest network updated", network_id=network_id, updates=list(updates.keys())
+        )
 
         return network
 
@@ -536,7 +570,9 @@ class GuestNetworkManager:
             self._device_manager.register_device(mac_address, assigned_ip)
             return assigned_ip
 
-        logger.warning("No available IP addresses", network_id=network_id, mac_address=mac_address)
+        logger.warning(
+            "No available IP addresses", network_id=network_id, mac_address=mac_address
+        )
         return None
 
     async def apply_bandwidth_policies(
@@ -639,7 +675,11 @@ class GuestNetworkManager:
             return {}
 
         online_devices = self._device_manager.list_online_devices()
-        network_devices = [device for device in online_devices if network.is_ip_in_range(device["ip_address"])]
+        network_devices = [
+            device
+            for device in online_devices
+            if network.is_ip_in_range(device["ip_address"])
+        ]
 
         total_bandwidth_down = sum(
             self._device_manager.get_device_bandwidth_usage(

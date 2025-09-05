@@ -9,8 +9,9 @@ management system for storing metadata, audit logs, and configuration.
 from datetime import datetime
 from typing import Any, Optional
 
-from dotmac.tasks import TaskPriority, TaskStatus
 from pydantic import BaseModel, ConfigDict, Field
+
+from dotmac.tasks import TaskPriority, TaskStatus
 
 
 class TaskOperationAuditLog(BaseModel):
@@ -23,7 +24,9 @@ class TaskOperationAuditLog(BaseModel):
     tenant_id: str = Field(description="Tenant identifier")
     user_id: Optional[str] = Field(None, description="User who performed the operation")
 
-    operation: str = Field(description="Operation performed (cancel, retry, delete, etc.)")
+    operation: str = Field(
+        description="Operation performed (cancel, retry, delete, etc.)"
+    )
     timestamp: datetime = Field(description="When the operation was performed")
 
     # Operation context
@@ -32,12 +35,16 @@ class TaskOperationAuditLog(BaseModel):
     api_endpoint: Optional[str] = Field(None, description="API endpoint used")
 
     # Operation details
-    operation_metadata: dict[str, Any] = Field(default_factory=dict, description="Operation-specific metadata")
+    operation_metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Operation-specific metadata"
+    )
 
     # Results
     success: bool = Field(description="Whether the operation succeeded")
     error_message: Optional[str] = Field(None, description="Error message if failed")
-    result_data: Optional[dict[str, Any]] = Field(None, description="Additional result data")
+    result_data: Optional[dict[str, Any]] = Field(
+        None, description="Additional result data"
+    )
 
 
 class TaskMetricsSnapshot(BaseModel):
@@ -50,12 +57,20 @@ class TaskMetricsSnapshot(BaseModel):
     snapshot_time: datetime = Field(description="When the snapshot was taken")
 
     # Performance metrics
-    execution_time: Optional[float] = Field(None, description="Total execution time in seconds")
-    queue_time: Optional[float] = Field(None, description="Time spent in queue in seconds")
+    execution_time: Optional[float] = Field(
+        None, description="Total execution time in seconds"
+    )
+    queue_time: Optional[float] = Field(
+        None, description="Time spent in queue in seconds"
+    )
 
     # Resource usage
-    peak_memory_usage: Optional[int] = Field(None, description="Peak memory usage in bytes")
-    avg_cpu_usage: Optional[float] = Field(None, description="Average CPU usage percentage")
+    peak_memory_usage: Optional[int] = Field(
+        None, description="Peak memory usage in bytes"
+    )
+    avg_cpu_usage: Optional[float] = Field(
+        None, description="Average CPU usage percentage"
+    )
     network_io: Optional[int] = Field(None, description="Network I/O in bytes")
     disk_io: Optional[int] = Field(None, description="Disk I/O in bytes")
 
@@ -64,7 +79,9 @@ class TaskMetricsSnapshot(BaseModel):
     warning_count: int = Field(0, description="Number of warnings")
 
     # Custom metrics
-    custom_metrics: dict[str, Any] = Field(default_factory=dict, description="Task-specific custom metrics")
+    custom_metrics: dict[str, Any] = Field(
+        default_factory=dict, description="Task-specific custom metrics"
+    )
 
 
 class SystemHealthSnapshot(BaseModel):
@@ -104,7 +121,9 @@ class SystemHealthSnapshot(BaseModel):
     database_status: str = Field(description="Database connection status")
 
     # Alerts and issues
-    active_alerts: list[dict[str, Any]] = Field(default_factory=list, description="Currently active system alerts")
+    active_alerts: list[dict[str, Any]] = Field(
+        default_factory=list, description="Currently active system alerts"
+    )
 
 
 class TenantTaskQuota(BaseModel):
@@ -121,18 +140,28 @@ class TenantTaskQuota(BaseModel):
     max_monthly_tasks: int = Field(description="Maximum tasks per month")
 
     # Resource limits
-    max_task_memory: Optional[int] = Field(None, description="Maximum memory per task in bytes")
-    max_task_duration: Optional[int] = Field(None, description="Maximum task duration in seconds")
+    max_task_memory: Optional[int] = Field(
+        None, description="Maximum memory per task in bytes"
+    )
+    max_task_duration: Optional[int] = Field(
+        None, description="Maximum task duration in seconds"
+    )
     max_queue_size: Optional[int] = Field(None, description="Maximum queue size")
 
     # Priority limits
-    can_use_high_priority: bool = Field(False, description="Can use high priority tasks")
-    can_use_urgent_priority: bool = Field(False, description="Can use urgent priority tasks")
+    can_use_high_priority: bool = Field(
+        False, description="Can use high priority tasks"
+    )
+    can_use_urgent_priority: bool = Field(
+        False, description="Can use urgent priority tasks"
+    )
 
     # Feature access
     can_cancel_tasks: bool = Field(True, description="Can cancel tasks")
     can_retry_tasks: bool = Field(True, description="Can retry failed tasks")
-    can_view_system_metrics: bool = Field(False, description="Can view system-wide metrics")
+    can_view_system_metrics: bool = Field(
+        False, description="Can view system-wide metrics"
+    )
 
     # Current usage
     current_concurrent_tasks: int = Field(0, description="Current concurrent tasks")
@@ -161,13 +190,16 @@ class TaskTemplate(BaseModel):
 
     # Task configuration
     task_type: str = Field(description="Type of task this template creates")
-    priority: TaskPriority = Field(TaskPriority.MEDIUM, description="Default task priority")
+    priority: TaskPriority = Field(
+        TaskPriority.MEDIUM, description="Default task priority"
+    )
     max_retries: int = Field(3, description="Default maximum retries")
     timeout: Optional[int] = Field(None, description="Default task timeout in seconds")
 
     # Template parameters
     parameters: dict[str, Any] = Field(
-        default_factory=dict, description="Default parameters for tasks created from this template"
+        default_factory=dict,
+        description="Default parameters for tasks created from this template",
     )
 
     # Parameter schema for validation
@@ -176,13 +208,19 @@ class TaskTemplate(BaseModel):
     )
 
     # Usage statistics
-    usage_count: int = Field(0, description="Number of times this template has been used")
-    last_used_at: Optional[datetime] = Field(None, description="When template was last used")
+    usage_count: int = Field(
+        0, description="Number of times this template has been used"
+    )
+    last_used_at: Optional[datetime] = Field(
+        None, description="When template was last used"
+    )
 
     # Access control
     tenant_id: Optional[str] = Field(None, description="Tenant that owns this template")
     is_public: bool = Field(False, description="Whether template is publicly available")
-    allowed_tenants: list[str] = Field(default_factory=list, description="Tenants allowed to use this template")
+    allowed_tenants: list[str] = Field(
+        default_factory=list, description="Tenants allowed to use this template"
+    )
 
 
 class TaskScheduleRule(BaseModel):
@@ -200,13 +238,21 @@ class TaskScheduleRule(BaseModel):
     enabled: bool = Field(True, description="Whether the rule is active")
 
     # Task configuration
-    task_template_id: Optional[str] = Field(None, description="Template to use for created tasks")
+    task_template_id: Optional[str] = Field(
+        None, description="Template to use for created tasks"
+    )
     task_type: str = Field(description="Type of task to create")
-    task_parameters: dict[str, Any] = Field(default_factory=dict, description="Parameters for created tasks")
+    task_parameters: dict[str, Any] = Field(
+        default_factory=dict, description="Parameters for created tasks"
+    )
 
     # Execution limits
-    max_concurrent_executions: int = Field(1, description="Maximum concurrent executions")
-    skip_if_previous_running: bool = Field(True, description="Skip if previous execution still running")
+    max_concurrent_executions: int = Field(
+        1, description="Maximum concurrent executions"
+    )
+    skip_if_previous_running: bool = Field(
+        True, description="Skip if previous execution still running"
+    )
 
     # Metadata
     tenant_id: str = Field(description="Tenant that owns this rule")
@@ -215,8 +261,12 @@ class TaskScheduleRule(BaseModel):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     # Execution tracking
-    last_execution_at: Optional[datetime] = Field(None, description="Last successful execution")
-    next_execution_at: Optional[datetime] = Field(None, description="Next scheduled execution")
+    last_execution_at: Optional[datetime] = Field(
+        None, description="Last successful execution"
+    )
+    next_execution_at: Optional[datetime] = Field(
+        None, description="Next scheduled execution"
+    )
     execution_count: int = Field(0, description="Total number of executions")
     failure_count: int = Field(0, description="Number of failed executions")
 
@@ -230,16 +280,27 @@ class TaskNotificationRule(BaseModel):
     name: str = Field(description="Human-readable rule name")
 
     # Trigger conditions
-    task_types: list[str] = Field(default_factory=list, description="Task types to monitor (empty = all types)")
-    task_statuses: list[TaskStatus] = Field(
-        default_factory=list, description="Task statuses to trigger on (empty = all statuses)"
+    task_types: list[str] = Field(
+        default_factory=list, description="Task types to monitor (empty = all types)"
     )
-    tenant_ids: list[str] = Field(default_factory=list, description="Tenants to monitor (empty = all tenants)")
+    task_statuses: list[TaskStatus] = Field(
+        default_factory=list,
+        description="Task statuses to trigger on (empty = all statuses)",
+    )
+    tenant_ids: list[str] = Field(
+        default_factory=list, description="Tenants to monitor (empty = all tenants)"
+    )
 
     # Conditions
-    min_execution_time: Optional[float] = Field(None, description="Minimum execution time in seconds to trigger")
-    max_execution_time: Optional[float] = Field(None, description="Maximum execution time in seconds to trigger")
-    error_patterns: list[str] = Field(default_factory=list, description="Error message patterns to match")
+    min_execution_time: Optional[float] = Field(
+        None, description="Minimum execution time in seconds to trigger"
+    )
+    max_execution_time: Optional[float] = Field(
+        None, description="Maximum execution time in seconds to trigger"
+    )
+    error_patterns: list[str] = Field(
+        default_factory=list, description="Error message patterns to match"
+    )
 
     # Notification configuration
     notification_channels: list[str] = Field(
@@ -249,13 +310,17 @@ class TaskNotificationRule(BaseModel):
 
     # Rate limiting
     cooldown_seconds: int = Field(300, description="Minimum time between notifications")
-    max_notifications_per_hour: int = Field(10, description="Maximum notifications per hour")
+    max_notifications_per_hour: int = Field(
+        10, description="Maximum notifications per hour"
+    )
 
     # Metadata
     tenant_id: Optional[str] = Field(None, description="Tenant that owns this rule")
     enabled: bool = Field(True, description="Whether the rule is active")
     created_at: datetime = Field(description="Rule creation timestamp")
-    last_triggered_at: Optional[datetime] = Field(None, description="Last time rule was triggered")
+    last_triggered_at: Optional[datetime] = Field(
+        None, description="Last time rule was triggered"
+    )
 
 
 class TaskDependency(BaseModel):
@@ -267,20 +332,30 @@ class TaskDependency(BaseModel):
     dependency_task_id: str = Field(description="Task that must complete first")
 
     # Dependency type
-    dependency_type: str = Field("completion", description="Type of dependency (completion, success, etc.)")
+    dependency_type: str = Field(
+        "completion", description="Type of dependency (completion, success, etc.)"
+    )
 
     # Conditions
-    required_status: Optional[TaskStatus] = Field(None, description="Required status of dependency task")
+    required_status: Optional[TaskStatus] = Field(
+        None, description="Required status of dependency task"
+    )
 
-    timeout_seconds: Optional[int] = Field(None, description="Maximum time to wait for dependency")
+    timeout_seconds: Optional[int] = Field(
+        None, description="Maximum time to wait for dependency"
+    )
 
     # Metadata
     created_at: datetime = Field(description="Dependency creation timestamp")
-    resolved_at: Optional[datetime] = Field(None, description="When dependency was resolved")
+    resolved_at: Optional[datetime] = Field(
+        None, description="When dependency was resolved"
+    )
 
     # Status
     is_resolved: bool = Field(False, description="Whether dependency is resolved")
-    resolution_result: Optional[str] = Field(None, description="How dependency was resolved")
+    resolution_result: Optional[str] = Field(
+        None, description="How dependency was resolved"
+    )
 
 
 class WorkflowTemplate(BaseModel):
@@ -301,7 +376,9 @@ class WorkflowTemplate(BaseModel):
 
     # Configuration
     parallel_execution: bool = Field(False, description="Allow parallel step execution")
-    failure_strategy: str = Field("stop_on_first_failure", description="How to handle step failures")
+    failure_strategy: str = Field(
+        "stop_on_first_failure", description="How to handle step failures"
+    )
 
     # Metadata
     tenant_id: Optional[str] = Field(None, description="Tenant that owns this template")
@@ -310,7 +387,9 @@ class WorkflowTemplate(BaseModel):
 
     # Usage tracking
     usage_count: int = Field(0, description="Number of times template has been used")
-    success_rate: float = Field(0.0, description="Success rate of workflows from this template")
+    success_rate: float = Field(
+        0.0, description="Success rate of workflows from this template"
+    )
 
 
 # Utility models for API responses and internal data transfer
@@ -327,10 +406,14 @@ class TaskExecutionContext(BaseModel):
 
     # Execution environment
     worker_id: Optional[str] = Field(None, description="Worker executing the task")
-    execution_node: Optional[str] = Field(None, description="Node where task is executing")
+    execution_node: Optional[str] = Field(
+        None, description="Node where task is executing"
+    )
 
     # Resource allocation
-    allocated_memory: Optional[int] = Field(None, description="Allocated memory in bytes")
+    allocated_memory: Optional[int] = Field(
+        None, description="Allocated memory in bytes"
+    )
     allocated_cpu: Optional[float] = Field(None, description="Allocated CPU cores")
 
     # Timing
@@ -338,7 +421,9 @@ class TaskExecutionContext(BaseModel):
     started_at: Optional[datetime] = Field(None, description="When execution started")
 
     # Context data
-    context_data: dict[str, Any] = Field(default_factory=dict, description="Additional context data for task execution")
+    context_data: dict[str, Any] = Field(
+        default_factory=dict, description="Additional context data for task execution"
+    )
 
 
 class TaskBatchInfo(BaseModel):
@@ -368,8 +453,12 @@ class TaskBatchInfo(BaseModel):
     progress_percentage: float = Field(0.0, description="Batch completion percentage")
 
     # Configuration
-    stop_on_first_failure: bool = Field(False, description="Stop batch on first task failure")
-    max_concurrent_tasks: Optional[int] = Field(None, description="Maximum concurrent tasks in batch")
+    stop_on_first_failure: bool = Field(
+        False, description="Stop batch on first task failure"
+    )
+    max_concurrent_tasks: Optional[int] = Field(
+        None, description="Maximum concurrent tasks in batch"
+    )
 
 
 class AlertRule(BaseModel):
@@ -384,7 +473,9 @@ class AlertRule(BaseModel):
     # Trigger conditions
     metric_name: str = Field(description="Metric to monitor")
     threshold_value: float = Field(description="Threshold value to trigger alert")
-    comparison_operator: str = Field(description="Comparison operator (>, <, >=, <=, ==)")
+    comparison_operator: str = Field(
+        description="Comparison operator (>, <, >=, <=, ==)"
+    )
 
     # Alert configuration
     severity: str = Field(description="Alert severity (info, warning, error, critical)")
@@ -400,4 +491,6 @@ class AlertRule(BaseModel):
     # Metadata
     enabled: bool = Field(True, description="Whether the rule is active")
     created_at: datetime = Field(description="Rule creation timestamp")
-    last_triggered_at: Optional[datetime] = Field(None, description="Last time rule was triggered")
+    last_triggered_at: Optional[datetime] = Field(
+        None, description="Last time rule was triggered"
+    )

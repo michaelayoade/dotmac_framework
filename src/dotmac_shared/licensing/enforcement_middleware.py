@@ -8,12 +8,13 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 
 import httpx
-from dotmac.database.base import get_db_session
-from dotmac_shared.api.response import APIResponse
-from dotmac_shared.core.logging import get_logger
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
+
+from dotmac.database.base import get_db_session
+from dotmac_shared.api.response import APIResponse
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -98,18 +99,25 @@ class LicenseEnforcementMiddleware:
             # Check if license is active and not expired
             if not self._is_license_active(license_contract):
                 return LicenseCheck(
-                    allowed=False, feature="license_validity", message="License has expired or is inactive"
+                    allowed=False,
+                    feature="license_validity",
+                    message="License has expired or is inactive",
                 )
 
             # Determine what feature/limit to check based on endpoint
-            feature_check = self._determine_feature_check(request.url.path, request.method)
+            feature_check = self._determine_feature_check(
+                request.url.path, request.method
+            )
 
             if not feature_check:
                 return LicenseCheck(allowed=True, feature="unknown")
 
             # Check specific limit
             return await self._check_feature_limit(
-                tenant_id, license_contract, feature_check["feature"], feature_check.get("increment", 1)
+                tenant_id,
+                license_contract,
+                feature_check["feature"],
+                feature_check.get("increment", 1),
             )
 
         except Exception as e:
@@ -159,7 +167,11 @@ class LicenseEnforcementMiddleware:
             return None
 
     async def _check_feature_limit(
-        self, tenant_id: str, license_contract: dict[str, Any], feature: str, increment: int = 1
+        self,
+        tenant_id: str,
+        license_contract: dict[str, Any],
+        feature: str,
+        increment: int = 1,
     ) -> LicenseCheck:
         """Check if feature usage is within limits"""
 
@@ -183,14 +195,18 @@ class LicenseEnforcementMiddleware:
                     message=f"License limit exceeded for {feature}. Limit: {limit}, Current: {current_usage}",
                 )
 
-            return LicenseCheck(allowed=True, feature=feature, limit=limit, remaining=limit - new_usage)
+            return LicenseCheck(
+                allowed=True, feature=feature, limit=limit, remaining=limit - new_usage
+            )
 
         except Exception as e:
             logger.error(f"Error checking feature limit {feature}: {e}")
             # Fail open
             return LicenseCheck(allowed=True, feature=feature)
 
-    def _determine_feature_check(self, path: str, method: str) -> Optional[dict[str, Any]]:
+    def _determine_feature_check(
+        self, path: str, method: str
+    ) -> Optional[dict[str, Any]]:
         """Map API endpoint to license feature check"""
 
         # Customer management endpoints
@@ -226,7 +242,9 @@ class LicenseEnforcementMiddleware:
         # No specific check needed
         return None
 
-    def _get_feature_limit(self, license_contract: dict[str, Any], feature: str) -> Optional[int]:
+    def _get_feature_limit(
+        self, license_contract: dict[str, Any], feature: str
+    ) -> Optional[int]:
         """Get limit for specific feature from license contract"""
 
         # Direct limit fields
@@ -366,9 +384,15 @@ class LicenseEnforcementMiddleware:
         from dotmac.platform.auth.core.jwt_service import JWTService
 
         jwt_service = JWTService()
-        payload = {"service": "isp_instance", "scope": "license_check", "token_type": "service"}
+        payload = {
+            "service": "isp_instance",
+            "scope": "license_check",
+            "token_type": "service",
+        }
 
-        return await jwt_service.create_access_token(data=payload, expires_delta=timedelta(hours=1))
+        return await jwt_service.create_access_token(
+            data=payload, expires_delta=timedelta(hours=1)
+        )
 
     def _get_management_platform_url(self) -> str:
         """Get Management Platform URL from environment"""
@@ -386,12 +410,20 @@ class LicenseEnforcementMiddleware:
                 if feature == "max_customers":
                     from dotmac_isp.modules.identity.models import Customer
 
-                    return db.query(Customer).filter_by(tenant_id=tenant_id, is_active=True).count()
+                    return (
+                        db.query(Customer)
+                        .filter_by(tenant_id=tenant_id, is_active=True)
+                        .count()
+                    )
 
                 elif feature == "service_plans":
                     from dotmac_isp.modules.services.models import ServicePlan
 
-                    return db.query(ServicePlan).filter_by(tenant_id=tenant_id, is_active=True).count()
+                    return (
+                        db.query(ServicePlan)
+                        .filter_by(tenant_id=tenant_id, is_active=True)
+                        .count()
+                    )
 
                 # Add other feature counts as needed
 
@@ -436,7 +468,10 @@ class LicenseEnforcementMiddleware:
         last_sync_key = f"last_sync:{tenant_id}"
 
         # Only sync every 5 minutes
-        if last_sync_key in self.last_sync and now - self.last_sync[last_sync_key] < 300:
+        if (
+            last_sync_key in self.last_sync
+            and now - self.last_sync[last_sync_key] < 300
+        ):
             return
 
         try:

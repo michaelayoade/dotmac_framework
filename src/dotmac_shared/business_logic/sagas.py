@@ -82,7 +82,13 @@ class SagaContext:
 class SagaStep(ABC):
     """Abstract base class for saga steps"""
 
-    def __init__(self, name: str, timeout_seconds: int = 30, retry_count: int = 3, compensation_required: bool = True):
+    def __init__(
+        self,
+        name: str,
+        timeout_seconds: int = 30,
+        retry_count: int = 3,
+        compensation_required: bool = True,
+    ):
         self.name = name
         self.timeout_seconds = timeout_seconds
         self.retry_count = retry_count
@@ -123,7 +129,9 @@ class CompensationHandler(ABC):
     """Handler for custom compensation logic"""
 
     @abstractmethod
-    async def compensate(self, context: SagaContext, failed_step: str, completed_steps: list[str]) -> None:
+    async def compensate(
+        self, context: SagaContext, failed_step: str, completed_steps: list[str]
+    ) -> None:
         """Execute compensation logic"""
         pass
 
@@ -167,7 +175,9 @@ class SagaRecord(Base):
     correlation_id = Column(String(100), nullable=False, index=True)
 
     # Execution tracking
-    status = Column(String(30), nullable=False, default=SagaStatus.PENDING.value, index=True)
+    status = Column(
+        String(30), nullable=False, default=SagaStatus.PENDING.value, index=True
+    )
     current_step = Column(String(100), nullable=True)
     current_step_index = Column(Integer, default=0, nullable=False)
     total_steps = Column(Integer, default=0, nullable=False)
@@ -179,7 +189,9 @@ class SagaRecord(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     timeout_at = Column(DateTime, nullable=False)
@@ -209,7 +221,9 @@ class SagaStepRecord(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 
@@ -230,7 +244,10 @@ class SagaCoordinator:
         self._saga_definitions[definition.name] = definition
 
     async def execute_saga(
-        self, saga_name: str, context: SagaContext, initial_data: Optional[dict[str, Any]] = None
+        self,
+        saga_name: str,
+        context: SagaContext,
+        initial_data: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         """Execute a saga from start to finish"""
 
@@ -265,13 +282,19 @@ class SagaCoordinator:
 
             except Exception as e:
                 # Handle saga failure
-                return await self._handle_saga_failure(db, saga_record, definition, context, str(e))
+                return await self._handle_saga_failure(
+                    db, saga_record, definition, context, str(e)
+                )
 
-    async def resume_saga(self, saga_id: str, from_step: Optional[str] = None) -> dict[str, Any]:
+    async def resume_saga(
+        self, saga_id: str, from_step: Optional[str] = None
+    ) -> dict[str, Any]:
         """Resume a failed or interrupted saga"""
 
         with self.db_session_factory() as db:
-            saga_record = db.query(SagaRecord).filter(SagaRecord.id == UUID(saga_id)).first()
+            saga_record = (
+                db.query(SagaRecord).filter(SagaRecord.id == UUID(saga_id)).first()
+            )
 
             if not saga_record:
                 raise ValueError(f"Saga '{saga_id}' not found")
@@ -295,10 +318,17 @@ class SagaCoordinator:
                 start_index = saga_record.current_step_index
                 if from_step:
                     start_index = next(
-                        (i for i, step in enumerate(definition.steps) if step.name == from_step), start_index
+                        (
+                            i
+                            for i, step in enumerate(definition.steps)
+                            if step.name == from_step
+                        ),
+                        start_index,
                     )
 
-                await self._execute_saga_steps(db, saga_record, definition, context, start_index)
+                await self._execute_saga_steps(
+                    db, saga_record, definition, context, start_index
+                )
 
                 # Mark saga as completed
                 saga_record.status = SagaStatus.COMPLETED.value
@@ -313,7 +343,9 @@ class SagaCoordinator:
                 }
 
             except Exception as e:
-                return await self._handle_saga_failure(db, saga_record, definition, context, str(e))
+                return await self._handle_saga_failure(
+                    db, saga_record, definition, context, str(e)
+                )
 
     async def _execute_saga_steps(
         self,
@@ -351,7 +383,12 @@ class SagaCoordinator:
                 raise TimeoutError(f"Saga '{definition.name}' timed out")
 
     async def _execute_step(
-        self, db: Session, saga_record: SagaRecord, step: SagaStep, context: SagaContext, step_index: int
+        self,
+        db: Session,
+        saga_record: SagaRecord,
+        step: SagaStep,
+        context: SagaContext,
+        step_index: int,
     ) -> None:
         """Execute a single saga step with retry logic"""
 
@@ -378,7 +415,9 @@ class SagaCoordinator:
 
             try:
                 # Execute step with timeout
-                result = await asyncio.wait_for(step.execute(context), timeout=step.timeout_seconds)
+                result = await asyncio.wait_for(
+                    step.execute(context), timeout=step.timeout_seconds
+                )
 
                 # Step completed successfully
                 step_record.status = StepStatus.COMPLETED.value
@@ -409,7 +448,12 @@ class SagaCoordinator:
                     raise e
 
     async def _handle_saga_failure(
-        self, db: Session, saga_record: SagaRecord, definition: SagaDefinition, context: SagaContext, error_message: str
+        self,
+        db: Session,
+        saga_record: SagaRecord,
+        definition: SagaDefinition,
+        context: SagaContext,
+        error_message: str,
     ) -> dict[str, Any]:
         """Handle saga failure with compensation"""
 
@@ -464,7 +508,11 @@ class SagaCoordinator:
             ) from comp_error
 
     async def _compensate_saga(
-        self, db: Session, saga_record: SagaRecord, definition: SagaDefinition, context: SagaContext
+        self,
+        db: Session,
+        saga_record: SagaRecord,
+        definition: SagaDefinition,
+        context: SagaContext,
     ) -> None:
         """Compensate completed saga steps in reverse order"""
 
@@ -483,13 +531,17 @@ class SagaCoordinator:
         # Use custom compensation handler if available
         if definition.compensation_handler:
             completed_step_names = [step.step_name for step in completed_steps]
-            await definition.compensation_handler.compensate(context, saga_record.current_step, completed_step_names)
+            await definition.compensation_handler.compensate(
+                context, saga_record.current_step, completed_step_names
+            )
             return
 
         # Default compensation: reverse order of completed steps
         for step_record in completed_steps:
             # Find the step definition
-            step_def = next((s for s in definition.steps if s.name == step_record.step_name), None)
+            step_def = next(
+                (s for s in definition.steps if s.name == step_record.step_name), None
+            )
 
             if step_def:
                 try:
@@ -509,7 +561,11 @@ class SagaCoordinator:
                     raise e
 
     def _create_saga_record(
-        self, db: Session, saga_name: str, definition: SagaDefinition, context: SagaContext
+        self,
+        db: Session,
+        saga_name: str,
+        definition: SagaDefinition,
+        context: SagaContext,
     ) -> SagaRecord:
         """Create a new saga execution record"""
 
@@ -535,7 +591,9 @@ class SagaCoordinator:
     def get_saga_status(self, db: Session, saga_id: str) -> Optional[dict[str, Any]]:
         """Get saga execution status"""
 
-        saga_record = db.query(SagaRecord).filter(SagaRecord.id == UUID(saga_id)).first()
+        saga_record = (
+            db.query(SagaRecord).filter(SagaRecord.id == UUID(saga_id)).first()
+        )
 
         if not saga_record:
             return None
@@ -556,10 +614,16 @@ class SagaCoordinator:
                     "index": step_record.step_index,
                     "status": step_record.status,
                     "attempt_count": step_record.attempt_count,
-                    "started_at": step_record.started_at.isoformat() if step_record.started_at else None,
-                    "completed_at": step_record.completed_at.isoformat() if step_record.completed_at else None,
+                    "started_at": step_record.started_at.isoformat()
+                    if step_record.started_at
+                    else None,
+                    "completed_at": step_record.completed_at.isoformat()
+                    if step_record.completed_at
+                    else None,
                     "error_message": step_record.error_message,
-                    "compensated_at": step_record.compensated_at.isoformat() if step_record.compensated_at else None,
+                    "compensated_at": step_record.compensated_at.isoformat()
+                    if step_record.compensated_at
+                    else None,
                 }
             )
 
@@ -571,8 +635,12 @@ class SagaCoordinator:
             "progress": f"{saga_record.current_step_index}/{saga_record.total_steps}",
             "created_at": saga_record.created_at.isoformat(),
             "updated_at": saga_record.updated_at.isoformat(),
-            "started_at": saga_record.started_at.isoformat() if saga_record.started_at else None,
-            "completed_at": saga_record.completed_at.isoformat() if saga_record.completed_at else None,
+            "started_at": saga_record.started_at.isoformat()
+            if saga_record.started_at
+            else None,
+            "completed_at": saga_record.completed_at.isoformat()
+            if saga_record.completed_at
+            else None,
             "timeout_at": saga_record.timeout_at.isoformat(),
             "error_message": saga_record.error_message,
             "steps": steps,

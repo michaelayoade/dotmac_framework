@@ -11,7 +11,12 @@ from pathlib import Path
 from typing import Any, Optional
 
 from .chaos_monitoring import ChaosMonitor
-from .chaos_pipeline import ChaosPipelineScheduler, PipelineConfig, ResilienceLevel, ScheduleType
+from .chaos_pipeline import (
+    ChaosPipelineScheduler,
+    PipelineConfig,
+    ResilienceLevel,
+    ScheduleType,
+)
 from .chaos_scenarios import DotMacChaosScenarios
 from .resilience_validator import ResilienceValidator
 
@@ -27,7 +32,9 @@ class ChaosTestRunner:
         self.resilience_validator = ResilienceValidator()
         self.chaos_monitor = ChaosMonitor()
 
-    async def run_single_scenario(self, scenario_name: str, tenant_id: Optional[str] = None) -> dict[str, Any]:
+    async def run_single_scenario(
+        self, scenario_name: str, tenant_id: Optional[str] = None
+    ) -> dict[str, Any]:
         """Run a single chaos scenario"""
         logger.info(f"Running single scenario: {scenario_name}")
 
@@ -37,21 +44,29 @@ class ChaosTestRunner:
         try:
             if scenario_name == "tenant_isolation":
                 tenant = tenant_id or "test-tenant"
-                result = await self.chaos_scenarios.run_tenant_isolation_scenario(tenant)
+                result = await self.chaos_scenarios.run_tenant_isolation_scenario(
+                    tenant
+                )
 
             elif scenario_name == "isp_disruption":
-                result = await self.chaos_scenarios.run_isp_service_disruption_scenario()
+                result = (
+                    await self.chaos_scenarios.run_isp_service_disruption_scenario()
+                )
 
             elif scenario_name == "billing_resilience":
                 result = await self.chaos_scenarios.run_billing_resilience_scenario()
 
             elif scenario_name == "database_partition":
                 tenants = [tenant_id] if tenant_id else ["tenant-1", "tenant-2"]
-                result = await self.chaos_scenarios.run_multi_tenant_database_partition_scenario(tenants)
+                result = await self.chaos_scenarios.run_multi_tenant_database_partition_scenario(
+                    tenants
+                )
 
             elif scenario_name == "comprehensive":
                 tenant = tenant_id or "test-tenant"
-                result = await self.chaos_scenarios.run_comprehensive_resilience_test(tenant)
+                result = await self.chaos_scenarios.run_comprehensive_resilience_test(
+                    tenant
+                )
 
             elif scenario_name == "load_chaos":
                 result = await self.chaos_scenarios.run_load_and_chaos_scenario(100, 5)
@@ -105,7 +120,9 @@ class ChaosTestRunner:
             config_dict["schedule_type"] = ScheduleType(config_dict["schedule_type"])
 
         if "resilience_level" in config_dict:
-            config_dict["resilience_level"] = ResilienceLevel(config_dict["resilience_level"])
+            config_dict["resilience_level"] = ResilienceLevel(
+                config_dict["resilience_level"]
+            )
 
         config = PipelineConfig(**config_dict)
         self.scheduler.register_pipeline(config)
@@ -125,14 +142,21 @@ class ChaosTestRunner:
         """Trigger a pipeline manually"""
         return await self.scheduler.trigger_pipeline(pipeline_name)
 
-    def get_pipeline_status(self, pipeline_name: Optional[str] = None) -> dict[str, Any]:
+    def get_pipeline_status(
+        self, pipeline_name: Optional[str] = None
+    ) -> dict[str, Any]:
         """Get pipeline status"""
         if pipeline_name:
             status = self.scheduler.get_pipeline_status(pipeline_name)
-            return status if status else {"error": f"Pipeline {pipeline_name} not found"}
+            return (
+                status if status else {"error": f"Pipeline {pipeline_name} not found"}
+            )
         else:
             # Return all pipelines
-            return {name: self.scheduler.get_pipeline_status(name) for name in self.scheduler.pipelines.keys()}
+            return {
+                name: self.scheduler.get_pipeline_status(name)
+                for name in self.scheduler.pipelines.keys()
+            }
 
 
 async def run_cli_command(args):
@@ -247,12 +271,16 @@ def create_sample_configs():
 def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(description="DotMac Chaos Engineering Test Runner")
-    parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
+    parser.add_argument(
+        "--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"]
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Scenario command
-    scenario_parser = subparsers.add_parser("scenario", help="Run a single chaos scenario")
+    scenario_parser = subparsers.add_parser(
+        "scenario", help="Run a single chaos scenario"
+    )
     scenario_parser.add_argument(
         "scenario",
         choices=[
@@ -268,26 +296,39 @@ def main():
     scenario_parser.add_argument("--tenant", help="Tenant ID for tenant-specific tests")
 
     # Validate command
-    validate_parser = subparsers.add_parser("validate", help="Run resilience validation")
+    validate_parser = subparsers.add_parser(
+        "validate", help="Run resilience validation"
+    )
     validate_parser.add_argument(
-        "--level", default="basic", choices=["basic", "intermediate", "advanced", "production"], help="Validation level"
+        "--level",
+        default="basic",
+        choices=["basic", "intermediate", "advanced", "production"],
+        help="Validation level",
     )
 
     # Pipeline command
     pipeline_parser = subparsers.add_parser("pipeline", help="Manage chaos pipelines")
-    pipeline_subparsers = pipeline_parser.add_subparsers(dest="action", help="Pipeline actions")
+    pipeline_subparsers = pipeline_parser.add_subparsers(
+        dest="action", help="Pipeline actions"
+    )
 
     # Pipeline create
-    create_parser = pipeline_subparsers.add_parser("create", help="Create a new pipeline")
+    create_parser = pipeline_subparsers.add_parser(
+        "create", help="Create a new pipeline"
+    )
     create_parser.add_argument("config", help="Pipeline configuration JSON")
 
     # Pipeline trigger
-    trigger_parser = pipeline_subparsers.add_parser("trigger", help="Trigger a pipeline")
+    trigger_parser = pipeline_subparsers.add_parser(
+        "trigger", help="Trigger a pipeline"
+    )
     trigger_parser.add_argument("name", help="Pipeline name")
 
     # Pipeline status
     status_parser = pipeline_subparsers.add_parser("status", help="Get pipeline status")
-    status_parser.add_argument("--name", help="Pipeline name (optional, shows all if not specified)")
+    status_parser.add_argument(
+        "--name", help="Pipeline name (optional, shows all if not specified)"
+    )
 
     # Pipeline start scheduler
     pipeline_subparsers.add_parser("start", help="Start pipeline scheduler")
@@ -303,7 +344,8 @@ def main():
 
     # Set up logging
     logging.basicConfig(
-        level=getattr(logging, args.log_level), format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        level=getattr(logging, args.log_level),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     if args.command == "sample-configs":

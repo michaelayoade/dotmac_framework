@@ -349,9 +349,15 @@ class PlanEligibilityEngine:
     def _register_default_policies(self):
         """Register default eligibility policies"""
         # Plan eligibility policies
-        self.registry.register_policy(PlanEligibilityPolicies.create_residential_basic_eligibility())
-        self.registry.register_policy(PlanEligibilityPolicies.create_business_pro_eligibility())
-        self.registry.register_policy(PlanEligibilityPolicies.create_enterprise_eligibility())
+        self.registry.register_policy(
+            PlanEligibilityPolicies.create_residential_basic_eligibility()
+        )
+        self.registry.register_policy(
+            PlanEligibilityPolicies.create_business_pro_eligibility()
+        )
+        self.registry.register_policy(
+            PlanEligibilityPolicies.create_enterprise_eligibility()
+        )
 
         # Licensing policies
         self.registry.register_policy(LicensingPolicies.create_tenant_license_limits())
@@ -375,7 +381,9 @@ class PlanEligibilityEngine:
 
         try:
             result = self.engine.evaluate_policy(
-                policy_name=policy_name, context=context, evaluation_data={"customer": customer_data}
+                policy_name=policy_name,
+                context=context,
+                evaluation_data={"customer": customer_data},
             )
 
             return {
@@ -402,7 +410,10 @@ class PlanEligibilityEngine:
             ) from e
 
     def check_license_compliance(
-        self, tenant_data: dict[str, Any], license_data: dict[str, Any], context: PolicyContext
+        self,
+        tenant_data: dict[str, Any],
+        license_data: dict[str, Any],
+        context: PolicyContext,
     ) -> dict[str, Any]:
         """Check tenant licensing compliance"""
 
@@ -414,14 +425,18 @@ class PlanEligibilityEngine:
 
         try:
             result = self.engine.evaluate_policy(
-                policy_name="tenant_license_limits", context=context, evaluation_data=evaluation_data
+                policy_name="tenant_license_limits",
+                context=context,
+                evaluation_data=evaluation_data,
             )
 
             return {
                 "compliant": result.result == PolicyResult.ALLOW,
                 "violations": result.violated_rules,
                 "policy_result": result.to_dict(),
-                "license_status": "active" if result.result == PolicyResult.ALLOW else "violation",
+                "license_status": "active"
+                if result.result == PolicyResult.ALLOW
+                else "violation",
             }
 
         except Exception as e:
@@ -450,11 +465,17 @@ class PlanEligibilityEngine:
     ) -> dict[str, Any]:
         """Check if tenant can access requested features"""
 
-        evaluation_data = {"requested_features": requested_features, "license": license_data, "tenant": tenant_data}
+        evaluation_data = {
+            "requested_features": requested_features,
+            "license": license_data,
+            "tenant": tenant_data,
+        }
 
         try:
             result = self.engine.evaluate_policy(
-                policy_name="feature_access_licensing", context=context, evaluation_data=evaluation_data
+                policy_name="feature_access_licensing",
+                context=context,
+                evaluation_data=evaluation_data,
             )
 
             # Determine which features are allowed
@@ -463,11 +484,16 @@ class PlanEligibilityEngine:
 
             for feature in requested_features:
                 # This would need more sophisticated logic in practice
-                feature_evaluation_data = {**evaluation_data, "requested_feature": feature}
+                feature_evaluation_data = {
+                    **evaluation_data,
+                    "requested_feature": feature,
+                }
 
                 try:
                     feature_result = self.engine.evaluate_policy(
-                        policy_name="feature_access_licensing", context=context, evaluation_data=feature_evaluation_data
+                        policy_name="feature_access_licensing",
+                        context=context,
+                        evaluation_data=feature_evaluation_data,
                     )
 
                     if feature_result.result == PolicyResult.ALLOW:

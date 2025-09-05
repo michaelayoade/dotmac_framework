@@ -4,9 +4,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.db.repositories import BaseRepository
 from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import Session, joinedload
+
+from dotmac_shared.db.repositories import BaseRepository
 
 from .models import (
     Alert,
@@ -31,21 +32,33 @@ class MetricRepository(BaseRepository[Metric]):
 
     async def find_by_name(self, name: str) -> Optional[Metric]:
         """Find metric by name within tenant."""
-        return self.db.query(Metric).filter(and_(Metric.tenant_id == self.tenant_id, Metric.name == name)).first()
+        return (
+            self.db.query(Metric)
+            .filter(and_(Metric.tenant_id == self.tenant_id, Metric.name == name))
+            .first()
+        )
 
     async def find_by_type(self, metric_type: MetricType) -> list[Metric]:
         """Find metrics by type."""
         return (
             self.db.query(Metric)
             .filter(
-                and_(Metric.tenant_id == self.tenant_id, Metric.metric_type == metric_type, Metric.is_active is True)
+                and_(
+                    Metric.tenant_id == self.tenant_id,
+                    Metric.metric_type == metric_type,
+                    Metric.is_active is True,
+                )
             )
             .all()
         )
 
     async def get_active_metrics(self) -> list[Metric]:
         """Get all active metrics."""
-        return self.db.query(Metric).filter(and_(Metric.tenant_id == self.tenant_id, Metric.is_active is True)).all()
+        return (
+            self.db.query(Metric)
+            .filter(and_(Metric.tenant_id == self.tenant_id, Metric.is_active is True))
+            .all()
+        )
 
     async def update_latest_value(self, metric_id: UUID, value: float) -> bool:
         """Update the latest value for a metric."""
@@ -104,7 +117,10 @@ class MetricValueRepository(BaseRepository[MetricValue]):
     ) -> list[MetricValue]:
         """Get metric values for a specific metric within date range."""
         query = self.db.query(MetricValue).filter(
-            and_(MetricValue.tenant_id == self.tenant_id, MetricValue.metric_id == metric_id)
+            and_(
+                MetricValue.tenant_id == self.tenant_id,
+                MetricValue.metric_id == metric_id,
+            )
         )
 
         if start_date:
@@ -118,13 +134,21 @@ class MetricValueRepository(BaseRepository[MetricValue]):
         """Get the latest value for a metric."""
         return (
             self.db.query(MetricValue)
-            .filter(and_(MetricValue.tenant_id == self.tenant_id, MetricValue.metric_id == metric_id))
+            .filter(
+                and_(
+                    MetricValue.tenant_id == self.tenant_id,
+                    MetricValue.metric_id == metric_id,
+                )
+            )
             .order_by(desc(MetricValue.timestamp))
             .first()
         )
 
     async def get_value_statistics(
-        self, metric_id: UUID, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+        self,
+        metric_id: UUID,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> dict[str, float]:
         """Get statistical summary for metric values."""
         query = self.db.query(
@@ -132,7 +156,12 @@ class MetricValueRepository(BaseRepository[MetricValue]):
             func.min(MetricValue.value).label("min"),
             func.max(MetricValue.value).label("max"),
             func.count(MetricValue.value).label("count"),
-        ).filter(and_(MetricValue.tenant_id == self.tenant_id, MetricValue.metric_id == metric_id))
+        ).filter(
+            and_(
+                MetricValue.tenant_id == self.tenant_id,
+                MetricValue.metric_id == metric_id,
+            )
+        )
 
         if start_date:
             query = query.filter(MetricValue.timestamp >= start_date)
@@ -158,7 +187,12 @@ class ReportRepository(BaseRepository[Report]):
         """Find reports by type."""
         return (
             self.db.query(Report)
-            .filter(and_(Report.tenant_id == self.tenant_id, Report.report_type == report_type))
+            .filter(
+                and_(
+                    Report.tenant_id == self.tenant_id,
+                    Report.report_type == report_type,
+                )
+            )
             .order_by(desc(Report.created_at))
             .all()
         )
@@ -174,14 +208,26 @@ class ReportRepository(BaseRepository[Report]):
 
     async def get_scheduled_reports(self) -> list[Report]:
         """Get all scheduled reports."""
-        return self.db.query(Report).filter(and_(Report.tenant_id == self.tenant_id, Report.is_scheduled is True)).all()
+        return (
+            self.db.query(Report)
+            .filter(
+                and_(Report.tenant_id == self.tenant_id, Report.is_scheduled is True)
+            )
+            .all()
+        )
 
-    async def find_reports_by_date_range(self, start_date: datetime, end_date: datetime) -> list[Report]:
+    async def find_reports_by_date_range(
+        self, start_date: datetime, end_date: datetime
+    ) -> list[Report]:
         """Find reports within date range."""
         return (
             self.db.query(Report)
             .filter(
-                and_(Report.tenant_id == self.tenant_id, Report.start_date >= start_date, Report.end_date <= end_date)
+                and_(
+                    Report.tenant_id == self.tenant_id,
+                    Report.start_date >= start_date,
+                    Report.end_date <= end_date,
+                )
             )
             .order_by(desc(Report.generated_at))
             .all()
@@ -197,23 +243,33 @@ class DashboardRepository(BaseRepository[Dashboard]):
     async def find_by_name(self, name: str) -> Optional[Dashboard]:
         """Find dashboard by name within tenant."""
         return (
-            self.db.query(Dashboard).filter(and_(Dashboard.tenant_id == self.tenant_id, Dashboard.name == name)).first()
+            self.db.query(Dashboard)
+            .filter(and_(Dashboard.tenant_id == self.tenant_id, Dashboard.name == name))
+            .first()
         )
 
     async def get_public_dashboards(self) -> list[Dashboard]:
         """Get all public dashboards."""
         return (
             self.db.query(Dashboard)
-            .filter(and_(Dashboard.tenant_id == self.tenant_id, Dashboard.is_public is True))
+            .filter(
+                and_(Dashboard.tenant_id == self.tenant_id, Dashboard.is_public is True)
+            )
             .all()
         )
 
-    async def get_dashboard_with_widgets(self, dashboard_id: UUID) -> Optional[Dashboard]:
+    async def get_dashboard_with_widgets(
+        self, dashboard_id: UUID
+    ) -> Optional[Dashboard]:
         """Get dashboard with all its widgets."""
         return (
             self.db.query(Dashboard)
             .options(joinedload(Dashboard.widgets))
-            .filter(and_(Dashboard.tenant_id == self.tenant_id, Dashboard.id == dashboard_id))
+            .filter(
+                and_(
+                    Dashboard.tenant_id == self.tenant_id, Dashboard.id == dashboard_id
+                )
+            )
             .first()
         )
 
@@ -221,13 +277,22 @@ class DashboardRepository(BaseRepository[Dashboard]):
         """Update the widget count for a dashboard."""
         count = (
             self.db.query(Widget)
-            .filter(and_(Widget.tenant_id == self.tenant_id, Widget.dashboard_id == dashboard_id))
+            .filter(
+                and_(
+                    Widget.tenant_id == self.tenant_id,
+                    Widget.dashboard_id == dashboard_id,
+                )
+            )
             .count()
         )
 
         result = (
             self.db.query(Dashboard)
-            .filter(and_(Dashboard.tenant_id == self.tenant_id, Dashboard.id == dashboard_id))
+            .filter(
+                and_(
+                    Dashboard.tenant_id == self.tenant_id, Dashboard.id == dashboard_id
+                )
+            )
             .update({Dashboard.widget_count: count})
         )
 
@@ -244,7 +309,12 @@ class WidgetRepository(BaseRepository[Widget]):
         """Find widgets by dashboard ID."""
         return (
             self.db.query(Widget)
-            .filter(and_(Widget.tenant_id == self.tenant_id, Widget.dashboard_id == dashboard_id))
+            .filter(
+                and_(
+                    Widget.tenant_id == self.tenant_id,
+                    Widget.dashboard_id == dashboard_id,
+                )
+            )
             .order_by(Widget.position)
             .all()
         )
@@ -254,7 +324,11 @@ class WidgetRepository(BaseRepository[Widget]):
         return (
             self.db.query(Widget)
             .filter(
-                and_(Widget.tenant_id == self.tenant_id, Widget.widget_type == widget_type, Widget.is_visible is True)
+                and_(
+                    Widget.tenant_id == self.tenant_id,
+                    Widget.widget_type == widget_type,
+                    Widget.is_visible is True,
+                )
             )
             .all()
         )
@@ -264,19 +338,27 @@ class WidgetRepository(BaseRepository[Widget]):
         return (
             self.db.query(Widget)
             .filter(
-                and_(Widget.tenant_id == self.tenant_id, Widget.dashboard_id == dashboard_id, Widget.is_visible is True)
+                and_(
+                    Widget.tenant_id == self.tenant_id,
+                    Widget.dashboard_id == dashboard_id,
+                    Widget.is_visible is True,
+                )
             )
             .order_by(Widget.position)
             .all()
         )
 
-    async def reorder_widgets(self, dashboard_id: UUID, widget_positions: dict[UUID, int]) -> bool:
+    async def reorder_widgets(
+        self, dashboard_id: UUID, widget_positions: dict[UUID, int]
+    ) -> bool:
         """Reorder widgets by updating their positions."""
         try:
             for widget_id, position in widget_positions.items():
                 self.db.query(Widget).filter(
                     and_(
-                        Widget.tenant_id == self.tenant_id, Widget.dashboard_id == dashboard_id, Widget.id == widget_id
+                        Widget.tenant_id == self.tenant_id,
+                        Widget.dashboard_id == dashboard_id,
+                        Widget.id == widget_id,
                     )
                 ).update({Widget.position: position})
             self.db.commit()
@@ -296,7 +378,13 @@ class AlertRepository(BaseRepository[Alert]):
         """Find alerts by metric ID."""
         return (
             self.db.query(Alert)
-            .filter(and_(Alert.tenant_id == self.tenant_id, Alert.metric_id == metric_id, Alert.is_active is True))
+            .filter(
+                and_(
+                    Alert.tenant_id == self.tenant_id,
+                    Alert.metric_id == metric_id,
+                    Alert.is_active is True,
+                )
+            )
             .all()
         )
 
@@ -304,7 +392,13 @@ class AlertRepository(BaseRepository[Alert]):
         """Find alerts by severity level."""
         return (
             self.db.query(Alert)
-            .filter(and_(Alert.tenant_id == self.tenant_id, Alert.severity == severity, Alert.is_active is True))
+            .filter(
+                and_(
+                    Alert.tenant_id == self.tenant_id,
+                    Alert.severity == severity,
+                    Alert.is_active is True,
+                )
+            )
             .order_by(desc(Alert.last_triggered))
             .all()
         )
@@ -318,7 +412,9 @@ class AlertRepository(BaseRepository[Alert]):
             .all()
         )
 
-    async def update_trigger_info(self, alert_id: UUID, triggered_at: Optional[datetime] = None) -> bool:
+    async def update_trigger_info(
+        self, alert_id: UUID, triggered_at: Optional[datetime] = None
+    ) -> bool:
         """Update alert trigger information."""
         updates = {
             Alert.last_triggered: triggered_at or datetime.now(timezone.utc),
@@ -326,7 +422,9 @@ class AlertRepository(BaseRepository[Alert]):
         }
 
         result = (
-            self.db.query(Alert).filter(and_(Alert.tenant_id == self.tenant_id, Alert.id == alert_id)).update(updates)
+            self.db.query(Alert)
+            .filter(and_(Alert.tenant_id == self.tenant_id, Alert.id == alert_id))
+            .update(updates)
         )
 
         return result > 0
@@ -375,7 +473,12 @@ class AlertEventRepository(BaseRepository[AlertEvent]):
         """Find events by alert ID."""
         return (
             self.db.query(AlertEvent)
-            .filter(and_(AlertEvent.tenant_id == self.tenant_id, AlertEvent.alert_id == alert_id))
+            .filter(
+                and_(
+                    AlertEvent.tenant_id == self.tenant_id,
+                    AlertEvent.alert_id == alert_id,
+                )
+            )
             .order_by(desc(AlertEvent.triggered_at))
             .limit(limit)
             .all()
@@ -385,12 +488,19 @@ class AlertEventRepository(BaseRepository[AlertEvent]):
         """Get all unresolved alert events."""
         return (
             self.db.query(AlertEvent)
-            .filter(and_(AlertEvent.tenant_id == self.tenant_id, AlertEvent.resolution_timestamp.is_(None)))
+            .filter(
+                and_(
+                    AlertEvent.tenant_id == self.tenant_id,
+                    AlertEvent.resolution_timestamp.is_(None),
+                )
+            )
             .order_by(desc(AlertEvent.triggered_at))
             .all()
         )
 
-    async def resolve_event(self, event_id: UUID, resolution_notes: Optional[str] = None) -> bool:
+    async def resolve_event(
+        self, event_id: UUID, resolution_notes: Optional[str] = None
+    ) -> bool:
         """Mark an alert event as resolved."""
         updates = {
             AlertEvent.resolution_timestamp: datetime.now(timezone.utc),
@@ -399,7 +509,9 @@ class AlertEventRepository(BaseRepository[AlertEvent]):
 
         result = (
             self.db.query(AlertEvent)
-            .filter(and_(AlertEvent.tenant_id == self.tenant_id, AlertEvent.id == event_id))
+            .filter(
+                and_(AlertEvent.tenant_id == self.tenant_id, AlertEvent.id == event_id)
+            )
             .update(updates)
         )
 
@@ -416,7 +528,9 @@ class DataSourceRepository(BaseRepository[DataSource]):
         """Find data source by name within tenant."""
         return (
             self.db.query(DataSource)
-            .filter(and_(DataSource.tenant_id == self.tenant_id, DataSource.name == name))
+            .filter(
+                and_(DataSource.tenant_id == self.tenant_id, DataSource.name == name)
+            )
             .first()
         )
 
@@ -438,17 +552,28 @@ class DataSourceRepository(BaseRepository[DataSource]):
         """Get all active data sources."""
         return (
             self.db.query(DataSource)
-            .filter(and_(DataSource.tenant_id == self.tenant_id, DataSource.is_active is True))
+            .filter(
+                and_(
+                    DataSource.tenant_id == self.tenant_id, DataSource.is_active is True
+                )
+            )
             .all()
         )
 
-    async def update_sync_status(self, source_id: UUID, status: str, last_sync: Optional[datetime] = None) -> bool:
+    async def update_sync_status(
+        self, source_id: UUID, status: str, last_sync: Optional[datetime] = None
+    ) -> bool:
         """Update sync status for a data source."""
-        updates = {DataSource.sync_status: status, DataSource.last_sync: last_sync or datetime.now(timezone.utc)}
+        updates = {
+            DataSource.sync_status: status,
+            DataSource.last_sync: last_sync or datetime.now(timezone.utc),
+        }
 
         result = (
             self.db.query(DataSource)
-            .filter(and_(DataSource.tenant_id == self.tenant_id, DataSource.id == source_id))
+            .filter(
+                and_(DataSource.tenant_id == self.tenant_id, DataSource.id == source_id)
+            )
             .update(updates)
         )
 
@@ -490,20 +615,34 @@ class AnalyticsSessionRepository(BaseRepository[AnalyticsSession]):
 
             result = (
                 self.db.query(AnalyticsSession)
-                .filter(and_(AnalyticsSession.tenant_id == self.tenant_id, AnalyticsSession.id == session_id))
-                .update({AnalyticsSession.session_end: end_time, AnalyticsSession.duration_seconds: duration})
+                .filter(
+                    and_(
+                        AnalyticsSession.tenant_id == self.tenant_id,
+                        AnalyticsSession.id == session_id,
+                    )
+                )
+                .update(
+                    {
+                        AnalyticsSession.session_end: end_time,
+                        AnalyticsSession.duration_seconds: duration,
+                    }
+                )
             )
             return result > 0
         return False
 
-    async def get_dashboard_analytics(self, dashboard_id: UUID, days: int = 30) -> dict[str, Any]:
+    async def get_dashboard_analytics(
+        self, dashboard_id: UUID, days: int = 30
+    ) -> dict[str, Any]:
         """Get analytics data for a specific dashboard."""
         start_date = datetime.now(timezone.utc) - timedelta(days=days)
 
         stats = (
             self.db.query(
                 func.count(AnalyticsSession.id).label("total_views"),
-                func.count(func.distinct(AnalyticsSession.user_id)).label("unique_users"),
+                func.count(func.distinct(AnalyticsSession.user_id)).label(
+                    "unique_users"
+                ),
                 func.avg(AnalyticsSession.duration_seconds).label("avg_duration"),
             )
             .filter(
@@ -531,7 +670,11 @@ class MetricAggregationRepository(BaseRepository[MetricAggregation]):
         super().__init__(db, MetricAggregation, tenant_id)
 
     async def find_aggregation(
-        self, metric_id: UUID, aggregation_type: str, period: str, period_start: datetime
+        self,
+        metric_id: UUID,
+        aggregation_type: str,
+        period: str,
+        period_start: datetime,
     ) -> Optional[MetricAggregation]:
         """Find a specific metric aggregation."""
         return (
@@ -558,7 +701,10 @@ class MetricAggregationRepository(BaseRepository[MetricAggregation]):
     ) -> list[MetricAggregation]:
         """Get aggregations for a metric with optional filters."""
         query = self.db.query(MetricAggregation).filter(
-            and_(MetricAggregation.tenant_id == self.tenant_id, MetricAggregation.metric_id == metric_id)
+            and_(
+                MetricAggregation.tenant_id == self.tenant_id,
+                MetricAggregation.metric_id == metric_id,
+            )
         )
 
         if aggregation_type:
@@ -584,7 +730,9 @@ class MetricAggregationRepository(BaseRepository[MetricAggregation]):
         dimensions: Optional[dict[str, Any]] = None,
     ) -> MetricAggregation:
         """Create or update a metric aggregation."""
-        existing = await self.find_aggregation(metric_id, aggregation_type, period, period_start)
+        existing = await self.find_aggregation(
+            metric_id, aggregation_type, period, period_start
+        )
 
         if existing:
             existing.aggregated_value = aggregated_value

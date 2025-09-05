@@ -97,7 +97,12 @@ class FakeDataProvider(DataProvider):
     def supports(self, data_type: DataType) -> bool:
         """Check if data type is supported."""
         if not HAS_FAKER:
-            return data_type in {DataType.STRING, DataType.UUID, DataType.INTEGER, DataType.BOOLEAN}
+            return data_type in {
+                DataType.STRING,
+                DataType.UUID,
+                DataType.INTEGER,
+                DataType.BOOLEAN,
+            }
         return True
 
     def generate(self, data_type: DataType, **kwargs) -> Any:
@@ -118,7 +123,9 @@ class FakeDataProvider(DataProvider):
     def _generate_with_faker(self, data_type: DataType, **kwargs) -> Any:
         """Generate using Faker library."""
         generators = {
-            DataType.STRING: lambda: self.faker.text(max_nb_chars=kwargs.get("max_length", 100)),
+            DataType.STRING: lambda: self.faker.text(
+                max_nb_chars=kwargs.get("max_length", 100)
+            ),
             DataType.EMAIL: lambda: self.faker.email(),
             DataType.PHONE: lambda: self.faker.phone_number(),
             DataType.NAME: lambda: self.faker.name(),
@@ -128,7 +135,9 @@ class FakeDataProvider(DataProvider):
             DataType.IP_ADDRESS: lambda: self.faker.ipv4(),
             DataType.MAC_ADDRESS: lambda: self.faker.mac_address(),
             DataType.UUID: lambda: str(self.faker.uuid4()),
-            DataType.INTEGER: lambda: self.faker.random_int(min=kwargs.get("min", 1), max=kwargs.get("max", 1000)),
+            DataType.INTEGER: lambda: self.faker.random_int(
+                min=kwargs.get("min", 1), max=kwargs.get("max", 1000)
+            ),
             DataType.DECIMAL: lambda: Decimal(
                 str(
                     self.faker.pydecimal(
@@ -140,10 +149,12 @@ class FakeDataProvider(DataProvider):
             ),
             DataType.BOOLEAN: lambda: self.faker.boolean(),
             DataType.DATE: lambda: self.faker.date_between(
-                start_date=kwargs.get("start_date", "-1y"), end_date=kwargs.get("end_date", "today")
+                start_date=kwargs.get("start_date", "-1y"),
+                end_date=kwargs.get("end_date", "today"),
             ),
             DataType.DATETIME: lambda: self.faker.date_time_between(
-                start_date=kwargs.get("start_date", "-1y"), end_date=kwargs.get("end_date", "now")
+                start_date=kwargs.get("start_date", "-1y"),
+                end_date=kwargs.get("end_date", "now"),
             ),
             DataType.JSON: lambda: {
                 "key1": self.faker.word(),
@@ -168,13 +179,18 @@ class FakeDataProvider(DataProvider):
         """Generate using basic Python without Faker."""
         generators = {
             DataType.STRING: lambda: "".join(
-                random.choices(string.ascii_letters + string.digits, k=kwargs.get("length", 10))
+                random.choices(
+                    string.ascii_letters + string.digits, k=kwargs.get("length", 10)
+                )
             ),
             DataType.UUID: lambda: str(uuid4()),
-            DataType.INTEGER: lambda: random.randint(kwargs.get("min", 1), kwargs.get("max", 1000)),
+            DataType.INTEGER: lambda: random.randint(
+                kwargs.get("min", 1), kwargs.get("max", 1000)
+            ),
             DataType.BOOLEAN: lambda: random.choice([True, False]),
             DataType.EMAIL: lambda: f"user{random.randint(1000, 9999)}@example.com",
-            DataType.DATETIME: lambda: utc_now() - timedelta(days=random.randint(0, 365)),
+            DataType.DATETIME: lambda: utc_now()
+            - timedelta(days=random.randint(0, 365)),
         }
 
         generator = generators.get(data_type)
@@ -241,8 +257,18 @@ class ISPDataProvider(DataProvider):
         if ip_type == "private":
             # Generate private IP ranges
             ranges = [
-                (10, random.randint(0, 255), random.randint(0, 255), random.randint(1, 254)),
-                (172, random.randint(16, 31), random.randint(0, 255), random.randint(1, 254)),
+                (
+                    10,
+                    random.randint(0, 255),
+                    random.randint(0, 255),
+                    random.randint(1, 254),
+                ),
+                (
+                    172,
+                    random.randint(16, 31),
+                    random.randint(0, 255),
+                    random.randint(1, 254),
+                ),
                 (192, 168, random.randint(0, 255), random.randint(1, 254)),
             ]
             return ".".join(map(str, random.choice(ranges)))
@@ -263,7 +289,11 @@ class ISPDataProvider(DataProvider):
 
         if vendor:
             # Use known vendor prefixes
-            vendor_prefixes = {"cisco": "00:1B:D4", "mikrotik": "4C:5E:0C", "ubiquiti": "44:D9:E7"}
+            vendor_prefixes = {
+                "cisco": "00:1B:D4",
+                "mikrotik": "4C:5E:0C",
+                "ubiquiti": "44:D9:E7",
+            }
             prefix = vendor_prefixes.get(vendor.lower(), "00:00:00")
             suffix = ":".join([f"{random.randint(0, 255):02X}" for _ in range(3)])
             return f"{prefix}:{suffix}"
@@ -285,7 +315,27 @@ class ISPDataProvider(DataProvider):
         first = octets[0]
 
         # Check common reserved ranges
-        if first in [10, 127, 169, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239]:
+        if first in [
+            10,
+            127,
+            169,
+            224,
+            225,
+            226,
+            227,
+            228,
+            229,
+            230,
+            231,
+            232,
+            233,
+            234,
+            235,
+            236,
+            237,
+            238,
+            239,
+        ]:
             return True
         if first == 172 and 16 <= octets[1] <= 31:
             return True
@@ -331,7 +381,10 @@ class DataGenerator:
     def __init__(self, config: Optional[GenerationConfig] = None):
         """Initialize data generator with providers."""
         self.config = config or GenerationConfig()
-        self.providers: list[DataProvider] = [FakeDataProvider(self.config), ISPDataProvider(self.config)]
+        self.providers: list[DataProvider] = [
+            FakeDataProvider(self.config),
+            ISPDataProvider(self.config),
+        ]
         self.sequence_generator = SequenceGenerator(self.config.sequence_start)
 
     def generate(self, data_type: DataType, **kwargs) -> Any:

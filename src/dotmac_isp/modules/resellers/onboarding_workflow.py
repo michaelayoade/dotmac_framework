@@ -8,11 +8,12 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Optional
 
-from dotmac.database.base import Base
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import relationship
+
+from dotmac.database.base import Base
 
 from .services_complete import ResellerService
 
@@ -51,7 +52,9 @@ class ResellerOnboardingChecklist(Base):
     __tablename__ = "reseller_onboarding_checklists"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    reseller_id = Column(UUID(as_uuid=True), ForeignKey("isp_resellers.id"), nullable=False)
+    reseller_id = Column(
+        UUID(as_uuid=True), ForeignKey("isp_resellers.id"), nullable=False
+    )
     checklist_version = Column(String(50), default="1.0")
 
     # Progress tracking
@@ -83,7 +86,11 @@ class OnboardingTask(Base):
     __tablename__ = "onboarding_tasks"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    checklist_id = Column(UUID(as_uuid=True), ForeignKey("reseller_onboarding_checklists.id"), nullable=False)
+    checklist_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("reseller_onboarding_checklists.id"),
+        nullable=False,
+    )
 
     # Task identification
     task_id = Column(String(100), nullable=False, unique=True, index=True)
@@ -106,7 +113,9 @@ class OnboardingTask(Base):
     due_date = Column(DateTime, nullable=True)
 
     # Task requirements and completion
-    prerequisites = Column(JSON, default=list)  # List of task_ids that must be completed first
+    prerequisites = Column(
+        JSON, default=list
+    )  # List of task_ids that must be completed first
     completion_criteria = Column(Text, nullable=True)
     completion_notes = Column(Text, nullable=True)
 
@@ -151,8 +160,14 @@ class OnboardingTaskTemplate:
                 """,
                 "completion_criteria": "Signed agreement received and processed",
                 "resources": [
-                    {"name": "Reseller Agreement Template", "url": "/docs/reseller-agreement.pdf"},
-                    {"name": "Commission Structure Guide", "url": "/docs/commission-guide.pdf"},
+                    {
+                        "name": "Reseller Agreement Template",
+                        "url": "/docs/reseller-agreement.pdf",
+                    },
+                    {
+                        "name": "Commission Structure Guide",
+                        "url": "/docs/commission-guide.pdf",
+                    },
                 ],
                 "due_days": 5,
             },
@@ -173,7 +188,10 @@ class OnboardingTaskTemplate:
                 "completion_criteria": "Portal profile 100% complete with all required information",
                 "resources": [
                     {"name": "Portal Setup Guide", "url": "/docs/portal-setup.pdf"},
-                    {"name": "Profile Completion Checklist", "url": "/portal/profile/checklist"},
+                    {
+                        "name": "Profile Completion Checklist",
+                        "url": "/portal/profile/checklist",
+                    },
                 ],
                 "due_days": 3,
             },
@@ -213,7 +231,10 @@ class OnboardingTaskTemplate:
                 """,
                 "completion_criteria": "All training modules completed with quiz score ≥80%",
                 "resources": [
-                    {"name": "Product Training Portal", "url": "/training/products/basic"},
+                    {
+                        "name": "Product Training Portal",
+                        "url": "/training/products/basic",
+                    },
                     {"name": "Service Catalog", "url": "/docs/service-catalog.pdf"},
                     {"name": "Pricing Guide", "url": "/docs/pricing-guide.pdf"},
                 ],
@@ -258,8 +279,14 @@ class OnboardingTaskTemplate:
                 """,
                 "completion_criteria": "Technical assessment completed and reviewed",
                 "resources": [
-                    {"name": "Technical Assessment Form", "url": "/forms/technical-assessment"},
-                    {"name": "Recommended Certifications", "url": "/docs/certifications.pdf"},
+                    {
+                        "name": "Technical Assessment Form",
+                        "url": "/forms/technical-assessment",
+                    },
+                    {
+                        "name": "Recommended Certifications",
+                        "url": "/docs/certifications.pdf",
+                    },
                 ],
                 "due_days": 10,
             },
@@ -279,7 +306,10 @@ class OnboardingTaskTemplate:
                 "completion_criteria": "API integration successfully tested",
                 "resources": [
                     {"name": "API Documentation", "url": "/docs/api"},
-                    {"name": "Integration Examples", "url": "/docs/integration-examples"},
+                    {
+                        "name": "Integration Examples",
+                        "url": "/docs/integration-examples",
+                    },
                     {"name": "SDK Downloads", "url": "/downloads/sdk"},
                 ],
                 "prerequisites": ["technical_001"],
@@ -301,9 +331,15 @@ class OnboardingTaskTemplate:
                 """,
                 "completion_criteria": "Business plan submitted and approved",
                 "resources": [
-                    {"name": "Territory Planning Template", "url": "/docs/territory-planning.docx"},
+                    {
+                        "name": "Territory Planning Template",
+                        "url": "/docs/territory-planning.docx",
+                    },
                     {"name": "Market Research Tools", "url": "/tools/market-research"},
-                    {"name": "Business Plan Template", "url": "/docs/business-plan.docx"},
+                    {
+                        "name": "Business Plan Template",
+                        "url": "/docs/business-plan.docx",
+                    },
                 ],
                 "prerequisites": ["training_002"],
                 "due_days": 30,
@@ -396,10 +432,13 @@ class OnboardingWorkflowEngine:
         checklist_data = {
             "reseller_id": reseller.id,
             "checklist_version": "1.0",
-            "target_completion_date": datetime.now(timezone.utc) + timedelta(days=45),  # 45 days to complete
+            "target_completion_date": datetime.now(timezone.utc)
+            + timedelta(days=45),  # 45 days to complete
             "metadata": {
                 "created_by": "system",
-                "reseller_type": reseller.reseller_type.value if reseller.reseller_type else "standard",
+                "reseller_type": reseller.reseller_type.value
+                if reseller.reseller_type
+                else "standard",
             },
         }
 
@@ -420,12 +459,15 @@ class OnboardingWorkflowEngine:
                 "task_description": task_template["task_description"],
                 "category": task_template["category"],
                 "priority": task_template["priority"],
-                "estimated_duration_minutes": str(task_template.get("estimated_duration_minutes", 30)),
+                "estimated_duration_minutes": str(
+                    task_template.get("estimated_duration_minutes", 30)
+                ),
                 "instructions": task_template.get("instructions", ""),
                 "completion_criteria": task_template.get("completion_criteria", ""),
                 "resources": task_template.get("resources", []),
                 "prerequisites": task_template.get("prerequisites", []),
-                "due_date": datetime.now(timezone.utc) + timedelta(days=task_template.get("due_days", 30)),
+                "due_date": datetime.now(timezone.utc)
+                + timedelta(days=task_template.get("due_days", 30)),
                 "metadata": {"template_version": "1.0", "auto_created": True},
             }
 
@@ -585,12 +627,22 @@ class OnboardingWorkflowEngine:
             "completion_notes": "Profile completed successfully. All required fields filled.",
             "resources": [
                 {"name": "Portal Setup Guide", "url": "/docs/portal-setup.pdf"},
-                {"name": "Profile Completion Checklist", "url": "/portal/profile/checklist"},
+                {
+                    "name": "Profile Completion Checklist",
+                    "url": "/portal/profile/checklist",
+                },
             ],
             "prerequisites": [],
-            "dependents": ["training_001", "business_002"],  # Tasks that depend on this one
+            "dependents": [
+                "training_001",
+                "business_002",
+            ],  # Tasks that depend on this one
             "assigned_to": "reseller_self",
-            "metadata": {"difficulty_level": "easy", "auto_created": True, "template_version": "1.0"},
+            "metadata": {
+                "difficulty_level": "easy",
+                "auto_created": True,
+                "template_version": "1.0",
+            },
         }
 
         return task_details

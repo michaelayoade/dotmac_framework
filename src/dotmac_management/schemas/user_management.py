@@ -6,12 +6,7 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import (
-    BaseModel,
-    EmailStr,
-    Field,
-    field_validator,
-)
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class UserCreate(BaseModel):
@@ -73,7 +68,9 @@ class UserInvite(BaseModel):
     full_name: Optional[str] = Field(None, description="Full name of invitee")
     role: str = Field(..., description="Role to assign")
     custom_message: Optional[str] = Field(None, description="Custom invitation message")
-    expires_in_days: int = Field(default=7, ge=1, le=30, description="Invitation expiry in days")
+    expires_in_days: int = Field(
+        default=7, ge=1, le=30, description="Invitation expiry in days"
+    )
 
     @field_validator("role")
     def validate_role(cls, v):
@@ -169,7 +166,9 @@ class PermissionDefinition(BaseModel):
     category: str = Field(..., description="Permission category")
     display_name: str = Field(..., description="Human-readable permission name")
     description: str = Field(..., description="Permission description")
-    is_dangerous: bool = Field(default=False, description="Whether this is a dangerous permission")
+    is_dangerous: bool = Field(
+        default=False, description="Whether this is a dangerous permission"
+    )
 
 
 class PermissionAssignment(BaseModel):
@@ -195,7 +194,9 @@ class RoleCreate(BaseModel):
     display_name: str = Field(..., description="Human-readable role name")
     description: str = Field(..., description="Role description")
     permissions: list[str] = Field(..., description="Role permissions")
-    tenant_id: Optional[UUID] = Field(None, description="Tenant ID for tenant-specific roles")
+    tenant_id: Optional[UUID] = Field(
+        None, description="Tenant ID for tenant-specific roles"
+    )
 
 
 class RoleUpdate(BaseModel):
@@ -263,12 +264,22 @@ class UserSecuritySettings(BaseModel):
     """User security settings schema."""
 
     user_id: UUID = Field(..., description="User identifier")
-    two_factor_enabled: bool = Field(default=False, description="Two-factor authentication enabled")
-    password_expires_at: Optional[datetime] = Field(None, description="Password expiration")
+    two_factor_enabled: bool = Field(
+        default=False, description="Two-factor authentication enabled"
+    )
+    password_expires_at: Optional[datetime] = Field(
+        None, description="Password expiration"
+    )
     account_locked: bool = Field(default=False, description="Whether account is locked")
-    failed_login_attempts: int = Field(default=0, description="Number of failed login attempts")
-    last_password_change: Optional[datetime] = Field(None, description="Last password change")
-    security_questions_set: bool = Field(default=False, description="Security questions configured")
+    failed_login_attempts: int = Field(
+        default=0, description="Number of failed login attempts"
+    )
+    last_password_change: Optional[datetime] = Field(
+        None, description="Last password change"
+    )
+    security_questions_set: bool = Field(
+        default=False, description="Security questions configured"
+    )
 
 
 class TwoFactorSetup(BaseModel):
@@ -293,7 +304,9 @@ class ApiKeyCreate(BaseModel):
 
     name: str = Field(..., min_length=3, max_length=100, description="API key name")
     permissions: list[str] = Field(..., description="API key permissions")
-    expires_in_days: Optional[int] = Field(None, gt=0, le=365, description="Expiration in days")
+    expires_in_days: Optional[int] = Field(
+        None, gt=0, le=365, description="Expiration in days"
+    )
     description: Optional[str] = Field(None, description="API key description")
 
 
@@ -326,7 +339,9 @@ class UserBulkOperation(BaseModel):
 
     user_ids: list[UUID] = Field(..., min_length=1, description="List of user IDs")
     operation: str = Field(..., description="Operation to perform")
-    parameters: Optional[dict[str, Any]] = Field(None, description="Operation parameters")
+    parameters: Optional[dict[str, Any]] = Field(
+        None, description="Operation parameters"
+    )
 
 
 class UserBulkOperationResult(BaseModel):
@@ -346,7 +361,9 @@ class UserImport(BaseModel):
     users: list[UserCreate] = Field(..., min_length=1, description="Users to import")
     tenant_id: Optional[UUID] = Field(None, description="Target tenant ID")
     send_invitations: bool = Field(default=True, description="Send invitation emails")
-    skip_existing: bool = Field(default=True, description="Skip users that already exist")
+    skip_existing: bool = Field(
+        default=True, description="Skip users that already exist"
+    )
 
 
 class UserImportResult(BaseModel):
@@ -357,7 +374,9 @@ class UserImportResult(BaseModel):
     skipped: int = Field(..., description="Skipped users")
     failed: int = Field(..., description="Failed imports")
     errors: list[dict[str, Any]] = Field(..., description="Import errors")
-    imported_users: list[dict[str, Any]] = Field(..., description="Successfully imported users")
+    imported_users: list[dict[str, Any]] = Field(
+        ..., description="Successfully imported users"
+    )
 
 
 class UserExport(BaseModel):
@@ -377,7 +396,9 @@ class UserStatistics(BaseModel):
     inactive_users: int = Field(..., description="Number of inactive users")
     users_by_role: dict[str, int] = Field(..., description="User count by role")
     users_by_tenant: dict[str, int] = Field(..., description="User count by tenant")
-    recent_logins: int = Field(..., description="Users with recent logins (last 7 days)")
+    recent_logins: int = Field(
+        ..., description="Users with recent logins (last 7 days)"
+    )
     pending_invitations: int = Field(..., description="Pending invitations")
     locked_accounts: int = Field(..., description="Locked accounts")
     last_updated: datetime = Field(..., description="Statistics update timestamp")

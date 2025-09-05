@@ -221,7 +221,9 @@ class SNMPCollector:
 
         try:
             # Walk interface description table
-            if_descr_results = await self.client.walk(self.client.INTERFACE_OID_MAP["ifDescr"])
+            if_descr_results = await self.client.walk(
+                self.client.INTERFACE_OID_MAP["ifDescr"]
+            )
 
             for oid, description in if_descr_results:
                 # Extract interface index
@@ -232,13 +234,27 @@ class SNMPCollector:
 
                 # Get additional interface data
                 try:
-                    admin_status = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifAdminStatus']}.{if_index}")
-                    oper_status = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifOperStatus']}.{if_index}")
-                    speed = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifSpeed']}.{if_index}")
-                    in_octets = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifInOctets']}.{if_index}")
-                    out_octets = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifOutOctets']}.{if_index}")
-                    in_errors = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifInErrors']}.{if_index}")
-                    out_errors = await self.client.get(f"{self.client.INTERFACE_OID_MAP['ifOutErrors']}.{if_index}")
+                    admin_status = await self.client.get(
+                        f"{self.client.INTERFACE_OID_MAP['ifAdminStatus']}.{if_index}"
+                    )
+                    oper_status = await self.client.get(
+                        f"{self.client.INTERFACE_OID_MAP['ifOperStatus']}.{if_index}"
+                    )
+                    speed = await self.client.get(
+                        f"{self.client.INTERFACE_OID_MAP['ifSpeed']}.{if_index}"
+                    )
+                    in_octets = await self.client.get(
+                        f"{self.client.INTERFACE_OID_MAP['ifInOctets']}.{if_index}"
+                    )
+                    out_octets = await self.client.get(
+                        f"{self.client.INTERFACE_OID_MAP['ifOutOctets']}.{if_index}"
+                    )
+                    in_errors = await self.client.get(
+                        f"{self.client.INTERFACE_OID_MAP['ifInErrors']}.{if_index}"
+                    )
+                    out_errors = await self.client.get(
+                        f"{self.client.INTERFACE_OID_MAP['ifOutErrors']}.{if_index}"
+                    )
 
                     interface_data.update(
                         {
@@ -275,14 +291,18 @@ class SNMPCollector:
 
         # Try Cisco-specific OIDs first
         try:
-            cpu_usage = await self.client.get(self.client.CPU_MEMORY_OID_MAP["cpmCPUTotal5minRev"])
+            cpu_usage = await self.client.get(
+                self.client.CPU_MEMORY_OID_MAP["cpmCPUTotal5minRev"]
+            )
             if cpu_usage is not None:
                 cpu_memory_stats["cpu_usage"] = cpu_usage
                 cpu_memory_stats["cpu_source"] = "cisco"
         except SNMPError:
             # Try generic host resources
             try:
-                cpu_usage = await self.client.get(self.client.CPU_MEMORY_OID_MAP["hrProcessorLoad"])
+                cpu_usage = await self.client.get(
+                    self.client.CPU_MEMORY_OID_MAP["hrProcessorLoad"]
+                )
                 if cpu_usage is not None:
                     cpu_memory_stats["cpu_usage"] = cpu_usage
                     cpu_memory_stats["cpu_source"] = "host_resources"
@@ -293,12 +313,18 @@ class SNMPCollector:
         # Try to collect memory stats
         try:
             # Cisco memory
-            memory_used = await self.client.get(self.client.CPU_MEMORY_OID_MAP["ciscoMemoryPoolUsed"])
-            memory_free = await self.client.get(self.client.CPU_MEMORY_OID_MAP["ciscoMemoryPoolFree"])
+            memory_used = await self.client.get(
+                self.client.CPU_MEMORY_OID_MAP["ciscoMemoryPoolUsed"]
+            )
+            memory_free = await self.client.get(
+                self.client.CPU_MEMORY_OID_MAP["ciscoMemoryPoolFree"]
+            )
 
             if memory_used is not None and memory_free is not None:
                 total_memory = memory_used + memory_free
-                memory_utilization = (memory_used / total_memory) * 100 if total_memory > 0 else 0
+                memory_utilization = (
+                    (memory_used / total_memory) * 100 if total_memory > 0 else 0
+                )
                 cpu_memory_stats["memory_usage"] = memory_utilization
                 cpu_memory_stats["memory_total"] = total_memory
                 cpu_memory_stats["memory_used"] = memory_used
@@ -307,7 +333,9 @@ class SNMPCollector:
         except SNMPError:
             try:
                 # Generic host resources
-                memory_size = await self.client.get(self.client.CPU_MEMORY_OID_MAP["hrMemorySize"])
+                memory_size = await self.client.get(
+                    self.client.CPU_MEMORY_OID_MAP["hrMemorySize"]
+                )
                 if memory_size is not None:
                     cpu_memory_stats["memory_total"] = memory_size
                     cpu_memory_stats["memory_source"] = "host_resources"
@@ -330,7 +358,9 @@ class SNMPCollector:
                 system_task, interface_task, cpu_memory_task, return_exceptions=True
             )
 
-            collection_duration = (time.time() - start_time) * 1000  # Convert to milliseconds
+            collection_duration = (
+                time.time() - start_time
+            ) * 1000  # Convert to milliseconds
 
             metrics = {
                 "collection_timestamp": datetime.now(timezone.utc),
@@ -382,7 +412,11 @@ class SNMPCollector:
             connectivity_test = await self.client.test_connectivity()
             test_results["tests"]["connectivity"] = {
                 "status": "pass" if connectivity_test else "fail",
-                "message": ("SNMP connectivity successful" if connectivity_test else "SNMP connectivity failed"),
+                "message": (
+                    "SNMP connectivity successful"
+                    if connectivity_test
+                    else "SNMP connectivity failed"
+                ),
             }
         except Exception as e:
             test_results["tests"]["connectivity"] = {
@@ -395,7 +429,11 @@ class SNMPCollector:
             system_name = await self.client.get(self.client.SYSTEM_OID_MAP["sysName"])
             test_results["tests"]["system_info"] = {
                 "status": "pass" if system_name else "fail",
-                "message": (f"System name: {system_name}" if system_name else "Failed to retrieve system name"),
+                "message": (
+                    f"System name: {system_name}"
+                    if system_name
+                    else "Failed to retrieve system name"
+                ),
                 "system_name": system_name,
             }
         except Exception as e:
@@ -406,7 +444,9 @@ class SNMPCollector:
 
         # Test interface walk
         try:
-            interface_results = await self.client.walk(self.client.INTERFACE_OID_MAP["ifDescr"])
+            interface_results = await self.client.walk(
+                self.client.INTERFACE_OID_MAP["ifDescr"]
+            )
             interface_count = len(interface_results)
             test_results["tests"]["interface_discovery"] = {
                 "status": "pass" if interface_count > 0 else "fail",
@@ -420,7 +460,9 @@ class SNMPCollector:
             }
 
         # Overall test result
-        all_tests_passed = all(test["status"] == "pass" for test in test_results["tests"].values())
+        all_tests_passed = all(
+            test["status"] == "pass" for test in test_results["tests"].values()
+        )
         test_results["overall_status"] = "pass" if all_tests_passed else "fail"
 
         return test_results

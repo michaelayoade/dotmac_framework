@@ -56,7 +56,9 @@ class AnalyticsFilter(BaseModel):
     """Analytics filter schema."""
 
     field: str = Field(..., description="Field to filter on")
-    operator: str = Field(..., description="Filter operator (eq, ne, gt, gte, lt, lte, in, not_in, like)")
+    operator: str = Field(
+        ..., description="Filter operator (eq, ne, gt, gte, lt, lte, in, not_in, like)"
+    )
     value: Union[str, int, float, list[Any]] = Field(..., description="Filter value")
 
     @field_validator("operator")
@@ -75,7 +77,9 @@ class AnalyticsQuery(BaseModel):
     start_date: datetime = Field(..., description="Start date for analysis")
     end_date: datetime = Field(..., description="End date for analysis")
     tenant_id: Optional[UUID] = Field(None, description="Optional tenant filter")
-    filters: Optional[list[AnalyticsFilter]] = Field(None, description="Additional filters")
+    filters: Optional[list[AnalyticsFilter]] = Field(
+        None, description="Additional filters"
+    )
     group_by: Optional[list[str]] = Field(None, description="Fields to group by")
     aggregation: Optional[str] = Field("sum", description="Aggregation method")
     format: ReportFormat = Field(default=ReportFormat.JSON, description="Output format")
@@ -117,7 +121,9 @@ class KPI(BaseModel):
     unit: str = Field(..., description="Unit of measurement")
     format: str = Field(default="number", description="Display format")
     summary: MetricSummary = Field(..., description="Metric summary")
-    chart_data: Optional[list[TimeSeriesDataPoint]] = Field(None, description="Chart data")
+    chart_data: Optional[list[TimeSeriesDataPoint]] = Field(
+        None, description="Chart data"
+    )
 
 
 class TenantAnalytics(BaseModel):
@@ -129,7 +135,9 @@ class TenantAnalytics(BaseModel):
     active_tenants: int = Field(..., description="Number of active tenants")
     new_tenants: int = Field(..., description="New tenants in period")
     churn_rate: float = Field(..., description="Tenant churn rate")
-    growth_metrics: list[TimeSeriesDataPoint] = Field(..., description="Growth over time")
+    growth_metrics: list[TimeSeriesDataPoint] = Field(
+        ..., description="Growth over time"
+    )
     top_tenants: list[dict[str, Any]] = Field(..., description="Top performing tenants")
 
 
@@ -140,9 +148,13 @@ class UserAnalytics(BaseModel):
     total_users: int = Field(..., description="Total number of users")
     active_users: int = Field(..., description="Number of active users")
     new_users: int = Field(..., description="New users in period")
-    user_growth: list[TimeSeriesDataPoint] = Field(..., description="User growth over time")
+    user_growth: list[TimeSeriesDataPoint] = Field(
+        ..., description="User growth over time"
+    )
     activity_patterns: dict[str, Any] = Field(..., description="User activity patterns")
-    retention_metrics: dict[str, float] = Field(..., description="User retention metrics")
+    retention_metrics: dict[str, float] = Field(
+        ..., description="User retention metrics"
+    )
 
 
 class RevenueAnalytics(BaseModel):
@@ -153,8 +165,12 @@ class RevenueAnalytics(BaseModel):
     mrr: float = Field(..., description="Monthly recurring revenue")
     arr: float = Field(..., description="Annual recurring revenue")
     growth_rate: float = Field(..., description="Revenue growth rate")
-    revenue_by_period: list[TimeSeriesDataPoint] = Field(..., description="Revenue over time")
-    revenue_by_plan: dict[str, float] = Field(..., description="Revenue by billing plan")
+    revenue_by_period: list[TimeSeriesDataPoint] = Field(
+        ..., description="Revenue over time"
+    )
+    revenue_by_plan: dict[str, float] = Field(
+        ..., description="Revenue by billing plan"
+    )
     churn_analysis: dict[str, Any] = Field(..., description="Revenue churn analysis")
     cohort_analysis: dict[str, Any] = Field(..., description="Revenue cohort analysis")
 
@@ -163,12 +179,18 @@ class UsageAnalytics(BaseModel):
     """Usage analytics schema."""
 
     period: dict[str, str] = Field(..., description="Analysis period")
-    infrastructure_usage: dict[str, Any] = Field(..., description="Infrastructure usage metrics")
+    infrastructure_usage: dict[str, Any] = Field(
+        ..., description="Infrastructure usage metrics"
+    )
     api_usage: dict[str, Any] = Field(..., description="API usage metrics")
-    notification_usage: dict[str, Any] = Field(..., description="Notification usage metrics")
+    notification_usage: dict[str, Any] = Field(
+        ..., description="Notification usage metrics"
+    )
     storage_usage: dict[str, Any] = Field(..., description="Storage usage metrics")
     peak_usage: dict[str, Any] = Field(..., description="Peak usage analysis")
-    usage_trends: list[TimeSeriesDataPoint] = Field(..., description="Usage trends over time")
+    usage_trends: list[TimeSeriesDataPoint] = Field(
+        ..., description="Usage trends over time"
+    )
 
 
 class PerformanceMetrics(BaseModel):
@@ -179,8 +201,12 @@ class PerformanceMetrics(BaseModel):
     error_rates: dict[str, float] = Field(..., description="Error rate metrics")
     throughput: dict[str, float] = Field(..., description="Throughput metrics")
     uptime: float = Field(..., description="System uptime percentage")
-    resource_utilization: dict[str, float] = Field(..., description="Resource utilization")
-    external_services: dict[str, dict[str, float]] = Field(..., description="External service metrics")
+    resource_utilization: dict[str, float] = Field(
+        ..., description="Resource utilization"
+    )
+    external_services: dict[str, dict[str, float]] = Field(
+        ..., description="External service metrics"
+    )
 
 
 class CustomReport(BaseModel):
@@ -191,7 +217,9 @@ class CustomReport(BaseModel):
     description: Optional[str] = Field(None, description="Report description")
     query: AnalyticsQuery = Field(..., description="Report query configuration")
     data: dict[str, Any] = Field(..., description="Report data")
-    visualization: Optional[dict[str, Any]] = Field(None, description="Visualization configuration")
+    visualization: Optional[dict[str, Any]] = Field(
+        None, description="Visualization configuration"
+    )
     created_by: UUID = Field(..., description="User who created the report")
     created_at: datetime = Field(..., description="Creation timestamp")
     last_run: Optional[datetime] = Field(None, description="Last execution timestamp")
@@ -204,7 +232,9 @@ class ReportSchedule(BaseModel):
 
     schedule_id: UUID = Field(..., description="Schedule identifier")
     report_id: UUID = Field(..., description="Report identifier")
-    frequency: str = Field(..., description="Schedule frequency (daily, weekly, monthly)")
+    frequency: str = Field(
+        ..., description="Schedule frequency (daily, weekly, monthly)"
+    )
     time: str = Field(..., description="Execution time (HH:MM format)")
     timezone: str = Field(default="UTC", description="Timezone for schedule")
     recipients: list[str] = Field(..., description="Email recipients")
@@ -221,9 +251,15 @@ class AnalyticsDashboard(BaseModel):
     description: Optional[str] = Field(None, description="Dashboard description")
     widgets: list[dict[str, Any]] = Field(..., description="Dashboard widgets")
     layout: dict[str, Any] = Field(..., description="Dashboard layout configuration")
-    filters: Optional[list[AnalyticsFilter]] = Field(None, description="Global dashboard filters")
-    refresh_interval: Optional[int] = Field(None, description="Auto-refresh interval in seconds")
-    is_public: bool = Field(default=False, description="Whether dashboard is publicly accessible")
+    filters: Optional[list[AnalyticsFilter]] = Field(
+        None, description="Global dashboard filters"
+    )
+    refresh_interval: Optional[int] = Field(
+        None, description="Auto-refresh interval in seconds"
+    )
+    is_public: bool = Field(
+        default=False, description="Whether dashboard is publicly accessible"
+    )
     created_by: UUID = Field(..., description="User who created the dashboard")
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
@@ -237,7 +273,9 @@ class DashboardWidget(BaseModel):
     name: str = Field(..., description="Widget name")
     type: str = Field(..., description="Widget type (chart, metric, table)")
     query: AnalyticsQuery = Field(..., description="Widget data query")
-    visualization: dict[str, Any] = Field(..., description="Visualization configuration")
+    visualization: dict[str, Any] = Field(
+        ..., description="Visualization configuration"
+    )
     position: dict[str, int] = Field(..., description="Widget position and size")
     refresh_interval: Optional[int] = Field(None, description="Widget refresh interval")
     is_active: bool = Field(default=True, description="Whether widget is active")
@@ -251,7 +289,9 @@ class ExportRequest(BaseModel):
     filters: Optional[list[AnalyticsFilter]] = Field(None, description="Export filters")
     start_date: Optional[datetime] = Field(None, description="Start date filter")
     end_date: Optional[datetime] = Field(None, description="End date filter")
-    include_metadata: bool = Field(default=True, description="Include metadata in export")
+    include_metadata: bool = Field(
+        default=True, description="Include metadata in export"
+    )
     compression: bool = Field(default=False, description="Compress export file")
 
 
@@ -259,16 +299,26 @@ class ExportJob(BaseModel):
     """Data export job schema."""
 
     job_id: UUID = Field(..., description="Export job identifier")
-    export_request: ExportRequest = Field(..., description="Export request configuration")
-    status: str = Field(..., description="Job status (pending, running, completed, failed)")
+    export_request: ExportRequest = Field(
+        ..., description="Export request configuration"
+    )
+    status: str = Field(
+        ..., description="Job status (pending, running, completed, failed)"
+    )
     progress: float = Field(default=0.0, description="Job progress percentage")
-    file_url: Optional[str] = Field(None, description="Download URL for completed export")
+    file_url: Optional[str] = Field(
+        None, description="Download URL for completed export"
+    )
     file_size: Optional[int] = Field(None, description="Export file size in bytes")
-    error_message: Optional[str] = Field(None, description="Error message if job failed")
+    error_message: Optional[str] = Field(
+        None, description="Error message if job failed"
+    )
     created_by: UUID = Field(..., description="User who requested the export")
     created_at: datetime = Field(..., description="Job creation timestamp")
     started_at: Optional[datetime] = Field(None, description="Job start timestamp")
-    completed_at: Optional[datetime] = Field(None, description="Job completion timestamp")
+    completed_at: Optional[datetime] = Field(
+        None, description="Job completion timestamp"
+    )
     expires_at: Optional[datetime] = Field(None, description="Download link expiration")
 
 
@@ -280,14 +330,22 @@ class AnalyticsAlert(BaseModel):
     description: Optional[str] = Field(None, description="Alert description")
     metric_query: AnalyticsQuery = Field(..., description="Metric query for alert")
     threshold: float = Field(..., description="Alert threshold value")
-    operator: str = Field(..., description="Comparison operator (gt, gte, lt, lte, eq, ne)")
-    severity: str = Field(..., description="Alert severity (low, medium, high, critical)")
+    operator: str = Field(
+        ..., description="Comparison operator (gt, gte, lt, lte, eq, ne)"
+    )
+    severity: str = Field(
+        ..., description="Alert severity (low, medium, high, critical)"
+    )
     notification_channels: list[str] = Field(..., description="Notification channels")
     is_active: bool = Field(default=True, description="Whether alert is active")
     created_by: UUID = Field(..., description="User who created the alert")
     created_at: datetime = Field(..., description="Creation timestamp")
-    last_triggered: Optional[datetime] = Field(None, description="Last trigger timestamp")
-    trigger_count: int = Field(default=0, description="Number of times alert has triggered")
+    last_triggered: Optional[datetime] = Field(
+        None, description="Last trigger timestamp"
+    )
+    trigger_count: int = Field(
+        default=0, description="Number of times alert has triggered"
+    )
 
 
 class AlertTrigger(BaseModel):
@@ -300,10 +358,16 @@ class AlertTrigger(BaseModel):
     severity: str = Field(..., description="Alert severity")
     message: str = Field(..., description="Alert message")
     triggered_at: datetime = Field(..., description="Trigger timestamp")
-    acknowledged_at: Optional[datetime] = Field(None, description="Acknowledgment timestamp")
-    acknowledged_by: Optional[UUID] = Field(None, description="User who acknowledged alert")
+    acknowledged_at: Optional[datetime] = Field(
+        None, description="Acknowledgment timestamp"
+    )
+    acknowledged_by: Optional[UUID] = Field(
+        None, description="User who acknowledged alert"
+    )
     resolved_at: Optional[datetime] = Field(None, description="Resolution timestamp")
-    status: str = Field(default="active", description="Trigger status (active, acknowledged, resolved)")
+    status: str = Field(
+        default="active", description="Trigger status (active, acknowledged, resolved)"
+    )
 
 
 class MetricDefinition(BaseModel):
@@ -318,7 +382,9 @@ class MetricDefinition(BaseModel):
     category: str = Field(..., description="Metric category")
     aggregation_method: str = Field(..., description="Default aggregation method")
     calculation_logic: str = Field(..., description="Calculation logic description")
-    is_custom: bool = Field(default=False, description="Whether this is a custom metric")
+    is_custom: bool = Field(
+        default=False, description="Whether this is a custom metric"
+    )
     created_by: Optional[UUID] = Field(None, description="User who created the metric")
     created_at: datetime = Field(..., description="Creation timestamp")
 
@@ -329,7 +395,9 @@ class DataSource(BaseModel):
     source_id: UUID = Field(..., description="Data source identifier")
     name: str = Field(..., description="Data source name")
     type: str = Field(..., description="Data source type (database, api, file)")
-    connection_config: dict[str, Any] = Field(..., description="Connection configuration")
+    connection_config: dict[str, Any] = Field(
+        ..., description="Connection configuration"
+    )
     schema_mapping: dict[str, str] = Field(..., description="Schema field mapping")
     refresh_schedule: Optional[str] = Field(None, description="Data refresh schedule")
     last_refresh: Optional[datetime] = Field(None, description="Last refresh timestamp")
@@ -342,13 +410,25 @@ class AnalyticsConfig(BaseModel):
     """Analytics configuration schema."""
 
     config_id: UUID = Field(..., description="Configuration identifier")
-    tenant_id: Optional[UUID] = Field(None, description="Tenant identifier (global if None)")
+    tenant_id: Optional[UUID] = Field(
+        None, description="Tenant identifier (global if None)"
+    )
     retention_days: int = Field(default=90, description="Data retention period in days")
-    sampling_rate: float = Field(default=1.0, description="Data sampling rate (0.0-1.0)")
-    aggregation_intervals: list[str] = Field(default=["hour", "day", "week"], description="Aggregation intervals")
-    custom_dimensions: list[str] = Field(default_factory=list, description="Custom dimension fields")
-    privacy_settings: dict[str, bool] = Field(default_factory=dict, description="Privacy settings")
-    export_limits: dict[str, int] = Field(default_factory=dict, description="Export size limits")
+    sampling_rate: float = Field(
+        default=1.0, description="Data sampling rate (0.0-1.0)"
+    )
+    aggregation_intervals: list[str] = Field(
+        default=["hour", "day", "week"], description="Aggregation intervals"
+    )
+    custom_dimensions: list[str] = Field(
+        default_factory=list, description="Custom dimension fields"
+    )
+    privacy_settings: dict[str, bool] = Field(
+        default_factory=dict, description="Privacy settings"
+    )
+    export_limits: dict[str, int] = Field(
+        default_factory=dict, description="Export size limits"
+    )
     created_by: UUID = Field(..., description="User who created the configuration")
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
@@ -360,16 +440,26 @@ class AnalyticsInsight(BaseModel):
     insight_id: UUID = Field(..., description="Insight identifier")
     title: str = Field(..., description="Insight title")
     description: str = Field(..., description="Insight description")
-    insight_type: str = Field(..., description="Type of insight (anomaly, trend, recommendation)")
+    insight_type: str = Field(
+        ..., description="Type of insight (anomaly, trend, recommendation)"
+    )
     severity: str = Field(..., description="Insight severity (low, medium, high)")
     metric_affected: str = Field(..., description="Affected metric")
     confidence_score: float = Field(..., description="Confidence score (0.0-1.0)")
-    data_points: list[TimeSeriesDataPoint] = Field(..., description="Supporting data points")
-    recommendations: list[str] = Field(default_factory=list, description="Recommended actions")
+    data_points: list[TimeSeriesDataPoint] = Field(
+        ..., description="Supporting data points"
+    )
+    recommendations: list[str] = Field(
+        default_factory=list, description="Recommended actions"
+    )
     generated_at: datetime = Field(..., description="Generation timestamp")
     expires_at: Optional[datetime] = Field(None, description="Insight expiration")
-    is_acknowledged: bool = Field(default=False, description="Whether insight is acknowledged")
-    acknowledged_by: Optional[UUID] = Field(None, description="User who acknowledged insight")
+    is_acknowledged: bool = Field(
+        default=False, description="Whether insight is acknowledged"
+    )
+    acknowledged_by: Optional[UUID] = Field(
+        None, description="User who acknowledged insight"
+    )
 
 
 class AnalyticsSummary(BaseModel):

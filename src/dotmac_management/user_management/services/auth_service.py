@@ -16,12 +16,13 @@ import pyotp
 
 # Moved to top: import pyotp
 import qrcode
-from dotmac.platform.observability.logging import get_logger
-from dotmac_shared.common.exceptions import standard_exception_handler
-from dotmac_shared.config.secure_config import get_jwt_secret_sync
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac.platform.observability.logging import get_logger
+from dotmac_shared.common.exceptions import standard_exception_handler
+from dotmac_shared.config.secure_config import get_jwt_secret_sync
 
 from ..repositories.auth_repository import (
     ApiKeyRepository,
@@ -107,10 +108,15 @@ class AuthService(BaseService):
         user = await self.user_repo.get_by_username_or_email(username)
         if not user:
             await self._log_auth_event(
-                None, AuthAuditEventType.LOGIN_FAILED, {"reason": "user_not_found", "username": username}, client_ip
+                None,
+                AuthAuditEventType.LOGIN_FAILED,
+                {"reason": "user_not_found", "username": username},
+                client_ip,
             )
             return LoginAttemptResult(
-                success=False, error_code="INVALID_CREDENTIALS", message="Invalid username or password"
+                success=False,
+                error_code="INVALID_CREDENTIALS",
+                message="Invalid username or password",
             )
 
         # Check account status
@@ -121,12 +127,19 @@ class AuthService(BaseService):
                 {"reason": "account_inactive", "status": user.status},
                 client_ip,
             )
-            return LoginAttemptResult(success=False, error_code="ACCOUNT_INACTIVE", message="Account is not active")
+            return LoginAttemptResult(
+                success=False,
+                error_code="ACCOUNT_INACTIVE",
+                message="Account is not active",
+            )
 
         # Check account lockout
         if await self._is_account_locked(user.id):
             await self._log_auth_event(
-                user.id, AuthAuditEventType.LOGIN_FAILED, {"reason": "account_locked"}, client_ip
+                user.id,
+                AuthAuditEventType.LOGIN_FAILED,
+                {"reason": "account_locked"},
+                client_ip,
             )
             return LoginAttemptResult(
                 success=False,
@@ -136,10 +149,14 @@ class AuthService(BaseService):
 
         # Verify password
         user_password = await self.auth_repo.get_current_password(user.id)
-        if not user_password or not self.pwd_context.verify(password, user_password.password_hash):
+        if not user_password or not self.pwd_context.verify(
+            password, user_password.password_hash
+        ):
             await self._record_failed_attempt(user.id, client_ip)
             return LoginAttemptResult(
-                success=False, error_code="INVALID_CREDENTIALS", message="Invalid username or password"
+                success=False,
+                error_code="INVALID_CREDENTIALS",
+                message="Invalid username or password",
             )
 
         # Check if MFA is required
@@ -157,7 +174,10 @@ class AuthService(BaseService):
 
         # Create session and tokens
         session_data = SessionCreateSchema(
-            user_id=user.id, client_ip=client_ip, user_agent=user_agent, device_fingerprint=device_fingerprint
+            user_id=user.id,
+            client_ip=client_ip,
+            user_agent=user_agent,
+            device_fingerprint=device_fingerprint,
         )
 
         session = await self.create_session(session_data)
@@ -168,7 +188,10 @@ class AuthService(BaseService):
         await self._clear_failed_attempts(user.id)
 
         await self._log_auth_event(
-            user.id, AuthAuditEventType.LOGIN_SUCCESS, {"session_id": str(session.id)}, client_ip
+            user.id,
+            AuthAuditEventType.LOGIN_SUCCESS,
+            {"session_id": str(session.id)},
+            client_ip,
         )
 
         return LoginAttemptResult(
@@ -205,27 +228,43 @@ class AuthService(BaseService):
         """
         try:
             # Verify temp token
-            payload = jwt.decode(temp_token, self.jwt_secret, algorithms=[self.jwt_algorithm])
+            payload = jwt.decode(
+                temp_token, self.jwt_secret, algorithms=[self.jwt_algorithm]
+            )
             user_id = UUID(payload.get("user_id"))
-            token_type = payload.get("type")  # noqa: S105 - token classification, not a secret
+            token_type = payload.get(
+                "type"
+            )  # noqa: S105 - token classification, not a secret
 
             if token_type != "temp_mfa":
                 raise JWTError("Invalid token type")
 
         except JWTError:
             return LoginAttemptResult(
-                success=False, error_code="INVALID_TOKEN", message="Invalid or expired temporary token"
+                success=False,
+                error_code="INVALID_TOKEN",
+                message="Invalid or expired temporary token",
             )
 
         # Verify MFA code
         mfa_valid = await self.verify_mfa_code(user_id, mfa_code)
         if not mfa_valid:
-            await self._log_auth_event(user_id, AuthAuditEventType.MFA_FAILED, {"reason": "invalid_code"}, client_ip)
-            return LoginAttemptResult(success=False, error_code="INVALID_MFA_CODE", message="Invalid MFA code")
+            await self._log_auth_event(
+                user_id,
+                AuthAuditEventType.MFA_FAILED,
+                {"reason": "invalid_code"},
+                client_ip,
+            )
+            return LoginAttemptResult(
+                success=False, error_code="INVALID_MFA_CODE", message="Invalid MFA code"
+            )
 
         # Create session and tokens
         session_data = SessionCreateSchema(
-            user_id=user_id, client_ip=client_ip, user_agent=user_agent, device_fingerprint=device_fingerprint
+            user_id=user_id,
+            client_ip=client_ip,
+            user_agent=user_agent,
+            device_fingerprint=device_fingerprint,
         )
 
         session = await self.create_session(session_data)
@@ -233,7 +272,10 @@ class AuthService(BaseService):
         refresh_token = self._generate_refresh_token(user_id, session.id)
 
         await self._log_auth_event(
-            user_id, AuthAuditEventType.LOGIN_SUCCESS, {"session_id": str(session.id), "mfa_verified": True}, client_ip
+            user_id,
+            AuthAuditEventType.LOGIN_SUCCESS,
+            {"session_id": str(session.id), "mfa_verified": True},
+            client_ip,
         )
 
         return LoginAttemptResult(
@@ -247,7 +289,9 @@ class AuthService(BaseService):
         )
 
     @standard_exception_handler
-    async def logout_user(self, session_id: UUID, client_ip: Optional[str] = None) -> bool:
+    async def logout_user(
+        self, session_id: UUID, client_ip: Optional[str] = None
+    ) -> bool:
         """
         Logout user and invalidate session.
 
@@ -263,17 +307,28 @@ class AuthService(BaseService):
             return False
 
         # Invalidate session
-        await self.session_repo.update(session_id, status=SessionStatus.LOGGED_OUT, ended_at=datetime.now(timezone.utc))
-
-        await self._log_auth_event(
-            session.user_id, AuthAuditEventType.LOGOUT, {"session_id": str(session_id)}, client_ip
+        await self.session_repo.update(
+            session_id,
+            status=SessionStatus.LOGGED_OUT,
+            ended_at=datetime.now(timezone.utc),
         )
 
-        logger.info(f"User {session.user_id} logged out, session {session_id} invalidated")
+        await self._log_auth_event(
+            session.user_id,
+            AuthAuditEventType.LOGOUT,
+            {"session_id": str(session_id)},
+            client_ip,
+        )
+
+        logger.info(
+            f"User {session.user_id} logged out, session {session_id} invalidated"
+        )
         return True
 
     @standard_exception_handler
-    async def create_session(self, session_data: SessionCreateSchema) -> SessionInfoSchema:
+    async def create_session(
+        self, session_data: SessionCreateSchema
+    ) -> SessionInfoSchema:
         """
         Create new user session.
 
@@ -285,7 +340,9 @@ class AuthService(BaseService):
         """
         # Generate session token
         session_token = secrets.token_urlsafe(32)
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=self.session_timeout_minutes)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            minutes=self.session_timeout_minutes
+        )
 
         session = await self.session_repo.create_session(
             user_id=session_data.user_id,
@@ -310,10 +367,14 @@ class AuthService(BaseService):
             Tuple of (new_access_token, new_refresh_token) or None if invalid
         """
         try:
-            payload = jwt.decode(refresh_token, self.jwt_secret, algorithms=[self.jwt_algorithm])
+            payload = jwt.decode(
+                refresh_token, self.jwt_secret, algorithms=[self.jwt_algorithm]
+            )
             user_id = UUID(payload.get("user_id"))
             session_id = UUID(payload.get("session_id"))
-            token_type = payload.get("type")  # noqa: S105 - token classification, not a secret
+            token_type = payload.get(
+                "type"
+            )  # noqa: S105 - token classification, not a secret
 
             if token_type != "refresh":
                 raise JWTError("Invalid token type")
@@ -336,7 +397,9 @@ class AuthService(BaseService):
         return (new_access_token, new_refresh_token)
 
     @standard_exception_handler
-    async def setup_mfa(self, user_id: UUID, request: MFASetupRequestSchema) -> MFASetupResponseSchema:
+    async def setup_mfa(
+        self, user_id: UUID, request: MFASetupRequestSchema
+    ) -> MFASetupResponseSchema:
         """
         Setup MFA for user account.
 
@@ -352,7 +415,9 @@ class AuthService(BaseService):
 
         # Create provisioning URI for QR code
         user = await self.user_repo.get_by_id(user_id)
-        provisioning_uri = pyotp.TOTP(secret).provisioning_uri(name=user.email, issuer_name="DotMac")
+        provisioning_uri = pyotp.TOTP(secret).provisioning_uri(
+            name=user.email, issuer_name="DotMac"
+        )
 
         # Generate QR code
         qr = qrcode.QRCode(version=1, box_size=10, border=5)
@@ -440,7 +505,10 @@ class AuthService(BaseService):
 
     @standard_exception_handler
     async def change_password(
-        self, user_id: UUID, request: ChangePasswordSchema, client_ip: Optional[str] = None
+        self,
+        user_id: UUID,
+        request: ChangePasswordSchema,
+        client_ip: Optional[str] = None,
     ) -> bool:
         """
         Change user password.
@@ -459,7 +527,10 @@ class AuthService(BaseService):
             request.current_password, current_password.password_hash
         ):
             await self._log_auth_event(
-                user_id, AuthAuditEventType.PASSWORD_CHANGE_FAILED, {"reason": "invalid_current_password"}, client_ip
+                user_id,
+                AuthAuditEventType.PASSWORD_CHANGE_FAILED,
+                {"reason": "invalid_current_password"},
+                client_ip,
             )
             return False
 
@@ -471,16 +542,22 @@ class AuthService(BaseService):
 
         # Invalidate all sessions except current one if provided
         if request.keep_current_session and request.current_session_id:
-            await self.session_repo.invalidate_all_sessions_except(user_id, request.current_session_id)
+            await self.session_repo.invalidate_all_sessions_except(
+                user_id, request.current_session_id
+            )
         else:
             await self.session_repo.invalidate_all_sessions(user_id)
 
-        await self._log_auth_event(user_id, AuthAuditEventType.PASSWORD_CHANGED, {}, client_ip)
+        await self._log_auth_event(
+            user_id, AuthAuditEventType.PASSWORD_CHANGED, {}, client_ip
+        )
 
         return True
 
     @standard_exception_handler
-    async def create_api_key(self, user_id: UUID, request: ApiKeyCreateSchema) -> ApiKeySchema:
+    async def create_api_key(
+        self, user_id: UUID, request: ApiKeyCreateSchema
+    ) -> ApiKeySchema:
         """
         Create API key for user.
 
@@ -497,7 +574,9 @@ class AuthService(BaseService):
 
         expires_at = None
         if request.expires_in_days:
-            expires_at = datetime.now(timezone.utc) + timedelta(days=request.expires_in_days)
+            expires_at = datetime.now(timezone.utc) + timedelta(
+                days=request.expires_in_days
+            )
 
         # Store API key
         api_key_record = await self.api_key_repo.create_api_key(
@@ -509,7 +588,9 @@ class AuthService(BaseService):
         )
 
         await self._log_auth_event(
-            user_id, AuthAuditEventType.API_KEY_CREATED, {"api_key_id": str(api_key_record.id), "name": request.name}
+            user_id,
+            AuthAuditEventType.API_KEY_CREATED,
+            {"api_key_id": str(api_key_record.id), "name": request.name},
         )
 
         return ApiKeySchema(
@@ -552,11 +633,20 @@ class AuthService(BaseService):
 
     async def _is_account_locked(self, user_id: UUID) -> bool:
         """Check if account is locked due to failed attempts."""
-        return await self.auth_repo.is_account_locked(user_id, self.max_failed_attempts, self.lockout_duration_minutes)
+        return await self.auth_repo.is_account_locked(
+            user_id, self.max_failed_attempts, self.lockout_duration_minutes
+        )
 
-    async def _record_failed_attempt(self, user_id: UUID, client_ip: Optional[str] = None):
+    async def _record_failed_attempt(
+        self, user_id: UUID, client_ip: Optional[str] = None
+    ):
         """Record failed login attempt."""
-        await self._log_auth_event(user_id, AuthAuditEventType.LOGIN_FAILED, {"reason": "invalid_password"}, client_ip)
+        await self._log_auth_event(
+            user_id,
+            AuthAuditEventType.LOGIN_FAILED,
+            {"reason": "invalid_password"},
+            client_ip,
+        )
 
     async def _clear_failed_attempts(self, user_id: UUID):
         """Clear failed login attempts after successful login."""
@@ -571,5 +661,8 @@ class AuthService(BaseService):
     ):
         """Log authentication event for audit trail."""
         await self.audit_repo.log_event(
-            user_id=user_id, event_type=event_type, event_data=event_data, client_ip=client_ip
+            user_id=user_id,
+            event_type=event_type,
+            event_data=event_data,
+            client_ip=client_ip,
         )

@@ -88,7 +88,9 @@ class TopologyAnalyzer:
 
             self.link_attributes[link_id] = link_data
 
-    def find_shortest_path(self, source: str, target: str, metric: str = "hops") -> Optional[list[str]]:
+    def find_shortest_path(
+        self, source: str, target: str, metric: str = "hops"
+    ) -> Optional[list[str]]:
         """Find shortest path using different metrics."""
         if source not in self.nodes or target not in self.nodes:
             raise TopologyAnalysisError(f"Node not found: {source} or {target}")
@@ -126,7 +128,9 @@ class TopologyAnalyzer:
 
         return None
 
-    def _dijkstra_shortest_path(self, source: str, target: str, weight_attr: str) -> Optional[list[str]]:
+    def _dijkstra_shortest_path(
+        self, source: str, target: str, weight_attr: str
+    ) -> Optional[list[str]]:
         """Dijkstra's algorithm for weighted shortest path."""
         distances = {node: float("inf") for node in self.nodes}
         distances[source] = 0
@@ -167,7 +171,9 @@ class TopologyAnalyzer:
 
         return None
 
-    def find_all_paths(self, source: str, target: str, max_hops: int = 10) -> list[list[str]]:
+    def find_all_paths(
+        self, source: str, target: str, max_hops: int = 10
+    ) -> list[list[str]]:
         """Find all paths between source and target up to max_hops."""
         if source not in self.nodes or target not in self.nodes:
             raise TopologyAnalysisError(f"Node not found: {source} or {target}")
@@ -263,7 +269,9 @@ class TopologyAnalyzer:
                 continue
 
             neighbors = list(self.graph.get(node, {}).keys())
-            active_neighbors = [n for n in neighbors if self.graph[node][n].get("status") == "active"]
+            active_neighbors = [
+                n for n in neighbors if self.graph[node][n].get("status") == "active"
+            ]
 
             if len(active_neighbors) <= 1:
                 single_points.append(node)
@@ -364,7 +372,9 @@ class TopologyAnalyzer:
             # Degree centrality
             degree = len(self.graph.get(node, {}))
             max_possible_degree = len(self.nodes) - 1
-            metrics["degree_centrality"] = degree / max_possible_degree if max_possible_degree > 0 else 0
+            metrics["degree_centrality"] = (
+                degree / max_possible_degree if max_possible_degree > 0 else 0
+            )
 
             # Betweenness centrality (simplified)
             betweenness = 0
@@ -395,7 +405,9 @@ class TopologyAnalyzer:
 
             if reachable_nodes > 0:
                 avg_distance = total_distance / reachable_nodes
-                metrics["closeness_centrality"] = 1 / avg_distance if avg_distance > 0 else 0
+                metrics["closeness_centrality"] = (
+                    1 / avg_distance if avg_distance > 0 else 0
+                )
             else:
                 metrics["closeness_centrality"] = 0
 
@@ -433,7 +445,9 @@ class TopologyAnalyzer:
             )
 
         # Connectivity analysis
-        isolated_nodes = [node for node in self.nodes if len(self.graph.get(node, {})) == 0]
+        isolated_nodes = [
+            node for node in self.nodes if len(self.graph.get(node, {})) == 0
+        ]
 
         loops = self.detect_loops()
 
@@ -442,7 +456,10 @@ class TopologyAnalyzer:
             "loops_detected": len(loops),
             "loops": loops[:5],  # Show first 5 loops
             "average_degree": (
-                sum(len(neighbors) for neighbors in self.graph.values()) / len(self.nodes) if self.nodes else 0
+                sum(len(neighbors) for neighbors in self.graph.values())
+                / len(self.nodes)
+                if self.nodes
+                else 0
             ),
         }
 
@@ -450,7 +467,9 @@ class TopologyAnalyzer:
         centrality = self.calculate_centrality_metrics()
 
         # Find most central nodes
-        most_central_by_degree = sorted(centrality.items(), key=lambda x: x[1]["degree_centrality"], reverse=True)[:5]
+        most_central_by_degree = sorted(
+            centrality.items(), key=lambda x: x[1]["degree_centrality"], reverse=True
+        )[:5]
 
         most_central_by_betweenness = sorted(
             centrality.items(),
@@ -537,7 +556,9 @@ class TopologyAnalyzer:
             # Connectivity improvement
             original_components = self._count_connected_components(original_graph)
             new_components = self._count_connected_components(self.graph)
-            candidate_analysis["metrics"]["connectivity_improvement"] = max(0, original_components - new_components)
+            candidate_analysis["metrics"]["connectivity_improvement"] = max(
+                0, original_components - new_components
+            )
 
             # Average path length improvement
             avg_path_length = self._calculate_average_path_length()

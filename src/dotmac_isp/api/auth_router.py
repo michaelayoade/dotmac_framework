@@ -6,16 +6,36 @@ Handles admin user creation during tenant bootstrap.
 from datetime import datetime, timezone
 from typing import Any
 
-from dotmac.application import RouterFactory, standard_exception_handler
-from dotmac_management.user_management.adapters.isp_user_adapter import ISPUserAdapter
-from dotmac_shared.core.logging import get_logger
 from fastapi import HTTPException, status
 from pydantic import BaseModel, EmailStr
+
+try:
+    from dotmac.application import RouterFactory, standard_exception_handler
+except Exception:  # pragma: no cover
+
+    class RouterFactory:  # type: ignore
+        def __init__(self, name: str):
+            self.name = name
+
+        def create_router(self, *a, **k):  # noqa: ANN001
+            return object()
+
+    def standard_exception_handler(func=None, *d, **k):  # type: ignore
+        def _wrap(f):
+            return f
+
+        return _wrap if func is None else func
+
+
+from dotmac_management.user_management.adapters.isp_user_adapter import ISPUserAdapter
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 # Create auth router
-auth_router = RouterFactory.create_standard_router(prefix="/auth", tags=["authentication", "provisioning"])
+auth_router = RouterFactory.create_standard_router(
+    prefix="/auth", tags=["authentication", "provisioning"]
+)
 
 
 class AdminCreateRequest(BaseModel):
@@ -60,7 +80,8 @@ async def create_tenant_admin(request: AdminCreateRequest) -> AdminCreateRespons
         if existing_user:
             logger.warning(f"Admin user already exists: {request.email}")
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Admin user already exists for this tenant"
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Admin user already exists for this tenant",
             )
 
         # Create admin user
@@ -86,7 +107,10 @@ async def create_tenant_admin(request: AdminCreateRequest) -> AdminCreateRespons
         admin_user = await user_adapter.create_user(admin_data)
 
         if not admin_user:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create admin user")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create admin user",
+            )
 
         logger.info(f"✅ Tenant admin created successfully: {admin_user.id}")
 
@@ -108,7 +132,8 @@ async def create_tenant_admin(request: AdminCreateRequest) -> AdminCreateRespons
     except Exception as e:
         logger.error(f"Failed to create tenant admin: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Admin creation failed: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Admin creation failed: {str(e)}",
         ) from e
 
 
@@ -130,7 +155,9 @@ async def get_admin_status() -> dict[str, Any]:
             "tenant_configured": admin_count > 0,
             "admin_count": admin_count,
             "status": "configured" if admin_count > 0 else "pending_admin_creation",
-            "message": "Tenant has admin users" if admin_count > 0 else "Tenant needs admin user creation",
+            "message": "Tenant has admin users"
+            if admin_count > 0
+            else "Tenant needs admin user creation",
         }
 
     except Exception as e:

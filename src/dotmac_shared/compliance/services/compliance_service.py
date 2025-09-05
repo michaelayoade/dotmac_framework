@@ -12,7 +12,11 @@ from dotmac.application import standard_exception_handler
 from dotmac.communications.events import EventBus
 from dotmac.core import create_cache_service
 from dotmac_shared.application.config import DeploymentContext
-from dotmac_shared.services_framework.core.base import ServiceHealth, ServiceStatus, StatefulService
+from dotmac_shared.services_framework.core.base import (
+    ServiceHealth,
+    ServiceStatus,
+    StatefulService,
+)
 
 from ..core.compliance_manager import ComplianceConfig, ComplianceManager
 from ..core.regulatory_reporter import RegulatoryReporter, ReportingConfig
@@ -52,10 +56,14 @@ class ComplianceServiceConfig:
     def __post_init__(self):
         """Initialize sub-configurations if not provided."""
         if self.compliance_config is None:
-            self.compliance_config = ComplianceConfig(enabled_frameworks=self.enabled_frameworks)
+            self.compliance_config = ComplianceConfig(
+                enabled_frameworks=self.enabled_frameworks
+            )
 
         if self.reporting_config is None:
-            self.reporting_config = ReportingConfig(enabled_frameworks=self.enabled_frameworks)
+            self.reporting_config = ReportingConfig(
+                enabled_frameworks=self.enabled_frameworks
+            )
 
 
 class ComplianceService(StatefulService):
@@ -66,7 +74,11 @@ class ComplianceService(StatefulService):
 
     def __init__(self, config: ComplianceServiceConfig):
         """Initialize compliance service."""
-        super().__init__(name="compliance", config=config.__dict__, required_config=["enabled_frameworks"])
+        super().__init__(
+            name="compliance",
+            config=config.__dict__,
+            required_config=["enabled_frameworks"],
+        )
 
         self.compliance_config = config
         self.priority = 95  # Very high priority for compliance
@@ -129,7 +141,9 @@ class ComplianceService(StatefulService):
                 ServiceStatus.READY,
                 f"Compliance service ready with {len(self.compliance_config.enabled_frameworks)} frameworks",
                 {
-                    "frameworks": [f.value for f in self.compliance_config.enabled_frameworks],
+                    "frameworks": [
+                        f.value for f in self.compliance_config.enabled_frameworks
+                    ],
                     "auto_checks": self.compliance_config.auto_compliance_checks,
                     "real_time_monitoring": self.compliance_config.real_time_monitoring,
                 },
@@ -144,25 +158,35 @@ class ComplianceService(StatefulService):
 
     async def shutdown(self) -> bool:
         """Shutdown compliance service."""
-        await self._set_status(ServiceStatus.SHUTTING_DOWN, "Shutting down compliance service")
+        await self._set_status(
+            ServiceStatus.SHUTTING_DOWN, "Shutting down compliance service"
+        )
 
         # Clear state
         self.clear_state()
 
-        await self._set_status(ServiceStatus.SHUTDOWN, "Compliance service shutdown complete")
+        await self._set_status(
+            ServiceStatus.SHUTDOWN, "Compliance service shutdown complete"
+        )
         return True
 
     async def _health_check_stateful_service(self) -> ServiceHealth:
         """Perform health check on compliance service."""
         try:
             details = {
-                "frameworks": [f.value for f in self.compliance_config.enabled_frameworks],
+                "frameworks": [
+                    f.value for f in self.compliance_config.enabled_frameworks
+                ],
                 "active_operations": self._active_operations,
                 "events_processed": self.get_state("events_processed", 0),
                 "reports_generated": self.get_state("reports_generated", 0),
                 "alerts_created": self.get_state("alerts_created", 0),
-                "compliance_manager": "healthy" if self.compliance_manager else "unavailable",
-                "regulatory_reporter": "healthy" if self.regulatory_reporter else "unavailable",
+                "compliance_manager": "healthy"
+                if self.compliance_manager
+                else "unavailable",
+                "regulatory_reporter": "healthy"
+                if self.regulatory_reporter
+                else "unavailable",
                 "cache_service": "available" if self.cache_service else "unavailable",
             }
 
@@ -173,7 +197,9 @@ class ComplianceService(StatefulService):
 
                 if compliance_health.get("status") != "healthy":
                     return ServiceHealth(
-                        status=ServiceStatus.ERROR, message="Compliance manager unhealthy", details=details
+                        status=ServiceStatus.ERROR,
+                        message="Compliance manager unhealthy",
+                        details=details,
                     )
 
             if self.regulatory_reporter:
@@ -182,11 +208,16 @@ class ComplianceService(StatefulService):
 
                 if reporter_health.get("status") != "healthy":
                     return ServiceHealth(
-                        status=ServiceStatus.ERROR, message="Regulatory reporter unhealthy", details=details
+                        status=ServiceStatus.ERROR,
+                        message="Regulatory reporter unhealthy",
+                        details=details,
                     )
 
             # Check operational limits
-            if self._active_operations > self.compliance_config.max_concurrent_operations:
+            if (
+                self._active_operations
+                > self.compliance_config.max_concurrent_operations
+            ):
                 return ServiceHealth(
                     status=ServiceStatus.READY,
                     message=f"High load: {self._active_operations} active operations",
@@ -196,11 +227,17 @@ class ComplianceService(StatefulService):
             # Update last health check
             self.set_state("last_health_check", datetime.now(timezone.utc).isoformat())
 
-            return ServiceHealth(status=ServiceStatus.READY, message="Compliance service healthy", details=details)
+            return ServiceHealth(
+                status=ServiceStatus.READY,
+                message="Compliance service healthy",
+                details=details,
+            )
 
         except Exception as e:
             return ServiceHealth(
-                status=ServiceStatus.ERROR, message=f"Health check failed: {e}", details={"error": str(e)}
+                status=ServiceStatus.ERROR,
+                message=f"Health check failed: {e}",
+                details={"error": str(e)},
             )
 
     @standard_exception_handler
@@ -258,7 +295,9 @@ class ComplianceService(StatefulService):
         if not self.is_ready():
             raise RuntimeError("Compliance service not ready")
 
-        return await self.compliance_manager.get_compliance_metrics(framework, period_start, period_end)
+        return await self.compliance_manager.get_compliance_metrics(
+            framework, period_start, period_end
+        )
 
     @standard_exception_handler
     async def get_compliance_dashboard(
@@ -270,7 +309,9 @@ class ComplianceService(StatefulService):
         if not self.is_ready():
             raise RuntimeError("Compliance service not ready")
 
-        return await self.regulatory_reporter.get_compliance_dashboard_data(frameworks, period_days)
+        return await self.regulatory_reporter.get_compliance_dashboard_data(
+            frameworks, period_days
+        )
 
     @standard_exception_handler
     async def get_active_alerts(
@@ -309,7 +350,9 @@ class ComplianceService(StatefulService):
         except ValueError as e:
             raise ValueError(f"Invalid frequency: {frequency}") from e
 
-        return await self.regulatory_reporter.schedule_report(framework, report_type, freq, recipients, user_id)
+        return await self.regulatory_reporter.schedule_report(
+            framework, report_type, freq, recipients, user_id
+        )
 
     @standard_exception_handler
     async def perform_compliance_check(
@@ -362,7 +405,9 @@ class ComplianceService(StatefulService):
             # Create compliance event
             compliance_event = ComplianceEvent(
                 event_id=uuid4(),
-                tenant_id=getattr(self.compliance_config.deployment_context, "tenant_id", None),
+                tenant_id=getattr(
+                    self.compliance_config.deployment_context, "tenant_id", None
+                ),
                 event_type=event_type,
                 framework=ComplianceFramework.SOC2,  # Default framework
                 resource_id=entity_id,
@@ -389,7 +434,9 @@ class ComplianceService(StatefulService):
         }
 
 
-async def create_compliance_service(config: ComplianceServiceConfig) -> ComplianceService:
+async def create_compliance_service(
+    config: ComplianceServiceConfig,
+) -> ComplianceService:
     """Create and initialize compliance service."""
     service = ComplianceService(config)
 

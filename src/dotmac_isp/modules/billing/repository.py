@@ -10,9 +10,10 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_isp.shared.base_repository import BaseTenantRepository
 from sqlalchemy import and_, desc, extract, func, or_
 from sqlalchemy.orm import Session, joinedload
+
+from dotmac_isp.shared.base_repository import BaseTenantRepository
 
 from .models import (
     BillingCustomer,
@@ -34,17 +35,33 @@ class BillingCustomerRepository(BaseTenantRepository[BillingCustomer]):
 
     def find_by_email(self, email: str) -> Optional[BillingCustomer]:
         """Find customer by email address."""
-        return self._build_base_query().filter(BillingCustomer.email == email.lower()).first()
+        return (
+            self._build_base_query()
+            .filter(BillingCustomer.email == email.lower())
+            .first()
+        )
 
     def find_by_customer_code(self, customer_code: str) -> Optional[BillingCustomer]:
         """Find customer by customer code."""
-        return self._build_base_query().filter(BillingCustomer.customer_code == customer_code).first()
+        return (
+            self._build_base_query()
+            .filter(BillingCustomer.customer_code == customer_code)
+            .first()
+        )
 
-    def find_by_isp_customer_id(self, isp_customer_id: str) -> Optional[BillingCustomer]:
+    def find_by_isp_customer_id(
+        self, isp_customer_id: str
+    ) -> Optional[BillingCustomer]:
         """Find customer by ISP customer ID."""
-        return self._build_base_query().filter(BillingCustomer.isp_customer_id == isp_customer_id).first()
+        return (
+            self._build_base_query()
+            .filter(BillingCustomer.isp_customer_id == isp_customer_id)
+            .first()
+        )
 
-    def get_customers_with_overdue_invoices(self, days_overdue: int = 30) -> list[BillingCustomer]:
+    def get_customers_with_overdue_invoices(
+        self, days_overdue: int = 30
+    ) -> list[BillingCustomer]:
         """Get customers with overdue invoices."""
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_overdue)
 
@@ -52,15 +69,25 @@ class BillingCustomerRepository(BaseTenantRepository[BillingCustomer]):
             self._build_base_query()
             .join(Invoice)
             .filter(
-                and_(Invoice.status.in_(["sent", "pending"]), Invoice.due_date < cutoff_date, Invoice.amount_due > 0)
+                and_(
+                    Invoice.status.in_(["sent", "pending"]),
+                    Invoice.due_date < cutoff_date,
+                    Invoice.amount_due > 0,
+                )
             )
             .distinct()
             .all()
         )
 
-    def get_customers_by_connection_type(self, connection_type: str) -> list[BillingCustomer]:
+    def get_customers_by_connection_type(
+        self, connection_type: str
+    ) -> list[BillingCustomer]:
         """Get customers by connection type."""
-        return self._build_base_query().filter(BillingCustomer.connection_type == connection_type).all()
+        return (
+            self._build_base_query()
+            .filter(BillingCustomer.connection_type == connection_type)
+            .all()
+        )
 
 
 class BillingPlanRepository(BaseTenantRepository[BillingPlan]):
@@ -71,11 +98,18 @@ class BillingPlanRepository(BaseTenantRepository[BillingPlan]):
 
     def find_by_plan_code(self, plan_code: str) -> Optional[BillingPlan]:
         """Find billing plan by plan code."""
-        return self._build_base_query().filter(BillingPlan.plan_code == plan_code).first()
+        return (
+            self._build_base_query().filter(BillingPlan.plan_code == plan_code).first()
+        )
 
     def get_active_plans(self) -> list[BillingPlan]:
         """Get all active billing plans."""
-        return self._build_base_query().filter(BillingPlan.is_active is True).order_by(BillingPlan.base_price).all()
+        return (
+            self._build_base_query()
+            .filter(BillingPlan.is_active is True)
+            .order_by(BillingPlan.base_price)
+            .all()
+        )
 
     def get_public_plans(self) -> list[BillingPlan]:
         """Get public billing plans."""
@@ -90,13 +124,20 @@ class BillingPlanRepository(BaseTenantRepository[BillingPlan]):
         """Get plans by service type."""
         return (
             self._build_base_query()
-            .filter(and_(BillingPlan.is_active is True, BillingPlan.service_type == service_type))
+            .filter(
+                and_(
+                    BillingPlan.is_active is True,
+                    BillingPlan.service_type == service_type,
+                )
+            )
             .order_by(BillingPlan.base_price)
             .all()
         )
 
     def get_plans_by_bandwidth_range(
-        self, min_download: Optional[Decimal] = None, max_download: Optional[Decimal] = None
+        self,
+        min_download: Optional[Decimal] = None,
+        max_download: Optional[Decimal] = None,
     ) -> list[BillingPlan]:
         """Get plans within bandwidth range."""
         query = self._build_base_query().filter(BillingPlan.is_active is True)
@@ -130,16 +171,27 @@ class SubscriptionRepository(BaseTenantRepository[Subscription]):
         return (
             self._build_base_query()
             .filter(Subscription.status == "active")
-            .options(joinedload(Subscription.customer), joinedload(Subscription.billing_plan))
+            .options(
+                joinedload(Subscription.customer), joinedload(Subscription.billing_plan)
+            )
             .all()
         )
 
-    def get_subscriptions_for_billing(self, billing_date: datetime) -> list[Subscription]:
+    def get_subscriptions_for_billing(
+        self, billing_date: datetime
+    ) -> list[Subscription]:
         """Get subscriptions that need billing on a specific date."""
         return (
             self._build_base_query()
-            .filter(and_(Subscription.status == "active", Subscription.next_billing_date <= billing_date))
-            .options(joinedload(Subscription.customer), joinedload(Subscription.billing_plan))
+            .filter(
+                and_(
+                    Subscription.status == "active",
+                    Subscription.next_billing_date <= billing_date,
+                )
+            )
+            .options(
+                joinedload(Subscription.customer), joinedload(Subscription.billing_plan)
+            )
             .all()
         )
 
@@ -160,12 +212,16 @@ class SubscriptionRepository(BaseTenantRepository[Subscription]):
             .all()
         )
 
-    def get_subscriptions_by_service_address(self, service_address: str) -> list[Subscription]:
+    def get_subscriptions_by_service_address(
+        self, service_address: str
+    ) -> list[Subscription]:
         """Get subscriptions by service address."""
         return (
             self._build_base_query()
             .filter(Subscription.service_address.ilike(f"%{service_address}%"))
-            .options(joinedload(Subscription.customer), joinedload(Subscription.billing_plan))
+            .options(
+                joinedload(Subscription.customer), joinedload(Subscription.billing_plan)
+            )
             .all()
         )
 
@@ -202,7 +258,11 @@ class InvoiceRepository(BaseTenantRepository[Invoice]):
         return (
             self._build_base_query()
             .filter(
-                and_(Invoice.status.in_(["sent", "pending"]), Invoice.due_date < cutoff_date, Invoice.amount_due > 0)
+                and_(
+                    Invoice.status.in_(["sent", "pending"]),
+                    Invoice.due_date < cutoff_date,
+                    Invoice.amount_due > 0,
+                )
             )
             .options(joinedload(Invoice.customer))
             .order_by(Invoice.due_date)
@@ -213,13 +273,20 @@ class InvoiceRepository(BaseTenantRepository[Invoice]):
         """Get all unpaid invoices."""
         return (
             self._build_base_query()
-            .filter(and_(Invoice.status.in_(["sent", "pending", "overdue"]), Invoice.amount_due > 0))
+            .filter(
+                and_(
+                    Invoice.status.in_(["sent", "pending", "overdue"]),
+                    Invoice.amount_due > 0,
+                )
+            )
             .options(joinedload(Invoice.customer))
             .order_by(Invoice.due_date)
             .all()
         )
 
-    def get_revenue_by_period(self, start_date: datetime, end_date: datetime) -> tuple[Decimal, int]:
+    def get_revenue_by_period(
+        self, start_date: datetime, end_date: datetime
+    ) -> tuple[Decimal, int]:
         """Get total revenue and invoice count for a period."""
         result = (
             self._build_base_query()
@@ -231,7 +298,8 @@ class InvoiceRepository(BaseTenantRepository[Invoice]):
                 )
             )
             .with_entities(
-                func.sum(Invoice.amount_paid).label("total_revenue"), func.count(Invoice.id).label("invoice_count")
+                func.sum(Invoice.amount_paid).label("total_revenue"),
+                func.count(Invoice.id).label("invoice_count"),
             )
             .first()
         )
@@ -244,15 +312,26 @@ class InvoiceRepository(BaseTenantRepository[Invoice]):
 
         results = (
             self._build_base_query()
-            .filter(and_(Invoice.invoice_date >= start_date, Invoice.status.in_(["paid", "partially_paid"])))
+            .filter(
+                and_(
+                    Invoice.invoice_date >= start_date,
+                    Invoice.status.in_(["paid", "partially_paid"]),
+                )
+            )
             .with_entities(
                 extract("year", Invoice.invoice_date).label("year"),
                 extract("month", Invoice.invoice_date).label("month"),
                 func.sum(Invoice.amount_paid).label("revenue"),
                 func.count(Invoice.id).label("invoice_count"),
             )
-            .group_by(extract("year", Invoice.invoice_date), extract("month", Invoice.invoice_date))
-            .order_by(extract("year", Invoice.invoice_date), extract("month", Invoice.invoice_date))
+            .group_by(
+                extract("year", Invoice.invoice_date),
+                extract("month", Invoice.invoice_date),
+            )
+            .order_by(
+                extract("year", Invoice.invoice_date),
+                extract("month", Invoice.invoice_date),
+            )
             .all()
         )
 
@@ -275,11 +354,19 @@ class PaymentRepository(BaseTenantRepository[Payment]):
 
     def find_by_payment_number(self, payment_number: str) -> Optional[Payment]:
         """Find payment by payment number."""
-        return self._build_base_query().filter(Payment.payment_number == payment_number).first()
+        return (
+            self._build_base_query()
+            .filter(Payment.payment_number == payment_number)
+            .first()
+        )
 
     def find_by_transaction_id(self, transaction_id: str) -> Optional[Payment]:
         """Find payment by gateway transaction ID."""
-        return self._build_base_query().filter(Payment.gateway_transaction_id == transaction_id).first()
+        return (
+            self._build_base_query()
+            .filter(Payment.gateway_transaction_id == transaction_id)
+            .first()
+        )
 
     def get_customer_payments(self, customer_id: UUID) -> list[Payment]:
         """Get all payments for a customer."""
@@ -292,7 +379,12 @@ class PaymentRepository(BaseTenantRepository[Payment]):
 
     def get_invoice_payments(self, invoice_id: UUID) -> list[Payment]:
         """Get all payments for an invoice."""
-        return self._build_base_query().filter(Payment.invoice_id == invoice_id).order_by(Payment.payment_date).all()
+        return (
+            self._build_base_query()
+            .filter(Payment.invoice_id == invoice_id)
+            .order_by(Payment.payment_date)
+            .all()
+        )
 
     def get_failed_payments(self, days_back: int = 30) -> list[Payment]:
         """Get failed payments within specified days."""
@@ -310,7 +402,9 @@ class PaymentRepository(BaseTenantRepository[Payment]):
         """Get payments pending settlement."""
         return (
             self._build_base_query()
-            .filter(and_(Payment.status == "completed", Payment.settlement_date.is_(None)))
+            .filter(
+                and_(Payment.status == "completed", Payment.settlement_date.is_(None))
+            )
             .all()
         )
 
@@ -322,10 +416,15 @@ class UsageRecordRepository(BaseTenantRepository[UsageRecord]):
         super().__init__(db, UsageRecord, tenant_id)
 
     def get_subscription_usage(
-        self, subscription_id: UUID, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+        self,
+        subscription_id: UUID,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> list[UsageRecord]:
         """Get usage records for a subscription."""
-        query = self._build_base_query().filter(UsageRecord.subscription_id == subscription_id)
+        query = self._build_base_query().filter(
+            UsageRecord.subscription_id == subscription_id
+        )
 
         if start_date:
             query = query.filter(UsageRecord.usage_date >= start_date)
@@ -336,7 +435,12 @@ class UsageRecordRepository(BaseTenantRepository[UsageRecord]):
 
     def get_unprocessed_usage(self) -> list[UsageRecord]:
         """Get usage records that haven't been processed for billing."""
-        return self._build_base_query().filter(UsageRecord.processed is False).order_by(UsageRecord.usage_date).all()
+        return (
+            self._build_base_query()
+            .filter(UsageRecord.processed is False)
+            .order_by(UsageRecord.usage_date)
+            .all()
+        )
 
     def get_usage_summary_by_subscription(
         self, subscription_id: UUID, start_date: datetime, end_date: datetime
@@ -374,9 +478,15 @@ class CreditNoteRepository(BaseTenantRepository[CreditNote]):
     def __init__(self, db: Session, tenant_id: str):
         super().__init__(db, CreditNote, tenant_id)
 
-    def find_by_credit_note_number(self, credit_note_number: str) -> Optional[CreditNote]:
+    def find_by_credit_note_number(
+        self, credit_note_number: str
+    ) -> Optional[CreditNote]:
         """Find credit note by number."""
-        return self._build_base_query().filter(CreditNote.credit_note_number == credit_note_number).first()
+        return (
+            self._build_base_query()
+            .filter(CreditNote.credit_note_number == credit_note_number)
+            .first()
+        )
 
     def get_customer_credits(self, customer_id: UUID) -> list[CreditNote]:
         """Get all credit notes for a customer."""
@@ -389,7 +499,12 @@ class CreditNoteRepository(BaseTenantRepository[CreditNote]):
 
     def get_pending_credits(self) -> list[CreditNote]:
         """Get credit notes pending application."""
-        return self._build_base_query().filter(CreditNote.status == "pending").order_by(CreditNote.created_at).all()
+        return (
+            self._build_base_query()
+            .filter(CreditNote.status == "pending")
+            .order_by(CreditNote.created_at)
+            .all()
+        )
 
 
 class TaxRateRepository(BaseTenantRepository[TaxRate]):
@@ -407,14 +522,20 @@ class TaxRateRepository(BaseTenantRepository[TaxRate]):
                 and_(
                     TaxRate.is_active is True,
                     TaxRate.effective_date <= current_date,
-                    or_(TaxRate.expiry_date.is_(None), TaxRate.expiry_date > current_date),
+                    or_(
+                        TaxRate.expiry_date.is_(None),
+                        TaxRate.expiry_date > current_date,
+                    ),
                 )
             )
             .all()
         )
 
     def get_tax_rates_for_location(
-        self, country_code: str, state_code: Optional[str] = None, zip_code: Optional[str] = None
+        self,
+        country_code: str,
+        state_code: Optional[str] = None,
+        zip_code: Optional[str] = None,
     ) -> list[TaxRate]:
         """Get applicable tax rates for a location."""
         query = self.get_active_tax_rates()

@@ -7,12 +7,13 @@ Leverages existing services with DRY principles for complete automation.
 
 from typing import Any, Optional
 
-from dotmac.application import standard_exception_handler
-from dotmac.database.base import get_db_session
-from dotmac_shared.core.logging import get_logger
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac.application import standard_exception_handler
+from dotmac.database.base import get_db_session
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -26,7 +27,12 @@ class TenantProvisioningRequest(BaseModel):
     contact_email: str = Field(..., regex=r"^[^@]+@[^@]+\.[^@]+$")
     plan: str = Field(default="standard", regex=r"^(standard|premium|enterprise)$")
     enabled_features: list[str] = Field(
-        default_factory=lambda: ["customer_portal", "technician_portal", "billing", "notifications"]
+        default_factory=lambda: [
+            "customer_portal",
+            "technician_portal",
+            "billing",
+            "notifications",
+        ]
     )
     custom_domain: Optional[str] = Field(None, max_length=253)
     backup_enabled: bool = Field(default=True)
@@ -63,7 +69,8 @@ class UsageMetricRequest(BaseModel):
 
     tenant_id: str
     metric_type: str = Field(
-        ..., regex=r"^(bandwidth_gb|storage_gb|api_calls_1000|active_users|email_sends_1000|sms_sends)$"
+        ...,
+        regex=r"^(bandwidth_gb|storage_gb|api_calls_1000|active_users|email_sends_1000|sms_sends)$",
     )
     value: float = Field(..., gt=0)
     metadata: Optional[dict[str, Any]] = None
@@ -86,7 +93,9 @@ class DecommissionRequest(BaseModel):
     tenant_id: str
     reason: str = Field(default="Customer requested decommissioning")
     backup_data: bool = Field(default=True)
-    force: bool = Field(default=False, description="Force decommission even if tenant is active")
+    force: bool = Field(
+        default=False, description="Force decommission even if tenant is active"
+    )
 
 
 # API Router
@@ -125,11 +134,15 @@ async def provision_tenant_container(
         }
 
         # Start provisioning using integrated portal service
-        result = await portal_service.provision_tenant_container(reseller_id=reseller_id, customer_data=customer_data)
+        result = await portal_service.provision_tenant_container(
+            reseller_id=reseller_id, customer_data=customer_data
+        )
 
         if result["success"]:
             # Add background task for progress monitoring
-            background_tasks.add_task(_monitor_provisioning_progress, result["workflow_id"], reseller_id)
+            background_tasks.add_task(
+                _monitor_provisioning_progress, result["workflow_id"], reseller_id
+            )
 
             return ProvisioningResponse(
                 success=True,
@@ -146,9 +159,13 @@ async def provision_tenant_container(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/provision/status/{workflow_id}", response_model=ProvisioningStatusResponse)
+@router.get(
+    "/provision/status/{workflow_id}", response_model=ProvisioningStatusResponse
+)
 @standard_exception_handler
-async def get_provisioning_status(workflow_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_provisioning_status(
+    workflow_id: str, db: AsyncSession = Depends(get_db_session)
+):
     """
     Get real-time provisioning status and progress.
 
@@ -185,7 +202,9 @@ async def get_provisioning_status(workflow_id: str, db: AsyncSession = Depends(g
 
 @router.get("/containers")
 @standard_exception_handler
-async def list_tenant_containers(reseller_id: str, db: AsyncSession = Depends(get_db_session)):
+async def list_tenant_containers(
+    reseller_id: str, db: AsyncSession = Depends(get_db_session)
+):
     """
     List all tenant containers for a reseller.
 
@@ -219,7 +238,9 @@ async def list_tenant_containers(reseller_id: str, db: AsyncSession = Depends(ge
 
 @router.get("/dashboard/{reseller_id}")
 @standard_exception_handler
-async def get_saas_dashboard(reseller_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_saas_dashboard(
+    reseller_id: str, db: AsyncSession = Depends(get_db_session)
+):
     """
     Get comprehensive SaaS automation dashboard data.
 
@@ -240,14 +261,18 @@ async def get_saas_dashboard(reseller_id: str, db: AsyncSession = Depends(get_db
 
 @router.post("/usage/track", response_model=UsageTrackingResponse)
 @standard_exception_handler
-async def track_usage_metric(request: UsageMetricRequest, db: AsyncSession = Depends(get_db_session)):
+async def track_usage_metric(
+    request: UsageMetricRequest, db: AsyncSession = Depends(get_db_session)
+):
     """
     Track real-time usage metric for billing.
 
     Integrates with real-time usage billing system.
     """
     try:
-        from dotmac_isp.modules.resellers.realtime_usage_billing import get_usage_billing_service
+        from dotmac_isp.modules.resellers.realtime_usage_billing import (
+            get_usage_billing_service,
+        )
 
         usage_service = await get_usage_billing_service(db)
 
@@ -255,17 +280,25 @@ async def track_usage_metric(request: UsageMetricRequest, db: AsyncSession = Dep
         if request.metric_type == "api_calls_1000":
             result = await usage_service.track_api_usage(
                 request.tenant_id,
-                request.metadata.get("endpoint", "unknown") if request.metadata else "unknown",
+                request.metadata.get("endpoint", "unknown")
+                if request.metadata
+                else "unknown",
                 int(request.value * 1000),
             )
         elif request.metric_type == "bandwidth_gb":
             bytes_transferred = int(request.value * (1024**3))
-            result = await usage_service.track_bandwidth_usage(request.tenant_id, bytes_transferred)
+            result = await usage_service.track_bandwidth_usage(
+                request.tenant_id, bytes_transferred
+            )
         elif request.metric_type == "storage_gb":
             bytes_stored = int(request.value * (1024**3))
-            result = await usage_service.track_storage_usage(request.tenant_id, bytes_stored)
+            result = await usage_service.track_storage_usage(
+                request.tenant_id, bytes_stored
+            )
         elif request.metric_type == "active_users":
-            result = await usage_service.track_user_activity(request.tenant_id, int(request.value))
+            result = await usage_service.track_user_activity(
+                request.tenant_id, int(request.value)
+            )
         else:
             # Use generic tracking for other metric types
             usage_engine = usage_service.usage_engine
@@ -296,7 +329,9 @@ async def get_usage_summary(tenant_id: str, db: AsyncSession = Depends(get_db_se
     Shows current unbilled usage and costs.
     """
     try:
-        from dotmac_isp.modules.resellers.realtime_usage_billing import get_usage_billing_service
+        from dotmac_isp.modules.resellers.realtime_usage_billing import (
+            get_usage_billing_service,
+        )
 
         usage_service = await get_usage_billing_service(db)
         summary = await usage_service.get_realtime_usage_summary(tenant_id)
@@ -322,7 +357,9 @@ async def create_usage_billing_run(
     Leverages existing commission automation workflow.
     """
     try:
-        from dotmac_isp.modules.resellers.realtime_usage_billing import get_usage_billing_service
+        from dotmac_isp.modules.resellers.realtime_usage_billing import (
+            get_usage_billing_service,
+        )
 
         usage_service = await get_usage_billing_service(db)
         usage_engine = usage_service.usage_engine
@@ -348,7 +385,9 @@ async def create_usage_billing_run(
 @router.post("/decommission", response_model=ProvisioningResponse)
 @standard_exception_handler
 async def decommission_tenant(
-    request: DecommissionRequest, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db_session)
+    request: DecommissionRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db_session),
 ):
     """
     Decommission tenant container with automated cleanup.
@@ -356,18 +395,27 @@ async def decommission_tenant(
     Leverages enhanced provisioning service decommissioning workflow.
     """
     try:
-        from dotmac_management.services.enhanced_tenant_provisioning import EnhancedTenantProvisioningService
+        from dotmac_management.services.enhanced_tenant_provisioning import (
+            EnhancedTenantProvisioningService,
+        )
 
         # Get tenant database ID from tenant_id
         with get_db_session() as session:
             from dotmac_management.models.tenant import CustomerTenant
 
-            tenant = session.query(CustomerTenant).filter_by(tenant_id=request.tenant_id).first()
+            tenant = (
+                session.query(CustomerTenant)
+                .filter_by(tenant_id=request.tenant_id)
+                .first()
+            )
             if not tenant:
                 raise HTTPException(status_code=404, detail="Tenant not found")
 
             if not request.force and tenant.status != "active":
-                raise HTTPException(status_code=400, detail="Tenant is not active. Use force=true to override.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Tenant is not active. Use force=true to override.",
+                )
 
         # Initialize provisioning service
         provisioning_service = EnhancedTenantProvisioningService()
@@ -375,11 +423,15 @@ async def decommission_tenant(
 
         # Start decommissioning workflow
         workflow_id = await provisioning_service.decommission_tenant(
-            tenant_db_id=tenant.id, reason=request.reason, backup_data=request.backup_data
+            tenant_db_id=tenant.id,
+            reason=request.reason,
+            backup_data=request.backup_data,
         )
 
         # Add background monitoring
-        background_tasks.add_task(_monitor_decommissioning_progress, workflow_id, request.tenant_id)
+        background_tasks.add_task(
+            _monitor_decommissioning_progress, workflow_id, request.tenant_id
+        )
 
         return ProvisioningResponse(
             success=True,
@@ -398,14 +450,18 @@ async def decommission_tenant(
 
 @router.get("/analytics/{reseller_id}")
 @standard_exception_handler
-async def get_usage_analytics(reseller_id: str, days: int = 30, db: AsyncSession = Depends(get_db_session)):
+async def get_usage_analytics(
+    reseller_id: str, days: int = 30, db: AsyncSession = Depends(get_db_session)
+):
     """
     Get comprehensive usage billing analytics.
 
     Leverages existing commission reporting with usage data.
     """
     try:
-        from dotmac_isp.modules.resellers.realtime_usage_billing import get_usage_billing_service
+        from dotmac_isp.modules.resellers.realtime_usage_billing import (
+            get_usage_billing_service,
+        )
 
         usage_service = await get_usage_billing_service(db)
         usage_engine = usage_service.usage_engine
@@ -423,7 +479,9 @@ async def get_usage_analytics(reseller_id: str, days: int = 30, db: AsyncSession
 async def _monitor_provisioning_progress(workflow_id: str, reseller_id: str):
     """Background task to monitor provisioning progress."""
     try:
-        logger.info(f"Started monitoring provisioning {workflow_id} for reseller {reseller_id}")
+        logger.info(
+            f"Started monitoring provisioning {workflow_id} for reseller {reseller_id}"
+        )
         # Implementation would send periodic status updates via webhooks or notifications
     except Exception as e:
         logger.error(f"Error monitoring provisioning {workflow_id}: {e}")
@@ -432,7 +490,9 @@ async def _monitor_provisioning_progress(workflow_id: str, reseller_id: str):
 async def _monitor_decommissioning_progress(workflow_id: str, tenant_id: str):
     """Background task to monitor decommissioning progress."""
     try:
-        logger.info(f"Started monitoring decommissioning {workflow_id} for tenant {tenant_id}")
+        logger.info(
+            f"Started monitoring decommissioning {workflow_id} for tenant {tenant_id}"
+        )
         # Implementation would send periodic status updates
     except Exception as e:
         logger.error(f"Error monitoring decommissioning {workflow_id}: {e}")

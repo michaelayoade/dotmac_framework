@@ -7,11 +7,17 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac.application import standard_exception_handler
-from dotmac.core.exceptions import AuthorizationError, BusinessRuleError, EntityNotFoundError, ValidationError
 from passlib.context import CryptContext
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac.application import standard_exception_handler
+from dotmac.core.exceptions import (
+    AuthorizationError,
+    BusinessRuleError,
+    EntityNotFoundError,
+    ValidationError,
+)
 
 from ..models.user_models import UserModel
 from ..repositories.user_repository import UserProfileRepository, UserRepository
@@ -48,7 +54,10 @@ class UserService(BaseUserService):
 
     @standard_exception_handler
     async def create_user(
-        self, user_data: UserCreateSchema, created_by: Optional[UUID] = None, auto_activate: bool = False
+        self,
+        user_data: UserCreateSchema,
+        created_by: Optional[UUID] = None,
+        auto_activate: bool = False,
     ) -> UserResponseSchema:
         """Create a new user with comprehensive validation."""
 
@@ -124,7 +133,9 @@ class UserService(BaseUserService):
     # === User Retrieval ===
 
     @standard_exception_handler
-    async def get_user(self, user_id: UUID, include_profile: bool = True) -> UserResponseSchema:
+    async def get_user(
+        self, user_id: UUID, include_profile: bool = True
+    ) -> UserResponseSchema:
         """Get user by ID with optional profile."""
 
         if include_profile:
@@ -169,7 +180,9 @@ class UserService(BaseUserService):
     # === User Updates ===
 
     @standard_exception_handler
-    async def update_user(self, user_id: UUID, user_data: UserUpdateSchema, updated_by: UUID) -> UserResponseSchema:
+    async def update_user(
+        self, user_id: UUID, user_data: UserUpdateSchema, updated_by: UUID
+    ) -> UserResponseSchema:
         """Update user information."""
 
         # Get existing user
@@ -192,7 +205,9 @@ class UserService(BaseUserService):
 
         try:
             # Prepare update data
-            update_data = self._sanitize_user_data(user_data.model_dump(exclude_none=True))
+            update_data = self._sanitize_user_data(
+                user_data.model_dump(exclude_none=True)
+            )
 
             # Update user
             user = await self.user_repo.update(user_id, **update_data)
@@ -217,7 +232,9 @@ class UserService(BaseUserService):
     # === User Status Management ===
 
     @standard_exception_handler
-    async def activate_user(self, user_id: UUID, activated_by: UUID) -> UserResponseSchema:
+    async def activate_user(
+        self, user_id: UUID, activated_by: UUID
+    ) -> UserResponseSchema:
         """Activate user account."""
 
         user = await self.user_repo.get_by_id_or_raise(user_id)
@@ -229,7 +246,9 @@ class UserService(BaseUserService):
         user = await self.user_repo.activate_user(user_id)
 
         # Log activation
-        self._log_user_action(user_id=activated_by, action="user_activated", target_id=user_id)
+        self._log_user_action(
+            user_id=activated_by, action="user_activated", target_id=user_id
+        )
 
         # Send activation confirmation
         await self._send_activation_confirmation(user)
@@ -252,7 +271,10 @@ class UserService(BaseUserService):
 
         # Log deactivation
         self._log_user_action(
-            user_id=deactivated_by, action="user_deactivated", target_id=user_id, metadata={"reason": reason}
+            user_id=deactivated_by,
+            action="user_deactivated",
+            target_id=user_id,
+            metadata={"reason": reason},
         )
 
         # Terminate active sessions
@@ -262,7 +284,11 @@ class UserService(BaseUserService):
 
     @standard_exception_handler
     async def suspend_user(
-        self, user_id: UUID, suspended_by: UUID, reason: str, duration_days: Optional[int] = None
+        self,
+        user_id: UUID,
+        suspended_by: UUID,
+        reason: str,
+        duration_days: Optional[int] = None,
     ) -> UserResponseSchema:
         """Suspend user account."""
 
@@ -276,7 +302,11 @@ class UserService(BaseUserService):
             event_type="user_suspended",
             user_id=user_id,
             severity="warning",
-            details={"reason": reason, "suspended_by": str(suspended_by), "duration_days": duration_days},
+            details={
+                "reason": reason,
+                "suspended_by": str(suspended_by),
+                "duration_days": duration_days,
+            },
         )
 
         # Terminate active sessions
@@ -290,7 +320,9 @@ class UserService(BaseUserService):
     # === User Search ===
 
     @standard_exception_handler
-    async def search_users(self, search_params: UserSearchSchema) -> tuple[list[UserResponseSchema], int]:
+    async def search_users(
+        self, search_params: UserSearchSchema
+    ) -> tuple[list[UserResponseSchema], int]:
         """Search users with comprehensive filtering."""
 
         # Apply tenant filter if not super admin
@@ -303,7 +335,9 @@ class UserService(BaseUserService):
         user_responses = []
         for user in users:
             try:
-                response = await self._convert_to_response_schema(user, include_sensitive=False)
+                response = await self._convert_to_response_schema(
+                    user, include_sensitive=False
+                )
                 user_responses.append(response)
             except (ValueError, TypeError, AttributeError, KeyError) as e:
                 logger.warning(f"Failed to convert user {user.id} to response: {e}")
@@ -314,7 +348,9 @@ class UserService(BaseUserService):
     # === Bulk Operations ===
 
     @standard_exception_handler
-    async def bulk_operation(self, operation_data: UserBulkOperationSchema, performed_by: UUID) -> dict[str, Any]:
+    async def bulk_operation(
+        self, operation_data: UserBulkOperationSchema, performed_by: UUID
+    ) -> dict[str, Any]:
         """Perform bulk operations on users."""
 
         operation = operation_data.operation
@@ -359,7 +395,13 @@ class UserService(BaseUserService):
                 metadata={"user_count": len(user_ids), "parameters": parameters},
             )
 
-        except (ValidationError, AuthorizationError, BusinessRuleError, EntityNotFoundError, SQLAlchemyError) as e:
+        except (
+            ValidationError,
+            AuthorizationError,
+            BusinessRuleError,
+            EntityNotFoundError,
+            SQLAlchemyError,
+        ) as e:
             logger.error(f"Bulk operation {operation} failed: {e}")
             results["failed"] = len(user_ids)
             results["errors"].append(str(e))
@@ -378,7 +420,10 @@ class UserService(BaseUserService):
         """Get recently created users."""
         users = await self.user_repo.get_recent_users(limit, self.tenant_id)
 
-        return [await self._convert_to_response_schema(user, include_sensitive=False) for user in users]
+        return [
+            await self._convert_to_response_schema(user, include_sensitive=False)
+            for user in users
+        ]
 
     # === User Validation ===
 
@@ -399,16 +444,23 @@ class UserService(BaseUserService):
         # Custom business rules
         self._validate_business_rules("create_user", user_data=user_data)
 
-    async def _validate_user_update(self, user: UserModel, update_data: UserUpdateSchema) -> None:
+    async def _validate_user_update(
+        self, user: UserModel, update_data: UserUpdateSchema
+    ) -> None:
         """Validate user update business rules."""
 
         # Prevent downgrading admin users without proper permissions
         if hasattr(update_data, "user_type") and update_data.user_type:
-            if user.user_type in [UserType.SUPER_ADMIN, UserType.PLATFORM_ADMIN] and update_data.user_type not in [
+            if user.user_type in [
+                UserType.SUPER_ADMIN,
+                UserType.PLATFORM_ADMIN,
+            ] and update_data.user_type not in [
                 UserType.SUPER_ADMIN,
                 UserType.PLATFORM_ADMIN,
             ]:
-                raise AuthorizationError("Insufficient permissions to modify admin user type")
+                raise AuthorizationError(
+                    "Insufficient permissions to modify admin user type"
+                )
 
         # Custom business rules
         self._validate_business_rules("update_user", user=user, update_data=update_data)
@@ -437,7 +489,10 @@ class UserService(BaseUserService):
             user_id=user.id,
             notification_type="email",
             template="email_verification",
-            data={"verification_token": verification_token, "first_name": user.first_name},
+            data={
+                "verification_token": verification_token,
+                "first_name": user.first_name,
+            },
         )
 
     async def _send_activation_confirmation(self, user: UserModel) -> None:
@@ -471,12 +526,16 @@ class UserService(BaseUserService):
         """Terminate all active user sessions."""
         # Would integrate with session service
         self._log_security_event(
-            event_type="sessions_terminated", user_id=user_id, details={"reason": "account_status_change"}
+            event_type="sessions_terminated",
+            user_id=user_id,
+            details={"reason": "account_status_change"},
         )
 
     # === Data Conversion ===
 
-    async def _convert_to_response_schema(self, user: UserModel, include_sensitive: bool = False) -> UserResponseSchema:
+    async def _convert_to_response_schema(
+        self, user: UserModel, include_sensitive: bool = False
+    ) -> UserResponseSchema:
         """Convert user model to response schema."""
 
         user_dict = user.to_dict()
@@ -488,7 +547,9 @@ class UserService(BaseUserService):
         # Add computed fields
         user_dict.update(
             {
-                "roles": user.get_effective_roles() if hasattr(user, "get_effective_roles") else [],
+                "roles": user.get_effective_roles()
+                if hasattr(user, "get_effective_roles")
+                else [],
                 "permissions": user.get_effective_permissions(),
             }
         )
@@ -514,7 +575,9 @@ class UserProfileService(BaseUserService):
         return profile.to_dict() if hasattr(profile, "to_dict") else profile
 
     @standard_exception_handler
-    async def update_profile(self, user_id: UUID, profile_data: dict[str, Any], updated_by: UUID) -> dict[str, Any]:
+    async def update_profile(
+        self, user_id: UUID, profile_data: dict[str, Any], updated_by: UUID
+    ) -> dict[str, Any]:
         """Update user profile."""
 
         # Validate permissions
@@ -559,7 +622,9 @@ class UserManagementService(BaseUserService):
 
         # Update profile if provided
         if profile_data:
-            await self.profile_service.update_profile(user.id, profile_data, created_by or user.id)
+            await self.profile_service.update_profile(
+                user.id, profile_data, created_by or user.id
+            )
 
         # Send onboarding notifications
         await self._send_onboarding_sequence(user.id)

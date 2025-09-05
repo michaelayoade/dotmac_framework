@@ -92,7 +92,9 @@ class PolicyRule(BaseModel):
         """Evaluate rule against context data"""
         try:
             actual_value = self._get_field_value(context_data, self.field_path)
-            return self._apply_operator(actual_value, self.operator, self.expected_value)
+            return self._apply_operator(
+                actual_value, self.operator, self.expected_value
+            )
         except Exception as e:
             raise RuleEvaluationError(
                 message=f"Failed to evaluate rule '{self.name}': {str(e)}",
@@ -115,7 +117,9 @@ class PolicyRule(BaseModel):
 
         return value
 
-    def _apply_operator(self, actual: Any, operator: RuleOperator, expected: Any) -> bool:
+    def _apply_operator(
+        self, actual: Any, operator: RuleOperator, expected: Any
+    ) -> bool:
         """Apply operator to compare actual vs expected values"""
         if operator == RuleOperator.EQUALS:
             return actual == expected
@@ -130,9 +134,17 @@ class PolicyRule(BaseModel):
         elif operator == RuleOperator.LESS_THAN_OR_EQUAL:
             return actual is not None and actual <= expected
         elif operator == RuleOperator.IN:
-            return actual in expected if isinstance(expected, (list, tuple, set)) else False
+            return (
+                actual in expected
+                if isinstance(expected, (list, tuple, set))
+                else False
+            )
         elif operator == RuleOperator.NOT_IN:
-            return actual not in expected if isinstance(expected, (list, tuple, set)) else True
+            return (
+                actual not in expected
+                if isinstance(expected, (list, tuple, set))
+                else True
+            )
         elif operator == RuleOperator.CONTAINS:
             return expected in actual if hasattr(actual, "__contains__") else False
         elif operator == RuleOperator.NOT_CONTAINS:
@@ -152,7 +164,11 @@ class PolicyRule(BaseModel):
         elif operator == RuleOperator.REGEX_MATCH:
             import re
 
-            return bool(re.match(str(expected), str(actual))) if actual is not None else False
+            return (
+                bool(re.match(str(expected), str(actual)))
+                if actual is not None
+                else False
+            )
         else:
             raise ValueError(f"Unsupported operator: {operator}")
 
@@ -211,7 +227,9 @@ class BusinessPolicy(BaseModel):
         content_str = json.dumps(policy_content, sort_keys=True, default=str)
         return hashlib.sha256(content_str.encode()).hexdigest()[:16]
 
-    def evaluate(self, context: PolicyContext, evaluation_data: dict[str, Any]) -> "PolicyEvaluationResult":
+    def evaluate(
+        self, context: PolicyContext, evaluation_data: dict[str, Any]
+    ) -> "PolicyEvaluationResult":
         """Evaluate policy against provided context and data"""
 
         # Check if policy is active and within effective period
@@ -271,7 +289,9 @@ class BusinessPolicy(BaseModel):
         # Determine final result based on require_all_rules setting
         if self.require_all_rules:
             # AND logic - all rules must pass
-            final_result = self.default_result if not violated_rules else PolicyResult.DENY
+            final_result = (
+                self.default_result if not violated_rules else PolicyResult.DENY
+            )
         else:
             # OR logic - at least one rule must pass
             final_result = PolicyResult.ALLOW if passed_rules else self.default_result
@@ -286,7 +306,9 @@ class BusinessPolicy(BaseModel):
             evaluation_time=now,
             context=context,
             total_weight=sum(weight for _, _, weight in rule_results),
-            passed_weight=sum(weight for name, result, weight in rule_results if result),
+            passed_weight=sum(
+                weight for name, result, weight in rule_results if result
+            ),
         )
 
 
@@ -300,7 +322,9 @@ class PolicyEvaluationResult:
     evaluation_time: datetime
     context: PolicyContext
     policy_version: str = ""
-    rule_results: list[tuple] = field(default_factory=list)  # (rule_name, passed, weight)
+    rule_results: list[tuple] = field(
+        default_factory=list
+    )  # (rule_name, passed, weight)
     passed_rules: list[str] = field(default_factory=list)
     total_weight: float = 0.0
     passed_weight: float = 0.0
@@ -349,7 +373,10 @@ class RuleEvaluator:
             errors.append("Field path cannot be empty")
 
         if rule.operator in [RuleOperator.BETWEEN, RuleOperator.NOT_BETWEEN]:
-            if not isinstance(rule.expected_value, (list, tuple)) or len(rule.expected_value) != 2:
+            if (
+                not isinstance(rule.expected_value, (list, tuple))
+                or len(rule.expected_value) != 2
+            ):
                 errors.append("BETWEEN operators require exactly 2 values")
 
         if rule.operator in [RuleOperator.IN, RuleOperator.NOT_IN]:
@@ -371,14 +398,21 @@ class RuleEvaluator:
                 "operator": rule.operator.value,
             }
         except Exception as e:
-            return {"rule_name": rule.name, "passed": False, "error": str(e), "test_data": test_data}
+            return {
+                "rule_name": rule.name,
+                "passed": False,
+                "error": str(e),
+                "test_data": test_data,
+            }
 
 
 class PolicyRegistry:
     """Registry for managing business policies with versioning"""
 
     def __init__(self):
-        self.policies: dict[str, dict[str, BusinessPolicy]] = {}  # name -> version -> policy
+        self.policies: dict[
+            str, dict[str, BusinessPolicy]
+        ] = {}  # name -> version -> policy
         self.active_versions: dict[str, str] = {}  # name -> active_version
 
     def register_policy(self, policy: BusinessPolicy) -> None:
@@ -392,7 +426,9 @@ class PolicyRegistry:
         if policy.name not in self.active_versions or policy.is_active:
             self.active_versions[policy.name] = policy.version
 
-    def get_policy(self, name: str, version: Optional[str] = None) -> Optional[BusinessPolicy]:
+    def get_policy(
+        self, name: str, version: Optional[str] = None
+    ) -> Optional[BusinessPolicy]:
         """Get policy by name and optional version"""
         if name not in self.policies:
             return None
@@ -430,7 +466,11 @@ class PolicyEngine:
         self.evaluator = RuleEvaluator()
 
     def evaluate_policy(
-        self, policy_name: str, context: PolicyContext, evaluation_data: dict[str, Any], version: Optional[str] = None
+        self,
+        policy_name: str,
+        context: PolicyContext,
+        evaluation_data: dict[str, Any],
+        version: Optional[str] = None,
     ) -> PolicyEvaluationResult:
         """Evaluate a single policy"""
         policy = self.registry.get_policy(policy_name, version)
@@ -481,7 +521,11 @@ class PolicyEngine:
 
         # Check if we should raise exception for failures
         if require_all_pass:
-            failed_policies = [r for r in results if r.result in [PolicyResult.DENY, PolicyResult.REQUIRE_APPROVAL]]
+            failed_policies = [
+                r
+                for r in results
+                if r.result in [PolicyResult.DENY, PolicyResult.REQUIRE_APPROVAL]
+            ]
 
             if failed_policies:
                 error_context = ErrorContext(

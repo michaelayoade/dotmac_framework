@@ -12,6 +12,7 @@ from typing import Any
 import dns.exception
 import dns.resolver
 import httpx
+
 from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -52,7 +53,11 @@ class DNSValidator:
             http_status = await self._check_http_response(full_domain)
 
             # Check SSL certificate (if HTTPS is responding)
-            ssl_status = await self._check_ssl_certificate(full_domain) if http_status.get("https_responding") else None
+            ssl_status = (
+                await self._check_ssl_certificate(full_domain)
+                if http_status.get("https_responding")
+                else None
+            )
 
             is_available = (
                 not dns_exists["exists"]
@@ -68,7 +73,9 @@ class DNSValidator:
                 "http_status": http_status,
                 "ssl_status": ssl_status,
                 "checked_at": datetime.now(timezone.utc).isoformat(),
-                "message": "Domain is available" if is_available else "Domain is already in use",
+                "message": "Domain is available"
+                if is_available
+                else "Domain is already in use",
             }
 
         except Exception as e:
@@ -105,7 +112,11 @@ class DNSValidator:
                 answers = resolver.resolve(domain, "CNAME")
                 cname_records = [str(answer) for answer in answers]
                 logger.debug(f"Found CNAME records for {domain}: {cname_records}")
-                return {"exists": True, "record_type": "CNAME", "records": cname_records}
+                return {
+                    "exists": True,
+                    "record_type": "CNAME",
+                    "records": cname_records,
+                }
             except dns.resolver.NXDOMAIN:
                 pass
             except dns.resolver.NoAnswer:
@@ -122,7 +133,12 @@ class DNSValidator:
     async def _check_http_response(self, domain: str) -> dict[str, Any]:
         """Check HTTP/HTTPS response from the domain"""
 
-        result = {"http_responding": False, "https_responding": False, "http_status": None, "https_status": None}
+        result = {
+            "http_responding": False,
+            "https_responding": False,
+            "http_status": None,
+            "https_status": None,
+        }
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             # Check HTTP
@@ -158,8 +174,12 @@ class DNSValidator:
                     cert = ssock.getpeercert()
 
                     # Parse certificate info
-                    not_after = datetime.strptime(cert["notAfter"], "%b %d %H:%M:%S %Y %Z")
-                    not_before = datetime.strptime(cert["notBefore"], "%b %d %H:%M:%S %Y %Z")
+                    not_after = datetime.strptime(
+                        cert["notAfter"], "%b %d %H:%M:%S %Y %Z"
+                    )
+                    not_before = datetime.strptime(
+                        cert["notBefore"], "%b %d %H:%M:%S %Y %Z"
+                    )
                     now = datetime.now(timezone.utc)
 
                     days_until_expiry = (not_after - now).days
@@ -177,7 +197,11 @@ class DNSValidator:
 
         except Exception as e:
             logger.debug(f"SSL check failed for {domain}: {e}")
-            return {"valid": False, "error": str(e), "message": "SSL certificate check failed"}
+            return {
+                "valid": False,
+                "error": str(e),
+                "message": "SSL certificate check failed",
+            }
 
     async def validate_base_domain_config(self) -> dict[str, Any]:
         """
@@ -200,7 +224,9 @@ class DNSValidator:
                 "wildcard_dns_configured": wildcard_dns.get("exists", False),
                 "ready_for_tenants": base_dns.get("exists", False),
                 "checked_at": datetime.now(timezone.utc).isoformat(),
-                "recommendations": self._get_dns_recommendations(base_dns, wildcard_dns),
+                "recommendations": self._get_dns_recommendations(
+                    base_dns, wildcard_dns
+                ),
             }
 
         except Exception as e:
@@ -222,7 +248,9 @@ class DNSValidator:
             recommendations.append(f"Configure DNS A record for {self.base_domain}")
 
         if not wildcard_dns.get("exists"):
-            recommendations.append(f"Configure wildcard DNS (*.{self.base_domain}) for automatic tenant subdomains")
+            recommendations.append(
+                f"Configure wildcard DNS (*.{self.base_domain}) for automatic tenant subdomains"
+            )
 
         recommendations.extend(
             [
@@ -256,7 +284,8 @@ class CoolifyDNSValidator:
             async with httpx.AsyncClient(timeout=30) as client:
                 # Check Coolify API connectivity
                 response = await client.get(
-                    f"{self.coolify_url}/api/v1/servers", headers={"Authorization": f"Bearer {self.coolify_token}"}
+                    f"{self.coolify_url}/api/v1/servers",
+                    headers={"Authorization": f"Bearer {self.coolify_token}"},
                 )
 
                 if response.status_code != 200:
@@ -266,12 +295,14 @@ class CoolifyDNSValidator:
 
                 # Check if any servers support automatic DNS
                 dns_automation_available = any(
-                    server.get("settings", {}).get("automatic_domain_creation", False) for server in servers
+                    server.get("settings", {}).get("automatic_domain_creation", False)
+                    for server in servers
                 )
 
                 # Check SSL certificate automation
                 ssl_automation_available = any(
-                    server.get("settings", {}).get("lets_encrypt_enabled", False) for server in servers
+                    server.get("settings", {}).get("lets_encrypt_enabled", False)
+                    for server in servers
                 )
 
                 return {
@@ -279,7 +310,8 @@ class CoolifyDNSValidator:
                     "server_count": len(servers),
                     "dns_automation": dns_automation_available,
                     "ssl_automation": ssl_automation_available,
-                    "ready_for_tenants": dns_automation_available and ssl_automation_available,
+                    "ready_for_tenants": dns_automation_available
+                    and ssl_automation_available,
                     "checked_at": datetime.now(timezone.utc).isoformat(),
                     "recommendations": self._get_coolify_recommendations(
                         dns_automation_available, ssl_automation_available
@@ -302,10 +334,14 @@ class CoolifyDNSValidator:
         recommendations = []
 
         if not dns_auto:
-            recommendations.append("Enable automatic domain creation in Coolify server settings")
+            recommendations.append(
+                "Enable automatic domain creation in Coolify server settings"
+            )
 
         if not ssl_auto:
-            recommendations.append("Enable Let's Encrypt SSL automation in Coolify server settings")
+            recommendations.append(
+                "Enable Let's Encrypt SSL automation in Coolify server settings"
+            )
 
         recommendations.extend(
             [

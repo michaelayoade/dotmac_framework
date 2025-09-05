@@ -75,9 +75,24 @@ class VPSRequirementsService:
         }
 
         self.traffic_multipliers = {
-            TrafficLevel.LOW: {"cpu": 1.0, "ram": 1.0, "bandwidth": 1.0, "transfer": 1.0},
-            TrafficLevel.MEDIUM: {"cpu": 1.5, "ram": 1.3, "bandwidth": 2.0, "transfer": 3.0},
-            TrafficLevel.HIGH: {"cpu": 2.0, "ram": 1.8, "bandwidth": 3.0, "transfer": 5.0},
+            TrafficLevel.LOW: {
+                "cpu": 1.0,
+                "ram": 1.0,
+                "bandwidth": 1.0,
+                "transfer": 1.0,
+            },
+            TrafficLevel.MEDIUM: {
+                "cpu": 1.5,
+                "ram": 1.3,
+                "bandwidth": 2.0,
+                "transfer": 3.0,
+            },
+            TrafficLevel.HIGH: {
+                "cpu": 2.0,
+                "ram": 1.8,
+                "bandwidth": 3.0,
+                "transfer": 5.0,
+            },
         }
 
         # Customer scaling factors (per 100 customers)
@@ -89,7 +104,10 @@ class VPSRequirementsService:
         }
 
     async def calculate_requirements(
-        self, plan: TenantPlan, expected_customers: int = 100, estimated_traffic: str = "low"
+        self,
+        plan: TenantPlan,
+        expected_customers: int = 100,
+        estimated_traffic: str = "low",
     ) -> dict[str, Any]:
         """
         Calculate VPS requirements based on plan and usage expectations
@@ -113,34 +131,47 @@ class VPSRequirementsService:
 
             # Calculate CPU requirements
             base_cpu = base_reqs["min_cpu_cores"]
-            scaled_cpu = base_cpu + (customer_scale_factor * self.customer_scaling["cpu_per_100_customers"])
+            scaled_cpu = base_cpu + (
+                customer_scale_factor * self.customer_scaling["cpu_per_100_customers"]
+            )
             min_cpu = math.ceil(scaled_cpu * traffic_mult["cpu"])
             recommended_cpu = math.ceil(min_cpu * 1.5)
 
             # Calculate RAM requirements
             base_ram = base_reqs["min_ram_gb"]
-            scaled_ram = base_ram + (customer_scale_factor * self.customer_scaling["ram_per_100_customers_gb"])
+            scaled_ram = base_ram + (
+                customer_scale_factor
+                * self.customer_scaling["ram_per_100_customers_gb"]
+            )
             min_ram = math.ceil(scaled_ram * traffic_mult["ram"])
             recommended_ram = math.ceil(min_ram * 1.5)
 
             # Calculate storage requirements
             base_storage = base_reqs["min_storage_gb"]
             scaled_storage = base_storage + (
-                customer_scale_factor * self.customer_scaling["storage_per_100_customers_gb"]
+                customer_scale_factor
+                * self.customer_scaling["storage_per_100_customers_gb"]
             )
             min_storage = math.ceil(scaled_storage)
-            recommended_storage = math.ceil(min_storage * 2)  # Extra space for logs, backups
+            recommended_storage = math.ceil(
+                min_storage * 2
+            )  # Extra space for logs, backups
 
             # Calculate bandwidth requirements
             base_bandwidth = base_reqs["base_bandwidth_mbps"]
             scaled_bandwidth = base_bandwidth + (
-                customer_scale_factor * self.customer_scaling["bandwidth_per_100_customers_mbps"]
+                customer_scale_factor
+                * self.customer_scaling["bandwidth_per_100_customers_mbps"]
             )
             min_bandwidth = math.ceil(scaled_bandwidth * traffic_mult["bandwidth"])
 
             # Calculate monthly data transfer
-            monthly_transfer_base = expected_customers * 10  # 10GB per customer per month base
-            monthly_transfer = math.ceil(monthly_transfer_base * traffic_mult["transfer"])
+            monthly_transfer_base = (
+                expected_customers * 10
+            )  # 10GB per customer per month base
+            monthly_transfer = math.ceil(
+                monthly_transfer_base * traffic_mult["transfer"]
+            )
 
             # VPS provider cost estimates (USD per month)
             provider_costs = self._calculate_provider_costs(
@@ -148,7 +179,13 @@ class VPSRequirementsService:
             )
 
             # Required network ports
-            required_ports = [22, 80, 443, 8000, 8001]  # SSH, HTTP, HTTPS, ISP, Management
+            required_ports = [
+                22,
+                80,
+                443,
+                8000,
+                8001,
+            ]  # SSH, HTTP, HTTPS, ISP, Management
             if plan in [TenantPlan.PROFESSIONAL, TenantPlan.ENTERPRISE]:
                 required_ports.extend([9090, 3000, 9093])  # Monitoring ports
 
@@ -164,7 +201,14 @@ class VPSRequirementsService:
             ]
 
             # Recommended VPS providers
-            recommended_providers = ["DigitalOcean", "Linode", "Vultr", "Hetzner", "AWS EC2", "Google Cloud"]
+            recommended_providers = [
+                "DigitalOcean",
+                "Linode",
+                "Vultr",
+                "Hetzner",
+                "AWS EC2",
+                "Google Cloud",
+            ]
 
             requirements = {
                 "plan": plan,
@@ -185,7 +229,9 @@ class VPSRequirementsService:
                 "monthly_support_fee_usd": base_reqs["monthly_support_fee_usd"],
             }
 
-            logger.info(f"Calculated VPS requirements for {plan} plan with {expected_customers} customers")
+            logger.info(
+                f"Calculated VPS requirements for {plan} plan with {expected_customers} customers"
+            )
             return requirements
 
         except Exception as e:
@@ -251,7 +297,9 @@ class VPSRequirementsService:
         estimated_costs = {}
 
         # Estimate monthly bandwidth usage (conservative)
-        estimated_monthly_transfer_gb = bandwidth_mbps * 24 * 30 * 0.1 / 8  # 10% utilization
+        estimated_monthly_transfer_gb = (
+            bandwidth_mbps * 24 * 30 * 0.1 / 8
+        )  # 10% utilization
 
         for provider, pricing in provider_pricing.items():
             # Base instance cost
@@ -260,7 +308,9 @@ class VPSRequirementsService:
             storage_cost = storage_gb * pricing["storage_cost_per_gb"]
 
             # Bandwidth cost (if exceeding included)
-            bandwidth_overage = max(0, estimated_monthly_transfer_gb - pricing["bandwidth_included_gb"])
+            bandwidth_overage = max(
+                0, estimated_monthly_transfer_gb - pricing["bandwidth_included_gb"]
+            )
             bandwidth_cost = bandwidth_overage * pricing["bandwidth_cost_per_gb"]
 
             total_cost = cpu_cost + ram_cost + storage_cost + bandwidth_cost
@@ -337,7 +387,9 @@ class VPSRequirementsService:
 
         return plan_features.get(plan, {})
 
-    def validate_vps_specs(self, provided_specs: dict[str, Any], required_specs: dict[str, Any]) -> dict[str, Any]:
+    def validate_vps_specs(
+        self, provided_specs: dict[str, Any], required_specs: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Validate if provided VPS specs meet requirements
 
@@ -361,7 +413,9 @@ class VPSRequirementsService:
         provided_cpu = provided_specs.get("cpu_cores", 0)
         required_cpu = required_specs["min_cpu_cores"]
         if provided_cpu < required_cpu:
-            validation_results["failures"].append(f"CPU: {provided_cpu} cores < {required_cpu} required")
+            validation_results["failures"].append(
+                f"CPU: {provided_cpu} cores < {required_cpu} required"
+            )
             validation_results["overall_status"] = "fail"
         elif provided_cpu < required_specs["recommended_cpu_cores"]:
             validation_results["warnings"].append(
@@ -374,7 +428,9 @@ class VPSRequirementsService:
         provided_ram = provided_specs.get("ram_gb", 0)
         required_ram = required_specs["min_ram_gb"]
         if provided_ram < required_ram:
-            validation_results["failures"].append(f"RAM: {provided_ram}GB < {required_ram}GB required")
+            validation_results["failures"].append(
+                f"RAM: {provided_ram}GB < {required_ram}GB required"
+            )
             validation_results["overall_status"] = "fail"
         elif provided_ram < required_specs["recommended_ram_gb"]:
             validation_results["warnings"].append(
@@ -387,7 +443,9 @@ class VPSRequirementsService:
         provided_storage = provided_specs.get("storage_gb", 0)
         required_storage = required_specs["min_storage_gb"]
         if provided_storage < required_storage:
-            validation_results["failures"].append(f"Storage: {provided_storage}GB < {required_storage}GB required")
+            validation_results["failures"].append(
+                f"Storage: {provided_storage}GB < {required_storage}GB required"
+            )
             validation_results["overall_status"] = "fail"
         elif provided_storage < required_specs["recommended_storage_gb"]:
             validation_results["warnings"].append(
@@ -408,13 +466,20 @@ class VPSRequirementsService:
 
         # Add recommendations based on validation results
         if validation_results["overall_status"] == "fail":
-            validation_results["recommendations"].append("Upgrade VPS to meet minimum requirements before deployment")
+            validation_results["recommendations"].append(
+                "Upgrade VPS to meet minimum requirements before deployment"
+            )
         elif validation_results["warnings"]:
             validation_results["recommendations"].append(
                 "Consider upgrading to recommended specifications for better performance"
             )
 
-        if validation_results["overall_status"] == "pass" and not validation_results["warnings"]:
-            validation_results["recommendations"].append("VPS specifications look good! Ready for deployment.")
+        if (
+            validation_results["overall_status"] == "pass"
+            and not validation_results["warnings"]
+        ):
+            validation_results["recommendations"].append(
+                "VPS specifications look good! Ready for deployment."
+            )
 
         return validation_results

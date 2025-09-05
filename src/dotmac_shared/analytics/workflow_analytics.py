@@ -15,7 +15,11 @@ from dotmac.communications.events import EventBus
 from dotmac.core import create_cache_service
 from dotmac.core.schemas.base_schemas import TenantBaseModel
 from dotmac_shared.application.config import DeploymentContext
-from dotmac_shared.services_framework.core.base import ServiceHealth, ServiceStatus, StatefulService
+from dotmac_shared.services_framework.core.base import (
+    ServiceHealth,
+    ServiceStatus,
+    StatefulService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -61,19 +65,29 @@ class WorkflowEvent(TenantBaseModel):
     session_id: Optional[str] = field(None, description="Session identifier")
 
     # Performance metrics
-    duration_ms: Optional[float] = field(None, description="Event duration in milliseconds")
-    resource_usage: dict[str, Any] = field(default_factory=dict, description="Resource usage")
+    duration_ms: Optional[float] = field(
+        None, description="Event duration in milliseconds"
+    )
+    resource_usage: dict[str, Any] = field(
+        default_factory=dict, description="Resource usage"
+    )
 
     # Data and metadata
     input_data: dict[str, Any] = field(default_factory=dict, description="Input data")
     output_data: dict[str, Any] = field(default_factory=dict, description="Output data")
-    error_details: Optional[dict[str, Any]] = field(None, description="Error information")
-    metadata: dict[str, Any] = field(default_factory=dict, description="Additional metadata")
+    error_details: Optional[dict[str, Any]] = field(
+        None, description="Error information"
+    )
+    metadata: dict[str, Any] = field(
+        default_factory=dict, description="Additional metadata"
+    )
 
     # Timestamps
     started_at: Optional[datetime] = field(None, description="Event start time")
     completed_at: Optional[datetime] = field(None, description="Event completion time")
-    timestamp: datetime = field(default_factory=datetime.utcnow, description="Event timestamp")
+    timestamp: datetime = field(
+        default_factory=datetime.utcnow, description="Event timestamp"
+    )
 
 
 class WorkflowMetrics(TenantBaseModel):
@@ -150,7 +164,11 @@ class WorkflowAnalyticsService(StatefulService):
 
     def __init__(self, config: WorkflowAnalyticsConfig):
         """Initialize workflow analytics service."""
-        super().__init__(name="workflow_analytics", config=config.__dict__, required_config=["enabled_workflow_types"])
+        super().__init__(
+            name="workflow_analytics",
+            config=config.__dict__,
+            required_config=["enabled_workflow_types"],
+        )
 
         self.analytics_config = config
         self.priority = 85  # High priority for analytics
@@ -186,7 +204,9 @@ class WorkflowAnalyticsService(StatefulService):
                 ServiceStatus.READY,
                 f"Workflow analytics ready for {len(self.analytics_config.enabled_workflow_types)} workflow types",
                 {
-                    "workflow_types": [wt.value for wt in self.analytics_config.enabled_workflow_types],
+                    "workflow_types": [
+                        wt.value for wt in self.analytics_config.enabled_workflow_types
+                    ],
                     "real_time": self.analytics_config.real_time_analytics,
                     "batch_processing": self.analytics_config.batch_processing,
                 },
@@ -201,7 +221,9 @@ class WorkflowAnalyticsService(StatefulService):
 
     async def shutdown(self) -> bool:
         """Shutdown workflow analytics service."""
-        await self._set_status(ServiceStatus.SHUTTING_DOWN, "Shutting down workflow analytics")
+        await self._set_status(
+            ServiceStatus.SHUTTING_DOWN, "Shutting down workflow analytics"
+        )
 
         # Process remaining events
         if self.analytics_config.batch_processing and self._workflow_events:
@@ -210,14 +232,18 @@ class WorkflowAnalyticsService(StatefulService):
         # Clear state
         self.clear_state()
 
-        await self._set_status(ServiceStatus.SHUTDOWN, "Workflow analytics shutdown complete")
+        await self._set_status(
+            ServiceStatus.SHUTDOWN, "Workflow analytics shutdown complete"
+        )
         return True
 
     async def _health_check_stateful_service(self) -> ServiceHealth:
         """Perform health check on workflow analytics service."""
         try:
             details = {
-                "workflow_types": [wt.value for wt in self.analytics_config.enabled_workflow_types],
+                "workflow_types": [
+                    wt.value for wt in self.analytics_config.enabled_workflow_types
+                ],
                 "events_in_buffer": len(self._workflow_events),
                 "events_processed": self.get_state("events_processed", 0),
                 "metrics_calculated": self.get_state("metrics_calculated", 0),
@@ -227,7 +253,10 @@ class WorkflowAnalyticsService(StatefulService):
             }
 
             # Check buffer size
-            if len(self._workflow_events) > self.analytics_config.max_events_per_batch * 2:
+            if (
+                len(self._workflow_events)
+                > self.analytics_config.max_events_per_batch * 2
+            ):
                 return ServiceHealth(
                     status=ServiceStatus.READY,
                     message=f"High event buffer: {len(self._workflow_events)} events",
@@ -235,12 +264,16 @@ class WorkflowAnalyticsService(StatefulService):
                 )
 
             return ServiceHealth(
-                status=ServiceStatus.READY, message="Workflow analytics service healthy", details=details
+                status=ServiceStatus.READY,
+                message="Workflow analytics service healthy",
+                details=details,
             )
 
         except Exception as e:
             return ServiceHealth(
-                status=ServiceStatus.ERROR, message=f"Health check failed: {e}", details={"error": str(e)}
+                status=ServiceStatus.ERROR,
+                message=f"Health check failed: {e}",
+                details={"error": str(e)},
             )
 
     @standard_exception_handler
@@ -264,7 +297,9 @@ class WorkflowAnalyticsService(StatefulService):
 
         # Get tenant context
         tenant_id = None
-        if self.analytics_config.deployment_context and hasattr(self.analytics_config.deployment_context, "tenant_id"):
+        if self.analytics_config.deployment_context and hasattr(
+            self.analytics_config.deployment_context, "tenant_id"
+        ):
             tenant_id = self.analytics_config.deployment_context.tenant_id
 
         # Create workflow event
@@ -286,7 +321,11 @@ class WorkflowAnalyticsService(StatefulService):
         # Set timing information
         if status == WorkflowStatus.RUNNING:
             event.started_at = datetime.now(timezone.utc)
-        elif status in [WorkflowStatus.COMPLETED, WorkflowStatus.FAILED, WorkflowStatus.CANCELLED]:
+        elif status in [
+            WorkflowStatus.COMPLETED,
+            WorkflowStatus.FAILED,
+            WorkflowStatus.CANCELLED,
+        ]:
             event.completed_at = datetime.now(timezone.utc)
 
         # Store event
@@ -363,7 +402,9 @@ class WorkflowAnalyticsService(StatefulService):
             )
         ]
 
-        return await self._calculate_workflow_metrics(workflow_type, filtered_events, period_start, period_end)
+        return await self._calculate_workflow_metrics(
+            workflow_type, filtered_events, period_start, period_end
+        )
 
     @standard_exception_handler
     async def get_workflow_analytics_dashboard(
@@ -399,7 +440,9 @@ class WorkflowAnalyticsService(StatefulService):
 
         # Calculate metrics for each workflow type
         for workflow_type in self.analytics_config.enabled_workflow_types:
-            metrics = await self.get_workflow_metrics(workflow_type, period_start, period_end, tenant_id)
+            metrics = await self.get_workflow_metrics(
+                workflow_type, period_start, period_end, tenant_id
+            )
 
             dashboard["by_type"][workflow_type.value] = {
                 "total": metrics.total_workflows,
@@ -418,10 +461,14 @@ class WorkflowAnalyticsService(StatefulService):
         # Calculate overall metrics
         total = dashboard["overview"]["total_workflows"]
         if total > 0:
-            dashboard["overview"]["overall_success_rate"] = dashboard["overview"]["completed_workflows"] / total
+            dashboard["overview"]["overall_success_rate"] = (
+                dashboard["overview"]["completed_workflows"] / total
+            )
 
         # Add trend data (simplified)
-        dashboard["trends"] = await self._calculate_workflow_trends(period_start, period_end, tenant_id)
+        dashboard["trends"] = await self._calculate_workflow_trends(
+            period_start, period_end, tenant_id
+        )
 
         return dashboard
 
@@ -433,7 +480,10 @@ class WorkflowAnalyticsService(StatefulService):
             await self._check_performance_alerts(event)
 
         # Check for failure alerts
-        if event.status == WorkflowStatus.FAILED and self.analytics_config.performance_alerts:
+        if (
+            event.status == WorkflowStatus.FAILED
+            and self.analytics_config.performance_alerts
+        ):
             await self._check_failure_alerts(event)
 
     async def _process_batch_analytics(self):
@@ -455,10 +505,14 @@ class WorkflowAnalyticsService(StatefulService):
             period_start = min(e.timestamp for e in events)
             period_end = max(e.timestamp for e in events)
 
-            metrics = await self._calculate_workflow_metrics(workflow_type, events, period_start, period_end)
+            metrics = await self._calculate_workflow_metrics(
+                workflow_type, events, period_start, period_end
+            )
 
             # Cache metrics
-            metrics_key = f"{workflow_type.value}_{period_start.date()}_{period_end.date()}"
+            metrics_key = (
+                f"{workflow_type.value}_{period_start.date()}_{period_end.date()}"
+            )
             self._workflow_metrics[metrics_key] = metrics
 
             if self.cache_service:
@@ -477,7 +531,9 @@ class WorkflowAnalyticsService(StatefulService):
         # Clear processed events (in production, these would be archived)
         self._workflow_events.clear()
 
-        logger.info(f"Processed batch analytics for {len(events_by_type)} workflow types")
+        logger.info(
+            f"Processed batch analytics for {len(events_by_type)} workflow types"
+        )
 
     async def _calculate_workflow_metrics(
         self,
@@ -510,7 +566,9 @@ class WorkflowAnalyticsService(StatefulService):
                 error_categories={},
                 bottleneck_steps=[],
                 step_success_rates={},
-                tenant_id=getattr(self.analytics_config.deployment_context, "tenant_id", None),
+                tenant_id=getattr(
+                    self.analytics_config.deployment_context, "tenant_id", None
+                ),
             )
 
         # Group events by workflow ID to get complete workflows
@@ -545,10 +603,19 @@ class WorkflowAnalyticsService(StatefulService):
 
             # Calculate duration if we have start and end events
             start_event = next((e for e in workflow_events if e.started_at), None)
-            end_event = next((e for e in reversed(workflow_events) if e.completed_at), None)
+            end_event = next(
+                (e for e in reversed(workflow_events) if e.completed_at), None
+            )
 
-            if start_event and end_event and start_event.started_at and end_event.completed_at:
-                duration = (end_event.completed_at - start_event.started_at).total_seconds() * 1000
+            if (
+                start_event
+                and end_event
+                and start_event.started_at
+                and end_event.completed_at
+            ):
+                duration = (
+                    end_event.completed_at - start_event.started_at
+                ).total_seconds() * 1000
                 durations.append(duration)
 
         # Calculate duration statistics
@@ -569,8 +636,12 @@ class WorkflowAnalyticsService(StatefulService):
             percentile_95_ms = 0.0
 
         # Calculate rates
-        success_rate = completed_workflows / total_workflows if total_workflows > 0 else 0.0
-        failure_rate = failed_workflows / total_workflows if total_workflows > 0 else 0.0
+        success_rate = (
+            completed_workflows / total_workflows if total_workflows > 0 else 0.0
+        )
+        failure_rate = (
+            failed_workflows / total_workflows if total_workflows > 0 else 0.0
+        )
 
         # Calculate throughput
         period_hours = (period_end - period_start).total_seconds() / 3600
@@ -579,7 +650,9 @@ class WorkflowAnalyticsService(StatefulService):
         # Error analysis
         top_errors = []
         error_categories = {}
-        failed_events = [e for e in events if e.status == WorkflowStatus.FAILED and e.error_details]
+        failed_events = [
+            e for e in events if e.status == WorkflowStatus.FAILED and e.error_details
+        ]
 
         for event in failed_events:
             if event.error_details:
@@ -587,12 +660,16 @@ class WorkflowAnalyticsService(StatefulService):
                 error_categories[error_type] = error_categories.get(error_type, 0) + 1
 
         # Convert to top errors list
-        for error_type, count in sorted(error_categories.items(), key=lambda x: x[1], reverse=True)[:5]:
+        for error_type, count in sorted(
+            error_categories.items(), key=lambda x: x[1], reverse=True
+        )[:5]:
             top_errors.append(
                 {
                     "error_type": error_type,
                     "count": count,
-                    "percentage": count / failed_workflows * 100 if failed_workflows > 0 else 0,
+                    "percentage": count / failed_workflows * 100
+                    if failed_workflows > 0
+                    else 0,
                 }
             )
 
@@ -618,11 +695,17 @@ class WorkflowAnalyticsService(StatefulService):
 
             # Calculate step metrics
             for step_name, step_data in steps.items():
-                success_rate = step_data["successful"] / step_data["total"] if step_data["total"] > 0 else 0.0
+                success_rate = (
+                    step_data["successful"] / step_data["total"]
+                    if step_data["total"] > 0
+                    else 0.0
+                )
                 step_success_rates[step_name] = success_rate
 
                 if step_data["durations"]:
-                    avg_duration = sum(step_data["durations"]) / len(step_data["durations"])
+                    avg_duration = sum(step_data["durations"]) / len(
+                        step_data["durations"]
+                    )
                     bottleneck_steps.append(
                         {
                             "step_name": step_name,
@@ -657,7 +740,9 @@ class WorkflowAnalyticsService(StatefulService):
             error_categories=error_categories,
             bottleneck_steps=bottleneck_steps,
             step_success_rates=step_success_rates,
-            tenant_id=getattr(self.analytics_config.deployment_context, "tenant_id", None),
+            tenant_id=getattr(
+                self.analytics_config.deployment_context, "tenant_id", None
+            ),
         )
 
     async def _calculate_workflow_trends(
@@ -685,7 +770,10 @@ class WorkflowAnalyticsService(StatefulService):
             day_events = [
                 e
                 for e in self._workflow_events
-                if (e.timestamp.date() == current_date and (not tenant_id or e.tenant_id == tenant_id))
+                if (
+                    e.timestamp.date() == current_date
+                    and (not tenant_id or e.tenant_id == tenant_id)
+                )
             ]
 
             workflows_count = len({e.workflow_id for e in day_events})
@@ -711,7 +799,9 @@ class WorkflowAnalyticsService(StatefulService):
         # In production, this would use historical data
         baseline_duration = 5000  # 5 seconds baseline
 
-        threshold = baseline_duration * self.analytics_config.duration_threshold_multiplier
+        threshold = (
+            baseline_duration * self.analytics_config.duration_threshold_multiplier
+        )
 
         if event.duration_ms > threshold:
             await self._generate_alert(
@@ -740,7 +830,9 @@ class WorkflowAnalyticsService(StatefulService):
             },
         )
 
-    async def _generate_alert(self, alert_type: str, message: str, context: dict[str, Any]):
+    async def _generate_alert(
+        self, alert_type: str, message: str, context: dict[str, Any]
+    ):
         """Generate an analytics alert."""
 
         alert = {
@@ -765,7 +857,9 @@ class WorkflowAnalyticsService(StatefulService):
 
 
 # Factory function
-async def create_workflow_analytics_service(config: WorkflowAnalyticsConfig) -> WorkflowAnalyticsService:
+async def create_workflow_analytics_service(
+    config: WorkflowAnalyticsConfig,
+) -> WorkflowAnalyticsService:
     """Create and initialize workflow analytics service."""
     service = WorkflowAnalyticsService(config)
 

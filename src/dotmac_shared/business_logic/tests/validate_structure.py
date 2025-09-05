@@ -1,4 +1,5 @@
 import logging
+
 logger = logging.getLogger(__name__)
 
 """
@@ -107,13 +108,21 @@ def test_idempotency_components():
         import hashlib
         import json
 
-        def generate_idempotency_key(operation_type: str, tenant_id: str, data: dict[str, Any]) -> str:
-            key_data = {"operation_type": operation_type, "tenant_id": tenant_id, "data": data}
+        def generate_idempotency_key(
+            operation_type: str, tenant_id: str, data: dict[str, Any]
+        ) -> str:
+            key_data = {
+                "operation_type": operation_type,
+                "tenant_id": tenant_id,
+                "data": data,
+            }
             key_string = json.dumps(key_data, sort_keys=True, default=str)
             key_hash = hashlib.sha256(key_string.encode()).hexdigest()
             return f"{operation_type}:{tenant_id}:{key_hash[:16]}"
 
-        test_key = generate_idempotency_key("test_operation", "tenant123", {"param": "value"})
+        test_key = generate_idempotency_key(
+            "test_operation", "tenant123", {"param": "value"}
+        )
 
         assert test_key.startswith("test_operation:tenant123:")
         logger.info("   ✅ Idempotency key generation")
@@ -152,7 +161,9 @@ def test_business_rules():
 
     try:
         # Test plan eligibility rules
-        def check_residential_eligibility(customer_data: dict[str, Any]) -> dict[str, Any]:
+        def check_residential_eligibility(
+            customer_data: dict[str, Any]
+        ) -> dict[str, Any]:
             """Mock plan eligibility check"""
 
             errors = []
@@ -169,14 +180,22 @@ def test_business_rules():
             return {"eligible": len(errors) == 0, "errors": errors}
 
         # Test with valid customer
-        valid_customer = {"customer_type": "residential", "credit_score": 650, "outstanding_balance": 0}
+        valid_customer = {
+            "customer_type": "residential",
+            "credit_score": 650,
+            "outstanding_balance": 0,
+        }
 
         result = check_residential_eligibility(valid_customer)
         assert result["eligible"] is True
         logger.info("   ✅ Plan eligibility validation (passing case)")
 
         # Test with invalid customer
-        invalid_customer = {"customer_type": "residential", "credit_score": 550, "outstanding_balance": 100}
+        invalid_customer = {
+            "customer_type": "residential",
+            "credit_score": 550,
+            "outstanding_balance": 100,
+        }
 
         result = check_residential_eligibility(invalid_customer)
         assert result["eligible"] is False
@@ -193,7 +212,9 @@ def test_commission_calculations():
 
     try:
 
-        def calculate_commission(partner_data: dict[str, Any], customer_revenue: Decimal) -> dict[str, Any]:
+        def calculate_commission(
+            partner_data: dict[str, Any], customer_revenue: Decimal
+        ) -> dict[str, Any]:
             """Mock commission calculation"""
 
             # Check partner eligibility
@@ -225,7 +246,11 @@ def test_commission_calculations():
             }
 
         # Test with high-performing partner
-        partner_data = {"status": "active", "performance_score": 95, "compliance_status": "compliant"}
+        partner_data = {
+            "status": "active",
+            "performance_score": 95,
+            "compliance_status": "compliant",
+        }
 
         result = calculate_commission(partner_data, Decimal("1000.00"))
         assert result["total_commission"] == 70.0  # 5% + 2% = 7%
@@ -268,7 +293,12 @@ def test_operation_validation():
             return errors
 
         # Test valid data
-        valid_data = {"name": "Test Tenant", "domain": "test-tenant", "plan": "basic", "admin_email": "admin@test.com"}
+        valid_data = {
+            "name": "Test Tenant",
+            "domain": "test-tenant",
+            "plan": "basic",
+            "admin_email": "admin@test.com",
+        }
 
         errors = validate_tenant_provisioning_data(valid_data)
         assert len(errors) == 0
@@ -291,7 +321,9 @@ def test_error_handling():
     try:
         # Test business logic error structure
         class BusinessLogicError(Exception):
-            def __init__(self, message: str, error_code: str, context: dict[str, Any] = None):
+            def __init__(
+                self, message: str, error_code: str, context: dict[str, Any] = None
+            ):
                 super().__init__(message)
                 self.message = message
                 self.error_code = error_code
@@ -347,7 +379,9 @@ def main():
     logger.info("   • Tenant, service, and billing run operations")
     logger.info("   • Comprehensive error handling and compensation")
     logger.info("\n   The framework provides consistent business rule management")
-    logger.info("   across tenant provisioning, service provisioning, and billing runs.")
+    logger.info(
+        "   across tenant provisioning, service provisioning, and billing runs."
+    )
 
 
 if __name__ == "__main__":

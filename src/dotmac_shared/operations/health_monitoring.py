@@ -13,6 +13,8 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import ServiceError
 from dotmac_shared.container_monitoring.core.health_monitor import (
@@ -20,7 +22,6 @@ from dotmac_shared.container_monitoring.core.health_monitor import (
     HealthStatus,
 )
 from dotmac_shared.monitoring.config import MonitoringConfig
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,9 @@ class NetworkHealthMonitor:
         monitoring_config: Optional[MonitoringConfig] = None,
     ):
         self.db = db_session
-        self.monitoring_config = monitoring_config or MonitoringConfig(service_name="network_health_monitor")
+        self.monitoring_config = monitoring_config or MonitoringConfig(
+            service_name="network_health_monitor"
+        )
         self.container_monitor = ContainerHealthMonitor()
         self.active_endpoints: dict[UUID, NetworkEndpoint] = {}
         self.health_history: dict[UUID, list[HealthCheckResult]] = {}
@@ -98,7 +101,9 @@ class NetworkHealthMonitor:
             logger.info(f"Unregistered endpoint: {endpoint_name}")
 
     @standard_exception_handler
-    async def check_endpoint_health(self, endpoint: NetworkEndpoint) -> HealthCheckResult:
+    async def check_endpoint_health(
+        self, endpoint: NetworkEndpoint
+    ) -> HealthCheckResult:
         """Perform health check on a single endpoint."""
         start_time = datetime.now(timezone.utc)
 
@@ -112,7 +117,9 @@ class NetworkHealthMonitor:
 
             try:
                 result = sock.connect_ex((endpoint.host, endpoint.port))
-                response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
+                response_time = (
+                    datetime.now(timezone.utc) - start_time
+                ).total_seconds()
 
                 if result == 0:
                     if response_time <= endpoint.expected_response_time:
@@ -123,7 +130,9 @@ class NetworkHealthMonitor:
                         message = f"Endpoint {endpoint.name} responding slowly ({response_time:.2f}s)"
                 else:
                     status = NetworkHealthStatus.CRITICAL
-                    message = f"Endpoint {endpoint.name} connection failed (code: {result})"
+                    message = (
+                        f"Endpoint {endpoint.name} connection failed (code: {result})"
+                    )
 
             finally:
                 sock.close()
@@ -160,7 +169,10 @@ class NetworkHealthMonitor:
             return []
 
         # Run all health checks concurrently
-        tasks = [self.check_endpoint_health(endpoint) for endpoint in self.active_endpoints.values()]
+        tasks = [
+            self.check_endpoint_health(endpoint)
+            for endpoint in self.active_endpoints.values()
+        ]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -231,12 +243,16 @@ class NetworkHealthMonitor:
             "degraded_count": status_counts[NetworkHealthStatus.DEGRADED],
             "critical_count": status_counts[NetworkHealthStatus.CRITICAL],
             "offline_count": status_counts[NetworkHealthStatus.OFFLINE],
-            "average_response_time": total_response_time / len(results) if results else 0.0,
+            "average_response_time": total_response_time / len(results)
+            if results
+            else 0.0,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "details": [
                 {
                     "endpoint_id": str(result.endpoint_id),
-                    "endpoint_name": self.active_endpoints.get(result.endpoint_id, {}).name,
+                    "endpoint_name": self.active_endpoints.get(
+                        result.endpoint_id, {}
+                    ).name,
                     "status": result.status,
                     "response_time": result.response_time,
                     "message": result.message,
@@ -246,14 +262,20 @@ class NetworkHealthMonitor:
         }
 
     @standard_exception_handler
-    async def get_endpoint_trends(self, endpoint_id: UUID, hours: int = 24) -> dict[str, Any]:
+    async def get_endpoint_trends(
+        self, endpoint_id: UUID, hours: int = 24
+    ) -> dict[str, Any]:
         """Get health trends for a specific endpoint."""
         if endpoint_id not in self.health_history:
             raise ServiceError(f"No health history found for endpoint {endpoint_id}")
 
         # Filter results from last N hours
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
-        recent_results = [result for result in self.health_history[endpoint_id] if result.timestamp >= cutoff_time]
+        recent_results = [
+            result
+            for result in self.health_history[endpoint_id]
+            if result.timestamp >= cutoff_time
+        ]
 
         if not recent_results:
             return {
@@ -266,14 +288,19 @@ class NetworkHealthMonitor:
             }
 
         # Calculate trends
-        healthy_count = sum(1 for r in recent_results if r.status == NetworkHealthStatus.HEALTHY)
+        healthy_count = sum(
+            1 for r in recent_results if r.status == NetworkHealthStatus.HEALTHY
+        )
 
         total_response_time = sum(r.response_time for r in recent_results)
 
         status_distribution = {}
         for status in NetworkHealthStatus:
             count = sum(1 for r in recent_results if r.status == status)
-            status_distribution[status] = {"count": count, "percentage": (count / len(recent_results)) * 100}
+            status_distribution[status] = {
+                "count": count,
+                "percentage": (count / len(recent_results)) * 100,
+            }
 
         return {
             "endpoint_id": str(endpoint_id),
@@ -298,7 +325,9 @@ class NetworkHealthMonitor:
     @standard_exception_handler
     async def start_continuous_monitoring(self, check_interval: int = 30) -> None:
         """Start continuous monitoring of all endpoints."""
-        logger.info(f"Starting continuous network monitoring (interval: {check_interval}s)")
+        logger.info(
+            f"Starting continuous network monitoring (interval: {check_interval}s)"
+        )
 
         while True:
             try:
@@ -306,13 +335,20 @@ class NetworkHealthMonitor:
 
                 # Log summary
                 critical_count = sum(
-                    1 for r in results if r.status in [NetworkHealthStatus.CRITICAL, NetworkHealthStatus.OFFLINE]
+                    1
+                    for r in results
+                    if r.status
+                    in [NetworkHealthStatus.CRITICAL, NetworkHealthStatus.OFFLINE]
                 )
 
                 if critical_count > 0:
-                    logger.warning(f"Network health check: {critical_count} endpoints in critical state")
+                    logger.warning(
+                        f"Network health check: {critical_count} endpoints in critical state"
+                    )
                 else:
-                    logger.info(f"Network health check completed: {len(results)} endpoints checked")
+                    logger.info(
+                        f"Network health check completed: {len(results)} endpoints checked"
+                    )
 
                 # Wait for next check
                 await asyncio.sleep(check_interval)
@@ -330,11 +366,15 @@ class ServiceHealthChecker:
     """
 
     def __init__(self, monitoring_config: Optional[MonitoringConfig] = None):
-        self.monitoring_config = monitoring_config or MonitoringConfig(service_name="service_health_checker")
+        self.monitoring_config = monitoring_config or MonitoringConfig(
+            service_name="service_health_checker"
+        )
         self.container_monitor = ContainerHealthMonitor()
 
     @standard_exception_handler
-    async def check_database_health(self, connection_string: str, timeout: int = 5) -> dict[str, Any]:
+    async def check_database_health(
+        self, connection_string: str, timeout: int = 5
+    ) -> dict[str, Any]:
         """Check database connectivity and performance."""
         start_time = datetime.now(timezone.utc)
 
@@ -353,7 +393,9 @@ class ServiceHealthChecker:
             # Test connection and basic query
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
-                response_time = (datetime.now(timezone.utc) - start_time).total_seconds()
+                response_time = (
+                    datetime.now(timezone.utc) - start_time
+                ).total_seconds()
 
                 return {
                     "status": NetworkHealthStatus.HEALTHY,
@@ -391,7 +433,9 @@ class ServiceHealthChecker:
             }
 
     @standard_exception_handler
-    async def check_redis_health(self, redis_url: str, timeout: int = 5) -> dict[str, Any]:
+    async def check_redis_health(
+        self, redis_url: str, timeout: int = 5
+    ) -> dict[str, Any]:
         """Check Redis connectivity and performance."""
         start_time = datetime.now(timezone.utc)
 
@@ -438,7 +482,9 @@ class ServiceHealthChecker:
     async def check_container_health(self, container_id: str) -> dict[str, Any]:
         """Check container health using existing container monitor."""
         try:
-            health_report = await self.container_monitor.monitor_container_health(container_id)
+            health_report = await self.container_monitor.monitor_container_health(
+                container_id
+            )
 
             # Convert to standardized format
             status_mapping = {
@@ -449,11 +495,15 @@ class ServiceHealthChecker:
             }
 
             return {
-                "status": status_mapping.get(health_report.overall_status, NetworkHealthStatus.OFFLINE),
+                "status": status_mapping.get(
+                    health_report.overall_status, NetworkHealthStatus.OFFLINE
+                ),
                 "message": f"Container {container_id} health: {health_report.overall_status}",
                 "details": {
                     "container_id": container_id,
-                    "uptime": str(health_report.uptime) if health_report.uptime else None,
+                    "uptime": str(health_report.uptime)
+                    if health_report.uptime
+                    else None,
                     "check_count": len(health_report.checks),
                     "timestamp": health_report.timestamp.isoformat(),
                     "checks": [

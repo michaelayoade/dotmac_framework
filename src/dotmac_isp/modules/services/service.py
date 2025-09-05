@@ -6,10 +6,15 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from dotmac.application import standard_exception_handler
-from dotmac.core.exceptions import BusinessRuleError, EntityNotFoundError, ValidationError
-from dotmac_shared.services.base import BaseTenantService
 from sqlalchemy.orm import Session
+
+from dotmac.application import standard_exception_handler
+from dotmac.core.exceptions import (
+    BusinessRuleError,
+    EntityNotFoundError,
+    ValidationError,
+)
+from dotmac_shared.services.base import BaseTenantService
 
 from . import schemas
 from .models import ServiceInstance
@@ -49,12 +54,16 @@ class ServicesService(BaseTenantService):
     # =================================================================
 
     @standard_exception_handler
-    async def create_service_plan(self, plan_data: schemas.ServicePlanCreate) -> schemas.ServicePlanResponse:
+    async def create_service_plan(
+        self, plan_data: schemas.ServicePlanCreate
+    ) -> schemas.ServicePlanResponse:
         """Create a new service plan."""
         # Validate plan code is unique
         existing_plan = self.service_plan_repo.get_by_code(plan_data.plan_code)
         if existing_plan:
-            raise ValidationError(f"Service plan with code '{plan_data.plan_code}' already exists")
+            raise ValidationError(
+                f"Service plan with code '{plan_data.plan_code}' already exists"
+            )
 
         # Validate business rules
         await self._validate_service_plan_rules(plan_data)
@@ -65,7 +74,9 @@ class ServicesService(BaseTenantService):
         return schemas.ServicePlanResponse.model_validate(plan)
 
     @standard_exception_handler
-    async def get_service_plan(self, plan_id: UUID) -> Optional[schemas.ServicePlanResponse]:
+    async def get_service_plan(
+        self, plan_id: UUID
+    ) -> Optional[schemas.ServicePlanResponse]:
         """Get service plan by ID."""
         plan = self.service_plan_repo.get_by_id(plan_id)
         if not plan:
@@ -73,7 +84,9 @@ class ServicesService(BaseTenantService):
         return schemas.ServicePlanResponse.model_validate(plan)
 
     @standard_exception_handler
-    async def get_service_plan_by_code(self, plan_code: str) -> Optional[schemas.ServicePlanResponse]:
+    async def get_service_plan_by_code(
+        self, plan_code: str
+    ) -> Optional[schemas.ServicePlanResponse]:
         """Get service plan by code."""
         plan = self.service_plan_repo.get_by_code(plan_code)
         if not plan:
@@ -85,7 +98,9 @@ class ServicesService(BaseTenantService):
         self, filters: Optional[dict[str, Any]] = None, limit: int = 50, offset: int = 0
     ) -> list[schemas.ServicePlanResponse]:
         """List service plans with filtering."""
-        plans = self.service_plan_repo.list(filters=filters, limit=limit, offset=offset, sort_by="name")
+        plans = self.service_plan_repo.list(
+            filters=filters, limit=limit, offset=offset, sort_by="name"
+        )
         return [schemas.ServicePlanResponse.model_validate(plan) for plan in plans]
 
     @standard_exception_handler
@@ -95,7 +110,9 @@ class ServicesService(BaseTenantService):
         return [schemas.ServicePlanResponse.model_validate(plan) for plan in plans]
 
     @standard_exception_handler
-    async def get_service_plans_by_type(self, service_type: str) -> list[schemas.ServicePlanResponse]:
+    async def get_service_plans_by_type(
+        self, service_type: str
+    ) -> list[schemas.ServicePlanResponse]:
         """Get service plans by type."""
         plans = self.service_plan_repo.get_plans_by_type(service_type)
         return [schemas.ServicePlanResponse.model_validate(plan) for plan in plans]
@@ -110,9 +127,13 @@ class ServicesService(BaseTenantService):
     ) -> schemas.ServiceActivationResponse:
         """Activate a new service for a customer."""
         # Validate service plan exists and is active
-        service_plan = self.service_plan_repo.get_by_id(activation_request.service_plan_id)
+        service_plan = self.service_plan_repo.get_by_id(
+            activation_request.service_plan_id
+        )
         if not service_plan:
-            raise EntityNotFoundError(f"Service plan not found: {activation_request.service_plan_id}")
+            raise EntityNotFoundError(
+                f"Service plan not found: {activation_request.service_plan_id}"
+            )
 
         if not service_plan.is_active:
             raise BusinessRuleError("Service plan is not currently active")
@@ -137,7 +158,9 @@ class ServicesService(BaseTenantService):
         }
 
         if activation_request.contract_months:
-            service_data["contract_end_date"] = date.today() + timedelta(days=activation_request.contract_months * 30)
+            service_data["contract_end_date"] = date.today() + timedelta(
+                days=activation_request.contract_months * 30
+            )
 
         service_instance = self.service_instance_repo.create(service_data)
 
@@ -145,7 +168,8 @@ class ServicesService(BaseTenantService):
         provisioning_data = {
             "service_instance_id": service_instance.id,
             "provisioning_status": "pending",
-            "scheduled_date": activation_request.preferred_installation_date or (datetime.now() + timedelta(days=3)),
+            "scheduled_date": activation_request.preferred_installation_date
+            or (datetime.now() + timedelta(days=3)),
             "installation_notes": activation_request.installation_notes,
             "equipment_required": [],  # Will be populated based on service type
         }
@@ -154,21 +178,33 @@ class ServicesService(BaseTenantService):
 
         # Record status change
         self.status_history_repo.add_status_change(
-            service_instance.id, None, "pending", "Service activation requested", effective_date=datetime.now()
+            service_instance.id,
+            None,
+            "pending",
+            "Service activation requested",
+            effective_date=datetime.now(),
         )
 
-        logger.info(f"Activated service {service_number} for customer {activation_request.customer_id}")
+        logger.info(
+            f"Activated service {service_number} for customer {activation_request.customer_id}"
+        )
 
         return schemas.ServiceActivationResponse(
-            service_instance=schemas.ServiceInstanceResponse.model_validate(service_instance),
-            provisioning_task=schemas.ProvisioningTaskResponse.model_validate(provisioning_task),
+            service_instance=schemas.ServiceInstanceResponse.model_validate(
+                service_instance
+            ),
+            provisioning_task=schemas.ProvisioningTaskResponse.model_validate(
+                provisioning_task
+            ),
             estimated_activation=provisioning_data["scheduled_date"],
             total_setup_cost=setup_cost,
             monthly_recurring_cost=monthly_price,
         )
 
     @standard_exception_handler
-    async def get_service_instance(self, service_id: UUID) -> Optional[schemas.ServiceInstanceResponse]:
+    async def get_service_instance(
+        self, service_id: UUID
+    ) -> Optional[schemas.ServiceInstanceResponse]:
         """Get service instance by ID."""
         service = self.service_instance_repo.get_by_id(service_id)
         if not service:
@@ -176,7 +212,9 @@ class ServicesService(BaseTenantService):
         return schemas.ServiceInstanceResponse.model_validate(service)
 
     @standard_exception_handler
-    async def get_service_by_number(self, service_number: str) -> Optional[schemas.ServiceInstanceResponse]:
+    async def get_service_by_number(
+        self, service_number: str
+    ) -> Optional[schemas.ServiceInstanceResponse]:
         """Get service instance by service number."""
         service = self.service_instance_repo.get_by_service_number(service_number)
         if not service:
@@ -184,14 +222,22 @@ class ServicesService(BaseTenantService):
         return schemas.ServiceInstanceResponse.model_validate(service)
 
     @standard_exception_handler
-    async def get_customer_services(self, customer_id: UUID) -> list[schemas.ServiceInstanceResponse]:
+    async def get_customer_services(
+        self, customer_id: UUID
+    ) -> list[schemas.ServiceInstanceResponse]:
         """Get all services for a customer."""
         services = self.service_instance_repo.get_customer_services(customer_id)
-        return [schemas.ServiceInstanceResponse.model_validate(service) for service in services]
+        return [
+            schemas.ServiceInstanceResponse.model_validate(service)
+            for service in services
+        ]
 
     @standard_exception_handler
     async def update_service_status(
-        self, service_id: UUID, status_update: schemas.ServiceStatusUpdate, user_id: Optional[UUID] = None
+        self,
+        service_id: UUID,
+        status_update: schemas.ServiceStatusUpdate,
+        user_id: Optional[UUID] = None,
     ) -> schemas.ServiceInstanceResponse:
         """Update service status with history tracking."""
         service = self.service_instance_repo.get_by_id_or_raise(service_id)
@@ -215,10 +261,17 @@ class ServicesService(BaseTenantService):
 
         # Record status change
         self.status_history_repo.add_status_change(
-            service_id, old_status, status_update.status, status_update.reason, user_id, status_update.effective_date
+            service_id,
+            old_status,
+            status_update.status,
+            status_update.reason,
+            user_id,
+            status_update.effective_date,
         )
 
-        logger.info(f"Updated service {service.service_number} status: {old_status} -> {status_update.status}")
+        logger.info(
+            f"Updated service {service.service_number} status: {old_status} -> {status_update.status}"
+        )
 
         return schemas.ServiceInstanceResponse.model_validate(updated_service)
 
@@ -227,7 +280,9 @@ class ServicesService(BaseTenantService):
         self, service_id: UUID, reason: str, user_id: Optional[UUID] = None
     ) -> schemas.ServiceInstanceResponse:
         """Suspend a service."""
-        status_update = schemas.ServiceStatusUpdate(status="suspended", reason=reason, effective_date=datetime.now())
+        status_update = schemas.ServiceStatusUpdate(
+            status="suspended", reason=reason, effective_date=datetime.now()
+        )
         return await self.update_service_status(service_id, status_update, user_id)
 
     @standard_exception_handler
@@ -235,16 +290,24 @@ class ServicesService(BaseTenantService):
         self, service_id: UUID, reason: str, user_id: Optional[UUID] = None
     ) -> schemas.ServiceInstanceResponse:
         """Reactivate a suspended service."""
-        status_update = schemas.ServiceStatusUpdate(status="active", reason=reason, effective_date=datetime.now())
+        status_update = schemas.ServiceStatusUpdate(
+            status="active", reason=reason, effective_date=datetime.now()
+        )
         return await self.update_service_status(service_id, status_update, user_id)
 
     @standard_exception_handler
     async def cancel_service(
-        self, service_id: UUID, reason: str, effective_date: Optional[datetime] = None, user_id: Optional[UUID] = None
+        self,
+        service_id: UUID,
+        reason: str,
+        effective_date: Optional[datetime] = None,
+        user_id: Optional[UUID] = None,
     ) -> schemas.ServiceInstanceResponse:
         """Cancel a service."""
         status_update = schemas.ServiceStatusUpdate(
-            status="cancelled", reason=reason, effective_date=effective_date or datetime.now()
+            status="cancelled",
+            reason=reason,
+            effective_date=effective_date or datetime.now(),
         )
         return await self.update_service_status(service_id, status_update, user_id)
 
@@ -264,10 +327,16 @@ class ServicesService(BaseTenantService):
     ) -> schemas.ProvisioningTaskResponse:
         """Assign technician to provisioning task."""
         task = self.provisioning_repo.update(
-            provisioning_id, {"assigned_technician_id": technician_id, "provisioning_status": "in_progress"}
+            provisioning_id,
+            {
+                "assigned_technician_id": technician_id,
+                "provisioning_status": "in_progress",
+            },
         )
 
-        logger.info(f"Assigned technician {technician_id} to provisioning task {provisioning_id}")
+        logger.info(
+            f"Assigned technician {technician_id} to provisioning task {provisioning_id}"
+        )
 
         return schemas.ProvisioningTaskResponse.model_validate(task)
 
@@ -292,7 +361,9 @@ class ServicesService(BaseTenantService):
             await self.update_service_status(
                 task.service_instance_id,
                 schemas.ServiceStatusUpdate(
-                    status="active", reason="Provisioning completed successfully", effective_date=datetime.now()
+                    status="active",
+                    reason="Provisioning completed successfully",
+                    effective_date=datetime.now(),
                 ),
             )
 
@@ -306,7 +377,12 @@ class ServicesService(BaseTenantService):
 
     @standard_exception_handler
     async def record_service_usage(
-        self, service_id: UUID, usage_date: date, data_downloaded_mb: float, data_uploaded_mb: float, **kwargs
+        self,
+        service_id: UUID,
+        usage_date: date,
+        data_downloaded_mb: float,
+        data_uploaded_mb: float,
+        **kwargs,
     ) -> schemas.ServiceUsageResponse:
         """Record daily usage for a service."""
         usage = self.usage_repo.record_daily_usage(
@@ -320,8 +396,13 @@ class ServicesService(BaseTenantService):
         self, service_id: UUID, start_date: date, end_date: date
     ) -> list[schemas.ServiceUsageResponse]:
         """Get usage metrics for a service."""
-        usage_records = self.usage_repo.get_service_usage(service_id, start_date, end_date)
-        return [schemas.ServiceUsageResponse.model_validate(record) for record in usage_records]
+        usage_records = self.usage_repo.get_service_usage(
+            service_id, start_date, end_date
+        )
+        return [
+            schemas.ServiceUsageResponse.model_validate(record)
+            for record in usage_records
+        ]
 
     @standard_exception_handler
     async def get_service_dashboard(self) -> schemas.ServiceDashboard:
@@ -330,11 +411,14 @@ class ServicesService(BaseTenantService):
 
         # Calculate churn rate (cancelled services in last 30 days / total active at start of period)
         thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
-        recent_cancellations = await self.service_instance_repo.count_cancelled_since(thirty_days_ago)
+        recent_cancellations = await self.service_instance_repo.count_cancelled_since(
+            thirty_days_ago
+        )
         churn_rate = Decimal("0")
         if stats["status_breakdown"].get("active", 0) > 0:
             churn_rate = (
-                Decimal(str(recent_cancellations)) / Decimal(str(stats["status_breakdown"]["active"]))
+                Decimal(str(recent_cancellations))
+                / Decimal(str(stats["status_breakdown"]["active"]))
             ) * Decimal("100")
 
         # Get most popular plans
@@ -357,18 +441,29 @@ class ServicesService(BaseTenantService):
     # BUSINESS RULE VALIDATION
     # =================================================================
 
-    async def _validate_service_plan_rules(self, plan_data: schemas.ServicePlanCreate) -> None:
+    async def _validate_service_plan_rules(
+        self, plan_data: schemas.ServicePlanCreate
+    ) -> None:
         """Validate service plan business rules."""
-        if plan_data.max_contract_months and plan_data.min_contract_months > plan_data.max_contract_months:
-            raise BusinessRuleError("Minimum contract months cannot exceed maximum contract months")
+        if (
+            plan_data.max_contract_months
+            and plan_data.min_contract_months > plan_data.max_contract_months
+        ):
+            raise BusinessRuleError(
+                "Minimum contract months cannot exceed maximum contract months"
+            )
 
         if plan_data.monthly_price <= 0:
             raise BusinessRuleError("Monthly price must be greater than zero")
 
         if plan_data.service_type == "internet" and not plan_data.download_speed:
-            raise BusinessRuleError("Internet services must have download speed specified")
+            raise BusinessRuleError(
+                "Internet services must have download speed specified"
+            )
 
-    async def _validate_status_transition(self, current_status: str, new_status: str) -> None:
+    async def _validate_status_transition(
+        self, current_status: str, new_status: str
+    ) -> None:
         """Validate service status transitions."""
         valid_transitions = {
             "pending": ["active", "cancelled"],
@@ -379,7 +474,9 @@ class ServicesService(BaseTenantService):
         }
 
         if new_status not in valid_transitions.get(current_status, []):
-            raise BusinessRuleError(f"Invalid status transition from {current_status} to {new_status}")
+            raise BusinessRuleError(
+                f"Invalid status transition from {current_status} to {new_status}"
+            )
 
     async def _generate_service_number(self, service_type: str) -> str:
         """Generate unique service number."""

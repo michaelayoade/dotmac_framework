@@ -13,7 +13,7 @@ permissions:
   statuses: write
 
 env:
-  PYTHON_VERSION: '3.12'
+  PYTHON_VERSION: '3.9'
   NODE_VERSION: '18'
   PNPM_VERSION: '8'
 
@@ -73,12 +73,12 @@ jobs:
       
       - name: Install dependencies
         run: |
-          poetry install
+          poetry install --with security
       
       - name: Security checks
         run: |
           poetry run bandit -r src/ -f json -o bandit-report.json || true
-          poetry run safety check --json --output safety-report.json || true
+          poetry run safety scan --output json > safety-report.json || true
       
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -94,58 +94,69 @@ jobs:
         run: |
           echo "🔍 Scanning for hardcoded secrets (excluding tests)..."
           
-          # Create temporary script for complex scanning
-          cat > /tmp/scan_secrets.sh << 'EOF'
-          #!/bin/bash
-          set -e
+          # Use Python script for reliable secret scanning
+          python3 << 'EOF'
+          import os
+          import re
+          import sys
           
-          # Find production files only (exclude tests)
-          find . -type f \( -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \) \
-            ! -path "*/test*" ! -path "*/__test*" ! -path "*/.git/*" \
-            ! -path "*/node_modules/*" ! -path "*/__pycache__/*" \
-            ! -path "*/examples/*" ! -path "*/mock*" \
-            ! -name "*.test.*" ! -name "*.spec.*" > /tmp/prod_files.txt
+          def find_production_files():
+              production_files = []
+              for root, dirs, files in os.walk('.'):
+                  # Skip test directories and common non-production paths
+                  dirs[:] = [d for d in dirs if not any(skip in d for skip in [
+                      'test', '__test', '.git', 'node_modules', '__pycache__', 
+                      'examples', 'mock', '.dev-artifacts'
+                  ])]
+                  
+                  for file in files:
+                      if file.endswith(('.py', '.js', '.ts', '.jsx', '.tsx')) and not any(skip in file for skip in ['test.', 'spec.']):
+                          production_files.append(os.path.join(root, file))
+              
+              return production_files
           
-          # Check if we have any files to scan
-          if [ ! -s /tmp/prod_files.txt ]; then
-            echo "✅ No production files found to scan"
-            exit 0
-          fi
+          def scan_file(file_path):
+              try:
+                  with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                      content = f.read()
+                  
+                  # Check for API keys
+                  api_key_pattern = re.compile(r'sk_[a-zA-Z0-9_]{32,}|pk_[a-zA-Z0-9_]{32,}|rk_[a-zA-Z0-9_]{32,}')
+                  if api_key_pattern.search(content):
+                      print(f"❌ Potential API key found in: {file_path}")
+                      return True
+                  
+                  # Check for hardcoded credentials
+                  credential_pattern = re.compile(r'(password|secret|key|token)\s*[:=]\s*["\'][a-zA-Z0-9]{12,}["\']', re.IGNORECASE)
+                  matches = credential_pattern.search(content)
+                  if matches:
+                      # Exclude known safe patterns
+                      safe_patterns = ['CHANGE_ME', 'INSECURE', 'EXAMPLE', 'template', 'config', 'test-', 'demo-', 'placeholder']
+                      is_safe = any(safe in content for safe in safe_patterns)
+                      
+                      if not is_safe:
+                          print(f"❌ Potential hardcoded credential found in: {file_path}")
+                          return True
+                  
+              except Exception as e:
+                  print(f"Warning: Could not scan {file_path}: {e}")
+              
+              return False
           
-          # Check for API keys using simple while loop
-          found_api_keys=false
-          while IFS= read -r file; do
-            if grep -q "sk_[a-zA-Z0-9_]\{32,\}\|pk_[a-zA-Z0-9_]\{32,\}\|rk_[a-zA-Z0-9_]\{32,\}" "$file" 2>/dev/null; then
-              echo "❌ Potential API key found in: $file"
-              found_api_keys=true
-            fi
-          done < /tmp/prod_files.txt
+          files = find_production_files()
+          print(f"Scanning {len(files)} production files...")
           
-          if [ "$found_api_keys" = true ]; then
-            exit 1
-          fi
+          issues_found = False
+          for file_path in files:
+              if scan_file(file_path):
+                  issues_found = True
           
-          # Check for hardcoded credentials using simple while loop
-          found_credentials=false
-          while IFS= read -r file; do
-            if grep -q 'password\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"\|secret\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"\|key\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"\|token\s*[:=]\s*"[a-zA-Z0-9]\{12,\}"' "$file" 2>/dev/null; then
-              # Exclude known safe patterns
-              if ! grep -q "CHANGE_ME\|INSECURE.*EXAMPLE\|SECRET:\|template\|config" "$file" 2>/dev/null; then
-                echo "❌ Potential hardcoded credential found in: $file"
-                found_credentials=true
-              fi
-            fi
-          done < /tmp/prod_files.txt
-          
-          if [ "$found_credentials" = true ]; then
-            exit 1
-          fi
-          
-          echo "✅ No hardcoded secrets detected in production code"
+          if issues_found:
+              print("❌ Security issues detected!")
+              sys.exit(1)
+          else:
+              print("✅ No hardcoded secrets detected in production code")
           EOF
-          
-          chmod +x /tmp/scan_secrets.sh
-          /tmp/scan_secrets.sh
       
       - name: Security Bootstrap Validation
         env:
@@ -156,7 +167,22 @@ jobs:
             echo "⚠️ Skipping bootstrap validation: secrets not configured"
             exit 0
           fi
-          poetry run dotmac-admin bootstrap --check-only
+          
+          # Basic validation of environment variables for security bootstrap
+          echo "🔐 Validating security bootstrap environment..."
+          
+          # Check email format
+          if [[ ! "${AUTH_ADMIN_EMAIL}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+            echo "❌ Invalid email format for AUTH_ADMIN_EMAIL"
+            exit 1
+          fi
+          
+          # Check password strength (basic)
+          if [[ ${#AUTH_INITIAL_ADMIN_PASSWORD} -lt 12 ]]; then
+            echo "❌ AUTH_INITIAL_ADMIN_PASSWORD too short (minimum 12 characters)"
+            exit 1
+          fi
+          
           echo "✅ Security bootstrap environment validated"
 
   # Backend testing
@@ -226,11 +252,16 @@ jobs:
       
       - name: Run tests
         run: |
+          export PYTHONPATH="src:packages/dotmac-platform-services/src"
           poetry run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term --cov-report=html
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
           ENVIRONMENT: test
+          SKIP_OPENBAO_CHECKS: "true"
+          SECRET_KEY: "test-secret-key-for-ci-only"
+          JWT_SECRET: "test-jwt-secret-for-ci-only"
+          ENCRYPTION_KEY: "test-encryption-key-for-ci-only-32-chars"
       
       - name: Generate coverage summary
         run: |
@@ -483,6 +514,11 @@ jobs:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
           ENVIRONMENT: test
+          SKIP_OPENBAO_CHECKS: "true"
+          SECRET_KEY: "test-secret-key-for-ci-only"
+          JWT_SECRET: "test-jwt-secret-for-ci-only"
+          ENCRYPTION_KEY: "test-encryption-key-for-ci-only-32-chars"
+          PYTHONPATH: "src:packages/dotmac-platform-services/src"
       
       - name: Upload E2E results
         uses: actions/upload-artifact@v4

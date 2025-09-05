@@ -4,11 +4,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import (
-    BaseModel,
-    Field,
-    field_validator,
-)
+from pydantic import BaseModel, Field, field_validator
 
 from ..models.domain_management import (
     DNSRecordType,
@@ -317,7 +313,9 @@ class DomainStatsResponse(BaseModel):
     ssl_by_status: dict[str, int] = Field(default_factory=dict)
     providers_usage: dict[str, int] = Field(default_factory=dict)
     expiring_domains: list[DomainResponse] = Field(default_factory=list)
-    expiring_ssl_certificates: list[SSLCertificateResponse] = Field(default_factory=list)
+    expiring_ssl_certificates: list[SSLCertificateResponse] = Field(
+        default_factory=list
+    )
 
 
 # Search and Filter Schemas
@@ -341,7 +339,10 @@ class DomainSearchRequest(BaseModel):
 
     query: Optional[str] = Field(None, max_length=200)  # Search in domain name
     filters: Optional[DomainSearchFilters] = None
-    sort_by: str = Field(default="created_at", pattern="^(created_at|domain_name|expiration_date|status)$")
+    sort_by: str = Field(
+        default="created_at",
+        pattern="^(created_at|domain_name|expiration_date|status)$",
+    )
     sort_order: str = Field(default="desc", pattern="^(asc|desc)$")
     page: int = Field(default=1, ge=1)
     size: int = Field(default=50, ge=1, le=100)

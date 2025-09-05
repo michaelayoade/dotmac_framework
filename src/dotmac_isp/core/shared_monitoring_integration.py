@@ -8,7 +8,9 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from dotmac.communications.events import EventBus
-from dotmac.communications.notifications import NotificationService as UnifiedNotificationService
+from dotmac.communications.notifications import (
+    NotificationService as UnifiedNotificationService,
+)
 from dotmac_shared.monitoring.integrations import (
     AlertConfig,
     IntegratedMonitoringService,
@@ -48,7 +50,9 @@ class ISPMonitoringManager:
             await self._initialize_module_monitoring()
 
             self._initialized = True
-            logger.info(f"✅ ISP Monitoring Manager initialized for tenant {self.tenant_id}")
+            logger.info(
+                f"✅ ISP Monitoring Manager initialized for tenant {self.tenant_id}"
+            )
             return True
 
         except Exception as e:
@@ -92,7 +96,9 @@ class ISPMonitoringManager:
                 logger.info(f"✅ Initialized monitoring for ISP module: {module}")
 
             except Exception as e:
-                logger.error(f"❌ Failed to initialize monitoring for module {module}: {e}")
+                logger.error(
+                    f"❌ Failed to initialize monitoring for module {module}: {e}"
+                )
 
     def get_module_monitor(self, module: str) -> Optional[IntegratedMonitoringService]:
         """Get monitoring service for a specific ISP module."""
@@ -240,7 +246,9 @@ class ISPMonitoringManager:
         """Record error from any ISP module."""
         monitor = self.get_module_monitor(module)
         if monitor:
-            monitor.record_error(error_type=error_type, service=f"isp_{module}", tenant_id=self.tenant_id)
+            monitor.record_error(
+                error_type=error_type, service=f"isp_{module}", tenant_id=self.tenant_id
+            )
             # Log for troubleshooting
             logger.error(f"ISP {module} error: {error_type} - {error_details}")
 
@@ -275,7 +283,11 @@ class ISPMonitoringManager:
             try:
                 module_health = monitor.perform_health_check()
                 health_checks[f"isp_{module}"] = {
-                    "status": ("healthy" if all(hc.status.value == "healthy" for hc in module_health) else "degraded"),
+                    "status": (
+                        "healthy"
+                        if all(hc.status.value == "healthy" for hc in module_health)
+                        else "degraded"
+                    ),
                     "checks": [
                         {
                             "name": hc.name,

@@ -20,11 +20,7 @@ from tenacity import (
 from ..adapters.docker_adapter import DockerAdapter
 from ..adapters.kubernetes_adapter import KubernetesAdapter
 from ..adapters.resource_calculator import ResourceCalculator
-from .exceptions import (
-    DeploymentError,
-    InfrastructureError,
-    ProvisioningError,
-)
+from .exceptions import DeploymentError, InfrastructureError, ProvisioningError
 from .models import (
     DeploymentArtifacts,
     DeploymentStatus,
@@ -53,7 +49,9 @@ class ContainerProvisioner:
         # Track active provisioning operations
         self.active_operations: dict[UUID, ProvisioningResult] = {}
 
-    async def provision_container(self, request: ProvisioningRequest) -> ProvisioningResult:
+    async def provision_container(
+        self, request: ProvisioningRequest
+    ) -> ProvisioningResult:
         """
         Provision a new ISP Framework container.
 
@@ -120,7 +118,9 @@ class ContainerProvisioner:
                 endpoint_url=result.endpoint_url,
             )
 
-            result.add_log(f"Provisioning completed in {result.deployment_duration:.1f}s", "INFO")
+            result.add_log(
+                f"Provisioning completed in {result.deployment_duration:.1f}s", "INFO"
+            )
 
         except Exception as e:
             logger.error(
@@ -148,7 +148,9 @@ class ContainerProvisioner:
 
         return result
 
-    async def _validate_provisioning_request(self, request: ProvisioningRequest, result: ProvisioningResult) -> None:
+    async def _validate_provisioning_request(
+        self, request: ProvisioningRequest, result: ProvisioningResult
+    ) -> None:
         """Validate provisioning request and prerequisites."""
 
         result.add_log("Validating provisioning request", "INFO")
@@ -332,7 +334,9 @@ class ContainerProvisioner:
                 artifacts.ssl_certificate_name = ssl_info.get("certificate_name")
 
             # Set up monitoring and logging
-            await adapter.configure_monitoring(isp_id=request.isp_id, config=request.config, artifacts=artifacts)
+            await adapter.configure_monitoring(
+                isp_id=request.isp_id, config=request.config, artifacts=artifacts
+            )
 
             result.add_log("Service configuration completed", "INFO")
 
@@ -373,7 +377,8 @@ class ContainerProvisioner:
             # Perform comprehensive health validation
             async with HealthValidator(timeout=60) as validator:
                 health_status = await validator.wait_for_healthy(
-                    container_id=artifacts.container_id or f"isp-{request.config.tenant_name}",
+                    container_id=artifacts.container_id
+                    or f"isp-{request.config.tenant_name}",
                     base_url=base_url,
                     max_wait_seconds=120,  # 2 minutes max wait
                     check_interval=5,  # Check every 5 seconds
@@ -396,7 +401,9 @@ class ContainerProvisioner:
                 stage="health_validation",
             ) from e
 
-    async def _handle_rollback(self, request: ProvisioningRequest, result: ProvisioningResult) -> None:
+    async def _handle_rollback(
+        self, request: ProvisioningRequest, result: ProvisioningResult
+    ) -> None:
         """Handle rollback on provisioning failure."""
 
         result.add_log("Starting rollback", "WARN")
@@ -420,18 +427,26 @@ class ContainerProvisioner:
                 result.rollback_completed = True
                 result.status = DeploymentStatus.ROLLED_BACK
                 result.add_log("Rollback completed successfully", "INFO")
-                logger.info("Rollback completed successfully", isp_id=str(request.isp_id))
+                logger.info(
+                    "Rollback completed successfully", isp_id=str(request.isp_id)
+                )
             else:
                 result.add_log("Rollback partially completed", "WARN")
-                logger.warning("Rollback partially completed", isp_id=str(request.isp_id))
+                logger.warning(
+                    "Rollback partially completed", isp_id=str(request.isp_id)
+                )
 
         except Exception as rollback_error:
-            logger.error("Rollback failed", isp_id=str(request.isp_id), error=str(rollback_error))
+            logger.error(
+                "Rollback failed", isp_id=str(request.isp_id), error=str(rollback_error)
+            )
             result.add_log(f"Rollback failed: {rollback_error}", "ERROR")
 
             # Don't raise rollback errors - original error is more important
 
-    async def get_provisioning_status(self, isp_id: UUID) -> Optional[ProvisioningResult]:
+    async def get_provisioning_status(
+        self, isp_id: UUID
+    ) -> Optional[ProvisioningResult]:
         """Get current status of a provisioning operation."""
         return self.active_operations.get(isp_id)
 

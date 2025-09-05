@@ -52,7 +52,11 @@ def test_imports():
             initialize_hardened_secrets,
         )
 
-        _ = (HardenedSecretFactory, get_hardened_jwt_secret, initialize_hardened_secrets)
+        _ = (
+            HardenedSecretFactory,
+            get_hardened_jwt_secret,
+            initialize_hardened_secrets,
+        )
 
         logger.info("   ✅ Hardened secret factory module imported successfully")
     except ImportError as e:
@@ -228,8 +232,12 @@ def test_csrf_strategy():
         logger.info("   ✅ Invalid CSRF token rejection works")
 
         # Test token binding
-        session_token = token_generator.generate(session_id="session123", user_id="user456")
-        is_valid = token_generator.validate(session_token, session_id="session123", user_id="user456")
+        session_token = token_generator.generate(
+            session_id="session123", user_id="user456"
+        )
+        is_valid = token_generator.validate(
+            session_token, session_id="session123", user_id="user456"
+        )
         assert is_valid is True
         logger.info("   ✅ CSRF token binding works")
 
@@ -246,10 +254,18 @@ async def test_environment_validation():
     logger.info("=== Testing Environment Security Validation ===")
 
     try:
-        from .environment_security_validator import Environment, EnvironmentSecurityValidator, SecuritySeverity
+        from .environment_security_validator import (
+            Environment,
+            EnvironmentSecurityValidator,
+            SecuritySeverity,
+        )
 
         # Test validator creation for different environments
-        environments = [Environment.PRODUCTION, Environment.STAGING, Environment.DEVELOPMENT]
+        environments = [
+            Environment.PRODUCTION,
+            Environment.STAGING,
+            Environment.DEVELOPMENT,
+        ]
 
         for env in environments:
             validator = EnvironmentSecurityValidator(env, portal_name="test")
@@ -332,7 +348,9 @@ async def test_portal_integration():
         portal_types = ["admin", "customer", "management", "reseller", "technician"]
 
         for portal_type in portal_types:
-            result = await validate_portal_security(portal_type=portal_type, environment=Environment.DEVELOPMENT)
+            result = await validate_portal_security(
+                portal_type=portal_type, environment=Environment.DEVELOPMENT
+            )
 
             assert result.environment == Environment.DEVELOPMENT
             assert isinstance(result.security_score, float)
@@ -353,10 +371,16 @@ def test_configuration_consistency():
 
     try:
         from .secrets_policy import Environment, HardenedSecretsManager
-        from .unified_csrf_strategy import create_admin_portal_csrf_config, create_customer_portal_csrf_config
+        from .unified_csrf_strategy import (
+            create_admin_portal_csrf_config,
+            create_customer_portal_csrf_config,
+        )
 
         # Test CSRF configurations are reasonable
-        csrf_configs = [create_admin_portal_csrf_config(), create_customer_portal_csrf_config()]
+        csrf_configs = [
+            create_admin_portal_csrf_config(),
+            create_customer_portal_csrf_config(),
+        ]
 
         for config in csrf_configs:
             # Token lifetime should be between 30 minutes and 4 hours
@@ -391,7 +415,11 @@ def test_error_handling():
     logger.info("=== Testing Error Handling ===")
 
     try:
-        from .secrets_policy import Environment, HardenedSecretsManager, SecretsEnvironmentError
+        from .secrets_policy import (
+            Environment,
+            HardenedSecretsManager,
+            SecretsEnvironmentError,
+        )
         from .unified_csrf_strategy import CSRFToken
 
         # Test secrets policy error handling

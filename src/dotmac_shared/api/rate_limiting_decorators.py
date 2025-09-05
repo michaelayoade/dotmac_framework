@@ -12,9 +12,10 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from dotmac_shared.monitoring.base import get_monitoring
 from fastapi import HTTPException, Request
 from fastapi.security.utils import get_authorization_scheme_param
+
+from dotmac_shared.monitoring.base import get_monitoring
 
 
 class RateLimitType(Enum):
@@ -48,7 +49,9 @@ class RateLimitDecorators:
 
     def _initialize_rate_limiter(self):
         """Initialize the rate limiter with appropriate storage backend."""
-        logger.warning("Rate limiting components not available - rate limiting disabled")
+        logger.warning(
+            "Rate limiting components not available - rate limiting disabled"
+        )
         self._rate_limiter = None
         return
 
@@ -110,7 +113,11 @@ class RateLimitDecorators:
 
     def _init_rate_limiting_metrics(self):
         """Initialize rate limiting specific metrics."""
-        if not self._monitoring or not hasattr(self._monitoring, "meter") or not self._monitoring.meter:
+        if (
+            not self._monitoring
+            or not hasattr(self._monitoring, "meter")
+            or not self._monitoring.meter
+        ):
             logger.warning("Monitoring service not available for rate limiting metrics")
             return
 
@@ -134,10 +141,12 @@ class RateLimitDecorators:
                 unit="1",
             )
 
-            self.rate_limit_remaining_gauge = self._monitoring.meter.create_up_down_counter(
-                name="rate_limit_remaining_requests",
-                description="Remaining requests for current window",
-                unit="1",
+            self.rate_limit_remaining_gauge = (
+                self._monitoring.meter.create_up_down_counter(
+                    name="rate_limit_remaining_requests",
+                    description="Remaining requests for current window",
+                    unit="1",
+                )
             )
 
             logger.info("Rate limiting metrics initialized successfully")
@@ -183,7 +192,9 @@ class RateLimitDecorators:
             labels = {
                 "endpoint": endpoint,
                 "method": method,
-                "client_ip": (client_ip[:8] + "..." if len(client_ip) > 8 else client_ip),  # Truncate IP for privacy
+                "client_ip": (
+                    client_ip[:8] + "..." if len(client_ip) > 8 else client_ip
+                ),  # Truncate IP for privacy
                 "has_user_id": str(bool(user_id)),
             }
 
@@ -204,12 +215,16 @@ class RateLimitDecorators:
         except Exception as e:
             logger.error(f"Failed to record rate limiting metrics: {e}")
 
-    def _record_lockout_metric(self, client_ip: str, user_id: Optional[str], reason: str):
+    def _record_lockout_metric(
+        self, client_ip: str, user_id: Optional[str], reason: str
+    ):
         """Record account lockout metrics."""
         try:
             if self.rate_limit_lockouts_counter:
                 labels = {
-                    "client_ip": (client_ip[:8] + "..." if len(client_ip) > 8 else client_ip),
+                    "client_ip": (
+                        client_ip[:8] + "..." if len(client_ip) > 8 else client_ip
+                    ),
                     "has_user_id": str(bool(user_id)),
                     "reason": reason,
                 }
@@ -257,7 +272,9 @@ class RateLimitDecorators:
                     request = kwargs.get("request")
 
                 if not request:
-                    logger.warning(f"No request object found for rate limiting in {func.__name__}")
+                    logger.warning(
+                        f"No request object found for rate limiting in {func.__name__}"
+                    )
                     return await func(*args, **kwargs)
 
                 # Get client IP
@@ -270,7 +287,11 @@ class RateLimitDecorators:
 
                 # Check rate limit
                 try:
-                    is_allowed, remaining, reset_time = await self._rate_limiter.is_request_allowed(
+                    (
+                        is_allowed,
+                        remaining,
+                        reset_time,
+                    ) = await self._rate_limiter.is_request_allowed(
                         ip_address=client_ip,
                         user_id=user_id,
                         endpoint=str(request.url.path),
@@ -288,13 +309,18 @@ class RateLimitDecorators:
                     )
 
                     if not is_allowed:
-                        message = custom_message or "Rate limit exceeded. Please try again later."
+                        message = (
+                            custom_message
+                            or "Rate limit exceeded. Please try again later."
+                        )
 
                         # Add rate limit headers
                         headers = {
                             "X-RateLimit-Limit": str(max_requests or 100),
                             "X-RateLimit-Remaining": str(remaining),
-                            "Retry-After": str(int((reset_time - datetime.now()).total_seconds())),
+                            "Retry-After": str(
+                                int((reset_time - datetime.now()).total_seconds())
+                            ),
                         }
 
                         raise HTTPException(
@@ -302,7 +328,9 @@ class RateLimitDecorators:
                             detail={
                                 "error": "RATE_LIMIT_EXCEEDED",
                                 "message": message,
-                                "retry_after": int((reset_time - datetime.now()).total_seconds()),
+                                "retry_after": int(
+                                    (reset_time - datetime.now()).total_seconds()
+                                ),
                             },
                             headers=headers,
                         )
@@ -334,7 +362,9 @@ def rate_limit(
     custom_message: Optional[str] = None,
 ):
     """Standard rate limiting decorator."""
-    return _decorators.rate_limit(max_requests, time_window_seconds, rule_type, custom_message)
+    return _decorators.rate_limit(
+        max_requests, time_window_seconds, rule_type, custom_message
+    )
 
 
 def rate_limit_strict(max_requests: int = 10, time_window_seconds: int = 60):

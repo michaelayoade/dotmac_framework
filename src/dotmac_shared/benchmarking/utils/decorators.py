@@ -13,7 +13,9 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def standard_exception_handler(default_return: Any = None, log_errors: bool = True, reraise: bool = False) -> Callable:
+def standard_exception_handler(
+    default_return: Any = None, log_errors: bool = True, reraise: bool = False
+) -> Callable:
     """
     Standard exception handler decorator for benchmarking functions.
 
@@ -33,7 +35,10 @@ def standard_exception_handler(default_return: Any = None, log_errors: bool = Tr
                 return await func(*args, **kwargs)
             except Exception as e:
                 if log_errors:
-                    logger.error(f"Exception in {func.__name__}: {str(e)}\n" f"Traceback: {traceback.format_exc()}")
+                    logger.error(
+                        f"Exception in {func.__name__}: {str(e)}\n"
+                        f"Traceback: {traceback.format_exc()}"
+                    )
 
                 if reraise:
                     raise
@@ -46,7 +51,10 @@ def standard_exception_handler(default_return: Any = None, log_errors: bool = Tr
                 return func(*args, **kwargs)
             except Exception as e:
                 if log_errors:
-                    logger.error(f"Exception in {func.__name__}: {str(e)}\n" f"Traceback: {traceback.format_exc()}")
+                    logger.error(
+                        f"Exception in {func.__name__}: {str(e)}\n"
+                        f"Traceback: {traceback.format_exc()}"
+                    )
 
                 if reraise:
                     raise

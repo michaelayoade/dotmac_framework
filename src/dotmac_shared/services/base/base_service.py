@@ -23,9 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 # Import from core exception system
-from ...core.exceptions import (
-    EntityNotFoundError,
-)
+from ...core.exceptions import EntityNotFoundError
 
 # Try to import database base from multiple sources for compatibility
 try:
@@ -50,7 +48,9 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=PydanticBaseModel)
 ResponseSchemaType = TypeVar("ResponseSchemaType", bound=PydanticBaseModel)
 
 
-class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType], ABC):
+class BaseService(
+    Generic[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType], ABC
+):
     """
     Unified base service providing common business logic operations.
 
@@ -112,7 +112,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
 
     # Core CRUD Operations
 
-    async def create(self, data: CreateSchemaType, user_id: str | None = None) -> ResponseSchemaType:
+    async def create(
+        self, data: CreateSchemaType, user_id: str | None = None
+    ) -> ResponseSchemaType:
         """
         Create a new entity with business rule validation.
 
@@ -162,7 +164,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
         # Transform to response schema
         return self._to_response_schema(entity)
 
-    async def get_by_id(self, entity_id: UUID, user_id: str | None = None) -> ResponseSchemaType:
+    async def get_by_id(
+        self, entity_id: UUID, user_id: str | None = None
+    ) -> ResponseSchemaType:
         """
         Get entity by ID with tenant isolation and access control.
 
@@ -183,7 +187,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
 
         return self._to_response_schema(entity)
 
-    async def update(self, entity_id: UUID, data: UpdateSchemaType, user_id: str | None = None) -> ResponseSchemaType:
+    async def update(
+        self, entity_id: UUID, data: UpdateSchemaType, user_id: str | None = None
+    ) -> ResponseSchemaType:
         """
         Update entity with business rule validation.
 
@@ -234,7 +240,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
 
         return self._to_response_schema(entity)
 
-    async def delete(self, entity_id: UUID, user_id: str | None = None, soft_delete: bool = True) -> bool:
+    async def delete(
+        self, entity_id: UUID, user_id: str | None = None, soft_delete: bool = True
+    ) -> bool:
         """
         Delete entity with business rule validation.
 
@@ -313,7 +321,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
 
         return [self._to_response_schema(entity) for entity in entities]
 
-    async def count(self, filters: dict[str, Any] | None = None, user_id: str | None = None) -> int:
+    async def count(
+        self, filters: dict[str, Any] | None = None, user_id: str | None = None
+    ) -> int:
         """
         Count entities matching filters with access control.
 
@@ -349,11 +359,15 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
             entity = self.db.query(self.model_class).filter(and_(*filters)).first()
 
         if not entity:
-            raise EntityNotFoundError(f"{self.model_class.__name__} with ID {entity_id} not found")
+            raise EntityNotFoundError(
+                f"{self.model_class.__name__} with ID {entity_id} not found"
+            )
 
         return entity
 
-    def _build_list_query(self, filters: dict[str, Any] | None, order_by: str | None, user_id: str | None):
+    def _build_list_query(
+        self, filters: dict[str, Any] | None, order_by: str | None, user_id: str | None
+    ):
         """Build list query with filters and tenant isolation."""
         if isinstance(self.db, AsyncSession):
             query = select(self.model_class)
@@ -421,7 +435,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
             return self.response_schema.model_validate(entity)
         return entity
 
-    def _prepare_create_data(self, data: CreateSchemaType, user_id: str | None) -> dict[str, Any]:
+    def _prepare_create_data(
+        self, data: CreateSchemaType, user_id: str | None
+    ) -> dict[str, Any]:
         """Prepare creation data from schema."""
         if hasattr(data, "model_dump"):
             return data.model_dump(exclude_unset=True)
@@ -429,7 +445,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
             return data.dict(exclude_unset=True)
         return data
 
-    def _prepare_update_data(self, data: UpdateSchemaType, user_id: str | None) -> dict[str, Any]:
+    def _prepare_update_data(
+        self, data: UpdateSchemaType, user_id: str | None
+    ) -> dict[str, Any]:
         """Prepare update data from schema."""
         if hasattr(data, "model_dump"):
             return data.model_dump(exclude_unset=True)
@@ -439,11 +457,15 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
 
     # Abstract Business Logic Methods - Override in subclasses
 
-    async def _validate_create(self, data: CreateSchemaType, user_id: str | None) -> None:
+    async def _validate_create(
+        self, data: CreateSchemaType, user_id: str | None
+    ) -> None:
         """Validate business rules for creation. Override in subclasses."""
         pass
 
-    async def _validate_update(self, entity: ModelType, data: UpdateSchemaType, user_id: str | None) -> None:
+    async def _validate_update(
+        self, entity: ModelType, data: UpdateSchemaType, user_id: str | None
+    ) -> None:
         """Validate business rules for updates. Override in subclasses."""
         pass
 
@@ -451,7 +473,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
         """Validate business rules for deletion. Override in subclasses."""
         pass
 
-    async def _validate_access(self, entity: ModelType, user_id: str | None, operation: str) -> None:
+    async def _validate_access(
+        self, entity: ModelType, user_id: str | None, operation: str
+    ) -> None:
         """Validate access permissions. Override in subclasses."""
         pass
 
@@ -468,7 +492,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Respons
         pass
 
 
-class BaseManagementService(BaseService[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType]):
+class BaseManagementService(
+    BaseService[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType]
+):
     """
     Management-specific base service with additional features for the management platform.
 
@@ -483,7 +509,9 @@ class BaseManagementService(BaseService[ModelType, CreateSchemaType, UpdateSchem
         super().__init__(*args, **kwargs)
         self.is_management_service = True
 
-    async def _validate_access(self, entity: ModelType, user_id: str | None, operation: str) -> None:
+    async def _validate_access(
+        self, entity: ModelType, user_id: str | None, operation: str
+    ) -> None:
         """Enhanced access validation for management operations."""
         # Management services may have different permission requirements
         # Override in specific management services as needed

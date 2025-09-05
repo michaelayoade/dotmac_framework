@@ -1,4 +1,5 @@
 import logging
+
 logger = logging.getLogger(__name__)
 
 """
@@ -21,10 +22,11 @@ import asyncio
 import os
 
 import pytest
-from dotmac_management.models.tenant import CustomerTenant, TenantStatus
-from dotmac_management.services.tenant_provisioning import TenantProvisioningService
 from playwright.async_api import Page, expect
 from sqlalchemy.orm import Session
+
+from dotmac_management.models.tenant import CustomerTenant, TenantStatus
+from dotmac_management.services.tenant_provisioning import TenantProvisioningService
 
 from .factories import ApiTestDataFactory, TenantFactory
 from .utils import (
@@ -63,19 +65,33 @@ class TestTenantProvisioningWorkflow:
 
             # Login as management admin
             admin_creds = ApiTestDataFactory.create_management_admin_credentials()
-            login_success = await PageTestUtils.login_management_admin(management_page, admin_creds)
+            login_success = await PageTestUtils.login_management_admin(
+                management_page, admin_creds
+            )
             assert login_success, "Management admin login failed"
 
             # Navigate to tenant creation
             await management_page.goto("/tenants/new")
 
             # Fill tenant creation form
-            await management_page.fill("[data-testid=company-name]", tenant_data["company_name"])
-            await management_page.fill("[data-testid=subdomain]", tenant_data["subdomain"])
-            await management_page.fill("[data-testid=admin-name]", tenant_data["admin_name"])
-            await management_page.fill("[data-testid=admin-email]", tenant_data["admin_email"])
-            await management_page.select_option("[data-testid=plan-select]", tenant_data["plan"])
-            await management_page.select_option("[data-testid=region-select]", tenant_data["region"])
+            await management_page.fill(
+                "[data-testid=company-name]", tenant_data["company_name"]
+            )
+            await management_page.fill(
+                "[data-testid=subdomain]", tenant_data["subdomain"]
+            )
+            await management_page.fill(
+                "[data-testid=admin-name]", tenant_data["admin_name"]
+            )
+            await management_page.fill(
+                "[data-testid=admin-email]", tenant_data["admin_email"]
+            )
+            await management_page.select_option(
+                "[data-testid=plan-select]", tenant_data["plan"]
+            )
+            await management_page.select_option(
+                "[data-testid=region-select]", tenant_data["region"]
+            )
 
             # Submit tenant creation
             await management_page.click("[data-testid=create-tenant-button]")
@@ -90,15 +106,19 @@ class TestTenantProvisioningWorkflow:
             management_db_session.expire_all()
 
             created_tenant = (
-                management_db_session.query(CustomerTenant).filter_by(subdomain=tenant_data["subdomain"]).first()
+                management_db_session.query(CustomerTenant)
+                .filter_by(subdomain=tenant_data["subdomain"])
+                .first()
             )
 
             assert created_tenant is not None, "Tenant not found in database"
             assert created_tenant.status == TenantStatus.PENDING
 
             # Step 3: Wait for background provisioning to complete
-            provisioning_result = await ProvisioningTestUtils.wait_for_provisioning_completion(
-                management_db_session, created_tenant.tenant_id, timeout=600
+            provisioning_result = (
+                await ProvisioningTestUtils.wait_for_provisioning_completion(
+                    management_db_session, created_tenant.tenant_id, timeout=600
+                )
             )
 
             assert_tenant_provisioned_successfully(provisioning_result)
@@ -108,8 +128,12 @@ class TestTenantProvisioningWorkflow:
                 management_db_session, created_tenant.tenant_id
             )
 
-            assert steps_verification["verified"], f"Provisioning steps incomplete: {steps_verification}"
-            assert steps_verification["failed_events"] == 0, "Provisioning had failed events"
+            assert steps_verification[
+                "verified"
+            ], f"Provisioning steps incomplete: {steps_verification}"
+            assert (
+                steps_verification["failed_events"] == 0
+            ), "Provisioning had failed events"
 
             # Step 5: Verify tenant infrastructure is ready
             management_db_session.refresh(created_tenant)
@@ -121,7 +145,9 @@ class TestTenantProvisioningWorkflow:
             tenant_url = f"https://{created_tenant.domain}"
 
             # Wait for container to be healthy
-            container_healthy = await ContainerTestUtils.wait_for_container_health(tenant_url, timeout=120)
+            container_healthy = await ContainerTestUtils.wait_for_container_health(
+                tenant_url, timeout=120
+            )
             assert container_healthy, "Tenant container failed health checks"
 
             # Step 7: Verify tenant login page is accessible
@@ -145,7 +171,9 @@ class TestTenantProvisioningWorkflow:
                 assert tenant_login_success, "Tenant admin first login failed"
 
                 # Verify admin dashboard loads
-                await expect(tenant_page.locator("h1")).to_contain_text("Dashboard", timeout=15000)
+                await expect(tenant_page.locator("h1")).to_contain_text(
+                    "Dashboard", timeout=15000
+                )
 
             finally:
                 await tenant_page.close()
@@ -194,8 +222,14 @@ class TestTenantProvisioningWorkflow:
         )
 
         # Verify no new tenant was created
-        duplicate_count = management_db_session.query(CustomerTenant).filter_by(subdomain="existing").count()
-        assert duplicate_count == 1, "Duplicate tenant was created despite validation error"
+        duplicate_count = (
+            management_db_session.query(CustomerTenant)
+            .filter_by(subdomain="existing")
+            .count()
+        )
+        assert (
+            duplicate_count == 1
+        ), "Duplicate tenant was created despite validation error"
 
     async def test_tenant_provisioning_container_deployment_failure(
         self,
@@ -206,7 +240,11 @@ class TestTenantProvisioningWorkflow:
         """Test tenant provisioning with container deployment failure."""
 
         # Create tenant that will fail during container deployment
-        tenant = tenant_factory(company_name="Deployment Failure Test ISP", subdomain="failtest", plan="professional")
+        tenant = tenant_factory(
+            company_name="Deployment Failure Test ISP",
+            subdomain="failtest",
+            plan="professional",
+        )
 
         # Mock container deployment to fail
         mock_tenant_provisioning_service.coolify_client.create_application.side_effect = Exception(
@@ -214,7 +252,9 @@ class TestTenantProvisioningWorkflow:
         )
 
         # Start provisioning
-        provisioning_success = await mock_tenant_provisioning_service.provision_tenant(tenant.id, management_db_session)
+        provisioning_success = await mock_tenant_provisioning_service.provision_tenant(
+            tenant.id, management_db_session
+        )
 
         assert not provisioning_success, "Provisioning should have failed"
 
@@ -231,14 +271,18 @@ class TestTenantProvisioningWorkflow:
     ):
         """Test tenant provisioning with database creation failure."""
 
-        tenant = tenant_factory(company_name="Database Failure Test ISP", subdomain="dbfailtest")
+        tenant = tenant_factory(
+            company_name="Database Failure Test ISP", subdomain="dbfailtest"
+        )
 
         # Mock database creation to fail
         mock_tenant_provisioning_service.coolify_client.create_database_service.side_effect = Exception(
             "Database server unavailable"
         )
 
-        provisioning_success = await mock_tenant_provisioning_service.provision_tenant(tenant.id, management_db_session)
+        provisioning_success = await mock_tenant_provisioning_service.provision_tenant(
+            tenant.id, management_db_session
+        )
 
         assert not provisioning_success
         management_db_session.refresh(tenant)
@@ -253,21 +297,27 @@ class TestTenantProvisioningWorkflow:
     ):
         """Test tenant provisioning with health check timeout."""
 
-        tenant = tenant_factory(company_name="Health Check Timeout ISP", subdomain="healthtimeout")
+        tenant = tenant_factory(
+            company_name="Health Check Timeout ISP", subdomain="healthtimeout"
+        )
 
         # Mock health checks to always fail
         async def failing_health_check(*args, **kwargs):
             from httpx import HTTPStatusError
 
-            raise HTTPStatusError(message="Service unavailable", request=None, response=None)
+            raise HTTPStatusError(
+                message="Service unavailable", request=None, response=None
+            )
 
         # Patch the health check method
         original_run_health_checks = mock_tenant_provisioning_service._run_health_checks
         mock_tenant_provisioning_service._run_health_checks = failing_health_check
 
         try:
-            provisioning_success = await mock_tenant_provisioning_service.provision_tenant(
-                tenant.id, management_db_session
+            provisioning_success = (
+                await mock_tenant_provisioning_service.provision_tenant(
+                    tenant.id, management_db_session
+                )
             )
 
             assert not provisioning_success
@@ -276,7 +326,9 @@ class TestTenantProvisioningWorkflow:
 
         finally:
             # Restore original method
-            mock_tenant_provisioning_service._run_health_checks = original_run_health_checks
+            mock_tenant_provisioning_service._run_health_checks = (
+                original_run_health_checks
+            )
 
     async def test_tenant_provisioning_migration_failure_recovery(
         self,
@@ -286,7 +338,9 @@ class TestTenantProvisioningWorkflow:
     ):
         """Test tenant provisioning migration failure and recovery."""
 
-        tenant = tenant_factory(company_name="Migration Recovery Test ISP", subdomain="migrecovery")
+        tenant = tenant_factory(
+            company_name="Migration Recovery Test ISP", subdomain="migrecovery"
+        )
 
         # Mock migration to fail first time, succeed second time
         migration_call_count = 0
@@ -299,10 +353,14 @@ class TestTenantProvisioningWorkflow:
                 return False  # Fail first time
             return True  # Succeed on retry
 
-        mock_tenant_provisioning_service._check_migration_job_success = flaky_migration_check
+        mock_tenant_provisioning_service._check_migration_job_success = (
+            flaky_migration_check
+        )
 
         # Start provisioning - should succeed after retry
-        await mock_tenant_provisioning_service.provision_tenant(tenant.id, management_db_session)
+        await mock_tenant_provisioning_service.provision_tenant(
+            tenant.id, management_db_session
+        )
 
         # In this test we're simulating a scenario where migration fails but recovers
         # The actual implementation might handle retries differently
@@ -335,7 +393,10 @@ class TestTenantProvisioningWorkflow:
 
         # Start provisioning for all tenants concurrently
         provisioning_tasks = [
-            mock_tenant_provisioning_service.provision_tenant(tenant.id, management_db_session) for tenant in tenants
+            mock_tenant_provisioning_service.provision_tenant(
+                tenant.id, management_db_session
+            )
+            for tenant in tenants
         ]
 
         results = await asyncio.gather(*provisioning_tasks, return_exceptions=True)
@@ -377,7 +438,9 @@ class TestTenantProvisioningWorkflow:
             settings=custom_settings,
         )
 
-        provisioning_success = await mock_tenant_provisioning_service.provision_tenant(tenant.id, management_db_session)
+        provisioning_success = await mock_tenant_provisioning_service.provision_tenant(
+            tenant.id, management_db_session
+        )
 
         assert provisioning_success, "Custom settings provisioning failed"
 
@@ -397,10 +460,14 @@ class TestTenantProvisioningWorkflow:
     ):
         """Test tenant provisioning event logging and monitoring."""
 
-        tenant = tenant_factory(company_name="Monitoring Test ISP", subdomain="monitoring")
+        tenant = tenant_factory(
+            company_name="Monitoring Test ISP", subdomain="monitoring"
+        )
 
         # Start provisioning
-        provisioning_success = await mock_tenant_provisioning_service.provision_tenant(tenant.id, management_db_session)
+        provisioning_success = await mock_tenant_provisioning_service.provision_tenant(
+            tenant.id, management_db_session
+        )
 
         assert provisioning_success
 
@@ -429,7 +496,9 @@ class TestTenantProvisioningWorkflow:
         logged_event_types = [event.event_type for event in events[:6]]
 
         for expected_type in expected_event_types:
-            assert expected_type in logged_event_types, f"Missing expected event type: {expected_type}"
+            assert (
+                expected_type in logged_event_types
+            ), f"Missing expected event type: {expected_type}"
 
         # Verify correlation ID is consistent
         correlation_ids = set(event.correlation_id for event in events)
@@ -446,7 +515,9 @@ class TestTenantProvisioningWorkflow:
 class TestTenantProvisioningAPI:
     """Test tenant provisioning via API endpoints."""
 
-    async def test_create_tenant_via_api(self, http_client, management_db_session: Session):
+    async def test_create_tenant_via_api(
+        self, http_client, management_db_session: Session
+    ):
         """Test creating tenant via management API."""
 
         tenant_data = {
@@ -459,7 +530,9 @@ class TestTenantProvisioningAPI:
         }
 
         # Create management admin token
-        admin_token = "test_management_token"  # In real tests, would generate actual JWT
+        admin_token = (
+            "test_management_token"  # In real tests, would generate actual JWT
+        )
 
         response = await http_client.post(
             f"{os.getenv('TEST_MANAGEMENT_URL', 'http://localhost:8001')}/api/v1/tenants",
@@ -475,7 +548,11 @@ class TestTenantProvisioningAPI:
         assert response_data["status"] == "pending"
 
         # Verify tenant created in database
-        tenant = management_db_session.query(CustomerTenant).filter_by(subdomain="apitest").first()
+        tenant = (
+            management_db_session.query(CustomerTenant)
+            .filter_by(subdomain="apitest")
+            .first()
+        )
 
         assert tenant is not None
         assert tenant.status == TenantStatus.PENDING
@@ -486,7 +563,9 @@ class TestTenantProvisioningAPI:
         """Test getting tenant provisioning status via API."""
 
         tenant = tenant_factory(
-            company_name="Status API Test ISP", subdomain="statusapi", status=TenantStatus.PROVISIONING
+            company_name="Status API Test ISP",
+            subdomain="statusapi",
+            status=TenantStatus.PROVISIONING,
         )
 
         admin_token = "test_management_token"
@@ -514,7 +593,10 @@ class TestTenantProvisioningAPI:
         tenant = tenant_factory(
             company_name="Webhook Test ISP",
             subdomain="webhook",
-            settings={"webhook_url": "https://test.webhook.com/tenant-events", "enable_webhooks": True},
+            settings={
+                "webhook_url": "https://test.webhook.com/tenant-events",
+                "enable_webhooks": True,
+            },
         )
 
         # In a real implementation, this would:
@@ -524,5 +606,7 @@ class TestTenantProvisioningAPI:
         # 4. Test webhook retry logic
 
         # For now, just verify tenant was created with webhook settings
-        assert tenant.settings["webhook_url"] == "https://test.webhook.com/tenant-events"
+        assert (
+            tenant.settings["webhook_url"] == "https://test.webhook.com/tenant-events"
+        )
         assert tenant.settings["enable_webhooks"] is True

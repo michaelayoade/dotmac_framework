@@ -58,14 +58,26 @@ class APIEndpoint(BaseModel):
     summary: str = Field(..., description="Endpoint summary")
     description: Optional[str] = Field(None, description="Detailed description")
     tags: list[str] = Field(default_factory=list, description="Endpoint tags")
-    parameters: list[dict[str, Any]] = Field(default_factory=list, description="Request parameters")
-    request_body: Optional[dict[str, Any]] = Field(None, description="Request body schema")
+    parameters: list[dict[str, Any]] = Field(
+        default_factory=list, description="Request parameters"
+    )
+    request_body: Optional[dict[str, Any]] = Field(
+        None, description="Request body schema"
+    )
     responses: dict[str, dict[str, Any]] = Field(..., description="Response schemas")
-    examples: Optional[dict[str, Any]] = Field(None, description="Request/response examples")
-    deprecated: bool = Field(default=False, description="Whether endpoint is deprecated")
+    examples: Optional[dict[str, Any]] = Field(
+        None, description="Request/response examples"
+    )
+    deprecated: bool = Field(
+        default=False, description="Whether endpoint is deprecated"
+    )
     rate_limit: Optional[dict[str, int]] = Field(None, description="Rate limiting info")
-    requires_auth: bool = Field(default=True, description="Whether authentication is required")
-    permissions: list[str] = Field(default_factory=list, description="Required permissions")
+    requires_auth: bool = Field(
+        default=True, description="Whether authentication is required"
+    )
+    permissions: list[str] = Field(
+        default_factory=list, description="Required permissions"
+    )
 
 
 class CodeSample(BaseModel):
@@ -111,7 +123,9 @@ class SDKDocumentation(BaseModel):
     changelog: list[dict[str, Any]] = Field(..., description="SDK changelog")
     download_url: Optional[HttpUrl] = Field(None, description="SDK download URL")
     repository_url: Optional[HttpUrl] = Field(None, description="Source repository URL")
-    documentation_url: Optional[HttpUrl] = Field(None, description="Full documentation URL")
+    documentation_url: Optional[HttpUrl] = Field(
+        None, description="Full documentation URL"
+    )
 
 
 class DeveloperGuide(BaseModel):
@@ -133,10 +147,16 @@ class GuideSection(BaseModel):
     title: str = Field(..., description="Section title")
     content: str = Field(..., description="Section content (Markdown)")
     order: int = Field(..., description="Section order")
-    subsections: list["GuideSection"] = Field(default_factory=list, description="Subsections")
-    code_samples: list[CodeSample] = Field(default_factory=list, description="Code samples")
+    subsections: list["GuideSection"] = Field(
+        default_factory=list, description="Subsections"
+    )
+    code_samples: list[CodeSample] = Field(
+        default_factory=list, description="Code samples"
+    )
     images: list[str] = Field(default_factory=list, description="Image URLs")
-    links: list[dict[str, str]] = Field(default_factory=list, description="External links")
+    links: list[dict[str, str]] = Field(
+        default_factory=list, description="External links"
+    )
     tags: list[str] = Field(default_factory=list, description="Section tags")
     difficulty: str = Field(default="beginner", description="Difficulty level")
 
@@ -148,7 +168,9 @@ class ChangelogEntry(BaseModel):
     release_date: datetime = Field(..., description="Release date")
     type: str = Field(..., description="Release type (major, minor, patch)")
     changes: list[dict[str, Any]] = Field(..., description="List of changes")
-    breaking_changes: list[str] = Field(default_factory=list, description="Breaking changes")
+    breaking_changes: list[str] = Field(
+        default_factory=list, description="Breaking changes"
+    )
     migration_guide: Optional[str] = Field(None, description="Migration guide URL")
     author: str = Field(..., description="Release author")
     created_at: datetime = Field(..., description="Entry creation timestamp")
@@ -172,10 +194,14 @@ class PostmanCollection(BaseModel):
     """Postman collection schema."""
 
     info: dict[str, str] = Field(..., description="Collection information")
-    auth: Optional[dict[str, Any]] = Field(None, description="Authentication configuration")
+    auth: Optional[dict[str, Any]] = Field(
+        None, description="Authentication configuration"
+    )
     variables: list[dict[str, str]] = Field(..., description="Collection variables")
     items: list[dict[str, Any]] = Field(..., description="Request items")
-    events: list[dict[str, Any]] = Field(default_factory=list, description="Collection events")
+    events: list[dict[str, Any]] = Field(
+        default_factory=list, description="Collection events"
+    )
     generated_at: datetime = Field(..., description="Generation timestamp")
 
 
@@ -187,9 +213,13 @@ class OpenAPISpec(BaseModel):
     servers: list[dict[str, str]] = Field(..., description="Server configurations")
     paths: dict[str, dict[str, Any]] = Field(..., description="API paths")
     components: dict[str, Any] = Field(..., description="Reusable components")
-    security: list[dict[str, list[str]]] = Field(default_factory=list, description="Security requirements")
+    security: list[dict[str, list[str]]] = Field(
+        default_factory=list, description="Security requirements"
+    )
     tags: list[dict[str, str]] = Field(default_factory=list, description="API tags")
-    external_docs: Optional[dict[str, str]] = Field(None, description="External documentation")
+    external_docs: Optional[dict[str, str]] = Field(
+        None, description="External documentation"
+    )
 
 
 class InteractiveDocsConfig(BaseModel):
@@ -215,13 +245,19 @@ class APIExample(BaseModel):
     description: str = Field(..., description="Example description")
     endpoint: str = Field(..., description="API endpoint")
     method: APIEndpointMethod = Field(..., description="HTTP method")
-    request_headers: dict[str, str] = Field(default_factory=dict, description="Request headers")
+    request_headers: dict[str, str] = Field(
+        default_factory=dict, description="Request headers"
+    )
     request_body: Optional[dict[str, Any]] = Field(None, description="Request body")
     response_status: int = Field(..., description="Response status code")
-    response_headers: dict[str, str] = Field(default_factory=dict, description="Response headers")
+    response_headers: dict[str, str] = Field(
+        default_factory=dict, description="Response headers"
+    )
     response_body: dict[str, Any] = Field(..., description="Response body")
     curl_command: Optional[str] = Field(None, description="Generated cURL command")
-    code_samples: list[CodeSample] = Field(default_factory=list, description="Code samples")
+    code_samples: list[CodeSample] = Field(
+        default_factory=list, description="Code samples"
+    )
 
 
 class APIMetrics(BaseModel):
@@ -230,13 +266,21 @@ class APIMetrics(BaseModel):
     period: dict[str, Optional[str]] = Field(..., description="Metrics period")
     total_requests: int = Field(..., description="Total API requests")
     unique_developers: int = Field(..., description="Number of unique developers")
-    most_used_endpoints: list[dict[str, Any]] = Field(..., description="Most popular endpoints")
+    most_used_endpoints: list[dict[str, Any]] = Field(
+        ..., description="Most popular endpoints"
+    )
     error_rates: dict[str, float] = Field(..., description="Error rates by type")
-    response_times: dict[str, float] = Field(..., description="Response time percentiles")
+    response_times: dict[str, float] = Field(
+        ..., description="Response time percentiles"
+    )
     sdk_downloads: dict[str, int] = Field(..., description="SDK download counts")
     documentation_views: int = Field(..., description="Documentation page views")
-    geographic_usage: dict[str, int] = Field(default_factory=dict, description="Usage by geography")
-    user_agents: dict[str, int] = Field(default_factory=dict, description="Usage by user agent")
+    geographic_usage: dict[str, int] = Field(
+        default_factory=dict, description="Usage by geography"
+    )
+    user_agents: dict[str, int] = Field(
+        default_factory=dict, description="Usage by user agent"
+    )
     generated_at: datetime = Field(..., description="Metrics generation timestamp")
 
 
@@ -284,7 +328,9 @@ class DocumentationFeedback(BaseModel):
     feedback_id: UUID = Field(..., description="Feedback identifier")
     page_url: str = Field(..., description="Documentation page URL")
     section: Optional[str] = Field(None, description="Specific section")
-    feedback_type: str = Field(..., description="Feedback type (bug, improvement, question)")
+    feedback_type: str = Field(
+        ..., description="Feedback type (bug, improvement, question)"
+    )
     rating: Optional[int] = Field(None, ge=1, le=5, description="Page rating (1-5)")
     message: str = Field(..., description="Feedback message")
     user_email: Optional[str] = Field(None, description="User email (optional)")
@@ -304,9 +350,15 @@ class APIDocumentationRequest(BaseModel):
     version: str = Field(..., description="API version")
     include_examples: bool = Field(default=True, description="Include examples")
     include_schemas: bool = Field(default=True, description="Include detailed schemas")
-    include_deprecated: bool = Field(default=False, description="Include deprecated endpoints")
-    filter_tags: Optional[list[str]] = Field(None, description="Filter by specific tags")
-    custom_config: Optional[dict[str, Any]] = Field(None, description="Custom configuration")
+    include_deprecated: bool = Field(
+        default=False, description="Include deprecated endpoints"
+    )
+    filter_tags: Optional[list[str]] = Field(
+        None, description="Filter by specific tags"
+    )
+    custom_config: Optional[dict[str, Any]] = Field(
+        None, description="Custom configuration"
+    )
     output_filename: Optional[str] = Field(None, description="Output filename")
 
 
@@ -320,7 +372,9 @@ class SDKGenerationRequest(BaseModel):
     namespace: Optional[str] = Field(None, description="Namespace/package namespace")
     include_examples: bool = Field(default=True, description="Include code examples")
     include_tests: bool = Field(default=True, description="Include test files")
-    custom_config: Optional[dict[str, Any]] = Field(None, description="Language-specific configuration")
+    custom_config: Optional[dict[str, Any]] = Field(
+        None, description="Language-specific configuration"
+    )
     output_format: str = Field(default="zip", description="Output format (zip, tar.gz)")
 
 
@@ -333,8 +387,12 @@ class DocumentationStats(BaseModel):
     supported_languages: list[str] = Field(..., description="Supported SDK languages")
     page_views: dict[str, int] = Field(..., description="Page views by URL")
     search_queries: dict[str, int] = Field(..., description="Popular search queries")
-    feedback_summary: dict[str, int] = Field(..., description="Feedback summary by type")
-    user_engagement: dict[str, float] = Field(..., description="User engagement metrics")
+    feedback_summary: dict[str, int] = Field(
+        ..., description="Feedback summary by type"
+    )
+    user_engagement: dict[str, float] = Field(
+        ..., description="User engagement metrics"
+    )
     last_updated: datetime = Field(..., description="Last statistics update")
 
 

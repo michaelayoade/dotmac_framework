@@ -30,21 +30,27 @@ class DatabaseConfig(BaseSettings):
     async def get_primary_url(self) -> str:
         """Get primary database URL from OpenBao or environment"""
         config_manager = get_config_manager()
-        return await config_manager.get_secret(path="database/primary_url", env_fallback="DATABASE_URL", required=True)
+        return await config_manager.get_secret(
+            path="database/primary_url", env_fallback="DATABASE_URL", required=True
+        )
 
     async def get_readonly_url(self) -> str:
         """Get readonly database URL from OpenBao or environment"""
         config_manager = get_config_manager()
         return (
             await config_manager.get_secret(
-                path="database/readonly_url", env_fallback="DATABASE_READONLY_URL", required=False
+                path="database/readonly_url",
+                env_fallback="DATABASE_READONLY_URL",
+                required=False,
             )
             or await self.get_primary_url()
         )
 
     max_connections: int = Field(default=20, description="Maximum database connections")
     pool_timeout: int = Field(default=30, description="Connection pool timeout")
-    ssl_mode: str = Field(default="prefer", description="SSL mode for database connections")
+    ssl_mode: str = Field(
+        default="prefer", description="SSL mode for database connections"
+    )
 
 
 class CacheConfig(BaseSettings):
@@ -54,7 +60,9 @@ class CacheConfig(BaseSettings):
         """Get Redis URL from OpenBao or environment"""
         config_manager = get_config_manager()
         return (
-            await config_manager.get_secret(path="cache/redis_url", env_fallback="REDIS_URL", required=False)
+            await config_manager.get_secret(
+                path="cache/redis_url", env_fallback="REDIS_URL", required=False
+            )
             or "redis://localhost:6379/0"
         )
 
@@ -69,27 +77,35 @@ class SecurityConfig(BaseSettings):
     async def get_jwt_secret(self) -> str:
         """Get JWT secret from OpenBao or environment"""
         config_manager = get_config_manager()
-        return await config_manager.get_secret(path="auth/jwt_secret_key", env_fallback="JWT_SECRET_KEY", required=True)
+        return await config_manager.get_secret(
+            path="auth/jwt_secret_key", env_fallback="JWT_SECRET_KEY", required=True
+        )
 
     async def get_encryption_key(self) -> str:
         """Get field encryption key from OpenBao or environment"""
         config_manager = get_config_manager()
         return await config_manager.get_secret(
-            path="security/field_encryption_key", env_fallback="FIELD_ENCRYPTION_KEY", required=True
+            path="security/field_encryption_key",
+            env_fallback="FIELD_ENCRYPTION_KEY",
+            required=True,
         )
 
     jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
     jwt_expiry_hours: int = Field(default=24, description="JWT token expiry in hours")
     session_timeout_minutes: int = Field(default=480, description="Session timeout")
     max_failed_attempts: int = Field(default=5, description="Max failed login attempts")
-    lockout_duration_minutes: int = Field(default=30, description="Account lockout duration")
+    lockout_duration_minutes: int = Field(
+        default=30, description="Account lockout duration"
+    )
 
 
 class ObservabilityConfig(BaseSettings):
     """Observability and monitoring configuration"""
 
     otel_endpoint: str = Field(
-        default_factory=lambda: os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
+        default_factory=lambda: os.getenv(
+            "OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"
+        ),
         description="OpenTelemetry collector endpoint",
     )
 
@@ -98,7 +114,10 @@ class ObservabilityConfig(BaseSettings):
         description="OpenTelemetry service name",
     )
 
-    log_level: str = Field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"), description="Logging level")
+    log_level: str = Field(
+        default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"),
+        description="Logging level",
+    )
 
     metrics_enabled: bool = Field(
         default_factory=lambda: os.getenv("METRICS_ENABLED", "true").lower() == "true",
@@ -119,10 +138,14 @@ class DotMacConfig(BaseSettings):
 
     # Environment
     environment: str = Field(
-        default_factory=lambda: os.getenv("ENVIRONMENT", "development"), description="Application environment"
+        default_factory=lambda: os.getenv("ENVIRONMENT", "development"),
+        description="Application environment",
     )
 
-    debug: bool = Field(default_factory=lambda: os.getenv("DEBUG", "false").lower() == "true", description="Debug mode")
+    debug: bool = Field(
+        default_factory=lambda: os.getenv("DEBUG", "false").lower() == "true",
+        description="Debug mode",
+    )
 
     # Subsystem configurations
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
@@ -171,7 +194,10 @@ class DotMacConfig(BaseSettings):
 
     async def get_database_urls(self) -> dict[str, str]:
         """Get all database URLs"""
-        return {"primary": await self.database.get_primary_url(), "readonly": await self.database.get_readonly_url()}
+        return {
+            "primary": await self.database.get_primary_url(),
+            "readonly": await self.database.get_readonly_url(),
+        }
 
     async def get_cache_url(self) -> str:
         """Get cache URL"""

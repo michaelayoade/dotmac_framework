@@ -21,7 +21,9 @@ class EventSimulator:
         self._event_store = []
         self._failure_injections = {}
 
-    async def publish_event(self, event_type: str, payload: dict[str, Any], correlation_id: str) -> str:
+    async def publish_event(
+        self, event_type: str, payload: dict[str, Any], correlation_id: str
+    ) -> str:
         """Publish an event for testing"""
         event_id = str(uuid.uuid4())
         event = {
@@ -42,7 +44,11 @@ class EventSimulator:
         return event_id
 
     async def publish_and_store_event(
-        self, event_type: str, payload: dict[str, Any], correlation_id: str, store_in_event_store: bool = False
+        self,
+        event_type: str,
+        payload: dict[str, Any],
+        correlation_id: str,
+        store_in_event_store: bool = False,
     ) -> str:
         """Publish event and optionally store in event store"""
         event_id = await self.publish_event(event_type, payload, correlation_id)
@@ -80,7 +86,12 @@ class EventSimulator:
         saga = self._saga_states[saga_id]
 
         # Simulate typical saga steps
-        steps = ["customer_account_creation", "billing_setup", "service_provisioning", "notification_dispatch"]
+        steps = [
+            "customer_account_creation",
+            "billing_setup",
+            "service_provisioning",
+            "notification_dispatch",
+        ]
 
         for step in steps:
             await asyncio.sleep(0.1)  # Simulate processing time
@@ -93,7 +104,9 @@ class EventSimulator:
                 await self._execute_compensation(saga_id, step)
                 return
 
-            saga["steps_completed"].append({"step": step, "completed_at": datetime.utcnow().isoformat()})
+            saga["steps_completed"].append(
+                {"step": step, "completed_at": datetime.utcnow().isoformat()}
+            )
 
         saga["status"] = "completed"
         saga["completed_at"] = datetime.utcnow().isoformat()
@@ -106,7 +119,10 @@ class EventSimulator:
     async def inject_saga_failure(self, saga_id: str, step: str, failure_type: str):
         """Inject a failure into saga execution"""
         failure_key = f"{saga_id}:{step}"
-        self._failure_injections[failure_key] = {"type": failure_type, "injected_at": datetime.utcnow().isoformat()}
+        self._failure_injections[failure_key] = {
+            "type": failure_type,
+            "injected_at": datetime.utcnow().isoformat(),
+        }
         logger.info(f"Scheduled failure injection for saga {saga_id} at step {step}")
 
     async def _execute_compensation(self, saga_id: str, failed_step: str):
@@ -136,7 +152,9 @@ class EventSimulator:
         self._saga_states.clear()
         await asyncio.sleep(0.1)
 
-    async def replay_events_from_store(self, correlation_id: str, from_timestamp: datetime) -> list[dict]:
+    async def replay_events_from_store(
+        self, correlation_id: str, from_timestamp: datetime
+    ) -> list[dict]:
         """Replay events from event store"""
         replayed_events = []
 

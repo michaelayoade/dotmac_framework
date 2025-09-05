@@ -17,7 +17,9 @@ class RelationshipRegistry:
         self._deferred_relationships: list[Callable] = []
         self._configured = False
 
-    def register_relationship(self, model_class: type, attr_name: str, relationship_fn: Callable):
+    def register_relationship(
+        self, model_class: type, attr_name: str, relationship_fn: Callable
+    ):
         """Register a relationship to be configured later.
 
         Args:
@@ -70,7 +72,9 @@ def register_cross_module_relationship(model_class: type, attr_name: str):
     """
 
     def decorator(relationship_fn):
-        relationship_registry.register_relationship(model_class, attr_name, relationship_fn)
+        relationship_registry.register_relationship(
+            model_class, attr_name, relationship_fn
+        )
         return relationship_fn
 
     return decorator

@@ -7,12 +7,17 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from fastapi import APIRouter, Body, Depends, Path, Query
+
 from dotmac_shared.api import StandardDependencies, standard_exception_handler
 from dotmac_shared.api.dependencies import get_standard_deps
 from dotmac_shared.schemas import BaseResponseSchema
-from fastapi import APIRouter, Body, Depends, Path, Query
 
-from ..schemas import CreateMetricRequest, CustomerAnalyticsResponse, ServiceAnalyticsResponse
+from ..schemas import (
+    CreateMetricRequest,
+    CustomerAnalyticsResponse,
+    ServiceAnalyticsResponse,
+)
 from ..service import ISPAnalyticsService, get_analytics_service
 
 
@@ -46,7 +51,8 @@ def create_isp_analytics_router_dry() -> APIRouter:
     @standard_exception_handler
     async def get_customer_analytics(
         customer_id: UUID = Path(..., description="Customer ID"),
-        start_date: datetime | None = Query(None, description="Start date for analytics"),
+        start_date: datetime
+        | None = Query(None, description="Start date for analytics"),
         end_date: datetime | None = Query(None, description="End date for analytics"),
         include_usage: bool = Query(True, description="Include usage statistics"),
         deps: StandardDependencies = Depends(get_standard_deps),
@@ -72,13 +78,17 @@ def create_isp_analytics_router_dry() -> APIRouter:
         service_id: UUID = Path(..., description="Service ID"),
         start_date: datetime | None = Query(None, description="Start date"),
         end_date: datetime | None = Query(None, description="End date"),
-        include_performance: bool = Query(True, description="Include performance metrics"),
+        include_performance: bool = Query(
+            True, description="Include performance metrics"
+        ),
         deps: StandardDependencies = Depends(get_standard_deps),
         service: ISPAnalyticsService = Depends(get_isp_analytics_service),
     ) -> ServiceAnalyticsResponse:
         """Get analytics for a specific ISP service."""
 
-        filters = MetricFilters(start_date=start_date, end_date=end_date, service_id=service_id)
+        filters = MetricFilters(
+            start_date=start_date, end_date=end_date, service_id=service_id
+        )
 
         analytics = await service.get_service_analytics(
             service_id=service_id,
@@ -100,7 +110,9 @@ def create_isp_analytics_router_dry() -> APIRouter:
         """Create a new analytics metric."""
 
         metric_id = await service.create_metric(
-            tenant_id=deps.tenant_id, user_id=deps.user_id, metric_data=metric_data.model_dump()
+            tenant_id=deps.tenant_id,
+            user_id=deps.user_id,
+            metric_data=metric_data.model_dump(),
         )
 
         return {"message": "Metric created successfully", "metric_id": str(metric_id)}
@@ -118,7 +130,10 @@ def create_isp_analytics_router_dry() -> APIRouter:
         """Get statistical summary for a metric."""
 
         stats = await service.get_metric_statistics(
-            metric_id=metric_id, tenant_id=deps.tenant_id, start_date=start_date, end_date=end_date
+            metric_id=metric_id,
+            tenant_id=deps.tenant_id,
+            start_date=start_date,
+            end_date=end_date,
         )
 
         return {
@@ -142,7 +157,9 @@ def create_isp_analytics_router_dry() -> APIRouter:
         """Get network performance analytics."""
 
         performance = await service.get_network_performance_analytics(
-            tenant_id=deps.tenant_id, time_range=time_range, include_details=include_details
+            tenant_id=deps.tenant_id,
+            time_range=time_range,
+            include_details=include_details,
         )
 
         return {
@@ -165,7 +182,10 @@ def create_isp_analytics_router_dry() -> APIRouter:
         """Get bandwidth usage analytics with optional filtering."""
 
         usage = await service.get_bandwidth_usage_analytics(
-            tenant_id=deps.tenant_id, customer_id=customer_id, service_type=service_type, time_range=time_range
+            tenant_id=deps.tenant_id,
+            customer_id=customer_id,
+            service_type=service_type,
+            time_range=time_range,
         )
 
         return {
@@ -185,7 +205,11 @@ def create_isp_analytics_router_dry() -> APIRouter:
         deps: StandardDependencies = Depends(get_standard_deps),
     ) -> dict[str, str]:
         """Health check for ISP analytics service."""
-        return {"service": "isp-analytics", "status": "healthy", "tenant_id": deps.tenant_id}
+        return {
+            "service": "isp-analytics",
+            "status": "healthy",
+            "tenant_id": deps.tenant_id,
+        }
 
     return router
 

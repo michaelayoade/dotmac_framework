@@ -93,7 +93,9 @@ class RoutingRule(BaseModel):
 class RoutingAction(BaseModel):
     """Action to take when routing rule matches."""
 
-    type: str = Field(..., min_length=1)  # assign_to_team, assign_to_agent, escalate, etc.
+    type: str = Field(
+        ..., min_length=1
+    )  # assign_to_team, assign_to_agent, escalate, etc.
     parameters: dict[str, Any] = Field(default_factory=dict)
 
     # Conditional execution

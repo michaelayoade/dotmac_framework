@@ -22,6 +22,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import PaymentError
 
@@ -31,7 +32,11 @@ logger = logging.getLogger(__name__)
 class PaymentsEdgeCasesE2E:
     """End-to-end test suite for payment edge cases and complex scenarios."""
 
-    def __init__(self, base_url: str = "http://localhost:8000", frontend_url: str = "http://localhost:3000"):
+    def __init__(
+        self,
+        base_url: str = "http://localhost:8000",
+        frontend_url: str = "http://localhost:3000",
+    ):
         self.base_url = base_url
         self.frontend_url = frontend_url
         self.test_tenant_id = str(uuid4())
@@ -92,14 +97,21 @@ class PaymentsEdgeCasesE2E:
             results["steps"].append(
                 {
                     "name": "decline_scenarios_testing",
-                    "status": "completed" if all(r["success"] for r in decline_results) else "failed",
+                    "status": "completed"
+                    if all(r["success"] for r in decline_results)
+                    else "failed",
                     "duration": sum(r.get("duration", 0) for r in decline_results),
-                    "details": {"scenarios_tested": len(decline_scenarios), "results": decline_results},
+                    "details": {
+                        "scenarios_tested": len(decline_scenarios),
+                        "results": decline_results,
+                    },
                 }
             )
 
             # Step 3: Test retry logic and backoff
-            retry_test = await self._test_payment_retry_logic(decline_results[0]["payment_id"])
+            retry_test = await self._test_payment_retry_logic(
+                decline_results[0]["payment_id"]
+            )
             results["steps"].append(
                 {
                     "name": "retry_logic_testing",
@@ -110,7 +122,9 @@ class PaymentsEdgeCasesE2E:
             )
 
             # Step 4: Test dunning workflow
-            dunning_test = await self._test_dunning_workflow(customer_setup["customers"][0]["id"])
+            dunning_test = await self._test_dunning_workflow(
+                customer_setup["customers"][0]["id"]
+            )
             results["steps"].append(
                 {
                     "name": "dunning_workflow_testing",
@@ -121,7 +135,9 @@ class PaymentsEdgeCasesE2E:
             )
 
             # Step 5: Test payment recovery
-            recovery_test = await self._test_payment_recovery(decline_results[1]["payment_id"])
+            recovery_test = await self._test_payment_recovery(
+                decline_results[1]["payment_id"]
+            )
             results["steps"].append(
                 {
                     "name": "payment_recovery_testing",
@@ -217,7 +233,9 @@ class PaymentsEdgeCasesE2E:
             results["steps"].append(
                 {
                     "name": "3ds_failure_scenarios",
-                    "status": "completed" if all(r["success"] for r in failure_results) else "failed",
+                    "status": "completed"
+                    if all(r["success"] for r in failure_results)
+                    else "failed",
                     "duration": sum(r.get("duration", 0) for r in failure_results),
                     "details": {"scenarios": failure_results},
                 }
@@ -290,18 +308,24 @@ class PaymentsEdgeCasesE2E:
             results["steps"].append(
                 {
                     "name": "partial_refund_test",
-                    "status": "completed" if partial_refund_test["success"] else "failed",
+                    "status": "completed"
+                    if partial_refund_test["success"]
+                    else "failed",
                     "duration": partial_refund_test.get("duration", 0),
                     "details": partial_refund_test,
                 }
             )
 
             # Step 3: Test multiple partial refunds
-            multiple_partial_test = await self._test_multiple_partial_refunds(payments[1])
+            multiple_partial_test = await self._test_multiple_partial_refunds(
+                payments[1]
+            )
             results["steps"].append(
                 {
                     "name": "multiple_partial_refunds_test",
-                    "status": "completed" if multiple_partial_test["success"] else "failed",
+                    "status": "completed"
+                    if multiple_partial_test["success"]
+                    else "failed",
                     "duration": multiple_partial_test.get("duration", 0),
                     "details": multiple_partial_test,
                 }
@@ -323,7 +347,9 @@ class PaymentsEdgeCasesE2E:
             results["steps"].append(
                 {
                     "name": "cross_tenant_isolation_test",
-                    "status": "completed" if isolation_test["isolation_maintained"] else "failed",
+                    "status": "completed"
+                    if isolation_test["isolation_maintained"]
+                    else "failed",
                     "duration": isolation_test.get("duration", 0),
                     "details": isolation_test,
                 }
@@ -380,7 +406,9 @@ class PaymentsEdgeCasesE2E:
             results["steps"].append(
                 {
                     "name": "subscription_setup",
-                    "status": "completed" if subscription_setup["success"] else "failed",
+                    "status": "completed"
+                    if subscription_setup["success"]
+                    else "failed",
                     "duration": subscription_setup.get("duration", 0),
                     "details": subscription_setup,
                 }
@@ -390,7 +418,9 @@ class PaymentsEdgeCasesE2E:
                 raise PaymentError("Subscription setup failed")
 
             # Step 2: Test proration calculations
-            proration_test = await self._test_proration_calculations(subscription_setup["subscriptions"][0])
+            proration_test = await self._test_proration_calculations(
+                subscription_setup["subscriptions"][0]
+            )
             results["steps"].append(
                 {
                     "name": "proration_calculations_test",
@@ -401,7 +431,9 @@ class PaymentsEdgeCasesE2E:
             )
 
             # Step 3: Test plan changes mid-cycle
-            plan_change_test = await self._test_mid_cycle_plan_changes(subscription_setup["subscriptions"][1])
+            plan_change_test = await self._test_mid_cycle_plan_changes(
+                subscription_setup["subscriptions"][1]
+            )
             results["steps"].append(
                 {
                     "name": "mid_cycle_plan_changes_test",
@@ -412,11 +444,15 @@ class PaymentsEdgeCasesE2E:
             )
 
             # Step 4: Test subscription dunning
-            subscription_dunning_test = await self._test_subscription_dunning(subscription_setup["subscriptions"][2])
+            subscription_dunning_test = await self._test_subscription_dunning(
+                subscription_setup["subscriptions"][2]
+            )
             results["steps"].append(
                 {
                     "name": "subscription_dunning_test",
-                    "status": "completed" if subscription_dunning_test["success"] else "failed",
+                    "status": "completed"
+                    if subscription_dunning_test["success"]
+                    else "failed",
                     "duration": subscription_dunning_test.get("duration", 0),
                     "details": subscription_dunning_test,
                 }
@@ -434,7 +470,9 @@ class PaymentsEdgeCasesE2E:
             )
 
             # Step 6: Test subscription pause/resume
-            pause_resume_test = await self._test_subscription_pause_resume(subscription_setup["subscriptions"][3])
+            pause_resume_test = await self._test_subscription_pause_resume(
+                subscription_setup["subscriptions"][3]
+            )
             results["steps"].append(
                 {
                     "name": "subscription_pause_resume_test",
@@ -485,14 +523,18 @@ class PaymentsEdgeCasesE2E:
 
             # Generate summary
             total_tests = len(suite_results["tests"])
-            passed_tests = sum(1 for t in suite_results["tests"] if t.get("success", False))
+            passed_tests = sum(
+                1 for t in suite_results["tests"] if t.get("success", False)
+            )
             failed_tests = total_tests - passed_tests
 
             suite_results["summary"] = {
                 "total": total_tests,
                 "passed": passed_tests,
                 "failed": failed_tests,
-                "success_rate": (passed_tests / total_tests) * 100 if total_tests > 0 else 0,
+                "success_rate": (passed_tests / total_tests) * 100
+                if total_tests > 0
+                else 0,
             }
 
             suite_results["status"] = "completed" if failed_tests == 0 else "failed"
@@ -518,10 +560,20 @@ class PaymentsEdgeCasesE2E:
             # Create test customers with different payment scenarios
             payment_methods = [
                 {"type": "card", "brand": "visa", "last4": "4242", "status": "active"},
-                {"type": "card", "brand": "mastercard", "last4": "5555", "status": "active"},
+                {
+                    "type": "card",
+                    "brand": "mastercard",
+                    "last4": "5555",
+                    "status": "active",
+                },
                 {"type": "card", "brand": "amex", "last4": "1111", "status": "active"},
                 {"type": "card", "brand": "visa", "last4": "0002", "status": "expired"},
-                {"type": "card", "brand": "visa", "last4": "0341", "status": "insufficient_funds"},
+                {
+                    "type": "card",
+                    "brand": "visa",
+                    "last4": "0341",
+                    "status": "insufficient_funds",
+                },
             ]
 
             for i, payment_method in enumerate(payment_methods):
@@ -556,14 +608,22 @@ class PaymentsEdgeCasesE2E:
                 "success": True,
                 "customers": customers,
                 "customer_count": len(customers),
-                "payment_methods_total": sum(len(c["payment_methods"]) for c in customers),
+                "payment_methods_total": sum(
+                    len(c["payment_methods"]) for c in customers
+                ),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_payment_decline_scenario(self, scenario: dict[str, Any]) -> dict[str, Any]:
+    async def _test_payment_decline_scenario(
+        self, scenario: dict[str, Any]
+    ) -> dict[str, Any]:
         """Test specific payment decline scenario."""
         start_time = time.time()
 
@@ -571,9 +631,17 @@ class PaymentsEdgeCasesE2E:
             # Select customer based on scenario
             customer = None
             if scenario["type"] == "insufficient_funds":
-                customer = next(c for c in self.test_customers if c["payment_methods"][0]["last4"] == "0341")
+                customer = next(
+                    c
+                    for c in self.test_customers
+                    if c["payment_methods"][0]["last4"] == "0341"
+                )
             elif scenario["type"] == "expired_card":
-                customer = next(c for c in self.test_customers if c["payment_methods"][0]["last4"] == "0002")
+                customer = next(
+                    c
+                    for c in self.test_customers
+                    if c["payment_methods"][0]["last4"] == "0002"
+                )
             else:
                 customer = self.test_customers[0]  # Default customer
 
@@ -600,10 +668,15 @@ class PaymentsEdgeCasesE2E:
                 "expired_card": ("4001", "Your card has expired."),
                 "card_declined": ("4002", "Your card was declined."),
                 "processing_error": ("4003", "An error occurred processing your card."),
-                "fraud_suspected": ("4004", "Your card was flagged for suspected fraud."),
+                "fraud_suspected": (
+                    "4004",
+                    "Your card was flagged for suspected fraud.",
+                ),
             }
 
-            code, reason = decline_codes.get(scenario["type"], ("4999", "Unknown error"))
+            code, reason = decline_codes.get(
+                scenario["type"], ("4999", "Unknown error")
+            )
 
             payment.update(
                 {
@@ -642,7 +715,9 @@ class PaymentsEdgeCasesE2E:
 
         try:
             # Find the original payment
-            original_payment = next(p for p in self.test_payments if p["id"] == payment_id)
+            original_payment = next(
+                p for p in self.test_payments if p["id"] == payment_id
+            )
 
             # Define retry strategy
             retry_strategy = {
@@ -691,7 +766,9 @@ class PaymentsEdgeCasesE2E:
                 if retry_attempt["status"] == "succeeded":
                     break
 
-            final_success = any(attempt["status"] == "succeeded" for attempt in retry_attempts)
+            final_success = any(
+                attempt["status"] == "succeeded" for attempt in retry_attempts
+            )
 
             return {
                 "success": True,
@@ -704,7 +781,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_dunning_workflow(self, customer_id: str) -> dict[str, Any]:
         """Test dunning workflow for failed payments."""
@@ -724,10 +805,30 @@ class PaymentsEdgeCasesE2E:
 
             # Define dunning steps
             dunning_steps = [
-                {"step": 1, "type": "email", "subject": "Payment Failed - Please Update", "delay_days": 1},
-                {"step": 2, "type": "email", "subject": "Urgent: Account Past Due", "delay_days": 3},
-                {"step": 3, "type": "email_sms", "subject": "Final Notice", "delay_days": 7},
-                {"step": 4, "type": "suspension", "subject": "Account Suspended", "delay_days": 14},
+                {
+                    "step": 1,
+                    "type": "email",
+                    "subject": "Payment Failed - Please Update",
+                    "delay_days": 1,
+                },
+                {
+                    "step": 2,
+                    "type": "email",
+                    "subject": "Urgent: Account Past Due",
+                    "delay_days": 3,
+                },
+                {
+                    "step": 3,
+                    "type": "email_sms",
+                    "subject": "Final Notice",
+                    "delay_days": 7,
+                },
+                {
+                    "step": 4,
+                    "type": "suspension",
+                    "subject": "Account Suspended",
+                    "delay_days": 14,
+                },
             ]
 
             executed_steps = []
@@ -738,7 +839,8 @@ class PaymentsEdgeCasesE2E:
                     "type": step_config["type"],
                     "status": "processing",
                     "scheduled_for": (
-                        datetime.now(timezone.utc) + timedelta(days=step_config["delay_days"])
+                        datetime.now(timezone.utc)
+                        + timedelta(days=step_config["delay_days"])
                     ).isoformat(),
                     "started_at": datetime.now(timezone.utc).isoformat(),
                 }
@@ -751,7 +853,9 @@ class PaymentsEdgeCasesE2E:
                     {
                         "status": "completed",
                         "completed_at": datetime.now(timezone.utc).isoformat(),
-                        "delivery_status": "delivered" if step_config["type"] != "suspension" else "suspended",
+                        "delivery_status": "delivered"
+                        if step_config["type"] != "suspension"
+                        else "suspended",
                     }
                 )
 
@@ -769,7 +873,11 @@ class PaymentsEdgeCasesE2E:
                 "responded": True,
                 "response_type": "payment_method_updated",
                 "response_step": 2,
-                "new_payment_attempt": {"id": str(uuid4()), "status": "succeeded", "amount": Decimal("99.99")},
+                "new_payment_attempt": {
+                    "id": str(uuid4()),
+                    "status": "succeeded",
+                    "amount": Decimal("99.99"),
+                },
             }
 
             dunning_process.update(
@@ -790,7 +898,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_payment_recovery(self, failed_payment_id: str) -> dict[str, Any]:
         """Test payment recovery workflows."""
@@ -798,7 +910,9 @@ class PaymentsEdgeCasesE2E:
 
         try:
             # Find failed payment
-            failed_payment = next(p for p in self.test_payments if p["id"] == failed_payment_id)
+            failed_payment = next(
+                p for p in self.test_payments if p["id"] == failed_payment_id
+            )
 
             recovery_workflows = [
                 {
@@ -811,7 +925,11 @@ class PaymentsEdgeCasesE2E:
                     "description": "Customer updated payment information",
                     "success_rate": 0.8,
                 },
-                {"type": "manual_intervention", "description": "Manual review and approval", "success_rate": 0.9},
+                {
+                    "type": "manual_intervention",
+                    "description": "Manual review and approval",
+                    "success_rate": 0.9,
+                },
             ]
 
             recovery_attempts = []
@@ -849,11 +967,15 @@ class PaymentsEdgeCasesE2E:
                     recovery_attempts.append(recovery_attempt)
                     break
                 else:
-                    recovery_attempt["failure_reason"] = f"{workflow['type']} recovery failed"
+                    recovery_attempt[
+                        "failure_reason"
+                    ] = f"{workflow['type']} recovery failed"
 
                 recovery_attempts.append(recovery_attempt)
 
-            overall_success = any(attempt["status"] == "succeeded" for attempt in recovery_attempts)
+            overall_success = any(
+                attempt["status"] == "succeeded" for attempt in recovery_attempts
+            )
 
             return {
                 "success": True,
@@ -865,7 +987,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _setup_3ds_payment_methods(self) -> dict[str, Any]:
         """Setup 3DS-enabled payment methods."""
@@ -876,10 +1002,26 @@ class PaymentsEdgeCasesE2E:
 
             # Create customers with 3DS-enabled cards
             threeds_scenarios = [
-                {"card": "4000000000003220", "flow": "frictionless", "description": "Frictionless 3DS"},
-                {"card": "4000000000003238", "flow": "challenge", "description": "Challenge 3DS"},
-                {"card": "4000000000003246", "flow": "failed_auth", "description": "Authentication failed"},
-                {"card": "4000000000003253", "flow": "not_enrolled", "description": "Not enrolled in 3DS"},
+                {
+                    "card": "4000000000003220",
+                    "flow": "frictionless",
+                    "description": "Frictionless 3DS",
+                },
+                {
+                    "card": "4000000000003238",
+                    "flow": "challenge",
+                    "description": "Challenge 3DS",
+                },
+                {
+                    "card": "4000000000003246",
+                    "flow": "failed_auth",
+                    "description": "Authentication failed",
+                },
+                {
+                    "card": "4000000000003253",
+                    "flow": "not_enrolled",
+                    "description": "Not enrolled in 3DS",
+                },
             ]
 
             for i, scenario in enumerate(threeds_scenarios):
@@ -917,7 +1059,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_frictionless_3ds(self) -> dict[str, Any]:
         """Test frictionless 3DS authentication."""
@@ -978,7 +1124,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_challenge_3ds(self) -> dict[str, Any]:
         """Test challenge 3DS authentication flow."""
@@ -1042,9 +1192,15 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_3ds_failure_scenario(self, scenario: dict[str, Any]) -> dict[str, Any]:
+    async def _test_3ds_failure_scenario(
+        self, scenario: dict[str, Any]
+    ) -> dict[str, Any]:
         """Test 3DS failure scenarios."""
         start_time = time.time()
 
@@ -1088,7 +1244,9 @@ class PaymentsEdgeCasesE2E:
                 },
             }
 
-            failure_response = failure_responses.get(scenario["type"], failure_responses["authentication_failed"])
+            failure_response = failure_responses.get(
+                scenario["type"], failure_responses["authentication_failed"]
+            )
 
             threeds_attempt.update(failure_response)
             threeds_attempt["completed_at"] = datetime.now(timezone.utc).isoformat()
@@ -1130,7 +1288,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_3ds_fallback(self) -> dict[str, Any]:
         """Test 3DS fallback mechanisms."""
@@ -1204,7 +1366,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _setup_payments_for_refund_testing(self) -> dict[str, Any]:
         """Setup payments for refund testing scenarios."""
@@ -1226,7 +1392,9 @@ class PaymentsEdgeCasesE2E:
                 payment = {
                     "id": str(uuid4()),
                     "tenant_id": self.test_tenant_id,
-                    "customer_id": self.test_customers[i % len(self.test_customers)]["id"]
+                    "customer_id": self.test_customers[i % len(self.test_customers)][
+                        "id"
+                    ]
                     if self.test_customers
                     else str(uuid4()),
                     "amount": scenario["amount"],
@@ -1234,8 +1402,14 @@ class PaymentsEdgeCasesE2E:
                     "status": "succeeded",
                     "test_scenario": scenario["type"],
                     "gateway_transaction_id": f"txn_{uuid4().hex[:12]}",
-                    "created_at": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 30))).isoformat(),
-                    "succeeded_at": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 30))).isoformat(),
+                    "created_at": (
+                        datetime.now(timezone.utc)
+                        - timedelta(days=random.randint(1, 30))
+                    ).isoformat(),
+                    "succeeded_at": (
+                        datetime.now(timezone.utc)
+                        - timedelta(days=random.randint(1, 30))
+                    ).isoformat(),
                 }
                 test_payments.append(payment)
 
@@ -1251,7 +1425,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_partial_refunds(self, payment: dict[str, Any]) -> dict[str, Any]:
         """Test partial refund functionality."""
@@ -1291,7 +1469,11 @@ class PaymentsEdgeCasesE2E:
             remaining_refundable = original_amount - partial_refund_amount
 
             validation_checks = [
-                {"check": "refund_amount_valid", "condition": partial_refund_amount <= original_amount, "passed": True},
+                {
+                    "check": "refund_amount_valid",
+                    "condition": partial_refund_amount <= original_amount,
+                    "passed": True,
+                },
                 {
                     "check": "remaining_amount_calculated",
                     "remaining": remaining_refundable,
@@ -1314,14 +1496,22 @@ class PaymentsEdgeCasesE2E:
                 "refund_amount": partial_refund_amount,
                 "remaining_refundable": remaining_refundable,
                 "validation_checks": validation_checks,
-                "all_checks_passed": all(check["passed"] for check in validation_checks),
+                "all_checks_passed": all(
+                    check["passed"] for check in validation_checks
+                ),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_multiple_partial_refunds(self, payment: dict[str, Any]) -> dict[str, Any]:
+    async def _test_multiple_partial_refunds(
+        self, payment: dict[str, Any]
+    ) -> dict[str, Any]:
         """Test multiple partial refunds on same payment."""
         start_time = time.time()
 
@@ -1380,7 +1570,9 @@ class PaymentsEdgeCasesE2E:
             # Validation
             validation_results = {
                 "total_refunds_created": len(refunds),
-                "successful_refunds": len([r for r in refunds if r["status"] == "succeeded"]),
+                "successful_refunds": len(
+                    [r for r in refunds if r["status"] == "succeeded"]
+                ),
                 "failed_refunds": len([r for r in refunds if r["status"] == "failed"]),
                 "total_refunded": total_refunded,
                 "remaining_refundable": remaining_refundable,
@@ -1397,7 +1589,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_refund_limitations(self, payment: dict[str, Any]) -> dict[str, Any]:
         """Test refund limitations and edge cases."""
@@ -1407,7 +1603,9 @@ class PaymentsEdgeCasesE2E:
             limitation_tests = []
 
             # Test 1: Refund deadline (mock old payment)
-            old_payment_date = datetime.now(timezone.utc) - timedelta(days=185)  # Older than 180 days
+            old_payment_date = datetime.now(timezone.utc) - timedelta(
+                days=185
+            )  # Older than 180 days
             deadline_test = {
                 "test": "refund_deadline",
                 "payment_age_days": 185,
@@ -1471,7 +1669,8 @@ class PaymentsEdgeCasesE2E:
             await asyncio.sleep(1)
 
             all_limitations_working = all(
-                test["result"]["status"] == ("failed" if test["should_fail"] else "succeeded")
+                test["result"]["status"]
+                == ("failed" if test["should_fail"] else "succeeded")
                 for test in limitation_tests
             )
 
@@ -1485,7 +1684,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_cross_tenant_refund_isolation(self) -> dict[str, Any]:
         """Test cross-tenant refund isolation."""
@@ -1546,7 +1749,9 @@ class PaymentsEdgeCasesE2E:
                 },
                 {
                     "check": "security_violation_detected",
-                    "passed": cross_tenant_refund_attempt.get("security_violation", False),
+                    "passed": cross_tenant_refund_attempt.get(
+                        "security_violation", False
+                    ),
                     "details": "Cross-tenant access properly blocked",
                 },
                 {
@@ -1568,9 +1773,15 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"isolation_maintained": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "isolation_maintained": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_refund_reversal_scenarios(self, payment: dict[str, Any]) -> dict[str, Any]:
+    async def _test_refund_reversal_scenarios(
+        self, payment: dict[str, Any]
+    ) -> dict[str, Any]:
         """Test refund reversal scenarios."""
         start_time = time.time()
 
@@ -1593,8 +1804,16 @@ class PaymentsEdgeCasesE2E:
 
             # Test reversal scenarios
             reversal_scenarios = [
-                {"type": "chargeback_dispute", "reason": "Customer disputes refund", "success_probability": 0.3},
-                {"type": "bank_reversal", "reason": "Bank initiated reversal", "success_probability": 0.8},
+                {
+                    "type": "chargeback_dispute",
+                    "reason": "Customer disputes refund",
+                    "success_probability": 0.3,
+                },
+                {
+                    "type": "bank_reversal",
+                    "reason": "Bank initiated reversal",
+                    "success_probability": 0.8,
+                },
                 {
                     "type": "fraud_investigation",
                     "reason": "Fraud investigation requires reversal",
@@ -1640,7 +1859,9 @@ class PaymentsEdgeCasesE2E:
 
                 reversal_attempts.append(reversal_attempt)
 
-            successful_reversals = [r for r in reversal_attempts if r["status"] == "succeeded"]
+            successful_reversals = [
+                r for r in reversal_attempts if r["status"] == "succeeded"
+            ]
 
             return {
                 "success": True,
@@ -1654,7 +1875,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _setup_subscription_testing(self) -> dict[str, Any]:
         """Setup subscription plans and customers for testing."""
@@ -1696,18 +1921,26 @@ class PaymentsEdgeCasesE2E:
                 subscription = {
                     "id": str(uuid4()),
                     "tenant_id": self.test_tenant_id,
-                    "customer_id": self.test_customers[i % len(self.test_customers)]["id"]
+                    "customer_id": self.test_customers[i % len(self.test_customers)][
+                        "id"
+                    ]
                     if self.test_customers
                     else str(uuid4()),
                     "plan_id": plan["id"],
                     "plan": plan,
                     "status": "active",
                     "current_period_start": datetime.now(timezone.utc).isoformat(),
-                    "current_period_end": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
-                    "trial_start": (datetime.now(timezone.utc) - timedelta(days=plan["trial_period_days"])).isoformat(),
+                    "current_period_end": (
+                        datetime.now(timezone.utc) + timedelta(days=30)
+                    ).isoformat(),
+                    "trial_start": (
+                        datetime.now(timezone.utc)
+                        - timedelta(days=plan["trial_period_days"])
+                    ).isoformat(),
                     "trial_end": datetime.now(timezone.utc).isoformat(),
                     "created_at": (
-                        datetime.now(timezone.utc) - timedelta(days=plan["trial_period_days"] + 5)
+                        datetime.now(timezone.utc)
+                        - timedelta(days=plan["trial_period_days"] + 5)
                     ).isoformat(),
                 }
                 subscriptions.append(subscription)
@@ -1723,11 +1956,13 @@ class PaymentsEdgeCasesE2E:
                         "status": "trialing",
                         "current_period_start": datetime.now(timezone.utc).isoformat(),
                         "current_period_end": (
-                            datetime.now(timezone.utc) + timedelta(days=plan["trial_period_days"])
+                            datetime.now(timezone.utc)
+                            + timedelta(days=plan["trial_period_days"])
                         ).isoformat(),
                         "trial_start": datetime.now(timezone.utc).isoformat(),
                         "trial_end": (
-                            datetime.now(timezone.utc) + timedelta(days=plan["trial_period_days"])
+                            datetime.now(timezone.utc)
+                            + timedelta(days=plan["trial_period_days"])
                         ).isoformat(),
                         "created_at": datetime.now(timezone.utc).isoformat(),
                     }
@@ -1747,9 +1982,15 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_proration_calculations(self, subscription: dict[str, Any]) -> dict[str, Any]:
+    async def _test_proration_calculations(
+        self, subscription: dict[str, Any]
+    ) -> dict[str, Any]:
         """Test proration calculations for subscription changes."""
         start_time = time.time()
 
@@ -1759,7 +2000,9 @@ class PaymentsEdgeCasesE2E:
             current_amount = current_plan["amount"]
 
             # Days remaining in current period
-            current_period_end = datetime.fromisoformat(subscription["current_period_end"])
+            current_period_end = datetime.fromisoformat(
+                subscription["current_period_end"]
+            )
             days_remaining = (current_period_end - datetime.now(timezone.utc)).days
             days_in_period = 30  # Monthly billing
 
@@ -1811,7 +2054,11 @@ class PaymentsEdgeCasesE2E:
                     "condition": abs(proration_adjustment) <= new_plan["amount"],
                     "passed": abs(proration_adjustment) <= new_plan["amount"],
                 },
-                {"check": "unused_amount_calculated", "condition": unused_amount >= 0, "passed": unused_amount >= 0},
+                {
+                    "check": "unused_amount_calculated",
+                    "condition": unused_amount >= 0,
+                    "passed": unused_amount >= 0,
+                },
                 {
                     "check": "days_remaining_valid",
                     "condition": 0 <= days_remaining <= days_in_period,
@@ -1825,14 +2072,22 @@ class PaymentsEdgeCasesE2E:
                 "proration_calculation": proration_calculation,
                 "proration_item": proration_item,
                 "validation_checks": validation_checks,
-                "all_checks_passed": all(check["passed"] for check in validation_checks),
+                "all_checks_passed": all(
+                    check["passed"] for check in validation_checks
+                ),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_mid_cycle_plan_changes(self, subscription: dict[str, Any]) -> dict[str, Any]:
+    async def _test_mid_cycle_plan_changes(
+        self, subscription: dict[str, Any]
+    ) -> dict[str, Any]:
         """Test plan changes in the middle of billing cycle."""
         start_time = time.time()
 
@@ -1849,8 +2104,12 @@ class PaymentsEdgeCasesE2E:
             }
 
             # Calculate mid-cycle change
-            current_period_start = datetime.fromisoformat(subscription["current_period_start"])
-            current_period_end = datetime.fromisoformat(subscription["current_period_end"])
+            current_period_start = datetime.fromisoformat(
+                subscription["current_period_start"]
+            )
+            current_period_end = datetime.fromisoformat(
+                subscription["current_period_end"]
+            )
             change_date = datetime.now(timezone.utc)
 
             days_used = (change_date - current_period_start).days
@@ -1932,9 +2191,15 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_subscription_dunning(self, subscription: dict[str, Any]) -> dict[str, Any]:
+    async def _test_subscription_dunning(
+        self, subscription: dict[str, Any]
+    ) -> dict[str, Any]:
         """Test dunning process for subscription billing failures."""
         start_time = time.time()
 
@@ -1964,11 +2229,36 @@ class PaymentsEdgeCasesE2E:
 
             # Define subscription-specific dunning steps
             dunning_steps = [
-                {"step": 1, "action": "retry_payment", "delay_hours": 24, "suspend_after": False},
-                {"step": 2, "action": "email_notification", "delay_hours": 72, "suspend_after": False},
-                {"step": 3, "action": "retry_payment", "delay_hours": 168, "suspend_after": False},  # 1 week
-                {"step": 4, "action": "final_notice", "delay_hours": 336, "suspend_after": True},  # 2 weeks
-                {"step": 5, "action": "suspend_subscription", "delay_hours": 504, "suspend_after": True},  # 3 weeks
+                {
+                    "step": 1,
+                    "action": "retry_payment",
+                    "delay_hours": 24,
+                    "suspend_after": False,
+                },
+                {
+                    "step": 2,
+                    "action": "email_notification",
+                    "delay_hours": 72,
+                    "suspend_after": False,
+                },
+                {
+                    "step": 3,
+                    "action": "retry_payment",
+                    "delay_hours": 168,
+                    "suspend_after": False,
+                },  # 1 week
+                {
+                    "step": 4,
+                    "action": "final_notice",
+                    "delay_hours": 336,
+                    "suspend_after": True,
+                },  # 2 weeks
+                {
+                    "step": 5,
+                    "action": "suspend_subscription",
+                    "delay_hours": 504,
+                    "suspend_after": True,
+                },  # 3 weeks
             ]
 
             executed_steps = []
@@ -1979,7 +2269,8 @@ class PaymentsEdgeCasesE2E:
                     "action": step_config["action"],
                     "status": "processing",
                     "scheduled_for": (
-                        datetime.now(timezone.utc) + timedelta(hours=step_config["delay_hours"])
+                        datetime.now(timezone.utc)
+                        + timedelta(hours=step_config["delay_hours"])
                     ).isoformat(),
                     "started_at": datetime.now(timezone.utc).isoformat(),
                 }
@@ -1993,7 +2284,9 @@ class PaymentsEdgeCasesE2E:
                     step_execution.update(
                         {
                             "status": "completed",
-                            "payment_retry_result": "succeeded" if retry_success else "failed",
+                            "payment_retry_result": "succeeded"
+                            if retry_success
+                            else "failed",
                             "completed_at": datetime.now(timezone.utc).isoformat(),
                         }
                     )
@@ -2048,7 +2341,11 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_trial_period_edge_cases(self) -> dict[str, Any]:
         """Test trial period edge cases."""
@@ -2062,7 +2359,9 @@ class PaymentsEdgeCasesE2E:
                 "id": str(uuid4()),
                 "tenant_id": self.test_tenant_id,
                 "status": "trialing",
-                "trial_start": (datetime.now(timezone.utc) - timedelta(days=13)).isoformat(),
+                "trial_start": (
+                    datetime.now(timezone.utc) - timedelta(days=13)
+                ).isoformat(),
                 "trial_end": datetime.now(timezone.utc).isoformat(),  # Expires today
                 "plan": {"amount": Decimal("29.99"), "trial_period_days": 14},
             }
@@ -2087,7 +2386,10 @@ class PaymentsEdgeCasesE2E:
             )
 
             trial_ending_today.update(
-                {"status": "active", "trial_converted_at": datetime.now(timezone.utc).isoformat()}
+                {
+                    "status": "active",
+                    "trial_converted_at": datetime.now(timezone.utc).isoformat(),
+                }
             )
 
             edge_cases.append(
@@ -2104,8 +2406,12 @@ class PaymentsEdgeCasesE2E:
                 "id": str(uuid4()),
                 "tenant_id": self.test_tenant_id,
                 "status": "trialing",
-                "trial_start": (datetime.now(timezone.utc) - timedelta(days=5)).isoformat(),
-                "trial_end": (datetime.now(timezone.utc) + timedelta(days=9)).isoformat(),
+                "trial_start": (
+                    datetime.now(timezone.utc) - timedelta(days=5)
+                ).isoformat(),
+                "trial_end": (
+                    datetime.now(timezone.utc) + timedelta(days=9)
+                ).isoformat(),
                 "plan": {"amount": Decimal("99.99"), "trial_period_days": 14},
             }
 
@@ -2139,7 +2445,9 @@ class PaymentsEdgeCasesE2E:
                 "id": str(uuid4()),
                 "tenant_id": self.test_tenant_id,
                 "status": "trialing",
-                "trial_start": (datetime.now(timezone.utc) - timedelta(days=14)).isoformat(),
+                "trial_start": (
+                    datetime.now(timezone.utc) - timedelta(days=14)
+                ).isoformat(),
                 "trial_end": datetime.now(timezone.utc).isoformat(),
                 "plan": {"amount": Decimal("49.99"), "trial_period_days": 14},
             }
@@ -2153,7 +2461,12 @@ class PaymentsEdgeCasesE2E:
             }
 
             trial_conversion_failure.update(
-                {"status": "past_due", "trial_conversion_failed_at": datetime.now(timezone.utc).isoformat()}
+                {
+                    "status": "past_due",
+                    "trial_conversion_failed_at": datetime.now(
+                        timezone.utc
+                    ).isoformat(),
+                }
             )
 
             edge_cases.append(
@@ -2176,9 +2489,15 @@ class PaymentsEdgeCasesE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_subscription_pause_resume(self, subscription: dict[str, Any]) -> dict[str, Any]:
+    async def _test_subscription_pause_resume(
+        self, subscription: dict[str, Any]
+    ) -> dict[str, Any]:
         """Test subscription pause and resume functionality."""
         start_time = time.time()
 
@@ -2199,7 +2518,9 @@ class PaymentsEdgeCasesE2E:
 
             # Process pause
             pause_effective_date = datetime.now(timezone.utc)
-            paused_days_remaining = (datetime.fromisoformat(original_period_end) - pause_effective_date).days
+            paused_days_remaining = (
+                datetime.fromisoformat(original_period_end) - pause_effective_date
+            ).days
 
             pause_details = {
                 "paused_at": pause_effective_date.isoformat(),
@@ -2210,7 +2531,11 @@ class PaymentsEdgeCasesE2E:
             }
 
             subscription.update(
-                {"status": "paused", "paused_at": pause_effective_date.isoformat(), "pause_details": pause_details}
+                {
+                    "status": "paused",
+                    "paused_at": pause_effective_date.isoformat(),
+                    "pause_details": pause_details,
+                }
             )
 
             await asyncio.sleep(1)
@@ -2220,7 +2545,9 @@ class PaymentsEdgeCasesE2E:
                 "id": str(uuid4()),
                 "subscription_id": subscription["id"],
                 "resume_type": "customer_request",
-                "requested_at": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+                "requested_at": (
+                    datetime.now(timezone.utc) + timedelta(days=30)
+                ).isoformat(),
             }
 
             # Process resume
@@ -2228,7 +2555,9 @@ class PaymentsEdgeCasesE2E:
 
             # Calculate new period end (extend by paused duration)
             pause_duration_days = 30  # Days subscription was paused
-            new_period_end = datetime.fromisoformat(original_period_end) + timedelta(days=pause_duration_days)
+            new_period_end = datetime.fromisoformat(original_period_end) + timedelta(
+                days=pause_duration_days
+            )
 
             resume_details = {
                 "resumed_at": resume_date.isoformat(),
@@ -2283,12 +2612,18 @@ class PaymentsEdgeCasesE2E:
                 "resume_details": resume_details,
                 "final_subscription_status": subscription["status"],
                 "validation_checks": validation_checks,
-                "all_checks_passed": all(check["passed"] for check in validation_checks),
+                "all_checks_passed": all(
+                    check["passed"] for check in validation_checks
+                ),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
 
 # Pytest test functions
@@ -2301,7 +2636,9 @@ async def test_payments_edge_cases_e2e():
 
     # Assert overall success
     assert results["status"] == "completed", f"Test suite failed: {results}"
-    assert results["summary"]["success_rate"] >= 75, f"Success rate too low: {results['summary']}"
+    assert (
+        results["summary"]["success_rate"] >= 75
+    ), f"Success rate too low: {results['summary']}"
 
     # Log results
     logger.info("\nPayments Edge Cases Test Results:")

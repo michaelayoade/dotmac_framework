@@ -41,23 +41,34 @@ class TenantIsolationFailureInjector(FailureInjector):
 
     def supports_failure_type(self, failure_type: FailureType) -> bool:
         """Check if this injector supports the failure type"""
-        return failure_type in [FailureType.DATABASE_CONNECTION_FAILURE, FailureType.NETWORK_PARTITION]
+        return failure_type in [
+            FailureType.DATABASE_CONNECTION_FAILURE,
+            FailureType.NETWORK_PARTITION,
+        ]
 
     async def remove_failure(self, failure_config: dict[str, Any]) -> dict[str, Any]:
         """Remove previously injected failure"""
         isolation_type = failure_config.get("isolation_type", "database")
         tenant_id = failure_config.get("tenant_id")
 
-        logger.info(f"Removing tenant isolation failure for {tenant_id}: {isolation_type}")
+        logger.info(
+            f"Removing tenant isolation failure for {tenant_id}: {isolation_type}"
+        )
         await asyncio.sleep(0.1)  # Simulate cleanup time
 
-        return {"status": "removed", "failure_type": f"tenant_{isolation_type}_isolation", "tenant_id": tenant_id}
+        return {
+            "status": "removed",
+            "failure_type": f"tenant_{isolation_type}_isolation",
+            "tenant_id": tenant_id,
+        }
 
     async def inject_failure(self, failure_config: dict[str, Any]) -> dict[str, Any]:
         tenant_id = failure_config.get("tenant_id")
         isolation_type = failure_config.get("isolation_type", "database")
 
-        logger.info(f"Injecting tenant isolation failure for {tenant_id}: {isolation_type}")
+        logger.info(
+            f"Injecting tenant isolation failure for {tenant_id}: {isolation_type}"
+        )
 
         if isolation_type == "database":
             # Simulate database tenant partition failure
@@ -69,9 +80,14 @@ class TenantIsolationFailureInjector(FailureInjector):
             # Simulate network-level tenant isolation failure
             return await self._inject_network_isolation_failure(tenant_id)
 
-        return {"status": "failed", "reason": f"Unknown isolation type: {isolation_type}"}
+        return {
+            "status": "failed",
+            "reason": f"Unknown isolation type: {isolation_type}",
+        }
 
-    async def _inject_database_isolation_failure(self, tenant_id: str) -> dict[str, Any]:
+    async def _inject_database_isolation_failure(
+        self, tenant_id: str
+    ) -> dict[str, Any]:
         """Simulate database tenant isolation failure"""
         # In real implementation, this would manipulate database connections
         # or modify tenant routing to cause cross-tenant data access
@@ -109,7 +125,10 @@ class ISPServiceFailureInjector(FailureInjector):
 
     def supports_failure_type(self, failure_type: FailureType) -> bool:
         """Check if this injector supports the failure type"""
-        return failure_type in [FailureType.SERVICE_UNAVAILABLE, FailureType.NETWORK_LATENCY]
+        return failure_type in [
+            FailureType.SERVICE_UNAVAILABLE,
+            FailureType.NETWORK_LATENCY,
+        ]
 
     async def remove_failure(self, failure_config: dict[str, Any]) -> dict[str, Any]:
         """Remove previously injected failure"""
@@ -118,7 +137,11 @@ class ISPServiceFailureInjector(FailureInjector):
         logger.info(f"Removing ISP service failure: {service_type}")
         await asyncio.sleep(0.1)
 
-        return {"status": "removed", "failure_type": f"isp_{service_type}_failure", "service_type": service_type}
+        return {
+            "status": "removed",
+            "failure_type": f"isp_{service_type}_failure",
+            "service_type": service_type,
+        }
 
     async def inject_failure(self, failure_config: dict[str, Any]) -> dict[str, Any]:
         service_type = failure_config.get("service_type")
@@ -135,7 +158,10 @@ class ISPServiceFailureInjector(FailureInjector):
         elif service_type == "dhcp_service":
             return await self._inject_dhcp_failure(failure_mode)
 
-        return {"status": "failed", "reason": f"Unknown ISP service type: {service_type}"}
+        return {
+            "status": "failed",
+            "reason": f"Unknown ISP service type: {service_type}",
+        }
 
     async def _inject_provisioning_failure(self, failure_mode: str) -> dict[str, Any]:
         """Simulate service provisioning failures"""
@@ -183,7 +209,10 @@ class BillingResilienceFailureInjector(FailureInjector):
 
     def supports_failure_type(self, failure_type: FailureType) -> bool:
         """Check if this injector supports the failure type"""
-        return failure_type in [FailureType.SERVICE_UNAVAILABLE, FailureType.SLOW_RESPONSE]
+        return failure_type in [
+            FailureType.SERVICE_UNAVAILABLE,
+            FailureType.SLOW_RESPONSE,
+        ]
 
     async def remove_failure(self, failure_config: dict[str, Any]) -> dict[str, Any]:
         """Remove previously injected failure"""
@@ -192,13 +221,19 @@ class BillingResilienceFailureInjector(FailureInjector):
         logger.info(f"Removing billing failure: {billing_component}")
         await asyncio.sleep(0.1)
 
-        return {"status": "removed", "failure_type": f"{billing_component}_failure", "component": billing_component}
+        return {
+            "status": "removed",
+            "failure_type": f"{billing_component}_failure",
+            "component": billing_component,
+        }
 
     async def inject_failure(self, failure_config: dict[str, Any]) -> dict[str, Any]:
         billing_component = failure_config.get("component")
         failure_severity = failure_config.get("severity", "partial")
 
-        logger.info(f"Injecting billing failure: {billing_component} - {failure_severity}")
+        logger.info(
+            f"Injecting billing failure: {billing_component} - {failure_severity}"
+        )
 
         if billing_component == "payment_processing":
             return await self._inject_payment_failure(failure_severity)
@@ -209,7 +244,10 @@ class BillingResilienceFailureInjector(FailureInjector):
         elif billing_component == "usage_metering":
             return await self._inject_metering_failure(failure_severity)
 
-        return {"status": "failed", "reason": f"Unknown billing component: {billing_component}"}
+        return {
+            "status": "failed",
+            "reason": f"Unknown billing component: {billing_component}",
+        }
 
     async def _inject_payment_failure(self, severity: str) -> dict[str, Any]:
         """Simulate payment processing failures"""
@@ -218,7 +256,9 @@ class BillingResilienceFailureInjector(FailureInjector):
             "status": "injected",
             "failure_type": "payment_processing_failure",
             "severity": severity,
-            "impact": "revenue_loss_risk" if severity == "complete" else "delayed_payments",
+            "impact": "revenue_loss_risk"
+            if severity == "complete"
+            else "delayed_payments",
         }
 
     async def _inject_invoice_failure(self, severity: str) -> dict[str, Any]:
@@ -273,13 +313,17 @@ class DotMacChaosScenarios:
         )
 
         # Test database isolation
-        await experiment.start_experiment({"tenant_id": tenant_id, "isolation_type": "database"})
+        await experiment.start_experiment(
+            {"tenant_id": tenant_id, "isolation_type": "database"}
+        )
 
         # Validate isolation maintained
         await asyncio.sleep(2)
 
         # Test cache isolation
-        await experiment.inject_additional_failure({"tenant_id": tenant_id, "isolation_type": "cache"})
+        await experiment.inject_additional_failure(
+            {"tenant_id": tenant_id, "isolation_type": "cache"}
+        )
 
         await asyncio.sleep(1)
 
@@ -304,7 +348,9 @@ class DotMacChaosScenarios:
                 failure_injector=self.isp_injector,
             )
 
-            await experiment.start_experiment({"service_type": service_type, "failure_mode": failure_mode})
+            await experiment.start_experiment(
+                {"service_type": service_type, "failure_mode": failure_mode}
+            )
 
             # Let failure run for a bit
             await asyncio.sleep(random.uniform(1, 3))
@@ -332,7 +378,9 @@ class DotMacChaosScenarios:
                 failure_injector=self.billing_injector,
             )
 
-            await experiment.start_experiment({"component": component, "severity": severity})
+            await experiment.start_experiment(
+                {"component": component, "severity": severity}
+            )
 
             await asyncio.sleep(random.uniform(2, 4))
 
@@ -340,7 +388,9 @@ class DotMacChaosScenarios:
 
         return experiments
 
-    async def run_multi_tenant_database_partition_scenario(self, tenant_ids: list[str]) -> ChaosExperiment:
+    async def run_multi_tenant_database_partition_scenario(
+        self, tenant_ids: list[str]
+    ) -> ChaosExperiment:
         """Test database partition failures across multiple tenants"""
         experiment = ChaosExperiment(
             name="multi_tenant_database_partition",
@@ -351,12 +401,17 @@ class DotMacChaosScenarios:
 
         # Start with database connection failure
         await experiment.start_experiment(
-            {"failure_type": FailureType.DATABASE_CONNECTION_FAILURE, "duration_seconds": 30}
+            {
+                "failure_type": FailureType.DATABASE_CONNECTION_FAILURE,
+                "duration_seconds": 30,
+            }
         )
 
         # Inject tenant-specific isolation failures
         for tenant_id in tenant_ids:
-            await experiment.inject_additional_failure({"tenant_id": tenant_id, "isolation_type": "database"})
+            await experiment.inject_additional_failure(
+                {"tenant_id": tenant_id, "isolation_type": "database"}
+            )
             await asyncio.sleep(0.5)
 
         # Let the chaos run
@@ -370,28 +425,44 @@ class DotMacChaosScenarios:
 
         logger.info(f"Starting comprehensive resilience test for tenant {tenant_id}")
 
-        results = {"test_start": start_time.isoformat(), "tenant_id": tenant_id, "experiments": []}
+        results = {
+            "test_start": start_time.isoformat(),
+            "tenant_id": tenant_id,
+            "experiments": [],
+        }
 
         # Run tenant isolation scenario
         tenant_result = await self.run_tenant_isolation_scenario(tenant_id)
-        results["experiments"].append({"name": "tenant_isolation", "result": tenant_result})
+        results["experiments"].append(
+            {"name": "tenant_isolation", "result": tenant_result}
+        )
 
         # Run ISP service disruption scenarios
         isp_results = await self.run_isp_service_disruption_scenario()
-        results["experiments"].append({"name": "isp_service_disruption", "result": isp_results})
+        results["experiments"].append(
+            {"name": "isp_service_disruption", "result": isp_results}
+        )
 
         # Run billing resilience scenarios
         billing_results = await self.run_billing_resilience_scenario()
-        results["experiments"].append({"name": "billing_resilience", "result": billing_results})
+        results["experiments"].append(
+            {"name": "billing_resilience", "result": billing_results}
+        )
 
         # Run multi-tenant database scenario
-        database_result = await self.run_multi_tenant_database_partition_scenario([tenant_id])
-        results["experiments"].append({"name": "database_partition", "result": database_result})
+        database_result = await self.run_multi_tenant_database_partition_scenario(
+            [tenant_id]
+        )
+        results["experiments"].append(
+            {"name": "database_partition", "result": database_result}
+        )
 
         results["test_end"] = utc_now().isoformat()
         results["total_duration"] = (utc_now() - start_time).total_seconds()
 
-        logger.info(f"Comprehensive resilience test completed in {results['total_duration']:.2f}s")
+        logger.info(
+            f"Comprehensive resilience test completed in {results['total_duration']:.2f}s"
+        )
 
         return results
 
@@ -399,13 +470,17 @@ class DotMacChaosScenarios:
         self, concurrent_users: int = 100, duration_minutes: int = 10
     ) -> dict[str, Any]:
         """Combine load testing with chaos engineering"""
-        logger.info(f"Starting load + chaos scenario: {concurrent_users} users for {duration_minutes} minutes")
+        logger.info(
+            f"Starting load + chaos scenario: {concurrent_users} users for {duration_minutes} minutes"
+        )
 
         start_time = utc_now()
         end_time = start_time + timedelta(minutes=duration_minutes)
 
         # Start background load simulation
-        load_task = asyncio.create_task(self._simulate_user_load(concurrent_users, duration_minutes))
+        load_task = asyncio.create_task(
+            self._simulate_user_load(concurrent_users, duration_minutes)
+        )
 
         chaos_experiments = []
 
@@ -413,7 +488,13 @@ class DotMacChaosScenarios:
         while utc_now() < end_time:
             # Random chaos injection
             chaos_type = random.choice(
-                ["network_latency", "service_failure", "database_slowdown", "tenant_isolation", "isp_service"]
+                [
+                    "network_latency",
+                    "service_failure",
+                    "database_slowdown",
+                    "tenant_isolation",
+                    "isp_service",
+                ]
             )
 
             if chaos_type == "network_latency":
@@ -424,7 +505,10 @@ class DotMacChaosScenarios:
                     failure_injector=self.network_injector,
                 )
                 await experiment.start_experiment(
-                    {"failure_type": FailureType.NETWORK_LATENCY, "latency_ms": random.randint(100, 1000)}
+                    {
+                        "failure_type": FailureType.NETWORK_LATENCY,
+                        "latency_ms": random.randint(100, 1000),
+                    }
                 )
 
             elif chaos_type == "service_failure":
@@ -436,7 +520,10 @@ class DotMacChaosScenarios:
                     failure_injector=self.service_injector,
                 )
                 await experiment.start_experiment(
-                    {"failure_type": FailureType.SERVICE_UNAVAILABLE, "service_name": service}
+                    {
+                        "failure_type": FailureType.SERVICE_UNAVAILABLE,
+                        "service_name": service,
+                    }
                 )
 
             # Let chaos run for 30-60 seconds
@@ -457,15 +544,21 @@ class DotMacChaosScenarios:
             "total_experiments": len(chaos_experiments),
         }
 
-    async def _simulate_user_load(self, concurrent_users: int, duration_minutes: int) -> dict[str, Any]:
+    async def _simulate_user_load(
+        self, concurrent_users: int, duration_minutes: int
+    ) -> dict[str, Any]:
         """Simulate concurrent user load"""
-        logger.info(f"Simulating {concurrent_users} concurrent users for {duration_minutes} minutes")
+        logger.info(
+            f"Simulating {concurrent_users} concurrent users for {duration_minutes} minutes"
+        )
 
         # In real implementation, this would generate actual API calls
         # For now, simulate with delays
         tasks = []
         for _i in range(concurrent_users):
-            task = asyncio.create_task(self._simulate_single_user_session(duration_minutes))
+            task = asyncio.create_task(
+                self._simulate_single_user_session(duration_minutes)
+            )
             tasks.append(task)
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -488,7 +581,14 @@ class DotMacChaosScenarios:
             while utc_now() < end_time:
                 # Simulate various user actions
                 action = random.choice(
-                    ["login", "view_dashboard", "check_billing", "manage_services", "view_reports", "logout"]
+                    [
+                        "login",
+                        "view_dashboard",
+                        "check_billing",
+                        "manage_services",
+                        "view_reports",
+                        "logout",
+                    ]
                 )
 
                 # Random action duration

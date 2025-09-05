@@ -104,7 +104,9 @@ class Ticket(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     resolved_at = Column(DateTime, nullable=True)
     closed_at = Column(DateTime, nullable=True)
     due_date = Column(DateTime, nullable=True)
@@ -116,13 +118,21 @@ class Ticket(Base):
 
     # Metadata
     tags = Column(JSON, default=list)
-    extra_data = Column(JSON, default=dict)  # Renamed from metadata to avoid SQLAlchemy conflict
+    extra_data = Column(
+        JSON, default=dict
+    )  # Renamed from metadata to avoid SQLAlchemy conflict
     external_references = Column(JSON, default=dict)  # Links to other systems
 
     # Relationships
-    comments = relationship("TicketComment", back_populates="ticket", cascade="all, delete-orphan")
-    attachments = relationship("TicketAttachment", back_populates="ticket", cascade="all, delete-orphan")
-    escalations = relationship("TicketEscalation", back_populates="ticket", cascade="all, delete-orphan")
+    comments = relationship(
+        "TicketComment", back_populates="ticket", cascade="all, delete-orphan"
+    )
+    attachments = relationship(
+        "TicketAttachment", back_populates="ticket", cascade="all, delete-orphan"
+    )
+    escalations = relationship(
+        "TicketEscalation", back_populates="ticket", cascade="all, delete-orphan"
+    )
 
 
 class TicketComment(Base):
@@ -136,7 +146,9 @@ class TicketComment(Base):
 
     # Comment content
     content = Column(Text, nullable=False)
-    is_internal = Column(Boolean, default=False, nullable=False)  # Internal notes vs customer-visible
+    is_internal = Column(
+        Boolean, default=False, nullable=False
+    )  # Internal notes vs customer-visible
     is_solution = Column(Boolean, default=False, nullable=False)  # Mark as solution
 
     # Author information
@@ -150,7 +162,9 @@ class TicketComment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Additional data
-    extra_data = Column(JSON, default=dict)  # Renamed from metadata to avoid SQLAlchemy conflict
+    extra_data = Column(
+        JSON, default=dict
+    )  # Renamed from metadata to avoid SQLAlchemy conflict
 
     # Relationships
     ticket = relationship("Ticket", back_populates="comments")
@@ -179,7 +193,9 @@ class TicketAttachment(Base):
     uploaded_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Additional data
-    extra_data = Column(JSON, default=dict)  # Renamed from metadata to avoid SQLAlchemy conflict
+    extra_data = Column(
+        JSON, default=dict
+    )  # Renamed from metadata to avoid SQLAlchemy conflict
 
     # Relationships
     ticket = relationship("Ticket", back_populates="attachments")
@@ -208,7 +224,9 @@ class TicketEscalation(Base):
 
     # Metadata
     escalation_rules = Column(JSON, default=dict)  # Rules that triggered escalation
-    extra_data = Column(JSON, default=dict)  # Renamed from metadata to avoid SQLAlchemy conflict
+    extra_data = Column(
+        JSON, default=dict
+    )  # Renamed from metadata to avoid SQLAlchemy conflict
 
     # Relationships
     ticket = relationship("Ticket", back_populates="escalations")

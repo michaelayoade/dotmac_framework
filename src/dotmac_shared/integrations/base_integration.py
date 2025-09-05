@@ -8,10 +8,11 @@ from abc import ABC, abstractmethod
 from typing import Any, Optional, TypeVar
 from uuid import UUID
 
-from dotmac.application import standard_exception_handler
-from dotmac.core.schemas.base_schemas import BaseResponseSchema
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac.application import standard_exception_handler
+from dotmac.core.schemas.base_schemas import BaseResponseSchema
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,11 @@ class IntegrationConfig(BaseModel):
     enabled: bool = True
     auth_type: str = "none"  # none, api_key, oauth, jwt
     rate_limits: dict[str, int] = {}
-    retry_config: dict[str, Any] = {"max_retries": 3, "backoff_factor": 2, "timeout": 30}
+    retry_config: dict[str, Any] = {
+        "max_retries": 3,
+        "backoff_factor": 2,
+        "timeout": 30,
+    }
 
 
 class IntegrationMetrics(BaseModel):
@@ -111,8 +116,12 @@ class BaseIntegration(ABC):
         self.metrics.requests_success += 1
         if response_time > 0:
             # Simple moving average
-            total_time = self.metrics.avg_response_time * (self.metrics.requests_total - 1)
-            self.metrics.avg_response_time = (total_time + response_time) / self.metrics.requests_total
+            total_time = self.metrics.avg_response_time * (
+                self.metrics.requests_total - 1
+            )
+            self.metrics.avg_response_time = (
+                total_time + response_time
+            ) / self.metrics.requests_total
         self.metrics.last_success = "now"  # In production, use actual timestamp
 
     def _record_error(self, error: str):
@@ -148,7 +157,11 @@ class ApiIntegration(BaseIntegration):
         pass
 
     async def make_request(
-        self, method: str, endpoint: str, data: Optional[dict[str, Any]] = None, params: Optional[dict[str, str]] = None
+        self,
+        method: str,
+        endpoint: str,
+        data: Optional[dict[str, Any]] = None,
+        params: Optional[dict[str, str]] = None,
     ) -> dict[str, Any]:
         """Make authenticated API request with error handling."""
         import time
@@ -167,14 +180,18 @@ class ApiIntegration(BaseIntegration):
         start_time = time.time()
 
         try:
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as session:
                 async with session.request(
                     method=method,
                     url=url,
                     json=data,
                     params=params,
                     headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=self.config.retry_config["timeout"]),
+                    timeout=aiohttp.ClientTimeout(
+                        total=self.config.retry_config["timeout"]
+                    ),
                 ) as response:
                     response_time = time.time() - start_time
 
@@ -210,7 +227,9 @@ class WebhookIntegration(BaseIntegration):
         pass
 
     @abstractmethod
-    async def process_webhook_event(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
+    async def process_webhook_event(
+        self, event_type: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
         """Process incoming webhook event."""
         pass
 

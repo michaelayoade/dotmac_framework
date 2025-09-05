@@ -10,7 +10,12 @@ from typing import Optional
 from uuid import uuid4
 
 from dotmac_shared.exceptions import NotFoundError, PermissionError, ValidationError
-from dotmac_shared.file_management.models import AccessLevel, FileCategory, FileStatus, ScanStatus
+from dotmac_shared.file_management.models import (
+    AccessLevel,
+    FileCategory,
+    FileStatus,
+    ScanStatus,
+)
 from dotmac_shared.file_management.schemas import (
     FileMetadataCreate,
     FileMetadataResponse,
@@ -31,8 +36,12 @@ class FileService:
 
     def __init__(self, file_repository: FileRepository):
         self.file_repository = file_repository
-        self.storage_base_path = Path(os.getenv("FILE_STORAGE_PATH", "/var/dotmac/files"))
-        self.max_file_size = int(os.getenv("MAX_FILE_SIZE", 50 * 1024 * 1024))  # 50MB default
+        self.storage_base_path = Path(
+            os.getenv("FILE_STORAGE_PATH", "/var/dotmac/files")
+        )
+        self.max_file_size = int(
+            os.getenv("MAX_FILE_SIZE", 50 * 1024 * 1024)
+        )  # 50MB default
 
         # Ensure storage directory exists
         self.storage_base_path.mkdir(parents=True, exist_ok=True)
@@ -40,7 +49,11 @@ class FileService:
     # File Upload and Creation
 
     async def create_file(
-        self, tenant_id: str, user_id: str, file_data: FileMetadataCreate, file_content: Optional[bytes] = None
+        self,
+        tenant_id: str,
+        user_id: str,
+        file_data: FileMetadataCreate,
+        file_content: Optional[bytes] = None,
     ) -> FileMetadataResponse:
         """Create a new file with metadata."""
         try:
@@ -60,13 +73,18 @@ class FileService:
             md5_hash = ""
             sha256_hash = ""
             file_size = 0
-            mime_type = mimetypes.guess_type(file_data.original_filename)[0] or "application/octet-stream"
+            mime_type = (
+                mimetypes.guess_type(file_data.original_filename)[0]
+                or "application/octet-stream"
+            )
 
             if file_content:
                 # Validate file size
                 file_size = len(file_content)
                 if file_size > self.max_file_size:
-                    raise ValidationError(f"File size exceeds maximum allowed: {self.max_file_size} bytes")
+                    raise ValidationError(
+                        f"File size exceeds maximum allowed: {self.max_file_size} bytes"
+                    )
 
                 # Calculate hashes
                 md5_hash = hashlib.md5(file_content).hexdigest()
@@ -91,7 +109,9 @@ class FileService:
                 "storage_type": "local",
                 "storage_path": str(storage_path),
                 "file_category": file_data.file_category,
-                "file_status": FileStatus.UPLOADED if file_content else FileStatus.UPLOADING,
+                "file_status": FileStatus.UPLOADED
+                if file_content
+                else FileStatus.UPLOADING,
                 "access_level": file_data.access_level,
                 "owner_user_id": user_id,
                 "is_public": file_data.access_level == AccessLevel.PUBLIC,
@@ -100,14 +120,16 @@ class FileService:
                 "tags": file_data.tags,
                 "related_entity_type": file_data.related_entity_type,
                 "related_entity_id": file_data.related_entity_id,
-                "upload_completed_at": datetime.now(timezone.utc) if file_content else None,
+                "upload_completed_at": datetime.now(timezone.utc)
+                if file_content
+                else None,
             }
 
             # Set expiration date if specified
             if file_data.expiration_days:
-                metadata_dict["expiration_date"] = datetime.now(timezone.utc) + timedelta(
-                    days=file_data.expiration_days
-                )
+                metadata_dict["expiration_date"] = datetime.now(
+                    timezone.utc
+                ) + timedelta(days=file_data.expiration_days)
 
             file_metadata = await self.file_repository.create_file_metadata(
                 tenant_id=tenant_id, file_data=metadata_dict, user_id=user_id
@@ -134,7 +156,9 @@ class FileService:
             logger.error(f"Failed to create file: {e}")
             raise ValidationError(f"Failed to create file: {str(e)}") from e
 
-    async def get_file(self, file_id: str, tenant_id: str, user_id: str) -> FileMetadataResponse:
+    async def get_file(
+        self, file_id: str, tenant_id: str, user_id: str
+    ) -> FileMetadataResponse:
         """Get file metadata by ID."""
         file_metadata = await self.file_repository.get_file_by_id(file_id, tenant_id)
         if not file_metadata:
@@ -156,12 +180,17 @@ class FileService:
 
         # Update last accessed
         await self.file_repository.update_file_metadata(
-            file_id=file_id, tenant_id=tenant_id, updates={"last_accessed": datetime.now(timezone.utc)}, user_id=user_id
+            file_id=file_id,
+            tenant_id=tenant_id,
+            updates={"last_accessed": datetime.now(timezone.utc)},
+            user_id=user_id,
         )
 
         return self._convert_to_response(file_metadata)
 
-    async def get_file_content(self, file_id: str, tenant_id: str, user_id: str) -> tuple[bytes, str, str]:
+    async def get_file_content(
+        self, file_id: str, tenant_id: str, user_id: str
+    ) -> tuple[bytes, str, str]:
         """Get file content for download."""
         file_metadata = await self.file_repository.get_file_by_id(file_id, tenant_id)
         if not file_metadata:
@@ -232,7 +261,9 @@ class FileService:
             update_dict["access_level"] = updates.access_level
             update_dict["is_public"] = updates.access_level == AccessLevel.PUBLIC
         if updates.expiration_days is not None:
-            update_dict["expiration_date"] = datetime.now(timezone.utc) + timedelta(days=updates.expiration_days)
+            update_dict["expiration_date"] = datetime.now(timezone.utc) + timedelta(
+                days=updates.expiration_days
+            )
 
         updated_metadata = await self.file_repository.update_file_metadata(
             file_id=file_id, tenant_id=tenant_id, updates=update_dict, user_id=user_id
@@ -251,7 +282,9 @@ class FileService:
 
         return self._convert_to_response(updated_metadata)
 
-    async def delete_file(self, file_id: str, tenant_id: str, user_id: str, permanent: bool = False) -> bool:
+    async def delete_file(
+        self, file_id: str, tenant_id: str, user_id: str, permanent: bool = False
+    ) -> bool:
         """Delete file (soft or hard delete)."""
         file_metadata = await self.file_repository.get_file_by_id(file_id, tenant_id)
         if not file_metadata:
@@ -289,7 +322,12 @@ class FileService:
     # File Search and Listing
 
     async def search_files(
-        self, tenant_id: str, user_id: str, search_filters: FileSearchFilters, page: int = 1, size: int = 50
+        self,
+        tenant_id: str,
+        user_id: str,
+        search_filters: FileSearchFilters,
+        page: int = 1,
+        size: int = 50,
     ) -> tuple[list[FileMetadataResponse], int]:
         """Search files with filters."""
         skip = (page - 1) * size
@@ -346,7 +384,11 @@ class FileService:
     # File Permissions
 
     async def grant_file_permission(
-        self, file_id: str, tenant_id: str, granter_user_id: str, permission_data: FilePermissionCreate
+        self,
+        file_id: str,
+        tenant_id: str,
+        granter_user_id: str,
+        permission_data: FilePermissionCreate,
     ) -> bool:
         """Grant file permission to a user."""
         file_metadata = await self.file_repository.get_file_by_id(file_id, tenant_id)
@@ -372,7 +414,9 @@ class FileService:
         }
 
         await self.file_repository.create_file_permission(
-            tenant_id=tenant_id, permission_data=permission_dict, user_id=granter_user_id
+            tenant_id=tenant_id,
+            permission_data=permission_dict,
+            user_id=granter_user_id,
         )
 
         # Log permission grant
@@ -391,7 +435,11 @@ class FileService:
     # File Validation
 
     async def validate_file(
-        self, filename: str, file_size: int, content_type: Optional[str] = None, category: FileCategory = None
+        self,
+        filename: str,
+        file_size: int,
+        content_type: Optional[str] = None,
+        category: FileCategory = None,
     ) -> FileValidationResponse:
         """Validate file before upload."""
         errors = []
@@ -403,7 +451,9 @@ class FileService:
 
         # Validate file size
         if file_size > self.max_file_size:
-            errors.append(f"File size ({file_size} bytes) exceeds maximum allowed ({self.max_file_size} bytes)")
+            errors.append(
+                f"File size ({file_size} bytes) exceeds maximum allowed ({self.max_file_size} bytes)"
+            )
 
         # Detect file category
         detected_category = self._detect_file_category(filename)
@@ -414,7 +464,9 @@ class FileService:
         # Validate extension
         file_extension = self._get_file_extension(filename).lower()
         if file_extension not in allowed_extensions:
-            errors.append(f"File extension '{file_extension}' not allowed for category '{detected_category}'")
+            errors.append(
+                f"File extension '{file_extension}' not allowed for category '{detected_category}'"
+            )
 
         # Security score (basic implementation)
         security_score = 100
@@ -443,7 +495,9 @@ class FileService:
 
     # Upload Session Management
 
-    async def create_upload_session(self, tenant_id: str, user_id: str, session_data: FileUploadSessionCreate):
+    async def create_upload_session(
+        self, tenant_id: str, user_id: str, session_data: FileUploadSessionCreate
+    ):
         """Create file upload session for large files."""
         session_dict = {
             "filename": session_data.filename,
@@ -490,17 +544,53 @@ class FileService:
     def _get_allowed_extensions(self, category: FileCategory) -> list[str]:
         """Get allowed extensions for file category."""
         extensions = {
-            FileCategory.IMAGE: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg"],
-            FileCategory.DOCUMENT: [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".xls", ".xlsx", ".ppt", ".pptx"],
-            FileCategory.VIDEO: [".mp4", ".avi", ".mov", ".wmv", ".flv", ".webm", ".mkv"],
+            FileCategory.IMAGE: [
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".gif",
+                ".bmp",
+                ".webp",
+                ".svg",
+            ],
+            FileCategory.DOCUMENT: [
+                ".pdf",
+                ".doc",
+                ".docx",
+                ".txt",
+                ".rtf",
+                ".odt",
+                ".xls",
+                ".xlsx",
+                ".ppt",
+                ".pptx",
+            ],
+            FileCategory.VIDEO: [
+                ".mp4",
+                ".avi",
+                ".mov",
+                ".wmv",
+                ".flv",
+                ".webm",
+                ".mkv",
+            ],
             FileCategory.AUDIO: [".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a"],
-            FileCategory.CONFIGURATION: [".json", ".yaml", ".yml", ".xml", ".ini", ".cfg"],
+            FileCategory.CONFIGURATION: [
+                ".json",
+                ".yaml",
+                ".yml",
+                ".xml",
+                ".ini",
+                ".cfg",
+            ],
             FileCategory.OTHER: [],  # Allow all for OTHER
         }
 
         return extensions.get(category, [])
 
-    async def _check_file_permission(self, file_metadata, user_id: str, action: str) -> bool:
+    async def _check_file_permission(
+        self, file_metadata, user_id: str, action: str
+    ) -> bool:
         """Check if user has permission to perform action on file."""
         # Owner always has full permissions
         if file_metadata.owner_user_id == user_id:
@@ -512,15 +602,21 @@ class FileService:
 
         # Check explicit permissions
         permission = await self.file_repository.get_user_file_permissions(
-            file_id=file_metadata.file_id, user_id=user_id, tenant_id=file_metadata.tenant_id
+            file_id=file_metadata.file_id,
+            user_id=user_id,
+            tenant_id=file_metadata.tenant_id,
         )
 
         if not permission:
-            raise PermissionError(f"No permission to {action} file: {file_metadata.file_id}")
+            raise PermissionError(
+                f"No permission to {action} file: {file_metadata.file_id}"
+            )
 
         # Check if permission has expired
         if permission.expires_at and datetime.now(timezone.utc) > permission.expires_at:
-            raise PermissionError(f"Permission expired for file: {file_metadata.file_id}")
+            raise PermissionError(
+                f"Permission expired for file: {file_metadata.file_id}"
+            )
 
         # Check specific action permissions
         permission_map = {
@@ -532,7 +628,9 @@ class FileService:
         }
 
         if not permission_map.get(action, False):
-            raise PermissionError(f"No {action} permission for file: {file_metadata.file_id}")
+            raise PermissionError(
+                f"No {action} permission for file: {file_metadata.file_id}"
+            )
 
         return True
 

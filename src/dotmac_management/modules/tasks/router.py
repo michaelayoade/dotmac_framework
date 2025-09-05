@@ -6,6 +6,9 @@ Task management endpoints using RouterFactory patterns.
 from typing import Any
 from uuid import UUID
 
+from fastapi import Depends, Query
+from pydantic import BaseModel, Field
+
 from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
@@ -13,8 +16,6 @@ from dotmac_shared.api.dependencies import (
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import Depends, Query
-from pydantic import BaseModel, Field
 
 # === Task Schemas ===
 
@@ -32,7 +33,9 @@ class TaskStatusUpdateRequest(BaseModel):
 
     status: str = Field(..., description="New task status")
     completion_notes: str | None = Field(None, description="Completion notes")
-    progress_percentage: int | None = Field(None, ge=0, le=100, description="Progress percentage")
+    progress_percentage: int | None = Field(
+        None, ge=0, le=100, description="Progress percentage"
+    )
 
 
 # === Main Tasks Router ===

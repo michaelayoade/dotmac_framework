@@ -40,19 +40,25 @@ class AnalyticsServiceConfig:
         # Get provider-specific configuration
         if self.provider.lower() == "prometheus":
             if not self.endpoint:
-                self.endpoint = os.getenv("PROMETHEUS_ENDPOINT", "http://localhost:9090")
+                self.endpoint = os.getenv(
+                    "PROMETHEUS_ENDPOINT", "http://localhost:9090"
+                )
 
         elif self.provider.lower() == "datadog":
             if not self.api_key:
                 self.api_key = os.getenv("DATADOG_API_KEY")
             if not self.endpoint:
-                self.endpoint = os.getenv("DATADOG_ENDPOINT", "https://api.datadoghq.com")
+                self.endpoint = os.getenv(
+                    "DATADOG_ENDPOINT", "https://api.datadoghq.com"
+                )
 
         elif self.provider.lower() == "newrelic":
             if not self.api_key:
                 self.api_key = os.getenv("NEWRELIC_API_KEY")
             if not self.endpoint:
-                self.endpoint = os.getenv("NEWRELIC_ENDPOINT", "https://api.newrelic.com")
+                self.endpoint = os.getenv(
+                    "NEWRELIC_ENDPOINT", "https://api.newrelic.com"
+                )
 
         # Try tenant-specific configuration
         if (
@@ -78,7 +84,9 @@ class AnalyticsService(StatefulService):
 
     def __init__(self, config: AnalyticsServiceConfig):
         """__init__ service method."""
-        super().__init__(name="analytics", config=config.__dict__, required_config=["provider"])
+        super().__init__(
+            name="analytics", config=config.__dict__, required_config=["provider"]
+        )
         self.analytics_config = config
         self.metrics_cache: list[dict[str, Any]] = []
         self.priority = 90  # High priority for monitoring
@@ -129,7 +137,9 @@ class AnalyticsService(StatefulService):
             raise ValueError("Prometheus endpoint is required")
 
         # Test connection (simulated)
-        logger.info(f"✅ Prometheus connection validated: {self.analytics_config.endpoint}")
+        logger.info(
+            f"✅ Prometheus connection validated: {self.analytics_config.endpoint}"
+        )
 
     async def _initialize_datadog(self):
         """Initialize Datadog analytics provider."""
@@ -160,7 +170,9 @@ class AnalyticsService(StatefulService):
 
     async def shutdown(self) -> bool:
         """Shutdown analytics service."""
-        await self._set_status(ServiceStatus.SHUTTING_DOWN, "Shutting down analytics service")
+        await self._set_status(
+            ServiceStatus.SHUTTING_DOWN, "Shutting down analytics service"
+        )
 
         # Send any remaining metrics
         if self.metrics_cache:
@@ -170,7 +182,9 @@ class AnalyticsService(StatefulService):
         self.metrics_cache.clear()
         self.clear_state()
 
-        await self._set_status(ServiceStatus.SHUTDOWN, "Analytics service shutdown complete")
+        await self._set_status(
+            ServiceStatus.SHUTDOWN, "Analytics service shutdown complete"
+        )
         return True
 
     async def _health_check_stateful_service(self) -> ServiceHealth:
@@ -244,7 +258,10 @@ class AnalyticsService(StatefulService):
         timestamp = timestamp or time.time()
 
         # Add tenant context if available
-        if self.analytics_config.deployment_context and self.analytics_config.deployment_context.tenant_id:
+        if (
+            self.analytics_config.deployment_context
+            and self.analytics_config.deployment_context.tenant_id
+        ):
             tags["tenant_id"] = self.analytics_config.deployment_context.tenant_id
 
         # Add deployment context
@@ -252,7 +269,9 @@ class AnalyticsService(StatefulService):
             if self.analytics_config.deployment_context.platform:
                 tags["platform"] = self.analytics_config.deployment_context.platform
             if self.analytics_config.deployment_context.environment:
-                tags["environment"] = self.analytics_config.deployment_context.environment
+                tags[
+                    "environment"
+                ] = self.analytics_config.deployment_context.environment
 
         metric = {
             "name": metric_name,
@@ -292,7 +311,10 @@ class AnalyticsService(StatefulService):
         timestamp = timestamp or time.time()
 
         # Add tenant context if available
-        if self.analytics_config.deployment_context and self.analytics_config.deployment_context.tenant_id:
+        if (
+            self.analytics_config.deployment_context
+            and self.analytics_config.deployment_context.tenant_id
+        ):
             properties["tenant_id"] = self.analytics_config.deployment_context.tenant_id
 
         # Convert event to metric format
@@ -416,7 +438,9 @@ class AnalyticsService(StatefulService):
 
         # Remove metrics older than retention period
         old_metrics = [
-            metric for metric in self.metrics_cache if current_time - metric["recorded_at"] > retention_seconds
+            metric
+            for metric in self.metrics_cache
+            if current_time - metric["recorded_at"] > retention_seconds
         ]
 
         for metric in old_metrics:

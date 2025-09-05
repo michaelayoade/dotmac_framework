@@ -8,10 +8,11 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
-from dotmac.database.base import Base
 from sqlalchemy import JSON, Boolean, Column, DateTime, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac.database.base import Base
 
 from .services_complete import ResellerCustomerService
 
@@ -141,7 +142,11 @@ class CustomerLifecycleManager:
         self.customer_service = ResellerCustomerService(db, tenant_id)
 
     async def advance_customer_stage(
-        self, customer_id: UUID, reseller_id: UUID, new_stage: str, notes: Optional[str] = None
+        self,
+        customer_id: UUID,
+        reseller_id: UUID,
+        new_stage: str,
+        notes: Optional[str] = None,
     ) -> dict[str, Any]:
         """Advance customer to next lifecycle stage"""
 
@@ -152,12 +157,16 @@ class CustomerLifecycleManager:
             raise ValueError(f"Invalid lifecycle stage: {new_stage}") from e
 
         # Get current lifecycle record or create new one
-        current_record = await self._get_current_lifecycle_record(customer_id, reseller_id)
+        current_record = await self._get_current_lifecycle_record(
+            customer_id, reseller_id
+        )
 
         if current_record:
             # Update existing record
             previous_stage = current_record.current_stage
-            stage_duration = (datetime.now(timezone.utc) - current_record.stage_entered_at).days
+            stage_duration = (
+                datetime.now(timezone.utc) - current_record.stage_entered_at
+            ).days
 
             # Create new record for the stage transition
             new_record = CustomerLifecycleRecord(
@@ -172,7 +181,11 @@ class CustomerLifecycleManager:
                 lifetime_value=current_record.lifetime_value,
                 engagement_score=current_record.engagement_score,
                 notes=notes,
-                metadata={"stage_transition": True, "previous_stage_duration_days": stage_duration, "automated": False},
+                metadata={
+                    "stage_transition": True,
+                    "previous_stage_duration_days": stage_duration,
+                    "automated": False,
+                },
             )
         else:
             # Create first lifecycle record
@@ -201,7 +214,11 @@ class CustomerLifecycleManager:
         }
 
     async def update_health_score(
-        self, customer_id: UUID, reseller_id: UUID, new_score: float, risk_factors: Optional[list[str]] = None
+        self,
+        customer_id: UUID,
+        reseller_id: UUID,
+        new_score: float,
+        risk_factors: Optional[list[str]] = None,
     ) -> dict[str, Any]:
         """Update customer health score and category"""
 
@@ -221,7 +238,9 @@ class CustomerLifecycleManager:
             health_category = CustomerHealthScore.CRITICAL
 
         # Get or create lifecycle record
-        current_record = await self._get_current_lifecycle_record(customer_id, reseller_id)
+        current_record = await self._get_current_lifecycle_record(
+            customer_id, reseller_id
+        )
 
         if current_record:
             # Update existing record
@@ -248,9 +267,13 @@ class CustomerLifecycleManager:
         # Check if health score change requires action
         score_change = new_score - old_score
         if score_change <= -20:  # Significant decline
-            await self._trigger_health_alert(customer_id, reseller_id, new_score, "significant_decline")
+            await self._trigger_health_alert(
+                customer_id, reseller_id, new_score, "significant_decline"
+            )
         elif health_category == CustomerHealthScore.CRITICAL:
-            await self._trigger_health_alert(customer_id, reseller_id, new_score, "critical_health")
+            await self._trigger_health_alert(
+                customer_id, reseller_id, new_score, "critical_health"
+            )
 
         return {
             "customer_id": str(customer_id),
@@ -305,12 +328,18 @@ class CustomerLifecycleManager:
         await self.db.commit()
 
         # Calculate health impact
-        health_impact = await self._calculate_interaction_health_impact(interaction_type, satisfaction_rating)
+        health_impact = await self._calculate_interaction_health_impact(
+            interaction_type, satisfaction_rating
+        )
         if health_impact != 0:
             # Update health score
-            current_record = await self._get_current_lifecycle_record(customer_id, reseller_id)
+            current_record = await self._get_current_lifecycle_record(
+                customer_id, reseller_id
+            )
             if current_record:
-                new_score = max(0, min(100, float(current_record.health_score) + health_impact))
+                new_score = max(
+                    0, min(100, float(current_record.health_score) + health_impact)
+                )
                 await self.update_health_score(customer_id, reseller_id, new_score)
 
         return {
@@ -323,11 +352,15 @@ class CustomerLifecycleManager:
             "follow_up_required": follow_up_required,
         }
 
-    async def get_customer_lifecycle_summary(self, customer_id: UUID, reseller_id: UUID) -> dict[str, Any]:
+    async def get_customer_lifecycle_summary(
+        self, customer_id: UUID, reseller_id: UUID
+    ) -> dict[str, Any]:
         """Get comprehensive customer lifecycle summary"""
 
         # Get current lifecycle record
-        current_record = await self._get_current_lifecycle_record(customer_id, reseller_id)
+        current_record = await self._get_current_lifecycle_record(
+            customer_id, reseller_id
+        )
 
         if not current_record:
             return {
@@ -339,20 +372,26 @@ class CustomerLifecycleManager:
             }
 
         # Get interaction history (last 30 days)
-        recent_interactions = await self._get_recent_interactions(customer_id, reseller_id, days=30)
+        recent_interactions = await self._get_recent_interactions(
+            customer_id, reseller_id, days=30
+        )
 
         # Get stage history
         stage_history = await self._get_stage_history(customer_id, reseller_id)
 
         # Calculate engagement metrics
-        engagement_metrics = await self._calculate_engagement_metrics(customer_id, reseller_id)
+        engagement_metrics = await self._calculate_engagement_metrics(
+            customer_id, reseller_id
+        )
 
         summary = {
             "customer_id": str(customer_id),
             "reseller_id": str(reseller_id),
             "current_stage": current_record.current_stage,
             "stage_entered_at": current_record.stage_entered_at.isoformat(),
-            "days_in_current_stage": (datetime.now(timezone.utc) - current_record.stage_entered_at).days,
+            "days_in_current_stage": (
+                datetime.now(timezone.utc) - current_record.stage_entered_at
+            ).days,
             "health_score": float(current_record.health_score),
             "health_category": current_record.health_category,
             "risk_factors": current_record.risk_factors,
@@ -362,8 +401,12 @@ class CustomerLifecycleManager:
             "recent_interactions": {
                 "total_count": len(recent_interactions),
                 "by_type": self._group_interactions_by_type(recent_interactions),
-                "avg_satisfaction": self._calculate_avg_satisfaction(recent_interactions),
-                "last_interaction_date": max([i.interaction_date for i in recent_interactions]).isoformat()
+                "avg_satisfaction": self._calculate_avg_satisfaction(
+                    recent_interactions
+                ),
+                "last_interaction_date": max(
+                    [i.interaction_date for i in recent_interactions]
+                ).isoformat()
                 if recent_interactions
                 else None,
             },
@@ -376,7 +419,9 @@ class CustomerLifecycleManager:
                 for record in stage_history
             ],
             "engagement_metrics": engagement_metrics,
-            "recommendations": await self._generate_customer_recommendations(current_record, recent_interactions),
+            "recommendations": await self._generate_customer_recommendations(
+                current_record, recent_interactions
+            ),
             "next_actions": await self._get_suggested_next_actions(current_record),
         }
 
@@ -397,12 +442,16 @@ class CustomerLifecycleManager:
         # In production, this would query the database
         return []
 
-    async def _get_stage_history(self, customer_id: UUID, reseller_id: UUID) -> list[CustomerLifecycleRecord]:
+    async def _get_stage_history(
+        self, customer_id: UUID, reseller_id: UUID
+    ) -> list[CustomerLifecycleRecord]:
         """Get customer's stage progression history"""
         # In production, this would query the database
         return []
 
-    async def _calculate_engagement_metrics(self, customer_id: UUID, reseller_id: UUID) -> dict[str, Any]:
+    async def _calculate_engagement_metrics(
+        self, customer_id: UUID, reseller_id: UUID
+    ) -> dict[str, Any]:
         """Calculate customer engagement metrics"""
         return {
             "communication_frequency": 8.5,  # interactions per month
@@ -412,7 +461,9 @@ class CustomerLifecycleManager:
             "feature_adoption_rate": 60.0,  # percentage
         }
 
-    def _group_interactions_by_type(self, interactions: list[CustomerInteraction]) -> dict[str, int]:
+    def _group_interactions_by_type(
+        self, interactions: list[CustomerInteraction]
+    ) -> dict[str, int]:
         """Group interactions by type"""
         grouped = {}
         for interaction in interactions:
@@ -420,9 +471,15 @@ class CustomerLifecycleManager:
             grouped[interaction_type] = grouped.get(interaction_type, 0) + 1
         return grouped
 
-    def _calculate_avg_satisfaction(self, interactions: list[CustomerInteraction]) -> Optional[float]:
+    def _calculate_avg_satisfaction(
+        self, interactions: list[CustomerInteraction]
+    ) -> Optional[float]:
         """Calculate average satisfaction rating"""
-        ratings = [i.satisfaction_rating for i in interactions if i.satisfaction_rating is not None]
+        ratings = [
+            i.satisfaction_rating
+            for i in interactions
+            if i.satisfaction_rating is not None
+        ]
         return sum(ratings) / len(ratings) if ratings else None
 
     async def _calculate_interaction_health_impact(
@@ -461,7 +518,9 @@ class CustomerLifecycleManager:
 
         return base_impact
 
-    async def _trigger_stage_actions(self, customer_id: UUID, reseller_id: UUID, stage: str):
+    async def _trigger_stage_actions(
+        self, customer_id: UUID, reseller_id: UUID, stage: str
+    ):
         """Trigger automated actions based on stage transition"""
         actions = {
             CustomerLifecycleStage.PROSPECT: [
@@ -489,7 +548,11 @@ class CustomerLifecycleManager:
                 "Schedule retention call",
                 "Offer value-add services",
             ],
-            CustomerLifecycleStage.CHURNED: ["Send exit survey", "Document churn reason", "Add to win-back campaign"],
+            CustomerLifecycleStage.CHURNED: [
+                "Send exit survey",
+                "Document churn reason",
+                "Add to win-back campaign",
+            ],
         }
 
         # In production, these would trigger actual automated workflows
@@ -501,29 +564,59 @@ class CustomerLifecycleManager:
     async def _get_stage_actions(self, stage: str) -> list[str]:
         """Get list of actions triggered for a stage"""
         actions = {
-            CustomerLifecycleStage.PROSPECT: ["welcome_email", "discovery_call", "nurture_campaign"],
-            CustomerLifecycleStage.QUALIFIED: ["demo_invitation", "assign_manager", "create_opportunity"],
-            CustomerLifecycleStage.CLOSED_WON: ["congratulations_email", "onboarding_start", "kickoff_call"],
-            CustomerLifecycleStage.ACTIVE: ["health_monitoring", "quarterly_reviews", "usage_tracking"],
-            CustomerLifecycleStage.AT_RISK: ["intervention_workflow", "retention_call", "value_add_offer"],
-            CustomerLifecycleStage.CHURNED: ["exit_survey", "churn_documentation", "winback_campaign"],
+            CustomerLifecycleStage.PROSPECT: [
+                "welcome_email",
+                "discovery_call",
+                "nurture_campaign",
+            ],
+            CustomerLifecycleStage.QUALIFIED: [
+                "demo_invitation",
+                "assign_manager",
+                "create_opportunity",
+            ],
+            CustomerLifecycleStage.CLOSED_WON: [
+                "congratulations_email",
+                "onboarding_start",
+                "kickoff_call",
+            ],
+            CustomerLifecycleStage.ACTIVE: [
+                "health_monitoring",
+                "quarterly_reviews",
+                "usage_tracking",
+            ],
+            CustomerLifecycleStage.AT_RISK: [
+                "intervention_workflow",
+                "retention_call",
+                "value_add_offer",
+            ],
+            CustomerLifecycleStage.CHURNED: [
+                "exit_survey",
+                "churn_documentation",
+                "winback_campaign",
+            ],
         }
 
         return actions.get(CustomerLifecycleStage(stage), [])
 
-    async def _trigger_health_alert(self, customer_id: UUID, reseller_id: UUID, score: float, alert_type: str):
+    async def _trigger_health_alert(
+        self, customer_id: UUID, reseller_id: UUID, score: float, alert_type: str
+    ):
         """Trigger alerts for health score issues"""
         logger.info(f"🚨 Health Alert for {customer_id}: {alert_type} (Score: {score})")
         # In production, this would send notifications, create tasks, etc.
 
     async def _generate_customer_recommendations(
-        self, lifecycle_record: CustomerLifecycleRecord, recent_interactions: list[CustomerInteraction]
+        self,
+        lifecycle_record: CustomerLifecycleRecord,
+        recent_interactions: list[CustomerInteraction],
     ) -> list[str]:
         """Generate recommendations based on customer data"""
         recommendations = []
 
         if lifecycle_record.health_score < 50:
-            recommendations.append("Schedule immediate check-in call to address concerns")
+            recommendations.append(
+                "Schedule immediate check-in call to address concerns"
+            )
 
         if len(recent_interactions) == 0:
             recommendations.append("Reach out to maintain regular communication")
@@ -533,14 +626,19 @@ class CustomerLifecycleManager:
 
         return recommendations
 
-    async def _get_suggested_next_actions(self, lifecycle_record: CustomerLifecycleRecord) -> list[str]:
+    async def _get_suggested_next_actions(
+        self, lifecycle_record: CustomerLifecycleRecord
+    ) -> list[str]:
         """Get suggested next actions based on current state"""
         stage = lifecycle_record.current_stage
 
         next_actions = {
             CustomerLifecycleStage.PROSPECT: ["Qualify needs", "Schedule demo"],
             CustomerLifecycleStage.QUALIFIED: ["Send proposal", "Address objections"],
-            CustomerLifecycleStage.ACTIVE: ["Check satisfaction", "Identify expansion opportunities"],
+            CustomerLifecycleStage.ACTIVE: [
+                "Check satisfaction",
+                "Identify expansion opportunities",
+            ],
             CustomerLifecycleStage.AT_RISK: ["Address concerns", "Offer solutions"],
         }
 

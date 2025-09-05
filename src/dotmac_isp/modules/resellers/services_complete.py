@@ -42,19 +42,28 @@ class ResellerApplicationService:
         self.repo = ResellerApplicationRepository(db, tenant_id)
         self.email_service = EmailService()
 
-    async def submit_application(self, application_data: dict[str, Any]) -> ResellerApplication:
+    async def submit_application(
+        self, application_data: dict[str, Any]
+    ) -> ResellerApplication:
         """Submit new reseller application with validation and notifications"""
 
         # Generate unique application ID
-        application_id = f"APP-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
+        application_id = (
+            f"APP-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
+        )
 
         # Validate application data
         self._validate_application_data(application_data)
 
         # Check for duplicate applications
         existing = await self.repo.get_by_email(application_data["contact_email"])
-        if existing and existing.status in [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW]:
-            raise ValueError(f"Active application already exists for {application_data['contact_email']}")
+        if existing and existing.status in [
+            ApplicationStatus.SUBMITTED,
+            ApplicationStatus.UNDER_REVIEW,
+        ]:
+            raise ValueError(
+                f"Active application already exists for {application_data['contact_email']}"
+            )
 
         # Prepare application data
         application_data.update(
@@ -90,7 +99,9 @@ class ResellerApplicationService:
         self, application_id: str, reviewer_id: str, notes: Optional[str] = None
     ) -> ResellerApplication:
         """Mark application as under review"""
-        application = await self.repo.update_status(application_id, ApplicationStatus.UNDER_REVIEW, reviewer_id, notes)
+        application = await self.repo.update_status(
+            application_id, ApplicationStatus.UNDER_REVIEW, reviewer_id, notes
+        )
         if not application:
             raise ValueError(f"Application {application_id} not found")
 
@@ -98,7 +109,10 @@ class ResellerApplicationService:
         return application
 
     async def approve_application(
-        self, application_id: str, reviewer_id: str, approval_data: Optional[dict[str, Any]] = None
+        self,
+        application_id: str,
+        reviewer_id: str,
+        approval_data: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         """Approve application and create reseller account"""
 
@@ -108,7 +122,9 @@ class ResellerApplicationService:
             raise ValueError(f"Application {application_id} not found")
 
         if not application.can_be_approved:
-            raise ValueError(f"Application {application_id} cannot be approved in current status")
+            raise ValueError(
+                f"Application {application_id} cannot be approved in current status"
+            )
 
         # Update application status
         await self.repo.update_status(
@@ -120,7 +136,9 @@ class ResellerApplicationService:
 
         # Create reseller account
         reseller_service = ResellerService(self.db, self.tenant_id)
-        reseller = await reseller_service.create_from_application(application, approval_data)
+        reseller = await reseller_service.create_from_application(
+            application, approval_data
+        )
 
         # Link application to reseller
         application.approved_reseller_id = reseller.id
@@ -164,7 +182,9 @@ class ResellerApplicationService:
         await self.repo.commit()
 
         # Send rejection notification
-        await self.email_service.send_application_rejected(application, rejection_reason)
+        await self.email_service.send_application_rejected(
+            application, rejection_reason
+        )
 
         # Log communication
         await self.repo.add_communication_log(
@@ -180,12 +200,18 @@ class ResellerApplicationService:
 
         return application
 
-    async def get_pending_applications(self, limit: int = 50, offset: int = 0) -> list[ResellerApplication]:
+    async def get_pending_applications(
+        self, limit: int = 50, offset: int = 0
+    ) -> list[ResellerApplication]:
         """Get applications pending review"""
         return await self.repo.list_pending_review(limit, offset)
 
     async def search_applications(
-        self, search_term: str, status: Optional[ApplicationStatus] = None, limit: int = 50, offset: int = 0
+        self,
+        search_term: str,
+        status: Optional[ApplicationStatus] = None,
+        limit: int = 50,
+        offset: int = 0,
     ) -> list[ResellerApplication]:
         """Search applications"""
         return await self.repo.search(search_term, status, limit, offset)
@@ -205,7 +231,16 @@ class ResellerApplicationService:
 
         # Phone validation (if provided)
         phone = data.get("contact_phone")
-        if phone and len(phone.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")) < 10:
+        if (
+            phone
+            and len(
+                phone.replace(" ", "")
+                .replace("-", "")
+                .replace("(", "")
+                .replace(")", "")
+            )
+            < 10
+        ):
             raise ValueError("Invalid phone number format")
 
 
@@ -218,12 +253,16 @@ class ResellerService:
         self.repo = ResellerRepository(db, tenant_id)
 
     async def create_from_application(
-        self, application: ResellerApplication, additional_data: Optional[dict[str, Any]] = None
+        self,
+        application: ResellerApplication,
+        additional_data: Optional[dict[str, Any]] = None,
     ) -> Reseller:
         """Create reseller account from approved application"""
 
         # Generate reseller ID
-        reseller_id = f"RES-{date.today().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
+        reseller_id = (
+            f"RES-{date.today().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
+        )
 
         # Map application data to reseller fields
         reseller_data = {
@@ -281,7 +320,9 @@ class ResellerService:
         """Get reseller by ID"""
         return await self.repo.get_by_id(reseller_id)
 
-    async def list_active_resellers(self, limit: int = 50, offset: int = 0) -> list[Reseller]:
+    async def list_active_resellers(
+        self, limit: int = 50, offset: int = 0
+    ) -> list[Reseller]:
         """List active resellers"""
         return await self.repo.list_active(limit, offset)
 
@@ -289,7 +330,9 @@ class ResellerService:
         """Get comprehensive dashboard data for reseller"""
         return await self.repo.get_dashboard_data(reseller_id)
 
-    async def update_metrics(self, reseller_id: str, metrics_update: dict[str, Any]) -> Optional[Reseller]:
+    async def update_metrics(
+        self, reseller_id: str, metrics_update: dict[str, Any]
+    ) -> Optional[Reseller]:
         """Update reseller performance metrics"""
 
         # Validate metrics data
@@ -304,7 +347,9 @@ class ResellerService:
             "customer_satisfaction_score",
         ]
 
-        filtered_metrics = {k: v for k, v in metrics_update.items() if k in allowed_metrics}
+        filtered_metrics = {
+            k: v for k, v in metrics_update.items() if k in allowed_metrics
+        }
 
         if not filtered_metrics:
             raise ValueError("No valid metrics provided for update")
@@ -315,7 +360,9 @@ class ResellerService:
 
         return reseller
 
-    async def suspend_reseller(self, reseller_id: str, reason: str, suspended_by: str) -> Optional[Reseller]:
+    async def suspend_reseller(
+        self, reseller_id: str, reason: str, suspended_by: str
+    ) -> Optional[Reseller]:
         """Suspend reseller account"""
         reseller = await self.repo.get_by_id(reseller_id)
         if not reseller:
@@ -327,14 +374,18 @@ class ResellerService:
         await self.repo.commit()
         return reseller
 
-    async def reactivate_reseller(self, reseller_id: str, reactivated_by: str) -> Optional[Reseller]:
+    async def reactivate_reseller(
+        self, reseller_id: str, reactivated_by: str
+    ) -> Optional[Reseller]:
         """Reactivate suspended reseller"""
         reseller = await self.repo.get_by_id(reseller_id)
         if not reseller:
             return None
 
         reseller.status = ResellerStatus.ACTIVE
-        reseller.internal_notes += f"\nReactivated by {reactivated_by} on {date.today()}"
+        reseller.internal_notes += (
+            f"\nReactivated by {reactivated_by} on {date.today()}"
+        )
 
         await self.repo.commit()
         return reseller
@@ -360,7 +411,9 @@ class ResellerCustomerService:
         # Check for existing assignment
         existing = await self.repo.get_by_customer(customer_id)
         if existing:
-            raise ValueError(f"Customer {customer_id} is already assigned to a reseller")
+            raise ValueError(
+                f"Customer {customer_id} is already assigned to a reseller"
+            )
 
         # Prepare assignment data
         assignment_data = {
@@ -374,7 +427,9 @@ class ResellerCustomerService:
             assignment_data.update(service_details)
 
         # Create assignment
-        assignment = await self.repo.assign_customer(reseller_id, customer_id, assignment_data)
+        assignment = await self.repo.assign_customer(
+            reseller_id, customer_id, assignment_data
+        )
         await self.repo.commit()
 
         return assignment
@@ -386,18 +441,26 @@ class ResellerCustomerService:
         return await self.repo.list_for_reseller(reseller_id, limit, offset)
 
     async def transfer_customer(
-        self, customer_id: UUID, new_reseller_id: UUID, transfer_reason: str, transferred_by: str
+        self,
+        customer_id: UUID,
+        new_reseller_id: UUID,
+        transfer_reason: str,
+        transferred_by: str,
     ) -> ResellerCustomer:
         """Transfer customer to a different reseller"""
 
         # Get current assignment
         current_assignment = await self.repo.get_by_customer(customer_id)
         if not current_assignment:
-            raise ValueError(f"Customer {customer_id} is not currently assigned to any reseller")
+            raise ValueError(
+                f"Customer {customer_id} is not currently assigned to any reseller"
+            )
 
         # Deactivate current assignment
         current_assignment.relationship_status = "transferred"
-        current_assignment.notes = f"Transferred to new reseller by {transferred_by}: {transfer_reason}"
+        current_assignment.notes = (
+            f"Transferred to new reseller by {transferred_by}: {transfer_reason}"
+        )
 
         # Create new assignment
         new_assignment_data = {
@@ -407,7 +470,9 @@ class ResellerCustomerService:
             "notes": f"Transferred from previous reseller: {transfer_reason}",
         }
 
-        new_assignment = await self.repo.assign_customer(new_reseller_id, customer_id, new_assignment_data)
+        new_assignment = await self.repo.assign_customer(
+            new_reseller_id, customer_id, new_assignment_data
+        )
 
         await self.repo.commit()
         return new_assignment

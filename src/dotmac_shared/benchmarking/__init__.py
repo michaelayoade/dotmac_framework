@@ -178,7 +178,9 @@ def create_benchmark_suite(
     return suite
 
 
-async def run_comprehensive_benchmark(suite_components: dict, test_name: str = "comprehensive_benchmark") -> dict:
+async def run_comprehensive_benchmark(
+    suite_components: dict, test_name: str = "comprehensive_benchmark"
+) -> dict:
     """
     Run a comprehensive benchmark using all available components.
 
@@ -189,7 +191,11 @@ async def run_comprehensive_benchmark(suite_components: dict, test_name: str = "
     Returns:
         Dictionary containing all benchmark results
     """
-    results = {"test_name": test_name, "timestamp": BenchmarkMetrics.get_timestamp(), "components": {}}
+    results = {
+        "test_name": test_name,
+        "timestamp": BenchmarkMetrics.get_timestamp(),
+        "components": {},
+    }
 
     # System metrics
     if "system_metrics" in suite_components:
@@ -208,7 +214,9 @@ async def run_comprehensive_benchmark(suite_components: dict, test_name: str = "
         # Run basic health check benchmark
         test_requests = [{"method": "GET", "path": "/health", "name": "health_check"}]
         config = ApiLoadTestConfig(concurrent_users=5, duration_seconds=30)
-        api_results = await benchmarker.run_load_test(test_requests, config, f"{test_name}_api")
+        api_results = await benchmarker.run_load_test(
+            test_requests, config, f"{test_name}_api"
+        )
         results["components"]["api_benchmark"] = api_results.__dict__
 
     # Database benchmarks
@@ -218,7 +226,9 @@ async def run_comprehensive_benchmark(suite_components: dict, test_name: str = "
             ("health_check", "SELECT 1 as health_check", {}),
             ("timestamp_query", "SELECT CURRENT_TIMESTAMP", {}),
         ]
-        db_results = await benchmarker.benchmark_query_set(test_queries, f"{test_name}_db")
+        db_results = await benchmarker.benchmark_query_set(
+            test_queries, f"{test_name}_db"
+        )
         results["components"]["database_benchmark"] = db_results.__dict__
 
     return results

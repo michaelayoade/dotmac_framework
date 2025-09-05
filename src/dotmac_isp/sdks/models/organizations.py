@@ -65,7 +65,9 @@ class Organization:
         self.id = kwargs.get("id", uuid4())
         self.name = kwargs.get("name")
         self.display_name = kwargs.get("display_name") or self.name
-        self.organization_type = kwargs.get("organization_type", OrganizationType.COMPANY)
+        self.organization_type = kwargs.get(
+            "organization_type", OrganizationType.COMPANY
+        )
         self.status = kwargs.get("status", OrganizationStatus.ACTIVE)
         self.description = kwargs.get("description")
         self.website = kwargs.get("website")

@@ -6,13 +6,11 @@ Zero legacy code, 100% production-ready integration.
 import logging
 from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+
 from dotmac_isp.api.performance_api import performance_api
 from dotmac_isp.core.cache_system import SmartCacheMiddleware, cache_invalidator
-from dotmac_isp.core.performance_monitor import (
-    http_monitor,
-    performance_collector,
-)
-from fastapi import FastAPI
+from dotmac_isp.core.performance_monitor import http_monitor, performance_collector
 
 logger = logging.getLogger(__name__)
 

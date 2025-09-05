@@ -117,7 +117,9 @@ class TenantResourceCalculator:
         """Calculate resource limits for a tenant provisioning request."""
 
         # Start with plan-based resources
-        base_resources = cls.PLAN_RESOURCES.get(request.plan_type, cls.PLAN_RESOURCES["standard"])
+        base_resources = cls.PLAN_RESOURCES.get(
+            request.plan_type, cls.PLAN_RESOURCES["standard"]
+        )
 
         # Use custom resources if provided
         if request.requested_resources:
@@ -126,8 +128,12 @@ class TenantResourceCalculator:
         # Adjust based on enabled features
         if "advanced_analytics" in request.enabled_features:
             # Analytics needs more CPU and memory
-            base_resources.cpu_limit = cls._increase_resource(base_resources.cpu_limit, 0.5)
-            base_resources.memory_limit = cls._increase_memory(base_resources.memory_limit, 256)
+            base_resources.cpu_limit = cls._increase_resource(
+                base_resources.cpu_limit, 0.5
+            )
+            base_resources.memory_limit = cls._increase_memory(
+                base_resources.memory_limit, 256
+            )
 
         if "bulk_operations" in request.enabled_features:
             # Bulk operations need more concurrent capacity
@@ -191,7 +197,9 @@ class TenantNamespaceGenerator:
         return f"tenant-{sanitized_tenant}-redis"
 
     @staticmethod
-    def generate_urls(tenant_id: str, partner_id: str, custom_domain: Optional[str] = None) -> dict[str, str]:
+    def generate_urls(
+        tenant_id: str, partner_id: str, custom_domain: Optional[str] = None
+    ) -> dict[str, str]:
         """Generate internal and external URLs for tenant."""
         namespace = TenantNamespaceGenerator.generate_namespace(tenant_id, partner_id)
         container_name = TenantNamespaceGenerator.generate_container_name(tenant_id)
@@ -231,7 +239,9 @@ class TenantConfigurationBuilder:
         )
 
         # Generate URLs
-        urls = TenantNamespaceGenerator.generate_urls(request.tenant_id, request.partner_id, request.custom_domain)
+        urls = TenantNamespaceGenerator.generate_urls(
+            request.tenant_id, request.partner_id, request.custom_domain
+        )
 
         # Create tenant configuration
         tenant_config = TenantConfig(
@@ -280,7 +290,9 @@ class TenantProvisioningEngine:
         self.config_builder = TenantConfigurationBuilder()
         self.provisioning_history: dict[str, TenantProvisioningResult] = {}
 
-    async def provision_tenant(self, request: TenantProvisioningRequest) -> TenantProvisioningResult:
+    async def provision_tenant(
+        self, request: TenantProvisioningRequest
+    ) -> TenantProvisioningResult:
         """Provision a new tenant container."""
         start_time = asyncio.get_event_loop().time()
 
@@ -293,16 +305,26 @@ class TenantProvisioningEngine:
 
         try:
             logger.info(f"Starting tenant provisioning for {request.tenant_id}")
-            result.provisioning_logs.append(f"Starting provisioning for tenant {request.tenant_id}")
+            result.provisioning_logs.append(
+                f"Starting provisioning for tenant {request.tenant_id}"
+            )
 
             # Step 1: Calculate resources
             resource_limits = self.resource_calculator.calculate_resources(request)
-            result.provisioning_logs.append(f"Calculated resource limits: {resource_limits}")
+            result.provisioning_logs.append(
+                f"Calculated resource limits: {resource_limits}"
+            )
 
             # Step 2: Generate names and namespace
-            namespace = self.namespace_generator.generate_namespace(request.tenant_id, request.partner_id)
-            container_name = self.namespace_generator.generate_container_name(request.tenant_id)
-            urls = self.namespace_generator.generate_urls(request.tenant_id, request.partner_id, request.custom_domain)
+            namespace = self.namespace_generator.generate_namespace(
+                request.tenant_id, request.partner_id
+            )
+            container_name = self.namespace_generator.generate_container_name(
+                request.tenant_id
+            )
+            urls = self.namespace_generator.generate_urls(
+                request.tenant_id, request.partner_id, request.custom_domain
+            )
 
             result.kubernetes_namespace = namespace
             result.container_name = container_name
@@ -310,10 +332,14 @@ class TenantProvisioningEngine:
             result.external_url = urls["external_url"]
 
             result.provisioning_logs.append(f"Generated namespace: {namespace}")
-            result.provisioning_logs.append(f"Generated container name: {container_name}")
+            result.provisioning_logs.append(
+                f"Generated container name: {container_name}"
+            )
 
             # Step 3: Build tenant configuration
-            tenant_config = self.config_builder.build_tenant_config(request, namespace, container_name, resource_limits)
+            tenant_config = self.config_builder.build_tenant_config(
+                request, namespace, container_name, resource_limits
+            )
             result.provisioning_logs.append("Built tenant configuration")
 
             # Step 4: Provision infrastructure (This would integrate with Kubernetes API)
@@ -351,7 +377,9 @@ class TenantProvisioningEngine:
 
         return result
 
-    async def _provision_infrastructure(self, tenant_config: TenantConfig, result: TenantProvisioningResult):
+    async def _provision_infrastructure(
+        self, tenant_config: TenantConfig, result: TenantProvisioningResult
+    ):
         """Provision Kubernetes infrastructure for tenant."""
         result.provisioning_logs.append("Provisioning Kubernetes infrastructure...")
 
@@ -371,7 +399,9 @@ class TenantProvisioningEngine:
 
         result.provisioning_logs.append("Infrastructure provisioning completed")
 
-    async def _deploy_tenant_container(self, tenant_config: TenantConfig, result: TenantProvisioningResult):
+    async def _deploy_tenant_container(
+        self, tenant_config: TenantConfig, result: TenantProvisioningResult
+    ):
         """Deploy the ISP Framework container for tenant."""
         result.provisioning_logs.append("Deploying tenant container...")
 
@@ -387,7 +417,9 @@ class TenantProvisioningEngine:
 
         result.provisioning_logs.append("Tenant container deployed successfully")
 
-    async def _configure_ssl(self, tenant_config: TenantConfig, result: TenantProvisioningResult):
+    async def _configure_ssl(
+        self, tenant_config: TenantConfig, result: TenantProvisioningResult
+    ):
         """Configure SSL certificates for tenant."""
         result.provisioning_logs.append("Configuring SSL certificates...")
 
@@ -402,7 +434,9 @@ class TenantProvisioningEngine:
         result.ssl_certificate_status = "active"
         result.provisioning_logs.append("SSL certificates configured")
 
-    async def _verify_deployment(self, tenant_config: TenantConfig, result: TenantProvisioningResult):
+    async def _verify_deployment(
+        self, tenant_config: TenantConfig, result: TenantProvisioningResult
+    ):
         """Verify tenant deployment is healthy."""
         result.provisioning_logs.append("Verifying deployment health...")
 
@@ -418,7 +452,9 @@ class TenantProvisioningEngine:
 
         result.provisioning_logs.append("Deployment verification completed")
 
-    async def get_tenant_status(self, tenant_id: str) -> Optional[TenantProvisioningResult]:
+    async def get_tenant_status(
+        self, tenant_id: str
+    ) -> Optional[TenantProvisioningResult]:
         """Get the current status of a tenant."""
         return self.provisioning_history.get(tenant_id)
 

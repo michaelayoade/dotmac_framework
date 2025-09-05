@@ -19,10 +19,11 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from dotmac_shared.core.exceptions import ValidationError
-from dotmac_shared.services.base import BaseService
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
+
+from dotmac_shared.core.exceptions import ValidationError
+from dotmac_shared.services.base import BaseService
 
 logger = logging.getLogger(__name__)
 
@@ -100,16 +101,24 @@ class UnifiedAnalyticsService(BaseService):
         self.components = {}
 
         if self.config.business_analytics_enabled:
-            self.components["business"] = BusinessAnalyticsComponent(self.db, self.tenant_id)
+            self.components["business"] = BusinessAnalyticsComponent(
+                self.db, self.tenant_id
+            )
 
         if self.config.workflow_analytics_enabled:
-            self.components["workflow"] = WorkflowAnalyticsComponent(self.db, self.tenant_id)
+            self.components["workflow"] = WorkflowAnalyticsComponent(
+                self.db, self.tenant_id
+            )
 
         if self.config.infrastructure_analytics_enabled:
-            self.components["infrastructure"] = InfrastructureAnalyticsComponent(self.db, self.tenant_id)
+            self.components["infrastructure"] = InfrastructureAnalyticsComponent(
+                self.db, self.tenant_id
+            )
 
         if self.config.knowledge_analytics_enabled:
-            self.components["knowledge"] = KnowledgeAnalyticsComponent(self.db, self.tenant_id)
+            self.components["knowledge"] = KnowledgeAnalyticsComponent(
+                self.db, self.tenant_id
+            )
 
     # Unified Analytics Interface
 
@@ -142,10 +151,16 @@ class UnifiedAnalyticsService(BaseService):
         if not component:
             return []
 
-        return await component.get_metrics(metric_names, start_time, end_time, tags_filter)
+        return await component.get_metrics(
+            metric_names, start_time, end_time, tags_filter
+        )
 
     async def create_dashboard(
-        self, name: str, analytics_type: AnalyticsType, config: dict[str, Any], user_id: str | None = None
+        self,
+        name: str,
+        analytics_type: AnalyticsType,
+        config: dict[str, Any],
+        user_id: str | None = None,
     ) -> dict[str, Any]:
         """Create a new analytics dashboard."""
         component = self.components.get(analytics_type.value)
@@ -155,7 +170,11 @@ class UnifiedAnalyticsService(BaseService):
         return await component.create_dashboard(name, config, user_id)
 
     async def generate_report(
-        self, analytics_type: AnalyticsType, report_type: str, parameters: dict[str, Any], user_id: str | None = None
+        self,
+        analytics_type: AnalyticsType,
+        report_type: str,
+        parameters: dict[str, Any],
+        user_id: str | None = None,
     ) -> dict[str, Any]:
         """Generate an analytics report."""
         component = self.components.get(analytics_type.value)
@@ -166,7 +185,9 @@ class UnifiedAnalyticsService(BaseService):
 
     # Convenience Methods for Common Analytics Operations
 
-    async def track_user_action(self, user_id: str, action: str, context: dict[str, Any] | None = None) -> bool:
+    async def track_user_action(
+        self, user_id: str, action: str, context: dict[str, Any] | None = None
+    ) -> bool:
         """Track a user action for behavioral analytics."""
         return await self.record_metric(
             name=f"user_action_{action}",
@@ -177,10 +198,18 @@ class UnifiedAnalyticsService(BaseService):
         )
 
     async def track_workflow_execution(
-        self, workflow_id: str, workflow_type: str, status: str, duration_ms: int | None = None
+        self,
+        workflow_id: str,
+        workflow_type: str,
+        status: str,
+        duration_ms: int | None = None,
     ) -> bool:
         """Track workflow execution for process analytics."""
-        tags = {"workflow_id": workflow_id, "workflow_type": workflow_type, "status": status}
+        tags = {
+            "workflow_id": workflow_id,
+            "workflow_type": workflow_type,
+            "status": status,
+        }
 
         # Record workflow completion
         await self.record_metric(
@@ -203,7 +232,9 @@ class UnifiedAnalyticsService(BaseService):
 
         return True
 
-    async def track_system_metric(self, metric_name: str, value: int | float, component: str) -> bool:
+    async def track_system_metric(
+        self, metric_name: str, value: int | float, component: str
+    ) -> bool:
         """Track system metrics for infrastructure analytics."""
         return await self.record_metric(
             name=metric_name,
@@ -213,13 +244,18 @@ class UnifiedAnalyticsService(BaseService):
             tags={"component": component},
         )
 
-    async def get_business_kpis(self, kpi_names: list[str] | None = None, period_days: int = 30) -> dict[str, Any]:
+    async def get_business_kpis(
+        self, kpi_names: list[str] | None = None, period_days: int = 30
+    ) -> dict[str, Any]:
         """Get business KPIs for the specified period."""
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=period_days)
 
         metrics = await self.get_metrics(
-            analytics_type=AnalyticsType.BUSINESS, metric_names=kpi_names, start_time=start_time, end_time=end_time
+            analytics_type=AnalyticsType.BUSINESS,
+            metric_names=kpi_names,
+            start_time=start_time,
+            end_time=end_time,
         )
 
         # Process metrics into KPI format
@@ -246,7 +282,10 @@ class UnifiedAnalyticsService(BaseService):
                     health["overall_status"] = "degraded"
 
             except Exception as e:
-                health["components"][component_type] = {"status": "unhealthy", "error": str(e)}
+                health["components"][component_type] = {
+                    "status": "unhealthy",
+                    "error": str(e),
+                }
                 health["overall_status"] = "unhealthy"
 
         return health
@@ -283,7 +322,9 @@ class BaseAnalyticsComponent:
         """Get metrics. Override in subclasses."""
         raise NotImplementedError
 
-    async def create_dashboard(self, name: str, config: dict[str, Any], user_id: str | None) -> dict[str, Any]:
+    async def create_dashboard(
+        self, name: str, config: dict[str, Any], user_id: str | None
+    ) -> dict[str, Any]:
         """Create dashboard. Override in subclasses."""
         raise NotImplementedError
 
@@ -323,7 +364,9 @@ class BusinessAnalyticsComponent(BaseAnalyticsComponent):
         # Implementation for retrieving business metrics
         return []
 
-    async def create_dashboard(self, name: str, config: dict[str, Any], user_id: str | None) -> dict[str, Any]:
+    async def create_dashboard(
+        self, name: str, config: dict[str, Any], user_id: str | None
+    ) -> dict[str, Any]:
         # Implementation for creating business dashboards
         return {"id": str(UUID.uuid4()), "name": name, "type": "business"}
 
@@ -331,7 +374,10 @@ class BusinessAnalyticsComponent(BaseAnalyticsComponent):
         self, report_type: str, parameters: dict[str, Any], user_id: str | None
     ) -> dict[str, Any]:
         # Implementation for generating business reports
-        return {"report_type": report_type, "generated_at": datetime.now(timezone.utc).isoformat()}
+        return {
+            "report_type": report_type,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
 
 
 class WorkflowAnalyticsComponent(BaseAnalyticsComponent):

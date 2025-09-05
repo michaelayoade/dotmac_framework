@@ -136,13 +136,19 @@ class Device(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
     created_by = Column(String(100))
     updated_by = Column(String(100))
 
     # Relationships
-    modules = relationship("DeviceModule", back_populates="device", cascade="all, delete-orphan")
-    interfaces = relationship("DeviceInterface", back_populates="device", cascade="all, delete-orphan")
+    modules = relationship(
+        "DeviceModule", back_populates="device", cascade="all, delete-orphan"
+    )
+    interfaces = relationship(
+        "DeviceInterface", back_populates="device", cascade="all, delete-orphan"
+    )
     mac_addresses = relationship("MacAddress", back_populates="device")
     monitoring_records = relationship("MonitoringRecord", back_populates="device")
 
@@ -157,7 +163,9 @@ class DeviceModule(Base):
     module_id = Column(String(100), nullable=False, unique=True, index=True)
 
     # Device relationship
-    device_id = Column(String(100), ForeignKey("device_inventory.device_id"), nullable=False)
+    device_id = Column(
+        String(100), ForeignKey("device_inventory.device_id"), nullable=False
+    )
 
     # Module information
     slot = Column(String(50), nullable=False)
@@ -174,7 +182,9 @@ class DeviceModule(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
     device = relationship("Device", back_populates="modules")
@@ -190,7 +200,9 @@ class DeviceInterface(Base):
     interface_id = Column(String(100), nullable=False, unique=True, index=True)
 
     # Device relationship
-    device_id = Column(String(100), ForeignKey("device_inventory.device_id"), nullable=False)
+    device_id = Column(
+        String(100), ForeignKey("device_inventory.device_id"), nullable=False
+    )
 
     # Stable port identifier: {device_id}:{interface_name}
     port_id = Column(String(255), nullable=False, unique=True, index=True)
@@ -224,7 +236,9 @@ class DeviceInterface(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
     device = relationship("Device", back_populates="interfaces")
@@ -239,7 +253,9 @@ class MacAddress(Base):
     tenant_id = Column(String(255), nullable=False, index=True)
 
     # MAC address information
-    mac_address = Column(String(17), nullable=False, unique=True, index=True)  # xx:xx:xx:xx:xx:xx
+    mac_address = Column(
+        String(17), nullable=False, unique=True, index=True
+    )  # xx:xx:xx:xx:xx:xx
     oui = Column(String(8), nullable=False, index=True)  # First 3 octets
     vendor = Column(String(255))
 
@@ -265,7 +281,9 @@ class MacAddress(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
     device = relationship("Device", back_populates="mac_addresses")
@@ -344,7 +362,9 @@ class NetworkNode(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
     source_links = relationship(
@@ -369,8 +389,12 @@ class NetworkLink(Base):
     link_id = Column(String(100), nullable=False, unique=True, index=True)
 
     # Link endpoints
-    source_node_id = Column(String(100), ForeignKey("network_nodes.node_id"), nullable=False)
-    target_node_id = Column(String(100), ForeignKey("network_nodes.node_id"), nullable=False)
+    source_node_id = Column(
+        String(100), ForeignKey("network_nodes.node_id"), nullable=False
+    )
+    target_node_id = Column(
+        String(100), ForeignKey("network_nodes.node_id"), nullable=False
+    )
 
     # Port/interface information
     source_port = Column(String(255))  # Port ID from source device
@@ -391,11 +415,17 @@ class NetworkLink(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
-    source_node = relationship("NetworkNode", foreign_keys=[source_node_id], back_populates="source_links")
-    target_node = relationship("NetworkNode", foreign_keys=[target_node_id], back_populates="target_links")
+    source_node = relationship(
+        "NetworkNode", foreign_keys=[source_node_id], back_populates="source_links"
+    )
+    target_node = relationship(
+        "NetworkNode", foreign_keys=[target_node_id], back_populates="target_links"
+    )
 
 
 class ConfigTemplate(Base):
@@ -429,7 +459,9 @@ class ConfigTemplate(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
     created_by = Column(String(100))
     updated_by = Column(String(100))
 
@@ -447,7 +479,9 @@ class ConfigIntent(Base):
     intent_id = Column(String(100), nullable=False, unique=True, index=True)
 
     # Target device
-    device_id = Column(String(100), ForeignKey("device_inventory.device_id"), nullable=False)
+    device_id = Column(
+        String(100), ForeignKey("device_inventory.device_id"), nullable=False
+    )
 
     # Template reference
     template_id = Column(String(100), ForeignKey("device_config_templates.template_id"))
@@ -458,12 +492,16 @@ class ConfigIntent(Base):
     rendered_config = Column(Text)
 
     # Workflow information
-    priority = Column(String(20), nullable=False, default="normal")  # low, normal, high, urgent
+    priority = Column(
+        String(20), nullable=False, default="normal"
+    )  # low, normal, high, urgent
     requires_approval = Column(Boolean, nullable=False, default=False)
     maintenance_window_id = Column(String(100))
 
     # Status tracking
-    status = Column(String(50), nullable=False, default="pending", index=True)  # pending, approved, applied, failed
+    status = Column(
+        String(50), nullable=False, default="pending", index=True
+    )  # pending, approved, applied, failed
     applied_at = Column(DateTime)
 
     # Error information
@@ -475,7 +513,9 @@ class ConfigIntent(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
     created_by = Column(String(100))
     updated_by = Column(String(100))
 

@@ -151,7 +151,9 @@ class SystemMetricsCollector:
             self._collecting = True
             self._collection_task = asyncio.create_task(self._collection_loop())
 
-            logger.info(f"Started system metrics collection (interval: {self.collection_interval}s)")
+            logger.info(
+                f"Started system metrics collection (interval: {self.collection_interval}s)"
+            )
             return True
 
         except Exception as e:
@@ -298,14 +300,18 @@ class SystemMetricsCollector:
             current_process = psutil.Process()
 
             # Current process metrics
-            self.process_metrics[current_process.pid] = self._get_process_metrics(current_process)
+            self.process_metrics[current_process.pid] = self._get_process_metrics(
+                current_process
+            )
 
             # Related processes (same name/command)
             try:
                 for proc in psutil.process_iter(["pid", "name", "cmdline"]):
                     if proc.info["name"] == current_process.name():
                         try:
-                            self.process_metrics[proc.pid] = self._get_process_metrics(proc)
+                            self.process_metrics[proc.pid] = self._get_process_metrics(
+                                proc
+                            )
                         except (psutil.NoSuchProcess, psutil.AccessDenied):
                             continue
             except Exception as e:
@@ -338,7 +344,9 @@ class SystemMetricsCollector:
                     memory_vms=memory_info.vms,
                     num_threads=process.num_threads(),
                     num_fds=process.num_fds() if hasattr(process, "num_fds") else 0,
-                    create_time=datetime.fromtimestamp(process.create_time(), tz=timezone.utc),
+                    create_time=datetime.fromtimestamp(
+                        process.create_time(), tz=timezone.utc
+                    ),
                     status=process.status(),
                     io_read_bytes=io_counters.read_bytes if io_counters else None,
                     io_write_bytes=io_counters.write_bytes if io_counters else None,
@@ -382,7 +390,9 @@ class SystemMetricsCollector:
         Returns:
             Baseline metrics summary
         """
-        logger.info(f"Establishing performance baseline over {duration_seconds} seconds")
+        logger.info(
+            f"Establishing performance baseline over {duration_seconds} seconds"
+        )
 
         if not self._collecting:
             logger.error("Metrics collection not active - cannot establish baseline")
@@ -425,7 +435,9 @@ class SystemMetricsCollector:
 
         logger.info("✅ Performance baseline established")
         logger.info(f"   Avg CPU: {self.baseline_metrics['avg_cpu_percent']:.1f}%")
-        logger.info(f"   Avg Memory: {self.baseline_metrics['avg_memory_percent']:.1f}%")
+        logger.info(
+            f"   Avg Memory: {self.baseline_metrics['avg_memory_percent']:.1f}%"
+        )
         logger.info(f"   Avg Load: {self.baseline_metrics['avg_load_1m']:.2f}")
 
         return self.baseline_metrics
@@ -434,7 +446,9 @@ class SystemMetricsCollector:
         """Get the most recent metrics snapshot"""
         return self.metrics_history[-1] if self.metrics_history else None
 
-    def get_metrics_summary(self, duration_seconds: Optional[int] = None) -> dict[str, Any]:
+    def get_metrics_summary(
+        self, duration_seconds: Optional[int] = None
+    ) -> dict[str, Any]:
         """
         Get summary statistics for collected metrics.
 
@@ -449,13 +463,20 @@ class SystemMetricsCollector:
 
         # Determine analysis window
         if duration_seconds:
-            cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=duration_seconds)
-            relevant_metrics = [m for m in self.metrics_history if m.timestamp >= cutoff_time]
+            cutoff_time = datetime.now(timezone.utc) - timedelta(
+                seconds=duration_seconds
+            )
+            relevant_metrics = [
+                m for m in self.metrics_history if m.timestamp >= cutoff_time
+            ]
         else:
             relevant_metrics = list(self.metrics_history)
 
         if not relevant_metrics:
-            return {"status": "no_data", "message": "No metrics in specified time window"}
+            return {
+                "status": "no_data",
+                "message": "No metrics in specified time window",
+            }
 
         # Calculate statistics
         cpu_values = [m.cpu_percent for m in relevant_metrics]
@@ -469,7 +490,9 @@ class SystemMetricsCollector:
             "collection_period": {
                 "start_time": relevant_metrics[0].timestamp.isoformat(),
                 "end_time": relevant_metrics[-1].timestamp.isoformat(),
-                "duration_seconds": (relevant_metrics[-1].timestamp - relevant_metrics[0].timestamp).total_seconds(),
+                "duration_seconds": (
+                    relevant_metrics[-1].timestamp - relevant_metrics[0].timestamp
+                ).total_seconds(),
                 "sample_count": len(relevant_metrics),
             },
             "current_snapshot": {
@@ -512,9 +535,12 @@ class SystemMetricsCollector:
         # Add baseline comparison if available
         if self.baseline_metrics:
             summary["baseline_comparison"] = {
-                "cpu_vs_baseline": current_metrics.cpu_percent - self.baseline_metrics["avg_cpu_percent"],
-                "memory_vs_baseline": current_metrics.memory_percent - self.baseline_metrics["avg_memory_percent"],
-                "load_vs_baseline": current_metrics.load_average_1m - self.baseline_metrics["avg_load_1m"],
+                "cpu_vs_baseline": current_metrics.cpu_percent
+                - self.baseline_metrics["avg_cpu_percent"],
+                "memory_vs_baseline": current_metrics.memory_percent
+                - self.baseline_metrics["avg_memory_percent"],
+                "load_vs_baseline": current_metrics.load_average_1m
+                - self.baseline_metrics["avg_load_1m"],
                 "baseline_established": True,
             }
         else:
@@ -587,7 +613,9 @@ class SystemMetricsCollector:
                     if "docker" in line:
                         container_id = line.split("/")[-1].strip()
                         if container_id:
-                            container_info["container_id"] = container_id[:12]  # Short ID
+                            container_info["container_id"] = container_id[
+                                :12
+                            ]  # Short ID
                         break
         except (FileNotFoundError, PermissionError):
             pass
@@ -680,7 +708,9 @@ class SystemMetricsCollector:
 
 
 # Convenience functions
-async def collect_system_metrics(duration_seconds: int = 60, interval: float = 1.0) -> dict[str, Any]:
+async def collect_system_metrics(
+    duration_seconds: int = 60, interval: float = 1.0
+) -> dict[str, Any]:
     """
     Collect system metrics for specified duration and return summary.
 

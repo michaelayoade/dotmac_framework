@@ -135,7 +135,13 @@ class TestPayment:
 
     def test_payment_method_validation(self):
         """Test payment method validation."""
-        valid_methods = ["credit_card", "debit_card", "bank_transfer", "paypal", "stripe"]
+        valid_methods = [
+            "credit_card",
+            "debit_card",
+            "bank_transfer",
+            "paypal",
+            "stripe",
+        ]
         test_method = "credit_card"
 
         assert test_method in valid_methods
@@ -144,7 +150,9 @@ class TestPayment:
 class TestModelRelationships:
     """Test relationships between models."""
 
-    def test_customer_invoice_relationship(self, sample_customer_data, sample_invoice_data):
+    def test_customer_invoice_relationship(
+        self, sample_customer_data, sample_invoice_data
+    ):
         """Test customer-invoice relationship."""
         customer_id = uuid4()
         invoice_data = sample_invoice_data.copy()
@@ -153,7 +161,9 @@ class TestModelRelationships:
         # Verify the relationship
         assert invoice_data["customer_id"] == customer_id
 
-    def test_invoice_payment_relationship(self, sample_invoice_data, sample_payment_data):
+    def test_invoice_payment_relationship(
+        self, sample_invoice_data, sample_payment_data
+    ):
         """Test invoice-payment relationship."""
         invoice_id = uuid4()
         payment_data = sample_payment_data.copy()
@@ -201,7 +211,11 @@ class TestModelValidation:
     def test_required_field_validation(self):
         """Test required field validation."""
         required_fields = ["customer_id", "total_amount", "currency"]
-        sample_data = {"customer_id": uuid4(), "total_amount": Decimal("100.00"), "currency": "USD"}
+        sample_data = {
+            "customer_id": uuid4(),
+            "total_amount": Decimal("100.00"),
+            "currency": "USD",
+        }
 
         for field in required_fields:
             assert field in sample_data

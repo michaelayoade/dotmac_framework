@@ -15,10 +15,11 @@ from pathlib import Path
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import ServiceError
 from dotmac_shared.monitoring.config import MonitoringConfig
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +95,9 @@ class InfrastructureAutomation:
         monitoring_config: Optional[MonitoringConfig] = None,
     ):
         self.db = db_session
-        self.monitoring_config = monitoring_config or MonitoringConfig(service_name="infrastructure_automation")
+        self.monitoring_config = monitoring_config or MonitoringConfig(
+            service_name="infrastructure_automation"
+        )
         self.maintenance_tasks: dict[UUID, MaintenanceTask] = {}
 
     @standard_exception_handler
@@ -104,7 +107,9 @@ class InfrastructureAutomation:
         logger.info(f"Registered maintenance task: {task.task_name}")
 
     @standard_exception_handler
-    async def database_cleanup(self, parameters: Optional[dict[str, Any]] = None) -> MaintenanceResult:
+    async def database_cleanup(
+        self, parameters: Optional[dict[str, Any]] = None
+    ) -> MaintenanceResult:
         """Perform database maintenance and cleanup."""
         start_time = datetime.now(timezone.utc)
         task_id = uuid4()
@@ -124,7 +129,9 @@ class InfrastructureAutomation:
             # Clean user lifecycle events
             if "clean_lifecycle_events" in params and params["clean_lifecycle_events"]:
                 # This would need actual implementation based on your database schema
-                lifecycle_cleaned = await self._cleanup_old_lifecycle_events(cutoff_date)
+                lifecycle_cleaned = await self._cleanup_old_lifecycle_events(
+                    cutoff_date
+                )
                 items_cleaned += lifecycle_cleaned
                 items_processed += lifecycle_cleaned
 
@@ -147,7 +154,9 @@ class InfrastructureAutomation:
             end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
-            logger.info(f"Database cleanup completed: {items_cleaned} items cleaned in {duration:.2f}s")
+            logger.info(
+                f"Database cleanup completed: {items_cleaned} items cleaned in {duration:.2f}s"
+            )
 
             return MaintenanceResult(
                 task_id=task_id,
@@ -182,7 +191,9 @@ class InfrastructureAutomation:
             )
 
     @standard_exception_handler
-    async def log_rotation_cleanup(self, parameters: Optional[dict[str, Any]] = None) -> MaintenanceResult:
+    async def log_rotation_cleanup(
+        self, parameters: Optional[dict[str, Any]] = None
+    ) -> MaintenanceResult:
         """Perform log rotation and cleanup."""
         start_time = datetime.now(timezone.utc)
         task_id = uuid4()
@@ -230,7 +241,9 @@ class InfrastructureAutomation:
             end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
-            logger.info(f"Log cleanup completed: {items_cleaned} files cleaned, {space_freed:.2f}MB freed")
+            logger.info(
+                f"Log cleanup completed: {items_cleaned} files cleaned, {space_freed:.2f}MB freed"
+            )
 
             return MaintenanceResult(
                 task_id=task_id,
@@ -266,7 +279,9 @@ class InfrastructureAutomation:
             )
 
     @standard_exception_handler
-    async def cache_cleanup(self, parameters: Optional[dict[str, Any]] = None) -> MaintenanceResult:
+    async def cache_cleanup(
+        self, parameters: Optional[dict[str, Any]] = None
+    ) -> MaintenanceResult:
         """Clean up cache systems and temporary files."""
         start_time = datetime.now(timezone.utc)
         task_id = uuid4()
@@ -289,12 +304,15 @@ class InfrastructureAutomation:
 
             # File cache cleanup
             if file_cache_cleanup:
-                cache_dirs = params.get("cache_directories", ["/tmp/cache", "/var/cache"])
+                cache_dirs = params.get(
+                    "cache_directories", ["/tmp/cache", "/var/cache"]
+                )
                 for cache_dir in cache_dirs:
                     cache_path = Path(cache_dir)
                     if cache_path.exists():
                         dir_stats = await self._cleanup_directory(
-                            cache_path, max_age_hours=params.get("cache_max_age_hours", 24)
+                            cache_path,
+                            max_age_hours=params.get("cache_max_age_hours", 24),
                         )
                         items_processed += dir_stats["processed"]
                         items_cleaned += dir_stats["cleaned"]
@@ -316,7 +334,9 @@ class InfrastructureAutomation:
             end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
-            logger.info(f"Cache cleanup completed: {items_cleaned} items cleaned, {space_freed:.2f}MB freed")
+            logger.info(
+                f"Cache cleanup completed: {items_cleaned} items cleaned, {space_freed:.2f}MB freed"
+            )
 
             return MaintenanceResult(
                 task_id=task_id,
@@ -347,7 +367,9 @@ class InfrastructureAutomation:
             )
 
     @standard_exception_handler
-    async def performance_optimization(self, parameters: Optional[dict[str, Any]] = None) -> MaintenanceResult:
+    async def performance_optimization(
+        self, parameters: Optional[dict[str, Any]] = None
+    ) -> MaintenanceResult:
         """Perform system performance optimization."""
         start_time = datetime.now(timezone.utc)
         task_id = uuid4()
@@ -382,7 +404,9 @@ class InfrastructureAutomation:
             end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
-            logger.info(f"Performance optimization completed: {optimizations_applied} optimizations applied")
+            logger.info(
+                f"Performance optimization completed: {optimizations_applied} optimizations applied"
+            )
 
             return MaintenanceResult(
                 task_id=task_id,
@@ -459,7 +483,9 @@ class InfrastructureAutomation:
         await asyncio.sleep(0.1)  # Simulate Redis operations
         return {"processed": 1000, "cleaned": 200}
 
-    async def _cleanup_directory(self, directory: Path, max_age_hours: int = 24) -> dict[str, Any]:
+    async def _cleanup_directory(
+        self, directory: Path, max_age_hours: int = 24
+    ) -> dict[str, Any]:
         """Clean up files in directory older than specified age."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
 
@@ -578,7 +604,9 @@ class MaintenanceScheduler:
 
         return False
 
-    async def _execute_maintenance_task(self, task: MaintenanceTask) -> MaintenanceResult:
+    async def _execute_maintenance_task(
+        self, task: MaintenanceTask
+    ) -> MaintenanceResult:
         """Execute a maintenance task."""
         logger.info(f"Executing maintenance task: {task.task_name}")
 
@@ -595,7 +623,9 @@ class MaintenanceScheduler:
             elif task.maintenance_type == MaintenanceType.PERFORMANCE_OPTIMIZATION:
                 result = await self.automation.performance_optimization(task.parameters)
             else:
-                raise ServiceError(f"Unsupported maintenance type: {task.maintenance_type}")
+                raise ServiceError(
+                    f"Unsupported maintenance type: {task.maintenance_type}"
+                )
 
             task.last_status = result.status
             return result
@@ -685,9 +715,15 @@ class OperationsOrchestrator:
 
         # Register all tasks
         await self.infrastructure_automation.register_maintenance_task(db_cleanup_task)
-        await self.infrastructure_automation.register_maintenance_task(log_rotation_task)
-        await self.infrastructure_automation.register_maintenance_task(cache_cleanup_task)
-        await self.infrastructure_automation.register_maintenance_task(perf_optimization_task)
+        await self.infrastructure_automation.register_maintenance_task(
+            log_rotation_task
+        )
+        await self.infrastructure_automation.register_maintenance_task(
+            cache_cleanup_task
+        )
+        await self.infrastructure_automation.register_maintenance_task(
+            perf_optimization_task
+        )
 
         logger.info("Default maintenance tasks initialized")
 

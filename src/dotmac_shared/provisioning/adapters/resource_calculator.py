@@ -97,7 +97,9 @@ class ResourceCalculator:
             )
 
             # Start with base resources for plan type
-            base_resources = self.BASE_RESOURCES.get(plan_type, self.BASE_RESOURCES[PlanType.STANDARD])
+            base_resources = self.BASE_RESOURCES.get(
+                plan_type, self.BASE_RESOURCES[PlanType.STANDARD]
+            )
 
             # Calculate base requirements
             cpu_cores = base_resources["cpu_cores"]
@@ -107,11 +109,22 @@ class ResourceCalculator:
             max_concurrent_requests = base_resources["max_concurrent_requests"]
 
             # Apply customer count scaling
-            cpu_cores += (customer_count / 1000) * self.SCALING_FACTORS["cpu_per_1000_customers"]
-            memory_gb += (customer_count / 500) * self.SCALING_FACTORS["memory_per_500_customers"]
-            storage_gb += (customer_count / 1000) * self.SCALING_FACTORS["storage_per_1000_customers"]
-            max_connections += int(customer_count * self.SCALING_FACTORS["connections_per_customer"])
-            max_concurrent_requests += int(customer_count / 100) * self.SCALING_FACTORS["requests_per_100_customers"]
+            cpu_cores += (customer_count / 1000) * self.SCALING_FACTORS[
+                "cpu_per_1000_customers"
+            ]
+            memory_gb += (customer_count / 500) * self.SCALING_FACTORS[
+                "memory_per_500_customers"
+            ]
+            storage_gb += (customer_count / 1000) * self.SCALING_FACTORS[
+                "storage_per_1000_customers"
+            ]
+            max_connections += int(
+                customer_count * self.SCALING_FACTORS["connections_per_customer"]
+            )
+            max_concurrent_requests += (
+                int(customer_count / 100)
+                * self.SCALING_FACTORS["requests_per_100_customers"]
+            )
 
             # Apply feature multipliers
             if feature_flags:
@@ -130,7 +143,9 @@ class ResourceCalculator:
             memory_gb = min(memory_gb, self.LIMITS["max_memory_gb"])
             storage_gb = min(storage_gb, self.LIMITS["max_storage_gb"])
             max_connections = min(max_connections, self.LIMITS["max_connections"])
-            max_concurrent_requests = min(max_concurrent_requests, self.LIMITS["max_concurrent_requests"])
+            max_concurrent_requests = min(
+                max_concurrent_requests, self.LIMITS["max_concurrent_requests"]
+            )
 
             # Create resource requirements
             resources = ResourceRequirements(
@@ -158,26 +173,38 @@ class ResourceCalculator:
                 requested_resources={"plan_type": plan_type.value},
             ) from e
 
-    def _calculate_feature_multipliers(self, feature_flags: FeatureFlags) -> dict[str, float]:
+    def _calculate_feature_multipliers(
+        self, feature_flags: FeatureFlags
+    ) -> dict[str, float]:
         """Calculate resource multipliers based on enabled features."""
 
         multipliers = {"cpu": 1.0, "memory": 1.0, "storage": 1.0}
 
         # Check each feature and apply multipliers
         if feature_flags.analytics_dashboard:
-            self._apply_multiplier(multipliers, self.FEATURE_MULTIPLIERS["analytics_dashboard"])
+            self._apply_multiplier(
+                multipliers, self.FEATURE_MULTIPLIERS["analytics_dashboard"]
+            )
 
         if feature_flags.api_webhooks:
-            self._apply_multiplier(multipliers, self.FEATURE_MULTIPLIERS["api_webhooks"])
+            self._apply_multiplier(
+                multipliers, self.FEATURE_MULTIPLIERS["api_webhooks"]
+            )
 
         if feature_flags.bulk_operations:
-            self._apply_multiplier(multipliers, self.FEATURE_MULTIPLIERS["bulk_operations"])
+            self._apply_multiplier(
+                multipliers, self.FEATURE_MULTIPLIERS["bulk_operations"]
+            )
 
         if feature_flags.advanced_reporting:
-            self._apply_multiplier(multipliers, self.FEATURE_MULTIPLIERS["advanced_reporting"])
+            self._apply_multiplier(
+                multipliers, self.FEATURE_MULTIPLIERS["advanced_reporting"]
+            )
 
         if feature_flags.multi_language:
-            self._apply_multiplier(multipliers, self.FEATURE_MULTIPLIERS["multi_language"])
+            self._apply_multiplier(
+                multipliers, self.FEATURE_MULTIPLIERS["multi_language"]
+            )
 
         logger.debug(
             "Feature multipliers calculated",
@@ -188,7 +215,9 @@ class ResourceCalculator:
 
         return multipliers
 
-    def _apply_multiplier(self, base_multipliers: dict[str, float], feature_multipliers: dict[str, float]) -> None:
+    def _apply_multiplier(
+        self, base_multipliers: dict[str, float], feature_multipliers: dict[str, float]
+    ) -> None:
         """Apply feature multipliers to base multipliers."""
         base_multipliers["cpu"] *= feature_multipliers["cpu"]
         base_multipliers["memory"] *= feature_multipliers["memory"]
@@ -232,8 +261,12 @@ class ResourceCalculator:
         }
 
         cpu_cost = resources.cpu_cores * HOURLY_RATES["cpu_per_core"] * hours_per_month
-        memory_cost = resources.memory_gb * HOURLY_RATES["memory_per_gb"] * hours_per_month
-        storage_cost = resources.storage_gb * HOURLY_RATES["storage_per_gb"] * hours_per_month
+        memory_cost = (
+            resources.memory_gb * HOURLY_RATES["memory_per_gb"] * hours_per_month
+        )
+        storage_cost = (
+            resources.storage_gb * HOURLY_RATES["storage_per_gb"] * hours_per_month
+        )
 
         total_cost = cpu_cost + memory_cost + storage_cost
 
@@ -246,7 +279,9 @@ class ResourceCalculator:
             "region": region,
         }
 
-    async def recommend_plan_type(self, customer_count: int, required_features: Optional[list] = None) -> PlanType:
+    async def recommend_plan_type(
+        self, customer_count: int, required_features: Optional[list] = None
+    ) -> PlanType:
         """
         Recommend optimal plan type based on requirements.
 
@@ -303,13 +338,19 @@ class ResourceCalculator:
         errors = []
 
         if resources.cpu_cores > self.LIMITS["max_cpu_cores"]:
-            errors.append(f"CPU cores ({resources.cpu_cores}) exceed maximum ({self.LIMITS['max_cpu_cores']})")
+            errors.append(
+                f"CPU cores ({resources.cpu_cores}) exceed maximum ({self.LIMITS['max_cpu_cores']})"
+            )
 
         if resources.memory_gb > self.LIMITS["max_memory_gb"]:
-            errors.append(f"Memory ({resources.memory_gb}GB) exceeds maximum ({self.LIMITS['max_memory_gb']}GB)")
+            errors.append(
+                f"Memory ({resources.memory_gb}GB) exceeds maximum ({self.LIMITS['max_memory_gb']}GB)"
+            )
 
         if resources.storage_gb > self.LIMITS["max_storage_gb"]:
-            errors.append(f"Storage ({resources.storage_gb}GB) exceeds maximum ({self.LIMITS['max_storage_gb']}GB)")
+            errors.append(
+                f"Storage ({resources.storage_gb}GB) exceeds maximum ({self.LIMITS['max_storage_gb']}GB)"
+            )
 
         if resources.max_connections > self.LIMITS["max_connections"]:
             errors.append(

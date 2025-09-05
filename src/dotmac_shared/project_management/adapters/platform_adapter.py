@@ -9,11 +9,7 @@ from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.models import (
-    ProjectPriority,
-    ProjectResponse,
-    ProjectType,
-)
+from ..core.models import ProjectPriority, ProjectResponse, ProjectType
 from ..services.project_service import ProjectService
 
 logger = logging.getLogger(__name__)
@@ -26,7 +22,9 @@ class BasePlatformAdapter(ABC):
         self.project_service = project_service
 
     @abstractmethod
-    async def get_customer_info(self, tenant_id: str, customer_id: str) -> dict[str, Any]:
+    async def get_customer_info(
+        self, tenant_id: str, customer_id: str
+    ) -> dict[str, Any]:
         """Get customer information from the platform."""
         pass
 
@@ -61,7 +59,9 @@ class ISPProjectAdapter(BasePlatformAdapter):
         super().__init__(project_service)
         self.isp_client = isp_client
 
-    async def get_customer_info(self, tenant_id: str, customer_id: str) -> dict[str, Any]:
+    async def get_customer_info(
+        self, tenant_id: str, customer_id: str
+    ) -> dict[str, Any]:
         """Get customer info from ISP Framework."""
         try:
             if self.isp_client:
@@ -185,7 +185,9 @@ class ISPProjectAdapter(BasePlatformAdapter):
             customer_id=None,  # Internal project
             project_name=f"Network Expansion - {expansion_details.get('area_name', 'Unknown Area')}",
             project_type=ProjectType.NETWORK_EXPANSION,
-            description=expansion_details.get("description", "Network infrastructure expansion"),
+            description=expansion_details.get(
+                "description", "Network infrastructure expansion"
+            ),
             priority=ProjectPriority.HIGH,
             project_manager=project_manager,
             estimated_cost=expansion_details.get("estimated_cost"),
@@ -240,7 +242,9 @@ class ManagementProjectAdapter(BasePlatformAdapter):
         super().__init__(project_service)
         self.management_client = management_client
 
-    async def get_customer_info(self, tenant_id: str, customer_id: str) -> dict[str, Any]:
+    async def get_customer_info(
+        self, tenant_id: str, customer_id: str
+    ) -> dict[str, Any]:
         """Get customer info from Management Platform."""
         try:
             if self.management_client:
@@ -358,7 +362,9 @@ class ManagementProjectAdapter(BasePlatformAdapter):
             customer_id=None,  # Internal project
             project_name=f"Infrastructure Upgrade - {upgrade_details.get('component_name')}",
             project_type=ProjectType.MIGRATION,
-            description=upgrade_details.get("description", "Infrastructure component upgrade"),
+            description=upgrade_details.get(
+                "description", "Infrastructure component upgrade"
+            ),
             priority=ProjectPriority.HIGH,
             project_manager=project_manager,
             estimated_cost=upgrade_details.get("estimated_cost"),
@@ -401,7 +407,9 @@ class ManagementProjectAdapter(BasePlatformAdapter):
                 "source_system": migration_details.get("source_system"),
                 "target_system": migration_details.get("target_system"),
                 "data_volume": migration_details.get("data_volume"),
-                "validation_requirements": migration_details.get("validation_rules", []),
+                "validation_requirements": migration_details.get(
+                    "validation_rules", []
+                ),
             },
             metadata={
                 "migration_type": migration_details.get("migration_type"),
@@ -449,22 +457,36 @@ class ProjectPlatformAdapter:
 
         if platform == "management":
             if project_type == "tenant_deployment":
-                return await adapter.create_tenant_deployment_project(db, tenant_id, **kwargs)
+                return await adapter.create_tenant_deployment_project(
+                    db, tenant_id, **kwargs
+                )
             elif project_type == "infrastructure_upgrade":
-                return await adapter.create_infrastructure_upgrade_project(db, tenant_id, **kwargs)
+                return await adapter.create_infrastructure_upgrade_project(
+                    db, tenant_id, **kwargs
+                )
             elif project_type == "data_migration":
-                return await adapter.create_data_migration_project(db, tenant_id, **kwargs)
+                return await adapter.create_data_migration_project(
+                    db, tenant_id, **kwargs
+                )
 
         elif platform == "isp":
             if project_type == "installation":
-                return await adapter.create_installation_project(db, tenant_id, **kwargs)
+                return await adapter.create_installation_project(
+                    db, tenant_id, **kwargs
+                )
             elif project_type == "network_expansion":
-                return await adapter.create_network_expansion_project(db, tenant_id, **kwargs)
+                return await adapter.create_network_expansion_project(
+                    db, tenant_id, **kwargs
+                )
             elif project_type == "equipment_replacement":
-                return await adapter.create_equipment_replacement_project(db, tenant_id, **kwargs)
+                return await adapter.create_equipment_replacement_project(
+                    db, tenant_id, **kwargs
+                )
 
         # Fallback to generic project creation
-        return await adapter.project_service.create_customer_project(db=db, tenant_id=tenant_id, **kwargs)
+        return await adapter.project_service.create_customer_project(
+            db=db, tenant_id=tenant_id, **kwargs
+        )
 
     async def send_project_notification(
         self,
@@ -477,7 +499,9 @@ class ProjectPlatformAdapter:
         """Send project notification through appropriate platform."""
         adapter = self.get_adapter(platform)
         if adapter:
-            return await adapter.send_notification(notification_type, recipient, project, **kwargs)
+            return await adapter.send_notification(
+                notification_type, recipient, project, **kwargs
+            )
         return False
 
     async def create_project_calendar_event(
@@ -491,5 +515,7 @@ class ProjectPlatformAdapter:
         """Create calendar event through appropriate platform."""
         adapter = self.get_adapter(platform)
         if adapter:
-            return await adapter.create_calendar_event(project, event_type, start_date, end_date)
+            return await adapter.create_calendar_event(
+                project, event_type, start_date, end_date
+            )
         return False

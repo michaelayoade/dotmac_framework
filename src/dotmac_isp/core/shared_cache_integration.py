@@ -29,7 +29,9 @@ class ISPCacheManager:
             if self.cache_service and not self._initialized:
                 await self.cache_service.initialize()
                 self._initialized = True
-                logger.info(f"✅ ISP Cache Manager initialized for tenant {self.tenant_id}")
+                logger.info(
+                    f"✅ ISP Cache Manager initialized for tenant {self.tenant_id}"
+                )
             return True
         except Exception as e:
             logger.error(f"❌ Failed to initialize ISP Cache Manager: {e}")
@@ -47,13 +49,17 @@ class ISPCacheManager:
 
         try:
             cache_key = self._get_cache_key("identity", f"customer:{customer_id}")
-            cached_data = await self.cache_service.get(cache_key, tenant_id=self.tenant_id)
+            cached_data = await self.cache_service.get(
+                cache_key, tenant_id=self.tenant_id
+            )
             return json.loads(cached_data) if cached_data else None
         except Exception as e:
             logger.error(f"Failed to get cached customer {customer_id}: {e}")
             return None
 
-    async def cache_customer(self, customer_id: str, customer_data: dict[str, Any], expire_minutes: int = 30) -> bool:
+    async def cache_customer(
+        self, customer_id: str, customer_data: dict[str, Any], expire_minutes: int = 30
+    ) -> bool:
         """Cache customer data."""
         if not self._initialized:
             return False
@@ -79,13 +85,17 @@ class ISPCacheManager:
 
         try:
             cache_key = self._get_cache_key("billing", f"invoice:{invoice_id}")
-            cached_data = await self.cache_service.get(cache_key, tenant_id=self.tenant_id)
+            cached_data = await self.cache_service.get(
+                cache_key, tenant_id=self.tenant_id
+            )
             return json.loads(cached_data) if cached_data else None
         except Exception as e:
             logger.error(f"Failed to get cached invoice {invoice_id}: {e}")
             return None
 
-    async def cache_invoice(self, invoice_id: str, invoice_data: dict[str, Any], expire_minutes: int = 60) -> bool:
+    async def cache_invoice(
+        self, invoice_id: str, invoice_data: dict[str, Any], expire_minutes: int = 60
+    ) -> bool:
         """Cache invoice data."""
         if not self._initialized:
             return False
@@ -111,13 +121,17 @@ class ISPCacheManager:
 
         try:
             cache_key = self._get_cache_key("network", f"device_status:{device_id}")
-            cached_data = await self.cache_service.get(cache_key, tenant_id=self.tenant_id)
+            cached_data = await self.cache_service.get(
+                cache_key, tenant_id=self.tenant_id
+            )
             return json.loads(cached_data) if cached_data else None
         except Exception as e:
             logger.error(f"Failed to get cached device status {device_id}: {e}")
             return None
 
-    async def cache_device_status(self, device_id: str, status_data: dict[str, Any], expire_minutes: int = 5) -> bool:
+    async def cache_device_status(
+        self, device_id: str, status_data: dict[str, Any], expire_minutes: int = 5
+    ) -> bool:
         """Cache device status (short TTL for real-time data)."""
         if not self._initialized:
             return False
@@ -143,13 +157,17 @@ class ISPCacheManager:
 
         try:
             cache_key = self._get_cache_key("analytics", f"report:{report_id}")
-            cached_data = await self.cache_service.get(cache_key, tenant_id=self.tenant_id)
+            cached_data = await self.cache_service.get(
+                cache_key, tenant_id=self.tenant_id
+            )
             return json.loads(cached_data) if cached_data else None
         except Exception as e:
             logger.error(f"Failed to get cached report {report_id}: {e}")
             return None
 
-    async def cache_report_data(self, report_id: str, report_data: dict[str, Any], expire_minutes: int = 120) -> bool:
+    async def cache_report_data(
+        self, report_id: str, report_data: dict[str, Any], expire_minutes: int = 120
+    ) -> bool:
         """Cache report data."""
         if not self._initialized:
             return False
@@ -168,17 +186,23 @@ class ISPCacheManager:
             return False
 
     # Service configuration caching
-    async def get_service_config(self, service_name: str, config_key: str) -> Optional[Any]:
+    async def get_service_config(
+        self, service_name: str, config_key: str
+    ) -> Optional[Any]:
         """Get cached service configuration."""
         if not self._initialized:
             return None
 
         try:
             cache_key = self._get_cache_key("config", f"{service_name}:{config_key}")
-            cached_data = await self.cache_service.get(cache_key, tenant_id=self.tenant_id)
+            cached_data = await self.cache_service.get(
+                cache_key, tenant_id=self.tenant_id
+            )
             return json.loads(cached_data) if cached_data else None
         except Exception as e:
-            logger.error(f"Failed to get cached config {service_name}:{config_key}: {e}")
+            logger.error(
+                f"Failed to get cached config {service_name}:{config_key}: {e}"
+            )
             return None
 
     async def cache_service_config(
@@ -213,13 +237,17 @@ class ISPCacheManager:
 
         try:
             cache_key = self._get_cache_key(module, key)
-            cached_data = await self.cache_service.get(cache_key, tenant_id=self.tenant_id)
+            cached_data = await self.cache_service.get(
+                cache_key, tenant_id=self.tenant_id
+            )
             return json.loads(cached_data) if cached_data else None
         except Exception as e:
             logger.error(f"Failed to get cached data {module}:{key}: {e}")
             return None
 
-    async def cache_data(self, module: str, key: str, data: Any, expire_minutes: int = 60) -> bool:
+    async def cache_data(
+        self, module: str, key: str, data: Any, expire_minutes: int = 60
+    ) -> bool:
         """Cache generic data."""
         if not self._initialized:
             return False
@@ -259,7 +287,9 @@ class ISPCacheManager:
             pattern = f"isp:{self.tenant_id}:{module}:*"
             # Note: This would require cache service to support pattern deletion
             # For now, we'll just log it
-            logger.info(f"Cache invalidation requested for module {module} (pattern: {pattern})")
+            logger.info(
+                f"Cache invalidation requested for module {module} (pattern: {pattern})"
+            )
             return True
         except Exception as e:
             logger.error(f"Failed to invalidate module cache {module}: {e}")
@@ -271,7 +301,9 @@ class ISPCacheManager:
             if self.cache_service:
                 cache_health = await self.cache_service.health_check()
                 return {
-                    "cache_manager": ("healthy" if self._initialized else "not_initialized"),
+                    "cache_manager": (
+                        "healthy" if self._initialized else "not_initialized"
+                    ),
                     "tenant_id": self.tenant_id,
                     "cache_service": cache_health,
                     "initialized": self._initialized,

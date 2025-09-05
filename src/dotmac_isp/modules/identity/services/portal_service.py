@@ -23,14 +23,20 @@ class PortalService(BaseService):
         self.user_repo = UserRepository(db_session, tenant_id)
 
     async def create_portal_access(
-        self, user_id: UUID, portal_type: str, access_data: dict[str, Any], created_by: str
+        self,
+        user_id: UUID,
+        portal_type: str,
+        access_data: dict[str, Any],
+        created_by: str,
     ) -> Optional[dict[str, Any]]:
         """Create portal access for user."""
         try:
             # Verify user exists
             user = await self.user_repo.get_by_id(user_id)
             if not user:
-                logger.warning(f"Portal access creation failed: user {user_id} not found")
+                logger.warning(
+                    f"Portal access creation failed: user {user_id} not found"
+                )
                 return None
 
             # Create portal access
@@ -52,7 +58,9 @@ class PortalService(BaseService):
             await self.db.commit()
             await self.db.refresh(portal_access)
 
-            logger.info(f"Created {portal_type} portal access for user {user_id} by {created_by}")
+            logger.info(
+                f"Created {portal_type} portal access for user {user_id} by {created_by}"
+            )
 
             return {
                 "id": str(portal_access.id),
@@ -71,7 +79,9 @@ class PortalService(BaseService):
             await self.db.rollback()
             return None
 
-    async def get_user_portal_access(self, user_id: UUID, portal_type: str) -> Optional[dict[str, Any]]:
+    async def get_user_portal_access(
+        self, user_id: UUID, portal_type: str
+    ) -> Optional[dict[str, Any]]:
         """Get user's portal access."""
         try:
             # Query for portal access
@@ -102,7 +112,9 @@ class PortalService(BaseService):
                 "max_concurrent_sessions": portal_access.max_concurrent_sessions,
                 "session_timeout_minutes": portal_access.session_timeout_minutes,
                 "require_mfa": portal_access.require_mfa,
-                "last_access": portal_access.last_access.isoformat() if portal_access.last_access else None,
+                "last_access": portal_access.last_access.isoformat()
+                if portal_access.last_access
+                else None,
                 "tenant_id": portal_access.tenant_id,
             }
         except Exception as e:
@@ -110,7 +122,11 @@ class PortalService(BaseService):
             return None
 
     async def update_portal_access(
-        self, user_id: UUID, portal_type: str, access_data: dict[str, Any], updated_by: str
+        self,
+        user_id: UUID,
+        portal_type: str,
+        access_data: dict[str, Any],
+        updated_by: str,
     ) -> Optional[dict[str, Any]]:
         """Update user's portal access."""
         try:
@@ -141,9 +157,13 @@ class PortalService(BaseService):
             if "denied_features" in access_data:
                 portal_access.denied_features = access_data["denied_features"]
             if "max_concurrent_sessions" in access_data:
-                portal_access.max_concurrent_sessions = access_data["max_concurrent_sessions"]
+                portal_access.max_concurrent_sessions = access_data[
+                    "max_concurrent_sessions"
+                ]
             if "session_timeout_minutes" in access_data:
-                portal_access.session_timeout_minutes = access_data["session_timeout_minutes"]
+                portal_access.session_timeout_minutes = access_data[
+                    "session_timeout_minutes"
+                ]
             if "require_mfa" in access_data:
                 portal_access.require_mfa = access_data["require_mfa"]
             if "allowed_ip_ranges" in access_data:
@@ -152,7 +172,9 @@ class PortalService(BaseService):
             await self.db.commit()
             await self.db.refresh(portal_access)
 
-            logger.info(f"Updated {portal_type} portal access for user {user_id} by {updated_by}")
+            logger.info(
+                f"Updated {portal_type} portal access for user {user_id} by {updated_by}"
+            )
 
             return {
                 "id": str(portal_access.id),
@@ -169,7 +191,9 @@ class PortalService(BaseService):
             await self.db.rollback()
             return None
 
-    async def check_portal_access(self, user_id: UUID, portal_type: str, feature: Optional[str] = None) -> bool:
+    async def check_portal_access(
+        self, user_id: UUID, portal_type: str, feature: Optional[str] = None
+    ) -> bool:
         """Check if user has portal access."""
         try:
             portal_access = await self.get_user_portal_access(user_id, portal_type)
@@ -220,7 +244,9 @@ class PortalService(BaseService):
                     "username": access.user.username if access.user else None,
                     "email": access.user.email if access.user else None,
                     "access_level": access.access_level,
-                    "last_access": access.last_access.isoformat() if access.last_access else None,
+                    "last_access": access.last_access.isoformat()
+                    if access.last_access
+                    else None,
                     "total_logins": access.total_logins,
                 }
                 for access in portal_accesses

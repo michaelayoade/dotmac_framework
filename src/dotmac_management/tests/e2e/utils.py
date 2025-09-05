@@ -15,11 +15,12 @@ from contextlib import asynccontextmanager
 from typing import Any, Optional
 
 import httpx
-from dotmac_management.models.tenant import CustomerTenant, TenantStatus
-from dotmac_shared.core.logging import get_logger
 from playwright.async_api import Page, expect
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
+
+from dotmac_management.models.tenant import CustomerTenant, TenantStatus
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -53,32 +54,46 @@ class DatabaseTestUtils:
 
     @staticmethod
     def verify_tenant_data_isolation(
-        tenant_a_session: Session, tenant_b_session: Session, table_name: str, tenant_a_id: str, tenant_b_id: str
+        tenant_a_session: Session,
+        tenant_b_session: Session,
+        table_name: str,
+        tenant_a_id: str,
+        tenant_b_id: str,
     ) -> dict[str, Any]:
         """Verify that tenant data is properly isolated."""
-        results = {"isolated": True, "tenant_a_count": 0, "tenant_b_count": 0, "cross_contamination": []}
+        results = {
+            "isolated": True,
+            "tenant_a_count": 0,
+            "tenant_b_count": 0,
+            "cross_contamination": [],
+        }
 
         try:
             # Check tenant A data
             tenant_a_data = tenant_a_session.execute(
-                text(f"SELECT * FROM {table_name} WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_a_id}
+                text(f"SELECT * FROM {table_name} WHERE tenant_id = :tenant_id"),
+                {"tenant_id": tenant_a_id},
             ).fetchall()
             results["tenant_a_count"] = len(tenant_a_data)
 
             # Check tenant B data
             tenant_b_data = tenant_b_session.execute(
-                text(f"SELECT * FROM {table_name} WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_b_id}
+                text(f"SELECT * FROM {table_name} WHERE tenant_id = :tenant_id"),
+                {"tenant_id": tenant_b_id},
             ).fetchall()
             results["tenant_b_count"] = len(tenant_b_data)
 
             # Check for cross-contamination (tenant A data in tenant B DB)
             cross_check = tenant_b_session.execute(
-                text(f"SELECT * FROM {table_name} WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_a_id}
+                text(f"SELECT * FROM {table_name} WHERE tenant_id = :tenant_id"),
+                {"tenant_id": tenant_a_id},
             ).fetchall()
 
             if cross_check:
                 results["isolated"] = False
-                results["cross_contamination"] = [dict(row._mapping) for row in cross_check]
+                results["cross_contamination"] = [
+                    dict(row._mapping) for row in cross_check
+                ]
 
         except Exception as e:
             logger.error(f"Error verifying data isolation: {e}")
@@ -92,7 +107,10 @@ class DatabaseTestUtils:
         """Clean up test data for a specific tenant."""
         try:
             for table in tables:
-                session.execute(text(f"DELETE FROM {table} WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_id})
+                session.execute(
+                    text(f"DELETE FROM {table} WHERE tenant_id = :tenant_id"),
+                    {"tenant_id": tenant_id},
+                )
             session.commit()
             logger.info(f"Cleaned up test data for tenant {tenant_id}")
         except Exception as e:
@@ -114,7 +132,9 @@ class ContainerTestUtils:
         async with httpx.AsyncClient(verify=False) as client:
             while time.time() - start_time < timeout:
                 try:
-                    response = await client.get(f"{container_url}{health_endpoint}", timeout=10)
+                    response = await client.get(
+                        f"{container_url}{health_endpoint}", timeout=10
+                    )
 
                     if response.status_code == 200:
                         health_data = response.json()
@@ -127,11 +147,15 @@ class ContainerTestUtils:
 
                 await asyncio.sleep(5)
 
-        logger.error(f"Container {container_url} failed to become healthy within {timeout}s")
+        logger.error(
+            f"Container {container_url} failed to become healthy within {timeout}s"
+        )
         return False
 
     @staticmethod
-    async def verify_container_scaling(base_url: str, expected_replicas: int, timeout: int = 120) -> bool:
+    async def verify_container_scaling(
+        base_url: str, expected_replicas: int, timeout: int = 120
+    ) -> bool:
         """Verify container has scaled to expected replicas."""
         time.time()
 
@@ -144,7 +168,9 @@ class ContainerTestUtils:
         return True
 
     @staticmethod
-    async def monitor_container_resources(container_id: str, duration: int = 60) -> dict[str, list[float]]:
+    async def monitor_container_resources(
+        container_id: str, duration: int = 60
+    ) -> dict[str, list[float]]:
         """Monitor container resource usage over time."""
         metrics = {"cpu_usage": [], "memory_usage": [], "timestamps": []}
 
@@ -185,7 +211,9 @@ class PageTestUtils:
             return False
 
     @staticmethod
-    async def login_tenant_admin(page: Page, tenant_url: str, credentials: dict[str, str]) -> bool:
+    async def login_tenant_admin(
+        page: Page, tenant_url: str, credentials: dict[str, str]
+    ) -> bool:
         """Login as tenant admin."""
         try:
             await page.goto(f"{tenant_url}/login")
@@ -202,7 +230,9 @@ class PageTestUtils:
             return False
 
     @staticmethod
-    async def wait_for_element_with_text(page: Page, selector: str, text: str, timeout: int = 10000) -> bool:
+    async def wait_for_element_with_text(
+        page: Page, selector: str, text: str, timeout: int = 10000
+    ) -> bool:
         """Wait for element containing specific text."""
         try:
             await expect(page.locator(selector)).to_contain_text(text, timeout=timeout)
@@ -212,7 +242,9 @@ class PageTestUtils:
             return False
 
     @staticmethod
-    async def capture_screenshot_on_failure(page: Page, test_name: str) -> Optional[str]:
+    async def capture_screenshot_on_failure(
+        page: Page, test_name: str
+    ) -> Optional[str]:
         """Capture screenshot when test fails."""
         try:
             screenshot_path = f"/tmp/{test_name}_{int(time.time())}.png"
@@ -323,7 +355,11 @@ class ProvisioningTestUtils:
         while time.time() - start_time < timeout:
             # Refresh session and get tenant
             management_db_session.expire_all()
-            tenant = management_db_session.query(CustomerTenant).filter_by(tenant_id=tenant_id).first()
+            tenant = (
+                management_db_session.query(CustomerTenant)
+                .filter_by(tenant_id=tenant_id)
+                .first()
+            )
 
             if not tenant:
                 result["error"] = "Tenant not found"
@@ -344,12 +380,18 @@ class ProvisioningTestUtils:
         return result
 
     @staticmethod
-    async def verify_provisioning_steps(management_db_session: Session, tenant_id: str) -> dict[str, Any]:
+    async def verify_provisioning_steps(
+        management_db_session: Session, tenant_id: str
+    ) -> dict[str, Any]:
         """Verify all provisioning steps completed successfully."""
         from dotmac_management.models.tenant import TenantProvisioningEvent
 
         # Get tenant
-        tenant = management_db_session.query(CustomerTenant).filter_by(tenant_id=tenant_id).first()
+        tenant = (
+            management_db_session.query(CustomerTenant)
+            .filter_by(tenant_id=tenant_id)
+            .first()
+        )
 
         if not tenant:
             return {"verified": False, "error": "Tenant not found"}
@@ -381,12 +423,16 @@ class ProvisioningTestUtils:
             "status_change.active",
         ]
 
-        completed_steps = [event.event_type for event in events if event.status == "success"]
+        completed_steps = [
+            event.event_type for event in events if event.status == "success"
+        ]
 
         return {
             "verified": all(step in completed_steps for step in expected_steps),
             "completed_steps": completed_steps,
-            "missing_steps": [step for step in expected_steps if step not in completed_steps],
+            "missing_steps": [
+                step for step in expected_steps if step not in completed_steps
+            ],
             "total_events": len(events),
             "successful_events": len([e for e in events if e.status == "success"]),
             "failed_events": len([e for e in events if e.status == "failed"]),
@@ -414,14 +460,21 @@ async def performance_monitor(test_name: str):
 # Assertion helpers
 def assert_tenant_provisioned_successfully(provisioning_result: dict[str, Any]):
     """Assert tenant was provisioned successfully."""
-    assert provisioning_result["completed"], f"Provisioning failed: {provisioning_result}"
-    assert provisioning_result["final_status"] in [TenantStatus.ACTIVE, TenantStatus.READY]
+    assert provisioning_result[
+        "completed"
+    ], f"Provisioning failed: {provisioning_result}"
+    assert provisioning_result["final_status"] in [
+        TenantStatus.ACTIVE,
+        TenantStatus.READY,
+    ]
 
 
 def assert_data_isolation_maintained(isolation_result: dict[str, Any]):
     """Assert data isolation is maintained between tenants."""
     assert isolation_result["isolated"], f"Data isolation violated: {isolation_result}"
-    assert not isolation_result["cross_contamination"], "Cross-tenant data contamination detected"
+    assert not isolation_result[
+        "cross_contamination"
+    ], "Cross-tenant data contamination detected"
 
 
 def assert_api_isolation_maintained(api_result: dict[str, Any]):

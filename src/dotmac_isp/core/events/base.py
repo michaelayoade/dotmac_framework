@@ -81,7 +81,9 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def publish(self, topic: str, event: EventRecord, partition_key: Optional[str] = None) -> PublishResult:
+    async def publish(
+        self, topic: str, event: EventRecord, partition_key: Optional[str] = None
+    ) -> PublishResult:
         """
         Publish an event to a topic.
 
@@ -113,7 +115,9 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def commit_offset(self, consumer_group: str, topic: str, partition: int, offset: str) -> None:
+    async def commit_offset(
+        self, consumer_group: str, topic: str, partition: int, offset: str
+    ) -> None:
         """
         Manually commit an offset for a consumer group.
 
@@ -211,7 +215,9 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def seek_to_beginning(self, consumer_group: str, topic: str, partition: Optional[int] = None) -> None:
+    async def seek_to_beginning(
+        self, consumer_group: str, topic: str, partition: Optional[int] = None
+    ) -> None:
         """
         Seek consumer group to the beginning of a topic/partition.
 
@@ -223,7 +229,9 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def seek_to_end(self, consumer_group: str, topic: str, partition: Optional[int] = None) -> None:
+    async def seek_to_end(
+        self, consumer_group: str, topic: str, partition: Optional[int] = None
+    ) -> None:
         """
         Seek consumer group to the end of a topic/partition.
 
@@ -235,7 +243,9 @@ class EventAdapter(ABC):
         pass
 
     @abstractmethod
-    async def seek_to_offset(self, consumer_group: str, topic: str, partition: int, offset: str) -> None:
+    async def seek_to_offset(
+        self, consumer_group: str, topic: str, partition: int, offset: str
+    ) -> None:
         """
         Seek consumer group to a specific offset.
 

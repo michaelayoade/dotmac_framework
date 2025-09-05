@@ -7,8 +7,14 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from pydantic import BaseModel, EmailStr, Field, field_validator
+from sqlalchemy.orm import Session
+
 from dotmac.application import StandardDependencies, get_standard_deps
-from dotmac.communications.notifications import UnifiedNotificationService as NotificationService
+from dotmac.communications.notifications import (
+    UnifiedNotificationService as NotificationService,
+)
 from dotmac.database.base import get_db_session
 from dotmac.platform.observability.logging import get_logger
 from dotmac_management.models.tenant import CustomerTenant, TenantPlan, TenantStatus
@@ -17,14 +23,6 @@ from dotmac_shared.api.exceptions import StandardExceptions, subdomain_taken
 from dotmac_shared.api.rate_limiting_decorators import RateLimitType, rate_limit
 from dotmac_shared.api.response import APIResponse
 from dotmac_shared.validation.common_validators import ValidatorMixins
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from pydantic import (
-    BaseModel,
-    EmailStr,
-    Field,
-    field_validator,
-)
-from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/public", tags=["public-signup"])
@@ -46,13 +44,21 @@ class PublicSignupRequest(BaseModel, ValidatorMixins):
     region: str = Field(default="us-east-1", description="Deployment region")
 
     # Optional information
-    description: Optional[str] = Field(None, max_length=500, description="Company description")
-    phone: Optional[str] = Field(None, max_length=50, description="Contact phone number")
-    billing_email: Optional[EmailStr] = Field(None, description="Billing email if different from admin")
+    description: Optional[str] = Field(
+        None, max_length=500, description="Company description"
+    )
+    phone: Optional[str] = Field(
+        None, max_length=50, description="Contact phone number"
+    )
+    billing_email: Optional[EmailStr] = Field(
+        None, description="Billing email if different from admin"
+    )
 
     # Marketing/source tracking
     source: Optional[str] = Field(None, max_length=100, description="Signup source")
-    utm_campaign: Optional[str] = Field(None, max_length=100, description="UTM campaign")
+    utm_campaign: Optional[str] = Field(
+        None, max_length=100, description="UTM campaign"
+    )
     utm_source: Optional[str] = Field(None, max_length=100, description="UTM source")
     utm_medium: Optional[str] = Field(None, max_length=100, description="UTM medium")
 
@@ -61,7 +67,9 @@ class PublicSignupRequest(BaseModel, ValidatorMixins):
     accept_privacy: bool = Field(default=True, description="Accept privacy policy")
 
     # Anti-spam verification
-    captcha_token: Optional[str] = Field(None, max_length=1000, description="Captcha verification token")
+    captcha_token: Optional[str] = Field(
+        None, max_length=1000, description="Captcha verification token"
+    )
 
     @field_validator("description")
     @classmethod
@@ -148,8 +156,12 @@ class PublicSignupResponse(BaseModel):
 class EmailVerificationRequest(BaseModel):
     """Email verification request with validation"""
 
-    tenant_id: str = Field(..., min_length=10, max_length=100, description="Tenant identifier")
-    verification_code: str = Field(..., min_length=20, max_length=100, description="Email verification code")
+    tenant_id: str = Field(
+        ..., min_length=10, max_length=100, description="Tenant identifier"
+    )
+    verification_code: str = Field(
+        ..., min_length=20, max_length=100, description="Email verification code"
+    )
 
     @field_validator("tenant_id")
     @classmethod
@@ -218,7 +230,11 @@ async def public_tenant_signup(
         #         raise HTTPException(status_code=400, detail="Invalid captcha")
 
         # Check subdomain availability
-        existing_tenant = db.query(CustomerTenant).filter_by(subdomain=signup_request.subdomain).first()
+        existing_tenant = (
+            db.query(CustomerTenant)
+            .filter_by(subdomain=signup_request.subdomain)
+            .first()
+        )
 
         if existing_tenant:
             raise subdomain_taken(signup_request.subdomain)
@@ -228,13 +244,16 @@ async def public_tenant_signup(
             db.query(CustomerTenant)
             .filter(
                 CustomerTenant.admin_email == signup_request.admin_email,
-                CustomerTenant.created_at > datetime.now(timezone.utc) - timedelta(hours=1),
+                CustomerTenant.created_at
+                > datetime.now(timezone.utc) - timedelta(hours=1),
             )
             .count()
         )
 
         if recent_signups >= 3:
-            raise StandardExceptions.rate_limited("Too many signup attempts. Please try again later.")
+            raise StandardExceptions.rate_limited(
+                "Too many signup attempts. Please try again later."
+            )
 
         # Generate tenant ID and verification code
         tenant_id = f"tenant-{signup_request.subdomain}-{secrets.token_hex(4)}"
@@ -261,7 +280,9 @@ async def public_tenant_signup(
                 "signup_timestamp": datetime.now(timezone.utc).isoformat(),
                 "signup_ip": "0.0.0.0",  # Would get from request
                 "verification_code": verification_code,
-                "verification_expires": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
+                "verification_expires": (
+                    datetime.now(timezone.utc) + timedelta(hours=24)
+                ).isoformat(),
                 "public_signup": True,
             },
             status=TenantStatus.PENDING_VERIFICATION,
@@ -273,7 +294,9 @@ async def public_tenant_signup(
         db.commit()
         db.refresh(tenant)
 
-        logger.info(f"Public signup received: {tenant_id} for {signup_request.company_name}")
+        logger.info(
+            f"Public signup received: {tenant_id} for {signup_request.company_name}"
+        )
 
         # Send verification email
         background_tasks.add_task(
@@ -301,7 +324,11 @@ async def public_tenant_signup(
             status_check_url=f"/api/v1/public/signup/{tenant_id}/status",
         )
 
-        return APIResponse(success=True, message="Signup successful! Verification email sent.", data=response)
+        return APIResponse(
+            success=True,
+            message="Signup successful! Verification email sent.",
+            data=response,
+        )
 
     except HTTPException:
         raise
@@ -309,7 +336,8 @@ async def public_tenant_signup(
         logger.error(f"Public signup failed: {e}")
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Signup failed. Please try again."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Signup failed. Please try again.",
         ) from e
 
 
@@ -334,12 +362,18 @@ async def verify_email_and_provision(
         # Find tenant by ID
         tenant = (
             db.query(CustomerTenant)
-            .filter_by(tenant_id=verification_request.tenant_id, status=TenantStatus.PENDING_VERIFICATION)
+            .filter_by(
+                tenant_id=verification_request.tenant_id,
+                status=TenantStatus.PENDING_VERIFICATION,
+            )
             .first()
         )
 
         if not tenant:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found or already verified")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Tenant not found or already verified",
+            )
 
         # Check verification code and expiry
         settings = tenant.settings or {}
@@ -347,12 +381,18 @@ async def verify_email_and_provision(
         expires_str = settings.get("verification_expires")
 
         if not stored_code or stored_code != verification_request.verification_code:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification code")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid verification code",
+            )
 
         if expires_str:
             expires = datetime.fromisoformat(expires_str)
             if datetime.now(timezone.utc) > expires:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Verification code has expired")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Verification code has expired",
+                )
 
         # Mark as verified and queue provisioning
         tenant.status = TenantStatus.REQUESTED
@@ -367,7 +407,9 @@ async def verify_email_and_provision(
 
         db.commit()
 
-        logger.info(f"Email verified for tenant {tenant.tenant_id}, starting provisioning")
+        logger.info(
+            f"Email verified for tenant {tenant.tenant_id}, starting provisioning"
+        )
 
         # Start provisioning
         provisioning_service = TenantProvisioningService()
@@ -387,7 +429,10 @@ async def verify_email_and_provision(
         raise
     except Exception as e:
         logger.error(f"Email verification failed: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Verification failed") from e
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Verification failed",
+        ) from e
 
 
 @router.get("/signup/{tenant_id}/status")
@@ -410,24 +455,49 @@ async def get_signup_status(
         tenant = db.query(CustomerTenant).filter_by(tenant_id=tenant_id).first()
 
         if not tenant:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found"
+            )
 
         # Progress mapping for public display
         progress_map = {
-            TenantStatus.PENDING_VERIFICATION: {"progress": 10, "message": "Awaiting email verification"},
-            TenantStatus.REQUESTED: {"progress": 20, "message": "Verification complete, queued for provisioning"},
-            TenantStatus.VALIDATING: {"progress": 25, "message": "Validating configuration"},
+            TenantStatus.PENDING_VERIFICATION: {
+                "progress": 10,
+                "message": "Awaiting email verification",
+            },
+            TenantStatus.REQUESTED: {
+                "progress": 20,
+                "message": "Verification complete, queued for provisioning",
+            },
+            TenantStatus.VALIDATING: {
+                "progress": 25,
+                "message": "Validating configuration",
+            },
             TenantStatus.QUEUED: {"progress": 30, "message": "Queued for provisioning"},
-            TenantStatus.PROVISIONING: {"progress": 50, "message": "Creating your infrastructure"},
+            TenantStatus.PROVISIONING: {
+                "progress": 50,
+                "message": "Creating your infrastructure",
+            },
             TenantStatus.MIGRATING: {"progress": 70, "message": "Setting up database"},
             TenantStatus.SEEDING: {"progress": 85, "message": "Initializing data"},
             TenantStatus.TESTING: {"progress": 95, "message": "Running final checks"},
-            TenantStatus.READY: {"progress": 100, "message": "Ready! Check your email for login details"},
-            TenantStatus.ACTIVE: {"progress": 100, "message": "Active and ready to use"},
-            TenantStatus.FAILED: {"progress": 0, "message": "Provisioning failed - support has been notified"},
+            TenantStatus.READY: {
+                "progress": 100,
+                "message": "Ready! Check your email for login details",
+            },
+            TenantStatus.ACTIVE: {
+                "progress": 100,
+                "message": "Active and ready to use",
+            },
+            TenantStatus.FAILED: {
+                "progress": 0,
+                "message": "Provisioning failed - support has been notified",
+            },
         }
 
-        status_info = progress_map.get(tenant.status, {"progress": 0, "message": "Unknown status"})
+        status_info = progress_map.get(
+            tenant.status, {"progress": 0, "message": "Unknown status"}
+        )
 
         return APIResponse(
             success=True,
@@ -440,7 +510,9 @@ async def get_signup_status(
                 "progress_percentage": status_info["progress"],
                 "status_message": status_info["message"],
                 "created_at": tenant.created_at.isoformat(),
-                "domain": tenant.domain if tenant.status in [TenantStatus.READY, TenantStatus.ACTIVE] else None,
+                "domain": tenant.domain
+                if tenant.status in [TenantStatus.READY, TenantStatus.ACTIVE]
+                else None,
             },
         )
 
@@ -448,11 +520,19 @@ async def get_signup_status(
         raise
     except Exception as e:
         logger.error(f"Failed to get signup status: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get status") from e
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get status",
+        ) from e
 
 
 async def _send_verification_email(
-    email: str, name: str, company: str, tenant_id: str, verification_code: str, subdomain: str
+    email: str,
+    name: str,
+    company: str,
+    tenant_id: str,
+    verification_code: str,
+    subdomain: str,
 ):
     """Send email verification link"""
 
@@ -461,7 +541,9 @@ async def _send_verification_email(
 
         # Create verification URL
         base_url = "https://signup.yourdomain.com"  # Would be configured
-        verification_url = f"{base_url}/verify?tenant_id={tenant_id}&code={verification_code}"
+        verification_url = (
+            f"{base_url}/verify?tenant_id={tenant_id}&code={verification_code}"
+        )
 
         # Send email
         await notification_service.send_email(

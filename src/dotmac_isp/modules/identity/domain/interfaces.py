@@ -12,7 +12,9 @@ class ICustomerService(ABC):
     """Interface for customer domain service."""
 
     @abstractmethod
-    async def create_customer(self, customer_data: schemas.CustomerCreate) -> schemas.CustomerResponse:
+    async def create_customer(
+        self, customer_data: schemas.CustomerCreate
+    ) -> schemas.CustomerResponse:
         """Create a new customer."""
 
     @abstractmethod
@@ -20,7 +22,9 @@ class ICustomerService(ABC):
         """Get customer by ID."""
 
     @abstractmethod
-    async def update_customer(self, customer_id: UUID, update_data: schemas.CustomerUpdate) -> schemas.CustomerResponse:
+    async def update_customer(
+        self, customer_id: UUID, update_data: schemas.CustomerUpdate
+    ) -> schemas.CustomerResponse:
         """Update customer information."""
 
     @abstractmethod
@@ -28,11 +32,15 @@ class ICustomerService(ABC):
         """Deactivate customer account."""
 
     @abstractmethod
-    async def search_customers(self, filters: schemas.CustomerSearchFilters) -> list[schemas.CustomerResponse]:
+    async def search_customers(
+        self, filters: schemas.CustomerSearchFilters
+    ) -> list[schemas.CustomerResponse]:
         """Search customers with filters."""
 
     @abstractmethod
-    async def validate_customer_data(self, customer_data: schemas.CustomerCreate) -> bool:
+    async def validate_customer_data(
+        self, customer_data: schemas.CustomerCreate
+    ) -> bool:
         """Validate customer creation data."""
 
     @abstractmethod
@@ -56,11 +64,15 @@ class IUserService(ABC):
         """Get user by email."""
 
     @abstractmethod
-    async def update_user(self, user_id: UUID, update_data: schemas.UserUpdate) -> schemas.UserResponse:
+    async def update_user(
+        self, user_id: UUID, update_data: schemas.UserUpdate
+    ) -> schemas.UserResponse:
         """Update user information."""
 
     @abstractmethod
-    async def change_password(self, user_id: UUID, current_password: str, new_password: str) -> bool:
+    async def change_password(
+        self, user_id: UUID, current_password: str, new_password: str
+    ) -> bool:
         """Change user password."""
 
     @abstractmethod
@@ -80,7 +92,9 @@ class IAuthenticationService(ABC):
     """Interface for authentication domain service."""
 
     @abstractmethod
-    async def authenticate_user(self, email: str, password: str) -> schemas.AuthResponse:
+    async def authenticate_user(
+        self, email: str, password: str
+    ) -> schemas.AuthResponse:
         """Authenticate user and return tokens."""
 
     @abstractmethod
@@ -88,7 +102,9 @@ class IAuthenticationService(ABC):
         """Refresh authentication token."""
 
     @abstractmethod
-    async def logout_user(self, user_id: UUID, session_id: Optional[str] = None) -> bool:
+    async def logout_user(
+        self, user_id: UUID, session_id: Optional[str] = None
+    ) -> bool:
         """Logout user and invalidate session."""
 
     @abstractmethod
@@ -96,7 +112,9 @@ class IAuthenticationService(ABC):
         """Validate authentication token."""
 
     @abstractmethod
-    async def create_session(self, user_id: UUID, device_info: dict[str, Any]) -> UserSession:
+    async def create_session(
+        self, user_id: UUID, device_info: dict[str, Any]
+    ) -> UserSession:
         """Create user session."""
 
     @abstractmethod
@@ -128,7 +146,9 @@ class IAuthorizationService(ABC):
         """Get all roles for user."""
 
     @abstractmethod
-    async def check_resource_access(self, user_id: UUID, resource_id: UUID, resource_type: str) -> bool:
+    async def check_resource_access(
+        self, user_id: UUID, resource_id: UUID, resource_type: str
+    ) -> bool:
         """Check if user can access specific resource."""
 
 
@@ -140,7 +160,9 @@ class IPortalService(ABC):
         """Generate unique portal ID for customer."""
 
     @abstractmethod
-    async def create_portal_account(self, portal_data: schemas.PortalAccountCreate) -> schemas.PortalAccountResponse:
+    async def create_portal_account(
+        self, portal_data: schemas.PortalAccountCreate
+    ) -> schemas.PortalAccountResponse:
         """Create portal account."""
 
     @abstractmethod
@@ -148,7 +170,9 @@ class IPortalService(ABC):
         """Get portal account by portal ID."""
 
     @abstractmethod
-    async def update_portal_preferences(self, portal_id: str, preferences: dict[str, Any]) -> bool:
+    async def update_portal_preferences(
+        self, portal_id: str, preferences: dict[str, Any]
+    ) -> bool:
         """Update portal user preferences."""
 
     @abstractmethod
@@ -188,11 +212,15 @@ class IUserValidationService(ABC):
         """Validate email format."""
 
     @abstractmethod
-    async def validate_email_uniqueness(self, email: str, exclude_user_id: Optional[UUID] = None) -> bool:
+    async def validate_email_uniqueness(
+        self, email: str, exclude_user_id: Optional[UUID] = None
+    ) -> bool:
         """Validate email uniqueness."""
 
     @abstractmethod
-    async def validate_username_uniqueness(self, username: str, exclude_user_id: Optional[UUID] = None) -> bool:
+    async def validate_username_uniqueness(
+        self, username: str, exclude_user_id: Optional[UUID] = None
+    ) -> bool:
         """Validate username uniqueness."""
 
     @abstractmethod
@@ -216,7 +244,9 @@ class IIdentityEventService(ABC):
         """Publish user created event."""
 
     @abstractmethod
-    async def publish_user_authenticated(self, user: User, session: UserSession) -> None:
+    async def publish_user_authenticated(
+        self, user: User, session: UserSession
+    ) -> None:
         """Publish user authenticated event."""
 
     @abstractmethod
@@ -236,7 +266,9 @@ class IIdentityIntegrationService(ABC):
         """Sync user with external system."""
 
     @abstractmethod
-    async def import_users_from_ldap(self, ldap_query: str) -> list[schemas.UserResponse]:
+    async def import_users_from_ldap(
+        self, ldap_query: str
+    ) -> list[schemas.UserResponse]:
         """Import users from LDAP."""
 
     @abstractmethod
@@ -244,5 +276,7 @@ class IIdentityIntegrationService(ABC):
         """Sync customer data with billing system."""
 
     @abstractmethod
-    async def notify_crm_customer_change(self, customer_id: UUID, change_type: str) -> bool:
+    async def notify_crm_customer_change(
+        self, customer_id: UUID, change_type: str
+    ) -> bool:
         """Notify CRM system of customer changes."""

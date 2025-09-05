@@ -6,9 +6,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
 
+from fastapi import WebSocket
+
 from dotmac.core import ValidationError
 from dotmac_shared.core.error_utils import send_ws
-from fastapi import WebSocket
 
 from ..models.websocket_event import (
     DeliveryStatus,
@@ -87,7 +88,9 @@ class WebSocketEventService:
             if not ok:
                 raise ValidationError("Failed to send welcome message")
 
-            logger.info(f"Registered WebSocket connection: {connection_id} for user: {user_id}")
+            logger.info(
+                f"Registered WebSocket connection: {connection_id} for user: {user_id}"
+            )
             return connection_id
 
         except (OSError, ConnectionError, ValidationError) as e:
@@ -151,10 +154,14 @@ class WebSocketEventService:
                 "is_active": True,
             }
 
-            await self.repository.create_subscription(tenant_id, subscription_data, user_id)
+            await self.repository.create_subscription(
+                tenant_id, subscription_data, user_id
+            )
 
             # Update connection's active subscriptions in database
-            connection_subscriptions = list(self.connection_subscriptions[connection_id])
+            connection_subscriptions = list(
+                self.connection_subscriptions[connection_id]
+            )
             await self.repository.update_connection_activity(
                 connection_id, {"active_subscriptions": connection_subscriptions}
             )
@@ -163,7 +170,9 @@ class WebSocketEventService:
             return True
 
         except (ValidationError, OSError) as e:
-            logger.exception("Failed to create subscription for connection %s", connection_id)
+            logger.exception(
+                "Failed to create subscription for connection %s", connection_id
+            )
             raise ValidationError(f"Failed to create subscription: {str(e)}") from e
 
     # Event Creation and Broadcasting
@@ -197,7 +206,9 @@ class WebSocketEventService:
         }
 
         if expires_in_hours:
-            event_dict["expires_at"] = datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
+            event_dict["expires_at"] = datetime.now(timezone.utc) + timedelta(
+                hours=expires_in_hours
+            )
 
         event = await self.repository.create_event(tenant_id, event_dict, user_id)
 
@@ -303,7 +314,9 @@ class WebSocketEventService:
                             "delivered_at": datetime.now(timezone.utc),
                             "message_size_bytes": len(json.dumps(message)),
                         }
-                        await self.repository.create_delivery(event.tenant_id, delivery_data)
+                        await self.repository.create_delivery(
+                            event.tenant_id, delivery_data
+                        )
                         delivered_count += 1
                     else:
                         delivery_data = {
@@ -313,7 +326,9 @@ class WebSocketEventService:
                             "status": DeliveryStatus.FAILED,
                             "error_message": "websocket_send_failed",
                         }
-                        await self.repository.create_delivery(event.tenant_id, delivery_data)
+                        await self.repository.create_delivery(
+                            event.tenant_id, delivery_data
+                        )
 
             # Update event delivery status
             if delivered_count > 0:
@@ -322,10 +337,15 @@ class WebSocketEventService:
                 )
             else:
                 await self.repository.update_event_delivery_status(
-                    event.event_id, event.tenant_id, DeliveryStatus.FAILED, "No active connections found"
+                    event.event_id,
+                    event.tenant_id,
+                    DeliveryStatus.FAILED,
+                    "No active connections found",
                 )
 
-            logger.info(f"Delivered event {event.event_id} to {delivered_count} connections")
+            logger.info(
+                f"Delivered event {event.event_id} to {delivered_count} connections"
+            )
             return delivered_count > 0
 
         except (OSError, ConnectionError, json.JSONEncodeError) as e:
@@ -335,7 +355,9 @@ class WebSocketEventService:
             )
             return False
 
-    async def acknowledge_event(self, event_id: str, tenant_id: str, user_id: str) -> bool:
+    async def acknowledge_event(
+        self, event_id: str, tenant_id: str, user_id: str
+    ) -> bool:
         """Acknowledge an event."""
         try:
             await self.repository.acknowledge_event(event_id, tenant_id, user_id)
@@ -365,7 +387,8 @@ class WebSocketEventService:
             events = [
                 event
                 for event in events
-                if event.requires_acknowledgment and (not event.acknowledged_by or user_id not in event.acknowledged_by)
+                if event.requires_acknowledgment
+                and (not event.acknowledged_by or user_id not in event.acknowledged_by)
             ]
 
         return events
@@ -429,10 +452,16 @@ class WebSocketEventService:
         return {
             "total_connections": len(self.active_connections),
             "connections_by_tenant": {
-                tenant_id: len(conn_set) for tenant_id, conn_set in self.tenant_connections.items()
+                tenant_id: len(conn_set)
+                for tenant_id, conn_set in self.tenant_connections.items()
             },
-            "connections_by_user": {user_id: len(conn_set) for user_id, conn_set in self.user_connections.items()},
-            "total_subscriptions": sum(len(subs) for subs in self.connection_subscriptions.values()),
+            "connections_by_user": {
+                user_id: len(conn_set)
+                for user_id, conn_set in self.user_connections.items()
+            },
+            "total_subscriptions": sum(
+                len(subs) for subs in self.connection_subscriptions.values()
+            ),
         }
 
     # Background Processing
@@ -503,7 +532,9 @@ class WebSocketEventService:
             "billing_updated": EventType.BILLING_UPDATE,
         }
 
-        event_type = event_type_mapping.get(billing_event_type, EventType.BILLING_UPDATE)
+        event_type = event_type_mapping.get(
+            billing_event_type, EventType.BILLING_UPDATE
+        )
 
         if target_user_id:
             return await self.send_to_user(

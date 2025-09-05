@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
+from fastapi import Depends, HTTPException
+
 from dotmac.application import standard_exception_handler
 from dotmac.application.api.router_factory import RouterFactory
 from dotmac_shared.api.dependencies import (
@@ -16,7 +18,6 @@ from dotmac_shared.api.dependencies import (
     get_standard_deps,
 )
 from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
-from fastapi import Depends, HTTPException
 
 from ..repositories.onboarding import (
     OnboardingArtifactRepository,
@@ -31,7 +32,9 @@ from ..schemas.tenant import (
 from ..services.onboarding_service import OnboardingService
 
 # Use DRY RouterFactory for router creation
-router = RouterFactory("Onboarding").create_router(prefix="/onboarding", tags=["Onboarding"])
+router = RouterFactory("Onboarding").create_router(
+    prefix="/onboarding", tags=["Onboarding"]
+)
 
 
 # In-memory store for simple workflow steps (replace with DB or workflow engine later)
@@ -45,7 +48,9 @@ def _now_iso() -> str:
 @router.get("/", response_model=dict[str, Any])
 @rate_limit(max_requests=60, time_window_seconds=60)
 @standard_exception_handler
-async def list_onboarding_requests(deps: PaginatedDependencies = Depends(get_paginated_deps)) -> dict[str, Any]:
+async def list_onboarding_requests(
+    deps: PaginatedDependencies = Depends(get_paginated_deps),
+) -> dict[str, Any]:
     repo = OnboardingRequestRepository(deps.db)
     items, total = await repo.list_paginated(deps.pagination.page, deps.pagination.size)
     return {
@@ -54,7 +59,9 @@ async def list_onboarding_requests(deps: PaginatedDependencies = Depends(get_pag
                 "id": str(it.id),
                 "workflow_id": it.workflow_id,
                 "tenant": {"name": it.tenant_name, "slug": it.tenant_slug},
-                "status": it.status.value if hasattr(it.status, "value") else str(it.status),
+                "status": it.status.value
+                if hasattr(it.status, "value")
+                else str(it.status),
                 "endpoint_url": it.endpoint_url,
                 "created_at": it.created_at,
                 "updated_at": it.updated_at,
@@ -90,7 +97,11 @@ async def create_onboarding_request(
         updated_at=req.updated_at,
     )
     steps = [
-        {"id": "provision_container", "name": "Provision Container", "status": "PENDING"},
+        {
+            "id": "provision_container",
+            "name": "Provision Container",
+            "status": "PENDING",
+        },
         {"id": "validate_health", "name": "Validate Health", "status": "PENDING"},
     ]
     return TenantOnboardingResponse(
@@ -104,7 +115,9 @@ async def create_onboarding_request(
 @router.get("/steps/{partner_id}", response_model=list[dict[str, Any]])
 @rate_limit(max_requests=120, time_window_seconds=60)
 @standard_exception_handler
-async def get_steps(partner_id: str, deps: StandardDependencies = Depends(get_standard_deps)) -> list[dict[str, Any]]:
+async def get_steps(
+    partner_id: str, deps: StandardDependencies = Depends(get_standard_deps)
+) -> list[dict[str, Any]]:
     # Provide canonical onboarding steps available for partners
     return [
         {"id": "provision_container", "name": "Provision Container"},
@@ -130,7 +143,9 @@ async def update_step(
     if status in ("PENDING", "RUNNING", "COMPLETED", "FAILED"):
         from ...models.onboarding import StepStatus
 
-        updated = await step_repo.set_status_by_key(step_id, StepStatus(status), reason=reason)
+        updated = await step_repo.set_status_by_key(
+            step_id, StepStatus(status), reason=reason
+        )
     else:
         updated = 0
     if updated == 0:
@@ -141,8 +156,12 @@ async def update_step(
 @router.post("/steps/{step_id}/approve", response_model=dict[str, Any])
 @rate_limit_strict(max_requests=60, time_window_seconds=60)
 @standard_exception_handler
-async def approve_step(step_id: str, deps: StandardDependencies = Depends(get_standard_deps)) -> dict[str, Any]:
-    return await update_step(step_id, {"status": "COMPLETED", "approved_at": _now_iso()}, deps)
+async def approve_step(
+    step_id: str, deps: StandardDependencies = Depends(get_standard_deps)
+) -> dict[str, Any]:
+    return await update_step(
+        step_id, {"status": "COMPLETED", "approved_at": _now_iso()}, deps
+    )
 
 
 @router.post("/steps/{step_id}/reject", response_model=dict[str, Any])
@@ -153,7 +172,11 @@ async def reject_step(
     reason: str,
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> dict[str, Any]:
-    return await update_step(step_id, {"status": "FAILED", "rejection_reason": reason, "rejected_at": _now_iso()}, deps)
+    return await update_step(
+        step_id,
+        {"status": "FAILED", "rejection_reason": reason, "rejected_at": _now_iso()},
+        deps,
+    )
 
 
 @router.post("/{partner_id}/complete", response_model=dict[str, Any])
@@ -198,7 +221,9 @@ async def get_onboarding_request(
 
     from ...models.onboarding import OnboardingStep
 
-    result = await deps.db.execute(select(OnboardingStep).where(OnboardingStep.request_id == request_id))
+    result = await deps.db.execute(
+        select(OnboardingStep).where(OnboardingStep.request_id == request_id)
+    )
     steps = result.scalars().all()
     return {
         "id": str(req.id),
@@ -213,7 +238,9 @@ async def get_onboarding_request(
                 "id": str(s.id),
                 "key": s.step_key,
                 "name": s.name,
-                "status": s.status.value if hasattr(s.status, "value") else str(s.status),
+                "status": s.status.value
+                if hasattr(s.status, "value")
+                else str(s.status),
                 "started_at": s.started_at,
                 "completed_at": s.completed_at,
                 "error_message": s.error_message,
@@ -236,7 +263,9 @@ async def get_onboarding_artifacts(
 
     from ...models.onboarding import OnboardingArtifact
 
-    result = await deps.db.execute(select(OnboardingArtifact).where(OnboardingArtifact.request_id == request_id))
+    result = await deps.db.execute(
+        select(OnboardingArtifact).where(OnboardingArtifact.request_id == request_id)
+    )
     artifacts = result.scalars().all()
     return {
         "items": [

@@ -8,8 +8,9 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac.core.schemas.base_schemas import BaseCreateSchema, BaseResponseSchema
 from pydantic import Field, field_validator, model_validator
+
+from dotmac.core.schemas.base_schemas import BaseCreateSchema, BaseResponseSchema
 
 
 class AuthProvider(str, Enum):
@@ -84,7 +85,9 @@ class LoginRequestSchema(BaseCreateSchema):
 
     # Platform context
     platform: Optional[str] = Field(None, description="Platform identifier")
-    tenant_id: Optional[UUID] = Field(None, description="Tenant ID for multi-tenant login")
+    tenant_id: Optional[UUID] = Field(
+        None, description="Tenant ID for multi-tenant login"
+    )
 
     @field_validator("username")
     @classmethod
@@ -97,18 +100,26 @@ class LoginAttemptResult(BaseResponseSchema):
     """Result of a login attempt with detailed status information."""
 
     success: bool = Field(..., description="Whether login was successful")
-    access_token: Optional[str] = Field(None, description="JWT access token if successful")
-    refresh_token: Optional[str] = Field(None, description="JWT refresh token if successful")
+    access_token: Optional[str] = Field(
+        None, description="JWT access token if successful"
+    )
+    refresh_token: Optional[str] = Field(
+        None, description="JWT refresh token if successful"
+    )
     token_type: str = Field(default="bearer", description="Token type")
     expires_in: Optional[int] = Field(None, description="Token expiry in seconds")
-    user: Optional[dict[str, Any]] = Field(None, description="User information if successful")
+    user: Optional[dict[str, Any]] = Field(
+        None, description="User information if successful"
+    )
     requires_mfa: bool = Field(default=False, description="Whether MFA is required")
     mfa_token: Optional[str] = Field(None, description="MFA verification token")
     tenant_id: Optional[UUID] = Field(None, description="Tenant ID")
     permissions: list[str] = Field(default_factory=list, description="User permissions")
     error_code: Optional[str] = Field(None, description="Error code if failed")
     error_message: Optional[str] = Field(None, description="Error message if failed")
-    locked_until: Optional[datetime] = Field(None, description="Account locked until timestamp")
+    locked_until: Optional[datetime] = Field(
+        None, description="Account locked until timestamp"
+    )
 
 
 class LoginResponseSchema(BaseResponseSchema):
@@ -128,12 +139,20 @@ class LoginResponseSchema(BaseResponseSchema):
     user: dict[str, Any] = Field(description="User profile information")
 
     # Security information
-    requires_mfa: bool = Field(False, description="MFA required for complete authentication")
-    mfa_methods: list[str] = Field(default_factory=list, description="Available MFA methods")
+    requires_mfa: bool = Field(
+        False, description="MFA required for complete authentication"
+    )
+    mfa_methods: list[str] = Field(
+        default_factory=list, description="Available MFA methods"
+    )
 
     # Warnings and notifications
-    password_expires_in_days: Optional[int] = Field(None, description="Days until password expires")
-    account_warnings: list[str] = Field(default_factory=list, description="Account warnings")
+    password_expires_in_days: Optional[int] = Field(
+        None, description="Days until password expires"
+    )
+    account_warnings: list[str] = Field(
+        default_factory=list, description="Account warnings"
+    )
 
 
 class TokenResponseSchema(BaseResponseSchema):
@@ -241,9 +260,13 @@ class MFASetupResponseSchema(BaseResponseSchema):
 class MFAVerifySchema(BaseCreateSchema):
     """Schema for MFA verification."""
 
-    code: str = Field(..., min_length=6, max_length=8, description="MFA verification code")
+    code: str = Field(
+        ..., min_length=6, max_length=8, description="MFA verification code"
+    )
     method: str = Field(..., description="MFA method used")
-    setup_token: Optional[str] = Field(None, description="Setup token for initial verification")
+    setup_token: Optional[str] = Field(
+        None, description="Setup token for initial verification"
+    )
     remember_device: bool = Field(False, description="Remember this device for MFA")
 
 
@@ -294,10 +317,14 @@ class AuthAuditSchema(BaseResponseSchema):
     # Additional details
     failure_reason: Optional[str] = Field(None, description="Reason for failure")
     mfa_method: Optional[str] = Field(None, description="MFA method used")
-    auth_provider: AuthProvider = Field(AuthProvider.LOCAL, description="Authentication provider")
+    auth_provider: AuthProvider = Field(
+        AuthProvider.LOCAL, description="Authentication provider"
+    )
 
     # Metadata
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional event metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional event metadata"
+    )
 
 
 class ApiKeySchema(BaseResponseSchema):
@@ -308,7 +335,9 @@ class ApiKeySchema(BaseResponseSchema):
     prefix: str = Field(description="API key prefix for identification")
 
     # Permissions and scope
-    permissions: list[str] = Field(default_factory=list, description="API key permissions")
+    permissions: list[str] = Field(
+        default_factory=list, description="API key permissions"
+    )
     scope: Optional[str] = Field(None, description="API key scope")
 
     # Lifecycle information
@@ -325,21 +354,29 @@ class ApiKeyCreateSchema(BaseCreateSchema):
     """Schema for creating API keys."""
 
     name: str = Field(..., min_length=1, max_length=100, description="API key name")
-    description: Optional[str] = Field(None, max_length=500, description="API key description")
+    description: Optional[str] = Field(
+        None, max_length=500, description="API key description"
+    )
 
     # Permissions and scope
-    permissions: list[str] = Field(default_factory=list, description="API key permissions")
+    permissions: list[str] = Field(
+        default_factory=list, description="API key permissions"
+    )
     scope: Optional[str] = Field(None, description="API key scope")
 
     # Expiry configuration
-    expires_in_days: Optional[int] = Field(None, ge=1, le=365, description="Days until expiry")
+    expires_in_days: Optional[int] = Field(
+        None, ge=1, le=365, description="Days until expiry"
+    )
 
     @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:
         """Validate API key name."""
         if not v.replace(" ", "").replace("-", "").replace("_", "").isalnum():
-            raise ValueError("Name can only contain letters, numbers, spaces, hyphens, and underscores")
+            raise ValueError(
+                "Name can only contain letters, numbers, spaces, hyphens, and underscores"
+            )
         return v.strip()
 
 

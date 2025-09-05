@@ -8,19 +8,13 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
-from dotmac_isp.shared.base_repository import BaseTenantRepository as BaseRepository
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from .models import (
-    AuthenticationLog,
-    Customer,
-    Role,
-    User,
-    UserRole,
-    UserSession,
-)
+from dotmac_isp.shared.base_repository import BaseTenantRepository as BaseRepository
+
+from .models import AuthenticationLog, Customer, Role, User, UserRole, UserSession
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +29,11 @@ class UserRepository(BaseRepository[User]):
         """Get user by email address."""
         try:
             stmt = select(User).where(
-                and_(User.tenant_id == self.tenant_id, User.email == email, User.is_active is True)
+                and_(
+                    User.tenant_id == self.tenant_id,
+                    User.email == email,
+                    User.is_active is True,
+                )
             )
             result = await self.db.execute(stmt)
             return result.scalar_one_or_none()
@@ -47,7 +45,11 @@ class UserRepository(BaseRepository[User]):
         """Get user by username."""
         try:
             stmt = select(User).where(
-                and_(User.tenant_id == self.tenant_id, User.username == username, User.is_active is True)
+                and_(
+                    User.tenant_id == self.tenant_id,
+                    User.username == username,
+                    User.is_active is True,
+                )
             )
             result = await self.db.execute(stmt)
             return result.scalar_one_or_none()
@@ -60,7 +62,13 @@ class UserRepository(BaseRepository[User]):
         try:
             stmt = (
                 select(User)
-                .where(and_(User.tenant_id == self.tenant_id, User.portal_type == portal_type, User.is_active is True))
+                .where(
+                    and_(
+                        User.tenant_id == self.tenant_id,
+                        User.portal_type == portal_type,
+                        User.is_active is True,
+                    )
+                )
                 .order_by(desc(User.created_at))
             )
 
@@ -111,7 +119,12 @@ class CustomerRepository(BaseRepository[Customer]):
         try:
             stmt = (
                 select(Customer)
-                .where(and_(Customer.tenant_id == self.tenant_id, Customer.customer_number == customer_number))
+                .where(
+                    and_(
+                        Customer.tenant_id == self.tenant_id,
+                        Customer.customer_number == customer_number,
+                    )
+                )
                 .options(selectinload(Customer.user))
             )
 
@@ -126,7 +139,9 @@ class CustomerRepository(BaseRepository[Customer]):
         try:
             stmt = (
                 select(Customer)
-                .where(and_(Customer.tenant_id == self.tenant_id, Customer.email == email))
+                .where(
+                    and_(Customer.tenant_id == self.tenant_id, Customer.email == email)
+                )
                 .options(selectinload(Customer.user))
             )
 
@@ -141,7 +156,11 @@ class CustomerRepository(BaseRepository[Customer]):
         try:
             stmt = (
                 select(Customer)
-                .where(and_(Customer.tenant_id == self.tenant_id, Customer.status == status))
+                .where(
+                    and_(
+                        Customer.tenant_id == self.tenant_id, Customer.status == status
+                    )
+                )
                 .order_by(desc(Customer.created_at))
             )
 
@@ -151,7 +170,9 @@ class CustomerRepository(BaseRepository[Customer]):
             logger.error(f"Error getting customers by status {status}: {e}")
             return []
 
-    async def search_customers(self, search_term: str, limit: int = 50) -> list[Customer]:
+    async def search_customers(
+        self, search_term: str, limit: int = 50
+    ) -> list[Customer]:
         """Search customers by name, email, or customer number."""
         try:
             stmt = (
@@ -191,7 +212,11 @@ class RoleRepository(BaseRepository[UserRole]):
             stmt = (
                 select(UserRole)
                 .where(
-                    and_(UserRole.tenant_id == self.tenant_id, UserRole.user_id == user_id, UserRole.is_active is True)
+                    and_(
+                        UserRole.tenant_id == self.tenant_id,
+                        UserRole.user_id == user_id,
+                        UserRole.is_active is True,
+                    )
                 )
                 .options(selectinload(UserRole.user))
             )
@@ -203,12 +228,20 @@ class RoleRepository(BaseRepository[UserRole]):
             return []
 
     async def assign_role(
-        self, user_id: UUID, role: Role, assigned_by: UUID, expires_at: Optional[datetime] = None
+        self,
+        user_id: UUID,
+        role: Role,
+        assigned_by: UUID,
+        expires_at: Optional[datetime] = None,
     ) -> Optional[UserRole]:
         """Assign role to user."""
         try:
             user_role = UserRole(
-                tenant_id=self.tenant_id, user_id=user_id, role=role, assigned_by=assigned_by, expires_at=expires_at
+                tenant_id=self.tenant_id,
+                user_id=user_id,
+                role=role,
+                assigned_by=assigned_by,
+                expires_at=expires_at,
             )
 
             self.db.add(user_role)
@@ -345,4 +378,9 @@ class AuthenticationRepository:
 
 
 # Export all repositories
-__all__ = ["UserRepository", "CustomerRepository", "RoleRepository", "AuthenticationRepository"]
+__all__ = [
+    "UserRepository",
+    "CustomerRepository",
+    "RoleRepository",
+    "AuthenticationRepository",
+]

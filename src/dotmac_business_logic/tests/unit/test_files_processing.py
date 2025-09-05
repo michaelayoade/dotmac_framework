@@ -37,7 +37,9 @@ class TestTemplateEngine:
                 return result
 
         engine = MockTemplateEngine()
-        result = engine.render_string(sample_template_data["content"], sample_template_data["variables"])
+        result = engine.render_string(
+            sample_template_data["content"], sample_template_data["variables"]
+        )
 
         assert result == sample_template_data["expected_output"]
 
@@ -255,7 +257,9 @@ class TestDocumentGenerator:
         pipeline = MockDocumentPipeline()
 
         # Render template
-        content = pipeline.render_template(sample_template_data["content"], sample_template_data["variables"])
+        content = pipeline.render_template(
+            sample_template_data["content"], sample_template_data["variables"]
+        )
 
         # Generate document
         document = pipeline.generate_document(content, "html")
@@ -273,7 +277,9 @@ class TestDocumentGenerator:
             def generate_batch(self, templates_data):
                 results = []
                 for i, data in enumerate(templates_data):
-                    results.append({"id": i, "status": "completed", "document": f"Document {i}"})
+                    results.append(
+                        {"id": i, "status": "completed", "document": f"Document {i}"}
+                    )
                 return results
 
         generator = MockBatchGenerator()
@@ -418,10 +424,14 @@ class TestFileIntegration:
         system = MockIntegratedSystem(mock_redis)
 
         # First render (cache miss)
-        result1 = await system.render_cached("test", sample_template_data["content"], sample_template_data["variables"])
+        result1 = await system.render_cached(
+            "test", sample_template_data["content"], sample_template_data["variables"]
+        )
 
         # Second render (cache hit)
-        result2 = await system.render_cached("test", sample_template_data["content"], sample_template_data["variables"])
+        result2 = await system.render_cached(
+            "test", sample_template_data["content"], sample_template_data["variables"]
+        )
 
         assert result1 == result2 == "Hello Test!"
         assert "template:test" in system.cache

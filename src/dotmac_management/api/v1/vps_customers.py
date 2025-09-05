@@ -6,6 +6,9 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from pydantic import BaseModel, ConfigDict, IPvAnyAddress, field_validator
+
 from dotmac.application import StandardDependencies, get_standard_deps
 from dotmac.platform.auth.dependencies import get_current_active_user
 from dotmac.platform.auth.models import User
@@ -17,13 +20,6 @@ from dotmac_management.services.vps_requirements import VPSRequirementsService
 from dotmac_shared.api.exceptions import standard_exception_handler
 from dotmac_shared.api.response import APIResponse
 from dotmac_shared.validation.common_validators import CommonValidators
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    IPvAnyAddress,
-    field_validator,
-)
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/vps-customers", tags=["vps-customers"])
@@ -180,10 +176,16 @@ async def get_vps_requirements(
 
     requirements_service = VPSRequirementsService()
     requirements = await requirements_service.calculate_requirements(
-        plan=plan, expected_customers=expected_customers, estimated_traffic=estimated_traffic
+        plan=plan,
+        expected_customers=expected_customers,
+        estimated_traffic=estimated_traffic,
     )
 
-    return APIResponse(success=True, message=f"VPS requirements calculated for {plan} plan", data=requirements)
+    return APIResponse(
+        success=True,
+        message=f"VPS requirements calculated for {plan} plan",
+        data=requirements,
+    )
 
 
 @router.post("/", response_model=APIResponse[VPSCustomerResponse])
@@ -208,11 +210,14 @@ async def setup_vps_customer(
         db = deps.db
         current_user = deps.current_user
         # Check if subdomain is already taken
-        existing_customer = db.query(VPSCustomer).filter_by(subdomain=setup_request.subdomain).first()
+        existing_customer = (
+            db.query(VPSCustomer).filter_by(subdomain=setup_request.subdomain).first()
+        )
 
         if existing_customer:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail=f"Subdomain '{setup_request.subdomain}' is already taken"
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Subdomain '{setup_request.subdomain}' is already taken",
             )
 
         # Generate unique customer ID
@@ -253,11 +258,15 @@ async def setup_vps_customer(
         db.commit()
         db.refresh(vps_customer)
 
-        logger.info(f"VPS customer created: {customer_id} for {setup_request.company_name}")
+        logger.info(
+            f"VPS customer created: {customer_id} for {setup_request.company_name}"
+        )
 
         # Queue deployment validation and setup in background
         provisioning_service = VPSProvisioningService()
-        background_tasks.add_task(provisioning_service.setup_vps_customer, vps_customer.id, db)
+        background_tasks.add_task(
+            provisioning_service.setup_vps_customer, vps_customer.id, db
+        )
 
         # Generate URLs for customer access
         base_url = "https://admin.yourdomain.com"  # Should come from config
@@ -300,7 +309,8 @@ async def setup_vps_customer(
         logger.error(f"Failed to setup VPS customer: {e}")
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to setup VPS customer"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to setup VPS customer",
         ) from e
 
 
@@ -357,13 +367,16 @@ async def list_vps_customers(
             )
 
         return APIResponse(
-            success=True, message=f"Retrieved {len(customer_responses)} VPS customers", data=customer_responses
+            success=True,
+            message=f"Retrieved {len(customer_responses)} VPS customers",
+            data=customer_responses,
         )
 
     except Exception as e:
         logger.error(f"Failed to list VPS customers: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to list VPS customers"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list VPS customers",
         ) from e
 
 
@@ -379,7 +392,10 @@ async def get_deployment_status(
     customer = db.query(VPSCustomer).filter_by(customer_id=customer_id).first()
 
     if not customer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"VPS customer '{customer_id}' not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"VPS customer '{customer_id}' not found",
+        )
 
     # Calculate progress based on status
     progress_map = {
@@ -410,14 +426,24 @@ async def get_deployment_status(
         progress_percentage=progress_map.get(customer.status, 0),
         current_step=customer.status.value.replace("_", " ").title(),
         estimated_completion_minutes=completion_estimates.get(customer.status),
-        error_message=customer.settings.get("last_error") if customer.settings else None,
+        error_message=customer.settings.get("last_error")
+        if customer.settings
+        else None,
         logs=customer.deployment_logs or [],
-        ssh_connection_test=customer.settings.get("ssh_test_passed") if customer.settings else None,
-        server_requirements_check=customer.settings.get("requirements_passed") if customer.settings else None,
-        deployment_readiness=customer.settings.get("deployment_ready") if customer.settings else None,
+        ssh_connection_test=customer.settings.get("ssh_test_passed")
+        if customer.settings
+        else None,
+        server_requirements_check=customer.settings.get("requirements_passed")
+        if customer.settings
+        else None,
+        deployment_readiness=customer.settings.get("deployment_ready")
+        if customer.settings
+        else None,
     )
 
-    return APIResponse(success=True, message="Deployment status retrieved", data=status_response)
+    return APIResponse(
+        success=True, message="Deployment status retrieved", data=status_response
+    )
 
 
 @router.post("/{customer_id}/retry-deployment")
@@ -433,7 +459,10 @@ async def retry_deployment(
     customer = db.query(VPSCustomer).filter_by(customer_id=customer_id).first()
 
     if not customer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"VPS customer '{customer_id}' not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"VPS customer '{customer_id}' not found",
+        )
 
     if customer.status not in [VPSStatus.FAILED]:
         raise HTTPException(
@@ -452,10 +481,15 @@ async def retry_deployment(
 
     logger.info(f"Retrying deployment for VPS customer: {customer_id}")
 
-    return APIResponse(success=True, message=f"Deployment retry started for VPS customer '{customer_id}'")
+    return APIResponse(
+        success=True,
+        message=f"Deployment retry started for VPS customer '{customer_id}'",
+    )
 
 
-@router.get("/{customer_id}/setup-instructions", response_model=APIResponse[dict[str, Any]])
+@router.get(
+    "/{customer_id}/setup-instructions", response_model=APIResponse[dict[str, Any]]
+)
 @standard_exception_handler
 async def get_setup_instructions(
     customer_id: str,
@@ -466,12 +500,17 @@ async def get_setup_instructions(
     customer = db.query(VPSCustomer).filter_by(customer_id=customer_id).first()
 
     if not customer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"VPS customer '{customer_id}' not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"VPS customer '{customer_id}' not found",
+        )
 
     # Generate setup instructions based on customer's VPS and plan
     requirements_service = VPSRequirementsService()
     requirements = await requirements_service.calculate_requirements(
-        plan=customer.plan, expected_customers=customer.expected_customers, estimated_traffic=customer.estimated_traffic
+        plan=customer.plan,
+        expected_customers=customer.expected_customers,
+        estimated_traffic=customer.estimated_traffic,
     )
 
     instructions = {
@@ -517,4 +556,6 @@ async def get_setup_instructions(
         ],
     }
 
-    return APIResponse(success=True, message="Setup instructions generated", data=instructions)
+    return APIResponse(
+        success=True, message="Setup instructions generated", data=instructions
+    )

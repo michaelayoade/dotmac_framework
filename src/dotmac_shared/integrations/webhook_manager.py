@@ -13,19 +13,17 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac.core.schemas.base_schemas import (
     BaseCreateSchema,
     BaseResponseSchema,
     BaseUpdateSchema,
 )
-from dotmac_shared.api.dependencies import (
-    StandardDependencies,
-    get_standard_deps,
-)
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +37,11 @@ class WebhookEndpointCreateSchema(BaseCreateSchema):
     events: list[str] = []
     active: bool = True
     description: Optional[str] = None
-    retry_config: dict[str, Any] = {"max_retries": 3, "retry_delay": 5, "exponential_backoff": True}
+    retry_config: dict[str, Any] = {
+        "max_retries": 3,
+        "retry_delay": 5,
+        "exponential_backoff": True,
+    }
 
 
 class WebhookEndpointUpdateSchema(BaseUpdateSchema):
@@ -112,23 +114,37 @@ class WebhookProcessor:
         """Add middleware for webhook processing."""
         self.middleware.append(middleware)
 
-    async def process_event(self, event: WebhookEvent, endpoint_config: dict[str, Any]) -> dict[str, Any]:
+    async def process_event(
+        self, event: WebhookEvent, endpoint_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Process webhook event through handlers and middleware."""
 
         # Apply middleware
         for middleware in self.middleware:
-            event = await middleware(event) if asyncio.iscoroutinefunction(middleware) else middleware(event)
+            event = (
+                await middleware(event)
+                if asyncio.iscoroutinefunction(middleware)
+                else middleware(event)
+            )
 
         # Process through registered handlers
         results = []
         if event.event_type in self.handlers:
             for handler in self.handlers[event.event_type]:
                 try:
-                    result = await handler(event) if asyncio.iscoroutinefunction(handler) else handler(event)
-                    results.append({"handler": handler.__name__, "success": True, "result": result})
+                    result = (
+                        await handler(event)
+                        if asyncio.iscoroutinefunction(handler)
+                        else handler(event)
+                    )
+                    results.append(
+                        {"handler": handler.__name__, "success": True, "result": result}
+                    )
                 except Exception as e:
                     logger.error(f"Handler {handler.__name__} failed: {str(e)}")
-                    results.append({"handler": handler.__name__, "success": False, "error": str(e)})
+                    results.append(
+                        {"handler": handler.__name__, "success": False, "error": str(e)}
+                    )
 
         return {
             "event_id": event.id,
@@ -153,7 +169,9 @@ class WebhookManager:
         self.deliveries: dict[str, WebhookDelivery] = {}
 
     @standard_exception_handler
-    async def create(self, data: WebhookEndpointCreateSchema, user_id: UUID) -> WebhookEndpointResponseSchema:
+    async def create(
+        self, data: WebhookEndpointCreateSchema, user_id: UUID
+    ) -> WebhookEndpointResponseSchema:
         """Create a new webhook endpoint."""
 
         endpoint_id = str(uuid4())
@@ -179,7 +197,9 @@ class WebhookManager:
         return self._endpoint_to_response(endpoint_config)
 
     @standard_exception_handler
-    async def get_by_id(self, endpoint_id: UUID, user_id: UUID) -> WebhookEndpointResponseSchema:
+    async def get_by_id(
+        self, endpoint_id: UUID, user_id: UUID
+    ) -> WebhookEndpointResponseSchema:
         """Get webhook endpoint by ID."""
         endpoint_str = str(endpoint_id)
 
@@ -232,11 +252,15 @@ class WebhookManager:
 
         if soft_delete:
             self.endpoints[endpoint_str]["active"] = False
-            self.endpoints[endpoint_str]["disabled_at"] = datetime.now(timezone.utc).isoformat()
+            self.endpoints[endpoint_str]["disabled_at"] = datetime.now(
+                timezone.utc
+            ).isoformat()
         else:
             del self.endpoints[endpoint_str]
 
-        logger.info(f"{'Disabled' if soft_delete else 'Deleted'} webhook endpoint: {endpoint_str}")
+        logger.info(
+            f"{'Disabled' if soft_delete else 'Deleted'} webhook endpoint: {endpoint_str}"
+        )
 
     @standard_exception_handler
     async def list(
@@ -253,9 +277,14 @@ class WebhookManager:
         for endpoint_config in self.endpoints.values():
             # Apply filters
             if filters:
-                if "active" in filters and endpoint_config["active"] != filters["active"]:
+                if (
+                    "active" in filters
+                    and endpoint_config["active"] != filters["active"]
+                ):
                     continue
-                if "event_type" in filters and filters["event_type"] not in endpoint_config.get("events", []):
+                if "event_type" in filters and filters[
+                    "event_type"
+                ] not in endpoint_config.get("events", []):
                     continue
 
             endpoints.append(self._endpoint_to_response(endpoint_config))
@@ -264,19 +293,28 @@ class WebhookManager:
         return endpoints[skip : skip + limit]
 
     @standard_exception_handler
-    async def count(self, filters: Optional[dict[str, Any]] = None, user_id: Optional[UUID] = None) -> int:
+    async def count(
+        self, filters: Optional[dict[str, Any]] = None, user_id: Optional[UUID] = None
+    ) -> int:
         """Count webhook endpoints with filters."""
         count = 0
         for endpoint_config in self.endpoints.values():
             if filters:
-                if "active" in filters and endpoint_config["active"] != filters["active"]:
+                if (
+                    "active" in filters
+                    and endpoint_config["active"] != filters["active"]
+                ):
                     continue
-                if "event_type" in filters and filters["event_type"] not in endpoint_config.get("events", []):
+                if "event_type" in filters and filters[
+                    "event_type"
+                ] not in endpoint_config.get("events", []):
                     continue
             count += 1
         return count
 
-    def _endpoint_to_response(self, endpoint_config: dict[str, Any]) -> WebhookEndpointResponseSchema:
+    def _endpoint_to_response(
+        self, endpoint_config: dict[str, Any]
+    ) -> WebhookEndpointResponseSchema:
         """Convert endpoint config to response schema."""
         return WebhookEndpointResponseSchema(
             id=UUID(endpoint_config["id"]),
@@ -294,7 +332,9 @@ class WebhookManager:
         )
 
     @standard_exception_handler
-    async def trigger_event(self, event_type: str, data: dict[str, Any], source: str = "system") -> dict[str, Any]:
+    async def trigger_event(
+        self, event_type: str, data: dict[str, Any], source: str = "system"
+    ) -> dict[str, Any]:
         """Trigger webhook event to all subscribed endpoints."""
 
         event = WebhookEvent(
@@ -310,7 +350,8 @@ class WebhookManager:
         matching_endpoints = [
             config
             for config in self.endpoints.values()
-            if config["active"] and (not config["events"] or event_type in config["events"])
+            if config["active"]
+            and (not config["events"] or event_type in config["events"])
         ]
 
         delivery_results = []
@@ -333,10 +374,17 @@ class WebhookManager:
 
                 self.deliveries[delivery.id] = delivery
                 endpoint_config["success_count"] += 1
-                endpoint_config["last_triggered"] = datetime.now(timezone.utc).isoformat()
+                endpoint_config["last_triggered"] = datetime.now(
+                    timezone.utc
+                ).isoformat()
 
                 delivery_results.append(
-                    {"endpoint": endpoint_config["name"], "success": True, "delivery_id": delivery.id, "result": result}
+                    {
+                        "endpoint": endpoint_config["name"],
+                        "success": True,
+                        "delivery_id": delivery.id,
+                        "result": result,
+                    }
                 )
 
             except Exception as e:
@@ -354,7 +402,12 @@ class WebhookManager:
                 endpoint_config["failure_count"] += 1
 
                 delivery_results.append(
-                    {"endpoint": endpoint_config["name"], "success": False, "delivery_id": delivery.id, "error": str(e)}
+                    {
+                        "endpoint": endpoint_config["name"],
+                        "success": False,
+                        "delivery_id": delivery.id,
+                        "error": str(e),
+                    }
                 )
 
         return {
@@ -367,12 +420,16 @@ class WebhookManager:
             "delivery_results": delivery_results,
         }
 
-    def validate_signature(self, payload: bytes, signature: str, secret: str, algorithm: str = "sha256") -> bool:
+    def validate_signature(
+        self, payload: bytes, signature: str, secret: str, algorithm: str = "sha256"
+    ) -> bool:
         """Validate webhook signature."""
         if not secret or not signature:
             return True  # No signature validation required
 
-        expected_signature = hmac.new(secret.encode(), payload, getattr(hashlib, algorithm)).hexdigest()
+        expected_signature = hmac.new(
+            secret.encode(), payload, getattr(hashlib, algorithm)
+        ).hexdigest()
 
         # Support different signature formats
         if signature.startswith("sha256="):
@@ -431,11 +488,17 @@ class WebhookManagerRouter:
 
             # Get the webhook endpoint config
             if endpoint_id not in manager.endpoints:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook endpoint not found")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Webhook endpoint not found",
+                )
 
             endpoint_config = manager.endpoints[endpoint_id]
             if not endpoint_config["active"]:
-                raise HTTPException(status_code=status.HTTP_410_GONE, detail="Webhook endpoint is disabled")
+                raise HTTPException(
+                    status_code=status.HTTP_410_GONE,
+                    detail="Webhook endpoint is disabled",
+                )
 
             # Get the payload
             payload = await request.body()
@@ -445,21 +508,27 @@ class WebhookManagerRouter:
             secret = endpoint_config.get("secret")
 
             if secret and not manager.validate_signature(payload, signature, secret):
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook signature")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid webhook signature",
+                )
 
             # Process the webhook
             try:
                 payload_data = json.loads(payload) if payload else {}
                 event_type = payload_data.get("type", "webhook.received")
 
-                result = await manager.trigger_event(event_type=event_type, data=payload_data, source="webhook")
+                result = await manager.trigger_event(
+                    event_type=event_type, data=payload_data, source="webhook"
+                )
 
                 return {"status": "received", "result": result}
 
             except Exception as e:
                 logger.error(f"Failed to process webhook: {str(e)}")
                 raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to process webhook: {str(e)}"
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to process webhook: {str(e)}",
                 ) from e
 
         @router.get("/deliveries", response_model=list[dict[str, Any]])

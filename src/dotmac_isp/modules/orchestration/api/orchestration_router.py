@@ -7,6 +7,9 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
+from fastapi import Body, Depends, Query
+from pydantic import BaseModel, Field
+
 from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
@@ -14,8 +17,6 @@ from dotmac_shared.api.dependencies import (
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import Body, Depends, Query
-from pydantic import BaseModel, Field
 
 from ..services.network_orchestrator import NetworkOrchestrationService
 
@@ -28,8 +29,12 @@ class ServiceProvisioningRequest(BaseModel):
     customer_id: UUID = Field(..., description="Customer ID")
     service_plan_id: str = Field(..., description="Service plan ID")
     service_address: str = Field(..., description="Service installation address")
-    installation_options: dict[str, Any] | None = Field(None, description="Installation options")
-    scheduled_date: datetime | None = Field(None, description="Preferred installation date")
+    installation_options: dict[str, Any] | None = Field(
+        None, description="Installation options"
+    )
+    scheduled_date: datetime | None = Field(
+        None, description="Preferred installation date"
+    )
     priority: str = Field("normal", description="Provisioning priority")
 
 
@@ -38,7 +43,9 @@ class ServiceModificationRequest(BaseModel):
 
     service_id: UUID = Field(..., description="Service ID to modify")
     new_bandwidth: str = Field(..., description="New bandwidth specification")
-    effective_date: datetime | None = Field(None, description="When change becomes effective")
+    effective_date: datetime | None = Field(
+        None, description="When change becomes effective"
+    )
     change_reason: str | None = Field(None, description="Reason for change")
 
 
@@ -47,7 +54,9 @@ class MaintenanceExecutionRequest(BaseModel):
 
     maintenance_type: str = Field(..., description="Type of maintenance")
     target_devices: list[str] = Field(..., description="Target device IDs")
-    execution_window: dict[str, datetime] = Field(..., description="Execution time window")
+    execution_window: dict[str, datetime] = Field(
+        ..., description="Execution time window"
+    )
     rollback_plan: dict[str, Any] | None = Field(None, description="Rollback plan")
 
 
@@ -99,7 +108,9 @@ async def provision_customer_service(
     }
 
 
-@orchestration_router.get("/provisioning/{provisioning_id}", response_model=dict[str, Any])
+@orchestration_router.get(
+    "/provisioning/{provisioning_id}", response_model=dict[str, Any]
+)
 @standard_exception_handler
 async def get_provisioning_status(
     provisioning_id: UUID,
@@ -110,17 +121,23 @@ async def get_provisioning_status(
     return await service.get_provisioning_status(provisioning_id)
 
 
-@orchestration_router.post("/provisioning/{provisioning_id}/cancel", response_model=dict[str, Any])
+@orchestration_router.post(
+    "/provisioning/{provisioning_id}/cancel", response_model=dict[str, Any]
+)
 @standard_exception_handler
 async def cancel_provisioning(
     provisioning_id: UUID,
-    cancellation_reason: str = Body(..., embed=True, description="Reason for cancellation"),
+    cancellation_reason: str = Body(
+        ..., embed=True, description="Reason for cancellation"
+    ),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> dict[str, Any]:
     """Cancel a service provisioning request."""
     service = NetworkOrchestrationService(deps.db, deps.tenant_id)
 
-    result = await service.cancel_provisioning(provisioning_id, cancellation_reason, deps.user_id)
+    result = await service.cancel_provisioning(
+        provisioning_id, cancellation_reason, deps.user_id
+    )
 
     return {
         "provisioning_id": provisioning_id,
@@ -204,7 +221,9 @@ async def execute_maintenance(
     }
 
 
-@orchestration_router.get("/maintenance/{maintenance_id}", response_model=dict[str, Any])
+@orchestration_router.get(
+    "/maintenance/{maintenance_id}", response_model=dict[str, Any]
+)
 @standard_exception_handler
 async def get_maintenance_status(
     maintenance_id: UUID,
@@ -274,16 +293,22 @@ async def list_workflow_executions(
     )
 
 
-@orchestration_router.get("/workflow-executions/{execution_id}", response_model=dict[str, Any])
+@orchestration_router.get(
+    "/workflow-executions/{execution_id}", response_model=dict[str, Any]
+)
 @standard_exception_handler
 async def get_workflow_execution_status(
     execution_id: UUID,
-    include_step_details: bool = Query(False, description="Include detailed step information"),
+    include_step_details: bool = Query(
+        False, description="Include detailed step information"
+    ),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> dict[str, Any]:
     """Get detailed status of a workflow execution."""
     service = NetworkOrchestrationService(deps.db, deps.tenant_id)
-    return await service.get_workflow_execution_status(execution_id, include_step_details)
+    return await service.get_workflow_execution_status(
+        execution_id, include_step_details
+    )
 
 
 # === Orchestration Analytics ===

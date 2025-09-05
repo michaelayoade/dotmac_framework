@@ -5,13 +5,11 @@ Modern WebSocket implementation using RouterFactory patterns.
 
 from typing import Any
 
-from dotmac.application import RouterFactory, standard_exception_handler
-from dotmac_shared.api.dependencies import (
-    StandardDependencies,
-    get_standard_deps,
-)
 from fastapi import Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
+
+from dotmac.application import RouterFactory, standard_exception_handler
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 # === WebSocket Schemas ===
 

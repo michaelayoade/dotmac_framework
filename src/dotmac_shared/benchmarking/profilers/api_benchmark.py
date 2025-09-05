@@ -86,7 +86,9 @@ class ApiLoadTestConfig:
     think_time: float = 0.0
 
     # Request patterns
-    request_distribution: dict[str, float] = field(default_factory=dict)  # endpoint -> weight
+    request_distribution: dict[str, float] = field(
+        default_factory=dict
+    )  # endpoint -> weight
 
     # Authentication
     shared_auth: bool = True
@@ -132,7 +134,9 @@ class ApiLoadTestResults:
     total_bytes_transferred: int
 
     # Error analysis
-    error_breakdown: dict[int, int] = field(default_factory=dict)  # status_code -> count
+    error_breakdown: dict[int, int] = field(
+        default_factory=dict
+    )  # status_code -> count
     error_messages: list[str] = field(default_factory=list)
 
     # Endpoint breakdown
@@ -191,7 +195,10 @@ class ApiEndpointBenchmarker:
 
             # Create connector with connection pooling
             self._connector = aiohttp.TCPConnector(
-                limit=100, limit_per_host=30, ssl=ssl_context, enable_cleanup_closed=True
+                limit=100,
+                limit_per_host=30,
+                ssl=ssl_context,
+                enable_cleanup_closed=True,
             )
 
             # Create session with default settings
@@ -211,7 +218,9 @@ class ApiEndpointBenchmarker:
             self._connector = None
 
     @standard_exception_handler
-    async def benchmark_single_request(self, request: ApiRequest, iterations: int = 1000) -> dict[str, Any]:
+    async def benchmark_single_request(
+        self, request: ApiRequest, iterations: int = 1000
+    ) -> dict[str, Any]:
         """
         Benchmark a single API request.
 
@@ -224,7 +233,9 @@ class ApiEndpointBenchmarker:
         """
         await self._ensure_session()
 
-        logger.info(f"Benchmarking {request.method.value} {request.endpoint} ({iterations} iterations)")
+        logger.info(
+            f"Benchmarking {request.method.value} {request.endpoint} ({iterations} iterations)"
+        )
 
         responses = []
         start_time = time.time()
@@ -240,24 +251,37 @@ class ApiEndpointBenchmarker:
 
             except Exception as e:
                 logger.debug(f"Request {i} failed: {e}")
-                error_response = ApiResponse(status_code=0, response_time=0.0, response_size=0, error_message=str(e))
+                error_response = ApiResponse(
+                    status_code=0,
+                    response_time=0.0,
+                    response_size=0,
+                    error_message=str(e),
+                )
                 responses.append(error_response)
 
         execution_time = time.time() - start_time
 
         # Calculate metrics
         successful_responses = [r for r in responses if 200 <= r.status_code < 400]
-        failed_responses = [r for r in responses if r.status_code == 0 or r.status_code >= 400]
+        failed_responses = [
+            r for r in responses if r.status_code == 0 or r.status_code >= 400
+        ]
 
         response_times = [r.response_time for r in responses if r.response_time > 0]
         response_sizes = [r.response_size for r in responses]
 
         results = {
-            "request": {"method": request.method.value, "endpoint": request.endpoint, "iterations": iterations},
+            "request": {
+                "method": request.method.value,
+                "endpoint": request.endpoint,
+                "iterations": iterations,
+            },
             "performance": {
                 "total_time": execution_time,
                 "requests_per_second": iterations / execution_time,
-                "avg_response_time": statistics.mean(response_times) if response_times else 0,
+                "avg_response_time": statistics.mean(response_times)
+                if response_times
+                else 0,
                 "min_response_time": min(response_times) if response_times else 0,
                 "max_response_time": max(response_times) if response_times else 0,
                 "p50_response_time": self._calculate_percentile(response_times, 50),
@@ -270,9 +294,13 @@ class ApiEndpointBenchmarker:
                 "success_rate": len(successful_responses) / iterations * 100,
             },
             "data_transfer": {
-                "avg_response_size": statistics.mean(response_sizes) if response_sizes else 0,
+                "avg_response_size": statistics.mean(response_sizes)
+                if response_sizes
+                else 0,
                 "total_bytes": sum(response_sizes),
-                "throughput_mbps": sum(response_sizes) / execution_time / (1024 * 1024) if execution_time > 0 else 0,
+                "throughput_mbps": sum(response_sizes) / execution_time / (1024 * 1024)
+                if execution_time > 0
+                else 0,
             },
         }
 
@@ -280,7 +308,10 @@ class ApiEndpointBenchmarker:
 
     @standard_exception_handler
     async def run_load_test(
-        self, requests: list[ApiRequest], config: ApiLoadTestConfig, test_name: str = "api_load_test"
+        self,
+        requests: list[ApiRequest],
+        config: ApiLoadTestConfig,
+        test_name: str = "api_load_test",
     ) -> ApiLoadTestResults:
         """
         Run comprehensive API load test.
@@ -296,7 +327,9 @@ class ApiEndpointBenchmarker:
         await self._ensure_session()
 
         logger.info(f"Starting API load test: {test_name}")
-        logger.info(f"Users: {config.concurrent_users}, Requests/user: {config.requests_per_user}")
+        logger.info(
+            f"Users: {config.concurrent_users}, Requests/user: {config.requests_per_user}"
+        )
 
         start_time = datetime.now(timezone.utc)
 
@@ -314,7 +347,9 @@ class ApiEndpointBenchmarker:
             # Calculate ramp-up delay
             ramp_delay = (user_id / config.concurrent_users) * config.ramp_up_duration
 
-            task = asyncio.create_task(self._simulate_user_session(user_id, requests, config, ramp_delay))
+            task = asyncio.create_task(
+                self._simulate_user_session(user_id, requests, config, ramp_delay)
+            )
             user_tasks.append(task)
 
         # Wait for all user sessions to complete
@@ -334,7 +369,9 @@ class ApiEndpointBenchmarker:
         end_time = datetime.now(timezone.utc)
 
         # Calculate comprehensive results
-        results = self._calculate_load_test_results(test_name, start_time, end_time, all_responses, requests, config)
+        results = self._calculate_load_test_results(
+            test_name, start_time, end_time, all_responses, requests, config
+        )
 
         self.test_history.append(results)
 
@@ -347,7 +384,11 @@ class ApiEndpointBenchmarker:
         return results
 
     async def _simulate_user_session(
-        self, user_id: int, requests: list[ApiRequest], config: ApiLoadTestConfig, ramp_delay: float
+        self,
+        user_id: int,
+        requests: list[ApiRequest],
+        config: ApiLoadTestConfig,
+        ramp_delay: float,
     ) -> list[ApiResponse]:
         """Simulate a single user session"""
 
@@ -374,14 +415,21 @@ class ApiEndpointBenchmarker:
                     await asyncio.sleep(config.think_time)
 
             except Exception as e:
-                error_response = ApiResponse(status_code=0, response_time=0.0, response_size=0, error_message=str(e))
+                error_response = ApiResponse(
+                    status_code=0,
+                    response_time=0.0,
+                    response_size=0,
+                    error_message=str(e),
+                )
                 error_response.headers["user_id"] = str(user_id)
                 error_response.headers["request_num"] = str(request_num)
                 user_responses.append(error_response)
 
         return user_responses
 
-    def _select_request(self, requests: list[ApiRequest], distribution: dict[str, float]) -> ApiRequest:
+    def _select_request(
+        self, requests: list[ApiRequest], distribution: dict[str, float]
+    ) -> ApiRequest:
         """Select request based on distribution weights"""
 
         from secrets import SystemRandom
@@ -452,7 +500,9 @@ class ApiEndpointBenchmarker:
                     response_size=len(content.encode("utf-8")),
                     content_type=response.headers.get("content-type"),
                     headers=dict(response.headers),
-                    content=content if len(content) < 1000 else content[:1000] + "...",  # Truncate large responses
+                    content=content
+                    if len(content) < 1000
+                    else content[:1000] + "...",  # Truncate large responses
                 )
 
         except asyncio.TimeoutError:
@@ -466,7 +516,12 @@ class ApiEndpointBenchmarker:
 
         except Exception as e:
             response_time = time.time() - start_time
-            return ApiResponse(status_code=0, response_time=response_time, response_size=0, error_message=str(e))
+            return ApiResponse(
+                status_code=0,
+                response_time=response_time,
+                response_size=0,
+                error_message=str(e),
+            )
 
     def _calculate_load_test_results(
         self,
@@ -484,11 +539,15 @@ class ApiEndpointBenchmarker:
         # Basic counts
         total_requests = len(responses)
         successful_responses = [r for r in responses if 200 <= r.status_code < 400]
-        failed_responses = [r for r in responses if r.status_code == 0 or r.status_code >= 400]
+        failed_responses = [
+            r for r in responses if r.status_code == 0 or r.status_code >= 400
+        ]
 
         successful_count = len(successful_responses)
         failed_count = len(failed_responses)
-        success_rate = (successful_count / total_requests * 100) if total_requests > 0 else 0
+        success_rate = (
+            (successful_count / total_requests * 100) if total_requests > 0 else 0
+        )
 
         # Response time analysis
         response_times = [r.response_time for r in responses if r.response_time > 0]
@@ -513,32 +572,51 @@ class ApiEndpointBenchmarker:
             endpoint_responses = [
                 r
                 for r in responses
-                if r.headers.get("endpoint") == request.endpoint or request.endpoint in str(r.headers)
+                if r.headers.get("endpoint") == request.endpoint
+                or request.endpoint in str(r.headers)
             ]
 
             if endpoint_responses:
-                endpoint_times = [r.response_time for r in endpoint_responses if r.response_time > 0]
+                endpoint_times = [
+                    r.response_time for r in endpoint_responses if r.response_time > 0
+                ]
                 endpoint_performance[request.endpoint] = {
-                    "avg_response_time": statistics.mean(endpoint_times) if endpoint_times else 0,
+                    "avg_response_time": statistics.mean(endpoint_times)
+                    if endpoint_times
+                    else 0,
                     "request_count": len(endpoint_responses),
-                    "success_rate": len([r for r in endpoint_responses if 200 <= r.status_code < 400])
+                    "success_rate": len(
+                        [r for r in endpoint_responses if 200 <= r.status_code < 400]
+                    )
                     / len(endpoint_responses)
                     * 100,
                 }
 
         # Tenant performance (if applicable)
         tenant_performance = {}
-        tenant_ids = {r.headers.get("X-Tenant-ID", "") for r in responses if r.headers.get("X-Tenant-ID")}
+        tenant_ids = {
+            r.headers.get("X-Tenant-ID", "")
+            for r in responses
+            if r.headers.get("X-Tenant-ID")
+        }
 
         for tenant_id in tenant_ids:
             if tenant_id:
-                tenant_responses = [r for r in responses if r.headers.get("X-Tenant-ID") == tenant_id]
-                tenant_times = [r.response_time for r in tenant_responses if r.response_time > 0]
+                tenant_responses = [
+                    r for r in responses if r.headers.get("X-Tenant-ID") == tenant_id
+                ]
+                tenant_times = [
+                    r.response_time for r in tenant_responses if r.response_time > 0
+                ]
 
                 tenant_performance[tenant_id] = {
-                    "avg_response_time": statistics.mean(tenant_times) if tenant_times else 0,
+                    "avg_response_time": statistics.mean(tenant_times)
+                    if tenant_times
+                    else 0,
                     "request_count": len(tenant_responses),
-                    "success_rate": len([r for r in tenant_responses if 200 <= r.status_code < 400])
+                    "success_rate": len(
+                        [r for r in tenant_responses if 200 <= r.status_code < 400]
+                    )
                     / len(tenant_responses)
                     * 100,
                 }
@@ -565,8 +643,12 @@ class ApiEndpointBenchmarker:
             error_messages=error_messages,
             endpoint_performance=endpoint_performance,
             tenant_performance=tenant_performance,
-            response_times=response_times if len(response_times) <= 10000 else response_times[:10000],  # Limit storage
-            response_sizes=response_sizes if len(response_sizes) <= 10000 else response_sizes[:10000],
+            response_times=response_times
+            if len(response_times) <= 10000
+            else response_times[:10000],  # Limit storage
+            response_sizes=response_sizes
+            if len(response_sizes) <= 10000
+            else response_sizes[:10000],
         )
 
     def _calculate_percentile(self, values: list[float], percentile: int) -> float:
@@ -582,7 +664,10 @@ class ApiEndpointBenchmarker:
 
     @standard_exception_handler
     async def test_authentication_performance(
-        self, login_request: ApiRequest, authenticated_requests: list[ApiRequest], iterations: int = 100
+        self,
+        login_request: ApiRequest,
+        authenticated_requests: list[ApiRequest],
+        iterations: int = 100,
     ) -> dict[str, Any]:
         """
         Test authentication performance including login and authenticated requests.
@@ -615,16 +700,24 @@ class ApiEndpointBenchmarker:
                     if login_response.content:
                         try:
                             auth_data = json.loads(login_response.content)
-                            token = auth_data.get("token") or auth_data.get("access_token")
+                            token = auth_data.get("token") or auth_data.get(
+                                "access_token"
+                            )
 
                             if token:
                                 # Test authenticated requests
-                                for auth_req in authenticated_requests[:3]:  # Limit to first 3
+                                for auth_req in authenticated_requests[
+                                    :3
+                                ]:  # Limit to first 3
                                     auth_req.auth_token = token
-                                    auth_response = await self._execute_request(auth_req)
+                                    auth_response = await self._execute_request(
+                                        auth_req
+                                    )
 
                                     if 200 <= auth_response.status_code < 300:
-                                        request_times.append(auth_response.response_time)
+                                        request_times.append(
+                                            auth_response.response_time
+                                        )
                                     else:
                                         auth_failures += 1
                         except json.JSONDecodeError:
@@ -645,14 +738,18 @@ class ApiEndpointBenchmarker:
                 "login_success_rate": len(login_times) / iterations * 100,
             },
             "authenticated_request_performance": {
-                "avg_request_time": statistics.mean(request_times) if request_times else 0,
+                "avg_request_time": statistics.mean(request_times)
+                if request_times
+                else 0,
                 "min_request_time": min(request_times) if request_times else 0,
                 "max_request_time": max(request_times) if request_times else 0,
                 "successful_requests": len(request_times),
             },
             "overall": {
                 "total_auth_failures": auth_failures,
-                "auth_failure_rate": auth_failures / (iterations * (len(authenticated_requests) + 1)) * 100,
+                "auth_failure_rate": auth_failures
+                / (iterations * (len(authenticated_requests) + 1))
+                * 100,
             },
         }
 
@@ -664,9 +761,15 @@ class ApiEndpointBenchmarker:
 
         total_tests = len(self.test_history)
         total_requests = sum(test.total_requests for test in self.test_history)
-        avg_success_rate = statistics.mean([test.success_rate for test in self.test_history])
-        avg_rps = statistics.mean([test.requests_per_second for test in self.test_history])
-        avg_response_time = statistics.mean([test.avg_response_time for test in self.test_history])
+        avg_success_rate = statistics.mean(
+            [test.success_rate for test in self.test_history]
+        )
+        avg_rps = statistics.mean(
+            [test.requests_per_second for test in self.test_history]
+        )
+        avg_response_time = statistics.mean(
+            [test.avg_response_time for test in self.test_history]
+        )
 
         return {
             "total_tests": total_tests,

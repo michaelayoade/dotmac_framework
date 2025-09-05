@@ -28,11 +28,17 @@ class PluginRepository(BaseRepository[Plugin]):
         """Increment plugin download count."""
         plugin = await self.get_by_id(plugin_id)
         if plugin:
-            await self.update(plugin_id, {"download_count": plugin.download_count + 1}, "system")
+            await self.update(
+                plugin_id, {"download_count": plugin.download_count + 1}, "system"
+            )
 
-    async def update_rating(self, plugin_id: UUID, rating: float, review_count: int) -> None:
+    async def update_rating(
+        self, plugin_id: UUID, rating: float, review_count: int
+    ) -> None:
         """Update plugin rating and review count."""
-        await self.update(plugin_id, {"rating": rating, "review_count": review_count}, "system")
+        await self.update(
+            plugin_id, {"rating": rating, "review_count": review_count}, "system"
+        )
 
     async def search_plugins(
         self,
@@ -78,7 +84,9 @@ class PluginLicenseRepository(BaseRepository[PluginLicense]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, PluginLicense)
 
-    async def get_by_tenant_and_plugin(self, tenant_id: UUID, plugin_id: UUID) -> Optional[PluginLicense]:
+    async def get_by_tenant_and_plugin(
+        self, tenant_id: UUID, plugin_id: UUID
+    ) -> Optional[PluginLicense]:
         """Get installation by tenant and plugin."""
         stmt = select(self.model).where(
             and_(
@@ -103,7 +111,9 @@ class PluginLicenseRepository(BaseRepository[PluginLicense]):
         """Get installations by plugin."""
         return await self.list(filters={"plugin_id": plugin_id, "is_deleted": False})
 
-    async def update_status(self, installation_id: UUID, status: str, updated_by: str) -> Optional[PluginLicense]:
+    async def update_status(
+        self, installation_id: UUID, status: str, updated_by: str
+    ) -> Optional[PluginLicense]:
         """Update installation status."""
         return await self.update(installation_id, {"status": status}, updated_by)
 
@@ -140,7 +150,9 @@ class PluginInstallationRepository(BaseRepository[PluginLicense]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, PluginLicense)
 
-    async def get_by_tenant_and_plugin(self, tenant_id: UUID, plugin_id: UUID) -> Optional[PluginLicense]:
+    async def get_by_tenant_and_plugin(
+        self, tenant_id: UUID, plugin_id: UUID
+    ) -> Optional[PluginLicense]:
         """Get installation by tenant and plugin."""
         stmt = select(self.model).where(
             and_(
@@ -188,7 +200,9 @@ class PluginSecurityScanRepository(BaseRepository[Plugin]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Plugin)
 
-    async def get_plugins_for_security_scan(self, scan_type: str = "all") -> list[Plugin]:
+    async def get_plugins_for_security_scan(
+        self, scan_type: str = "all"
+    ) -> list[Plugin]:
         """Get plugins that need security scanning."""
         filters = {"is_deleted": False, "is_active": True}
         return await self.list(filters=filters)

@@ -95,7 +95,9 @@ async def get_current_active_user(
 ) -> CurrentUser:
     """Get current active user (additional validation)."""
     if not current_user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User account is inactive")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User account is inactive"
+        )
     return current_user
 
 
@@ -161,7 +163,9 @@ def require_master_admin(
 ) -> CurrentUser:
     """Require master admin role."""
     if not current_user.is_master_admin():
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Master admin access required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Master admin access required"
+        )
     return current_user
 
 
@@ -190,7 +194,9 @@ def require_tenant_admin(
 ) -> CurrentUser:
     """Require tenant admin role or higher."""
     if not (current_user.is_master_admin() or current_user.is_tenant_admin()):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant admin access required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Tenant admin access required"
+        )
     return current_user
 
 
@@ -256,6 +262,8 @@ def get_current_tenant_id(
     return current_user.tenant_id
 
 
-def verify_tenant_access(tenant_id: str, current_user: CurrentUser = Depends(get_current_user)) -> bool:
+def verify_tenant_access(
+    tenant_id: str, current_user: CurrentUser = Depends(get_current_user)
+) -> bool:
     """Verify user has access to specified tenant."""
     return current_user.can_access_tenant(tenant_id)

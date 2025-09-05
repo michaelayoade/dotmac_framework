@@ -147,10 +147,14 @@ class DockerOrchestrator(ContainerOrchestrator):
 
     async def deploy(self, spec: DeploymentSpec) -> str:
         """Deploy using Docker Compose or Docker Swarm."""
-        deployment_id = f"{spec.service_name}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        deployment_id = (
+            f"{spec.service_name}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        )
 
         try:
-            with self.monitoring.create_span("docker_deploy", spec.service_name) as span:
+            with self.monitoring.create_span(
+                "docker_deploy", spec.service_name
+            ) as span:
                 span.set_tag("deployment_id", deployment_id)
                 span.set_tag("strategy", spec.strategy)
 
@@ -167,7 +171,9 @@ class DockerOrchestrator(ContainerOrchestrator):
                 compose_config = self._generate_compose_config(spec)
 
                 # Write temporary compose file
-                with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
+                with tempfile.NamedTemporaryFile(
+                    mode="w", suffix=".yml", delete=False
+                ) as f:
                     yaml.dump(compose_config, f)
                     compose_file = f.name
 
@@ -184,7 +190,9 @@ class DockerOrchestrator(ContainerOrchestrator):
                     result.status = DeploymentStatus.SUCCEEDED
                     result.end_time = datetime.now()
 
-                    self.logger.info(f"Deployment {deployment_id} completed successfully")
+                    self.logger.info(
+                        f"Deployment {deployment_id} completed successfully"
+                    )
                     return deployment_id
 
                 finally:
@@ -215,7 +223,9 @@ class DockerOrchestrator(ContainerOrchestrator):
             result.status = DeploymentStatus.ROLLING_BACK
 
             # Find previous deployment
-            previous_deployment = self._find_previous_deployment(result.service_name, deployment_id)
+            previous_deployment = self._find_previous_deployment(
+                result.service_name, deployment_id
+            )
             if previous_deployment:
                 # Restore previous version
                 await self._restore_deployment(previous_deployment)
@@ -254,7 +264,11 @@ class DockerOrchestrator(ContainerOrchestrator):
             "image": f"{spec.image}:{spec.tag}",
             "deploy": {
                 "replicas": spec.replicas,
-                "restart_policy": {"condition": "on-failure", "delay": "5s", "max_attempts": 3},
+                "restart_policy": {
+                    "condition": "on-failure",
+                    "delay": "5s",
+                    "max_attempts": 3,
+                },
             },
             "environment": spec.environment_variables,
             "labels": spec.labels,
@@ -272,11 +286,15 @@ class DockerOrchestrator(ContainerOrchestrator):
 
         # Add ports
         if spec.ports:
-            service_config["ports"] = [f"{host}:{container}" for host, container in spec.ports.items()]
+            service_config["ports"] = [
+                f"{host}:{container}" for host, container in spec.ports.items()
+            ]
 
         # Add volumes
         if spec.volumes:
-            service_config["volumes"] = [f"{host}:{container}" for host, container in spec.volumes.items()]
+            service_config["volumes"] = [
+                f"{host}:{container}" for host, container in spec.volumes.items()
+            ]
 
         # Add health check
         if spec.health_checks:
@@ -291,7 +309,9 @@ class DockerOrchestrator(ContainerOrchestrator):
 
         return {"version": "3.8", "services": {spec.service_name: service_config}}
 
-    async def _rolling_deploy(self, spec: DeploymentSpec, compose_file: str, deployment_id: str):
+    async def _rolling_deploy(
+        self, spec: DeploymentSpec, compose_file: str, deployment_id: str
+    ):
         """Perform rolling deployment."""
         cmd = ["docker-compose", "-f", compose_file, "up", "-d", "--remove-orphans"]
         await self._run_command(cmd)
@@ -299,7 +319,9 @@ class DockerOrchestrator(ContainerOrchestrator):
         # Wait for health checks
         await self._wait_for_health_checks(spec, deployment_id)
 
-    async def _blue_green_deploy(self, spec: DeploymentSpec, compose_file: str, deployment_id: str):
+    async def _blue_green_deploy(
+        self, spec: DeploymentSpec, compose_file: str, deployment_id: str
+    ):
         """Perform blue-green deployment."""
         # Deploy to green environment
         green_service = f"{spec.service_name}-green"
@@ -329,7 +351,9 @@ class DockerOrchestrator(ContainerOrchestrator):
         # Remove blue deployment
         await self._cleanup_blue_deployment(spec.service_name)
 
-    async def _canary_deploy(self, spec: DeploymentSpec, compose_file: str, deployment_id: str):
+    async def _canary_deploy(
+        self, spec: DeploymentSpec, compose_file: str, deployment_id: str
+    ):
         """Perform canary deployment."""
         canary_service = f"{spec.service_name}-canary"
 
@@ -356,7 +380,9 @@ class DockerOrchestrator(ContainerOrchestrator):
             await self._wait_for_health_checks(canary_spec, deployment_id)
 
             # Monitor canary metrics
-            canary_healthy = await self._monitor_canary_metrics(canary_service, deployment_id)
+            canary_healthy = await self._monitor_canary_metrics(
+                canary_service, deployment_id
+            )
 
             if canary_healthy:
                 # Promote canary to full deployment
@@ -379,13 +405,18 @@ class DockerOrchestrator(ContainerOrchestrator):
             success_count = 0
             failure_count = 0
 
-            while success_count < health_check.success_threshold and failure_count < health_check.failure_threshold:
+            while (
+                success_count < health_check.success_threshold
+                and failure_count < health_check.failure_threshold
+            ):
                 try:
                     if health_check.type == HealthCheckType.HTTP:
                         # Perform HTTP health check
                         import aiohttp
 
-                        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+                        async with aiohttp.ClientSession(
+                            timeout=aiohttp.ClientTimeout(total=30)
+                        ) as session:
                             async with session.get(
                                 health_check.endpoint,
                                 headers=health_check.headers,
@@ -402,7 +433,8 @@ class DockerOrchestrator(ContainerOrchestrator):
                         # Perform TCP health check
                         host, port = health_check.endpoint.split(":")
                         reader, writer = await asyncio.wait_for(
-                            asyncio.open_connection(host, int(port)), timeout=health_check.timeout_seconds
+                            asyncio.open_connection(host, int(port)),
+                            timeout=health_check.timeout_seconds,
                         )
                         writer.close()
                         await writer.wait_closed()
@@ -454,7 +486,9 @@ class DockerOrchestrator(ContainerOrchestrator):
         stdout, stderr = await process.communicate()
 
         if process.returncode != 0:
-            raise Exception(f"Command failed: {' '.join(cmd)}\nError: {stderr.decode()}")
+            raise Exception(
+                f"Command failed: {' '.join(cmd)}\nError: {stderr.decode()}"
+            )
 
         return stdout.decode()
 
@@ -471,7 +505,9 @@ class DockerOrchestrator(ContainerOrchestrator):
         except Exception as e:
             self.logger.warning(f"Failed to cleanup blue deployment: {str(e)}")
 
-    async def _monitor_canary_metrics(self, canary_service: str, deployment_id: str) -> bool:
+    async def _monitor_canary_metrics(
+        self, canary_service: str, deployment_id: str
+    ) -> bool:
         """Monitor canary deployment metrics."""
         # Monitor for 5 minutes
         monitoring_duration = 300
@@ -519,12 +555,16 @@ class DockerOrchestrator(ContainerOrchestrator):
 
         for metric, value in metrics.items():
             if metric in thresholds and value > thresholds[metric]:
-                self.logger.warning(f"Canary metric {metric} exceeded threshold: {value} > {thresholds[metric]}")
+                self.logger.warning(
+                    f"Canary metric {metric} exceeded threshold: {value} > {thresholds[metric]}"
+                )
                 return False
 
         return True
 
-    async def _promote_canary(self, spec: DeploymentSpec, canary_service: str, deployment_id: str):
+    async def _promote_canary(
+        self, spec: DeploymentSpec, canary_service: str, deployment_id: str
+    ):
         """Promote canary to full deployment."""
         self.logger.info(f"Promoting canary {canary_service} to full deployment")
 
@@ -548,7 +588,9 @@ class DockerOrchestrator(ContainerOrchestrator):
         except Exception as e:
             self.logger.warning(f"Failed to rollback canary: {str(e)}")
 
-    def _find_previous_deployment(self, service_name: str, current_deployment_id: str) -> Optional[DeploymentResult]:
+    def _find_previous_deployment(
+        self, service_name: str, current_deployment_id: str
+    ) -> Optional[DeploymentResult]:
         """Find the previous successful deployment for rollback."""
         previous_deployments = [
             result
@@ -583,7 +625,9 @@ class KubernetesOrchestrator(ContainerOrchestrator):
 
     async def deploy(self, spec: DeploymentSpec) -> str:
         """Deploy using Kubernetes."""
-        deployment_id = f"{spec.service_name}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        deployment_id = (
+            f"{spec.service_name}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        )
 
         try:
             with self.monitoring.create_span("k8s_deploy", spec.service_name) as span:
@@ -609,7 +653,9 @@ class KubernetesOrchestrator(ContainerOrchestrator):
                 result.status = DeploymentStatus.SUCCEEDED
                 result.end_time = datetime.now()
 
-                self.logger.info(f"Kubernetes deployment {deployment_id} completed successfully")
+                self.logger.info(
+                    f"Kubernetes deployment {deployment_id} completed successfully"
+                )
                 return deployment_id
 
         except Exception as e:
@@ -635,14 +681,23 @@ class KubernetesOrchestrator(ContainerOrchestrator):
             result = self.deployments[deployment_id]
             result.status = DeploymentStatus.ROLLING_BACK
 
-            cmd = ["kubectl", "rollout", "undo", f"deployment/{result.service_name}", "--namespace", self.namespace]
+            cmd = [
+                "kubectl",
+                "rollout",
+                "undo",
+                f"deployment/{result.service_name}",
+                "--namespace",
+                self.namespace,
+            ]
             await self._run_kubectl_command(cmd)
 
             result.status = DeploymentStatus.ROLLED_BACK
             return True
 
         except Exception as e:
-            self.logger.error(f"Kubernetes rollback failed for {deployment_id}: {str(e)}")
+            self.logger.error(
+                f"Kubernetes rollback failed for {deployment_id}: {str(e)}"
+            )
             return False
 
     async def scale(self, service_name: str, replicas: int) -> bool:
@@ -667,19 +722,32 @@ class KubernetesOrchestrator(ContainerOrchestrator):
         deployment_manifest = {
             "apiVersion": "apps/v1",
             "kind": "Deployment",
-            "metadata": {"name": spec.service_name, "namespace": self.namespace, "labels": spec.labels},
+            "metadata": {
+                "name": spec.service_name,
+                "namespace": self.namespace,
+                "labels": spec.labels,
+            },
             "spec": {
                 "replicas": spec.replicas,
                 "selector": {"matchLabels": {"app": spec.service_name}},
                 "template": {
-                    "metadata": {"labels": {"app": spec.service_name, **spec.labels}, "annotations": spec.annotations},
+                    "metadata": {
+                        "labels": {"app": spec.service_name, **spec.labels},
+                        "annotations": spec.annotations,
+                    },
                     "spec": {
                         "containers": [
                             {
                                 "name": spec.service_name,
                                 "image": f"{spec.image}:{spec.tag}",
-                                "env": [{"name": k, "value": v} for k, v in spec.environment_variables.items()],
-                                "ports": [{"containerPort": port} for port in spec.ports.values()],
+                                "env": [
+                                    {"name": k, "value": v}
+                                    for k, v in spec.environment_variables.items()
+                                ],
+                                "ports": [
+                                    {"containerPort": port}
+                                    for port in spec.ports.values()
+                                ],
                             }
                         ]
                     },
@@ -698,7 +766,9 @@ class KubernetesOrchestrator(ContainerOrchestrator):
                     limits["memory"] = spec.resource_limits.memory
                 resources["limits"] = limits
 
-                deployment_manifest["spec"]["template"]["spec"]["containers"][0]["resources"] = resources
+                deployment_manifest["spec"]["template"]["spec"]["containers"][0][
+                    "resources"
+                ] = resources
 
         # Add health checks
         if spec.health_checks:
@@ -735,11 +805,18 @@ class KubernetesOrchestrator(ContainerOrchestrator):
 
         return [deployment_manifest, service_manifest]
 
-    async def _apply_manifests(self, manifests: list[dict[str, Any]], strategy: DeploymentStrategy, deployment_id: str):
+    async def _apply_manifests(
+        self,
+        manifests: list[dict[str, Any]],
+        strategy: DeploymentStrategy,
+        deployment_id: str,
+    ):
         """Apply Kubernetes manifests."""
         for manifest in manifests:
             # Write manifest to temporary file
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".yaml", delete=False
+            ) as f:
                 yaml.dump(manifest, f)
                 manifest_file = f.name
 
@@ -771,7 +848,9 @@ class KubernetesOrchestrator(ContainerOrchestrator):
         stdout, stderr = await process.communicate()
 
         if process.returncode != 0:
-            raise Exception(f"kubectl command failed: {' '.join(cmd)}\nError: {stderr.decode()}")
+            raise Exception(
+                f"kubectl command failed: {' '.join(cmd)}\nError: {stderr.decode()}"
+            )
 
         return stdout.decode()
 
@@ -796,7 +875,9 @@ class DeploymentAutomation:
     async def deploy_service(self, spec: DeploymentSpec) -> DeploymentResult:
         """Deploy a service with comprehensive monitoring."""
         try:
-            with self.monitoring.create_span("deploy_service", spec.service_name) as span:
+            with self.monitoring.create_span(
+                "deploy_service", spec.service_name
+            ) as span:
                 span.set_tag("service", spec.service_name)
                 span.set_tag("strategy", spec.strategy)
                 span.set_tag("replicas", spec.replicas)
@@ -819,7 +900,8 @@ class DeploymentAutomation:
 
                 # Emit metrics
                 self.monitoring.increment_counter(
-                    "deployment_total", {"service": spec.service_name, "status": result.status}
+                    "deployment_total",
+                    {"service": spec.service_name, "status": result.status},
                 )
 
                 if result.end_time:
@@ -835,7 +917,8 @@ class DeploymentAutomation:
         except Exception as e:
             self.logger.error(f"Deployment failed for {spec.service_name}: {str(e)}")
             self.monitoring.increment_counter(
-                "deployment_errors_total", {"service": spec.service_name, "error": type(e).__name__}
+                "deployment_errors_total",
+                {"service": spec.service_name, "error": type(e).__name__},
             )
             raise
 
@@ -856,7 +939,8 @@ class DeploymentAutomation:
                             break
 
                     self.monitoring.increment_counter(
-                        "rollback_total", {"deployment_id": deployment_id, "success": str(success)}
+                        "rollback_total",
+                        {"deployment_id": deployment_id, "success": str(success)},
                     )
 
                 return success
@@ -865,20 +949,27 @@ class DeploymentAutomation:
             self.logger.error(f"Rollback failed for {deployment_id}: {str(e)}")
             return False
 
-    async def get_deployment_status(self, deployment_id: str) -> Optional[DeploymentResult]:
+    async def get_deployment_status(
+        self, deployment_id: str
+    ) -> Optional[DeploymentResult]:
         """Get comprehensive deployment status."""
         # Find in history
         for result in self.deployment_history:
             if result.deployment_id == deployment_id:
                 # Update with current orchestrator status
-                current_status = await self.orchestrator.get_deployment_status(deployment_id)
+                current_status = await self.orchestrator.get_deployment_status(
+                    deployment_id
+                )
                 result.status = current_status
                 return result
 
         return None
 
     async def list_deployments(
-        self, service_name: Optional[str] = None, status: Optional[DeploymentStatus] = None, limit: int = 50
+        self,
+        service_name: Optional[str] = None,
+        status: Optional[DeploymentStatus] = None,
+        limit: int = 50,
     ) -> list[DeploymentResult]:
         """List deployment history with filtering."""
         results = self.deployment_history.copy()
@@ -909,15 +1000,22 @@ class DeploymentAutomation:
         for health_check in spec.health_checks:
             if health_check.type == HealthCheckType.HTTP:
                 if not health_check.endpoint.startswith(("http://", "https://")):
-                    raise ValueError(f"Invalid HTTP health check endpoint: {health_check.endpoint}")
+                    raise ValueError(
+                        f"Invalid HTTP health check endpoint: {health_check.endpoint}"
+                    )
 
-    async def _get_deployment_result(self, deployment_id: str, spec: DeploymentSpec) -> DeploymentResult:
+    async def _get_deployment_result(
+        self, deployment_id: str, spec: DeploymentSpec
+    ) -> DeploymentResult:
         """Get deployment result from orchestrator."""
         status = await self.orchestrator.get_deployment_status(deployment_id)
 
         # Create result if not exists
         result = DeploymentResult(
-            deployment_id=deployment_id, service_name=spec.service_name, status=status, start_time=datetime.now()
+            deployment_id=deployment_id,
+            service_name=spec.service_name,
+            status=status,
+            start_time=datetime.now(),
         )
 
         if status in [DeploymentStatus.SUCCEEDED, DeploymentStatus.FAILED]:
@@ -925,7 +1023,9 @@ class DeploymentAutomation:
 
         return result
 
-    async def _post_deployment_integration(self, spec: DeploymentSpec, deployment_id: str):
+    async def _post_deployment_integration(
+        self, spec: DeploymentSpec, deployment_id: str
+    ):
         """Integrate deployed service with mesh and gateway."""
         try:
             # Register with service mesh
@@ -936,10 +1036,14 @@ class DeploymentAutomation:
             if self.api_gateway:
                 await self._configure_gateway_routes(spec)
 
-            self.logger.info(f"Post-deployment integration completed for {deployment_id}")
+            self.logger.info(
+                f"Post-deployment integration completed for {deployment_id}"
+            )
 
         except Exception as e:
-            self.logger.error(f"Post-deployment integration failed for {deployment_id}: {str(e)}")
+            self.logger.error(
+                f"Post-deployment integration failed for {deployment_id}: {str(e)}"
+            )
 
     async def _register_with_service_mesh(self, spec: DeploymentSpec):
         """Register service with service mesh."""
@@ -964,7 +1068,9 @@ class DeploymentAutomationFactory:
         return DeploymentAutomation(orchestrator, monitoring)
 
     @staticmethod
-    def create_kubernetes_deployment(monitoring: MonitoringStack, namespace: str = "default") -> DeploymentAutomation:
+    def create_kubernetes_deployment(
+        monitoring: MonitoringStack, namespace: str = "default"
+    ) -> DeploymentAutomation:
         """Create Kubernetes-based deployment automation."""
         orchestrator = KubernetesOrchestrator(monitoring, namespace)
         return DeploymentAutomation(orchestrator, monitoring)
@@ -988,7 +1094,9 @@ class DeploymentAutomationFactory:
 
 # Convenience function for easy setup
 async def setup_deployment_automation(
-    monitoring: MonitoringStack, orchestrator_type: str = "kubernetes", namespace: str = "default"
+    monitoring: MonitoringStack,
+    orchestrator_type: str = "kubernetes",
+    namespace: str = "default",
 ) -> DeploymentAutomation:
     """Setup deployment automation with monitoring integration."""
     factory = DeploymentAutomationFactory()

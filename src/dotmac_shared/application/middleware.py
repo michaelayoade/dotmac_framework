@@ -5,16 +5,23 @@ Standard middleware stack for all DotMac applications.
 import logging
 from typing import Any, Optional
 
-from dotmac.tasks import (
-    BackgroundOperationsManager,
-    add_background_operations_middleware,
-)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
-from ..middleware.api_versioning import APIVersioningMiddleware, add_api_versioning_middleware
-from ..security.tenant_security_enforcer import TenantSecurityEnforcer, add_tenant_security_enforcer_middleware
+from dotmac.tasks import (
+    BackgroundOperationsManager,
+    add_background_operations_middleware,
+)
+
+from ..middleware.api_versioning import (
+    APIVersioningMiddleware,
+    add_api_versioning_middleware,
+)
+from ..security.tenant_security_enforcer import (
+    TenantSecurityEnforcer,
+    add_tenant_security_enforcer_middleware,
+)
 from .config import DeploymentMode, PlatformConfig
 
 logger = logging.getLogger(__name__)
@@ -31,7 +38,9 @@ class StandardMiddlewareStack:
         background_operations: Optional[BackgroundOperationsManager] = None,
     ):
         self.platform_config = platform_config
-        self.tenant_security_enforcer = tenant_security_enforcer or TenantSecurityEnforcer()
+        self.tenant_security_enforcer = (
+            tenant_security_enforcer or TenantSecurityEnforcer()
+        )
         self.api_versioning = api_versioning or APIVersioningMiddleware()
         # Create BackgroundOperationsManager if needed
         if background_operations is None:
@@ -42,7 +51,9 @@ class StandardMiddlewareStack:
 
     def apply_to_app(self, app: FastAPI) -> list[str]:
         """Apply standard middleware stack to FastAPI application."""
-        logger.info(f"Applying standard middleware stack for {self.platform_config.platform_name}")
+        logger.info(
+            f"Applying standard middleware stack for {self.platform_config.platform_name}"
+        )
 
         # Apply middleware in reverse order (FastAPI applies them in reverse)
         self._apply_background_operations_middleware(app)
@@ -153,7 +164,9 @@ class StandardMiddlewareStack:
     def _apply_jwt_authentication(self, app: FastAPI):
         """Apply JWT authentication middleware."""
         try:
-            from dotmac_management.user_management.middleware import add_jwt_authentication_middleware
+            from dotmac_management.user_management.middleware import (
+                add_jwt_authentication_middleware,
+            )
 
             # Get JWT secret from secure configuration manager
             try:
@@ -170,7 +183,9 @@ class StandardMiddlewareStack:
                         "or configure OpenBao with auth/jwt_secret_key"
                     ) from e
 
-            jwt_algorithm = self.platform_config.custom_settings.get("jwt_algorithm", "HS256")
+            jwt_algorithm = self.platform_config.custom_settings.get(
+                "jwt_algorithm", "HS256"
+            )
 
             add_jwt_authentication_middleware(app, jwt_secret, jwt_algorithm)
 
@@ -228,7 +243,9 @@ class StandardMiddlewareStack:
 
         except ImportError as e:
             # Fallback: try platform-specific implementations
-            logger.warning(f"Universal rate limiting not available, trying platform-specific: {e}")
+            logger.warning(
+                f"Universal rate limiting not available, trying platform-specific: {e}"
+            )
             try:
                 if self.platform_config.deployment_context:
                     mode = self.platform_config.deployment_context.mode
@@ -267,11 +284,16 @@ class StandardMiddlewareStack:
                     ]
                 )
             elif context.mode == DeploymentMode.MANAGEMENT_PLATFORM:
-                allowed_hosts.extend(["*.dotmac.app", "management.dotmac.app", "admin.dotmac.app"])
+                allowed_hosts.extend(
+                    ["*.dotmac.app", "management.dotmac.app", "admin.dotmac.app"]
+                )
 
         # Add custom hosts from platform config
         custom_settings = self.platform_config.custom_settings
-        if "networking" in custom_settings and "allowed_hosts" in custom_settings["networking"]:
+        if (
+            "networking" in custom_settings
+            and "allowed_hosts" in custom_settings["networking"]
+        ):
             allowed_hosts.extend(custom_settings["networking"]["allowed_hosts"])
 
         return allowed_hosts
@@ -306,7 +328,10 @@ class StandardMiddlewareStack:
 
         # Override with custom settings
         custom_settings = self.platform_config.custom_settings
-        if "networking" in custom_settings and "cors_origins" in custom_settings["networking"]:
+        if (
+            "networking" in custom_settings
+            and "cors_origins" in custom_settings["networking"]
+        ):
             cors_config["allow_origins"] = custom_settings["networking"]["cors_origins"]
 
         return cors_config
@@ -334,7 +359,9 @@ class StandardMiddlewareStack:
     def _apply_background_operations_middleware(self, app: FastAPI):
         """Apply background operations middleware."""
         try:
-            add_background_operations_middleware(app, self.background_operations_manager)
+            add_background_operations_middleware(
+                app, self.background_operations_manager
+            )
             self.applied_middleware.append("BackgroundOperationsMiddleware")
             logger.debug("Applied background operations middleware")
 

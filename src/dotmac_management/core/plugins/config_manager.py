@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import yaml
+
 from dotmac.application import standard_exception_handler
 from dotmac_shared.core.logging import get_logger
 
@@ -44,7 +45,9 @@ class PluginConfigManager:
     """
 
     def __init__(self, config_dir: Optional[str] = None):
-        self.config_dir = Path(config_dir or os.getenv("PLUGIN_CONFIG_DIR", "./config/plugins"))
+        self.config_dir = Path(
+            config_dir or os.getenv("PLUGIN_CONFIG_DIR", "./config/plugins")
+        )
         self.configs: dict[str, PluginConfig] = {}
         self.env_prefix = "DOTMAC_PLUGIN_"
 
@@ -65,7 +68,9 @@ class PluginConfigManager:
             return True
 
         except PluginError:
-            logger.exception("Failed to load plugin configurations due to validation error")
+            logger.exception(
+                "Failed to load plugin configurations due to validation error"
+            )
             return False
 
     async def _load_from_files(self):
@@ -90,7 +95,14 @@ class PluginConfigManager:
 
                 await self._process_config_data(data, str(config_file))
 
-            except (OSError, json.JSONDecodeError, yaml.YAMLError, PluginError, ValueError, TypeError):
+            except (
+                OSError,
+                json.JSONDecodeError,
+                yaml.YAMLError,
+                PluginError,
+                ValueError,
+                TypeError,
+            ):
                 logger.exception(f"Failed to load config file {config_file}")
 
     async def _load_from_environment(self):
@@ -157,7 +169,9 @@ class PluginConfigManager:
             try:
                 plugin_type = PluginType(plugin_type_str)
             except ValueError:
-                logger.error(f"Invalid plugin type '{plugin_type_str}' for plugin {plugin_name}")
+                logger.error(
+                    f"Invalid plugin type '{plugin_type_str}' for plugin {plugin_name}"
+                )
                 plugin_type = PluginType.INFRASTRUCTURE_PROVIDER
 
             config = PluginConfig(
@@ -202,12 +216,16 @@ class PluginConfigManager:
             required_fields = ["base_url", "api_token"]
             for field in required_fields:
                 if field not in config.config:
-                    logger.warning(f"Deployment provider {config.name} missing recommended field: {field}")
+                    logger.warning(
+                        f"Deployment provider {config.name} missing recommended field: {field}"
+                    )
 
         elif config.plugin_type == PluginType.DNS_PROVIDER:
             # Validate DNS provider configuration
             if "base_domain" not in config.config:
-                logger.warning(f"DNS provider {config.name} missing base_domain configuration")
+                logger.warning(
+                    f"DNS provider {config.name} missing base_domain configuration"
+                )
 
     def get_plugin_config(self, plugin_name: str) -> Optional[PluginConfig]:
         """Get configuration for a specific plugin."""
@@ -215,7 +233,11 @@ class PluginConfigManager:
 
     def get_configs_by_type(self, plugin_type: PluginType) -> list[PluginConfig]:
         """Get all configurations for a specific plugin type."""
-        return [config for config in self.configs.values() if config.plugin_type == plugin_type and config.enabled]
+        return [
+            config
+            for config in self.configs.values()
+            if config.plugin_type == plugin_type and config.enabled
+        ]
 
     def get_enabled_configs(self) -> list[PluginConfig]:
         """Get all enabled plugin configurations."""
@@ -223,7 +245,11 @@ class PluginConfigManager:
 
     def get_auto_load_configs(self) -> list[PluginConfig]:
         """Get all configurations that should be auto-loaded."""
-        return [config for config in self.configs.values() if config.enabled and config.auto_load]
+        return [
+            config
+            for config in self.configs.values()
+            if config.enabled and config.auto_load
+        ]
 
     @standard_exception_handler
     async def add_runtime_config(self, plugin_config: PluginConfig) -> bool:
@@ -243,7 +269,9 @@ class PluginConfigManager:
             return False
 
     @standard_exception_handler
-    async def update_plugin_config(self, plugin_name: str, config_updates: dict[str, Any]) -> bool:
+    async def update_plugin_config(
+        self, plugin_name: str, config_updates: dict[str, Any]
+    ) -> bool:
         """Update configuration for an existing plugin."""
         try:
             if plugin_name not in self.configs:
@@ -267,7 +295,9 @@ class PluginConfigManager:
         """Remove a plugin configuration."""
         try:
             if plugin_name not in self.configs:
-                logger.warning(f"Plugin configuration not found for removal: {plugin_name}")
+                logger.warning(
+                    f"Plugin configuration not found for removal: {plugin_name}"
+                )
                 return False
 
             del self.configs[plugin_name]
@@ -275,7 +305,9 @@ class PluginConfigManager:
             return True
 
         except KeyError:
-            logger.exception(f"Unexpected KeyError removing plugin configuration {plugin_name}")
+            logger.exception(
+                f"Unexpected KeyError removing plugin configuration {plugin_name}"
+            )
             return False
 
     def export_configurations(self) -> dict[str, Any]:

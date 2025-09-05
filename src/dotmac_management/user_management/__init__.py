@@ -17,7 +17,14 @@ Key Features:
 """
 
 try:
-    from .auth import AuthenticationMiddleware, AuthError, EdgeJWTValidator, JWTService, get_current_user, require_scopes
+    from .auth import (
+        AuthenticationMiddleware,
+        AuthError,
+        EdgeJWTValidator,
+        JWTService,
+        get_current_user,
+        require_scopes,
+    )
 except Exception:  # pragma: no cover - optional during partial test collection
     AuthenticationMiddleware = AuthError = EdgeJWTValidator = JWTService = get_current_user = require_scopes = None  # type: ignore
 

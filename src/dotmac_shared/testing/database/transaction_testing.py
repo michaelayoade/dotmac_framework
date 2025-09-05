@@ -78,13 +78,17 @@ class DatabaseTransactionTester:
             echo=echo,
             poolclass=StaticPool,
             pool_pre_ping=True,
-            connect_args={"check_same_thread": False} if "sqlite" in database_url else {},
+            connect_args={"check_same_thread": False}
+            if "sqlite" in database_url
+            else {},
         )
         self.SessionLocal = sessionmaker(bind=self.engine)
         self.test_results: list[TransactionTestResult] = []
 
     @standard_exception_handler
-    async def run_transaction_test(self, test_case: TransactionTestCase) -> TransactionTestResult:
+    async def run_transaction_test(
+        self, test_case: TransactionTestCase
+    ) -> TransactionTestResult:
         """Run a single transaction test case"""
         logger.info(f"Running transaction test: {test_case.name}")
         start_time = time.time()
@@ -123,13 +127,19 @@ class DatabaseTransactionTester:
             self.test_results.append(test_result)
             return test_result
 
-    async def _run_single_session_test(self, test_case: TransactionTestCase) -> TransactionTestResult:
+    async def _run_single_session_test(
+        self, test_case: TransactionTestCase
+    ) -> TransactionTestResult:
         """Run test case with single database session"""
         with self.SessionLocal() as session:
             try:
                 # Set isolation level if specified
                 if test_case.isolation_level:
-                    session.execute(text(f"SET TRANSACTION ISOLATION LEVEL {test_case.isolation_level}"))
+                    session.execute(
+                        text(
+                            f"SET TRANSACTION ISOLATION LEVEL {test_case.isolation_level}"
+                        )
+                    )
 
                 operations_completed = 0
                 rollback_occurred = False
@@ -183,7 +193,9 @@ class DatabaseTransactionTester:
                     rollback_occurred=rollback_occurred,
                 )
 
-    async def _run_concurrent_test(self, test_case: TransactionTestCase) -> TransactionTestResult:
+    async def _run_concurrent_test(
+        self, test_case: TransactionTestCase
+    ) -> TransactionTestResult:
         """Run test case with concurrent database sessions"""
 
         async def run_concurrent_session(session_id: int):
@@ -191,7 +203,11 @@ class DatabaseTransactionTester:
             with self.SessionLocal() as session:
                 try:
                     if test_case.isolation_level:
-                        session.execute(text(f"SET TRANSACTION ISOLATION LEVEL {test_case.isolation_level}"))
+                        session.execute(
+                            text(
+                                f"SET TRANSACTION ISOLATION LEVEL {test_case.isolation_level}"
+                            )
+                        )
 
                     operations_completed = 0
                     for i, operation in enumerate(test_case.operations):
@@ -202,22 +218,39 @@ class DatabaseTransactionTester:
                         await asyncio.sleep(0.01)
 
                     session.commit()
-                    return {"success": True, "operations_completed": operations_completed}
+                    return {
+                        "success": True,
+                        "operations_completed": operations_completed,
+                    }
 
                 except Exception as e:
                     session.rollback()
-                    return {"success": False, "error": str(e), "operations_completed": operations_completed}
+                    return {
+                        "success": False,
+                        "error": str(e),
+                        "operations_completed": operations_completed,
+                    }
 
         # Run concurrent sessions
-        tasks = [run_concurrent_session(i) for i in range(test_case.concurrent_sessions)]
+        tasks = [
+            run_concurrent_session(i) for i in range(test_case.concurrent_sessions)
+        ]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Analyze results
-        successful_sessions = sum(1 for r in results if isinstance(r, dict) and r.get("success"))
-        total_operations = sum(r.get("operations_completed", 0) for r in results if isinstance(r, dict))
+        successful_sessions = sum(
+            1 for r in results if isinstance(r, dict) and r.get("success")
+        )
+        total_operations = sum(
+            r.get("operations_completed", 0) for r in results if isinstance(r, dict)
+        )
 
-        errors = [r.get("error") for r in results if isinstance(r, dict) and not r.get("success")]
+        errors = [
+            r.get("error")
+            for r in results
+            if isinstance(r, dict) and not r.get("success")
+        ]
 
         if successful_sessions == test_case.concurrent_sessions:
             result_type = TransactionTestResult.SUCCESS
@@ -245,7 +278,9 @@ class DatabaseTransactionTester:
             operation(session)
 
     @standard_exception_handler
-    async def test_rollback_scenarios(self, model_class: type, test_data: list[dict]) -> list[TransactionTestResult]:
+    async def test_rollback_scenarios(
+        self, model_class: type, test_data: list[dict]
+    ) -> list[TransactionTestResult]:
         """Test various rollback scenarios"""
 
         test_cases = [
@@ -255,7 +290,9 @@ class DatabaseTransactionTester:
                 operations=[
                     lambda s: self._create_record(s, model_class, test_data[0]),
                     lambda s: s.rollback(),  # Explicit rollback
-                    lambda s: self._verify_record_not_exists(s, model_class, test_data[0]),
+                    lambda s: self._verify_record_not_exists(
+                        s, model_class, test_data[0]
+                    ),
                 ],
                 expected_result=TransactionTestResult.ROLLBACK,
             ),
@@ -265,7 +302,9 @@ class DatabaseTransactionTester:
                 operations=[
                     lambda s: self._create_record(s, model_class, test_data[0]),
                     lambda s: s.commit(),
-                    lambda s: self._create_record(s, model_class, test_data[0]),  # Duplicate
+                    lambda s: self._create_record(
+                        s, model_class, test_data[0]
+                    ),  # Duplicate
                 ],
                 expected_result=TransactionTestResult.INTEGRITY_ERROR,
             ),
@@ -279,7 +318,9 @@ class DatabaseTransactionTester:
                     lambda s: s.rollback(),  # Rollback to savepoint
                     lambda s: s.commit(),
                     lambda s: self._verify_record_exists(s, model_class, test_data[0]),
-                    lambda s: self._verify_record_not_exists(s, model_class, test_data[1]),
+                    lambda s: self._verify_record_not_exists(
+                        s, model_class, test_data[1]
+                    ),
                 ],
                 expected_result=TransactionTestResult.SUCCESS,
             ),
@@ -293,10 +334,17 @@ class DatabaseTransactionTester:
         return results
 
     @standard_exception_handler
-    async def test_isolation_levels(self, model_class: type, test_data: dict) -> list[TransactionTestResult]:
+    async def test_isolation_levels(
+        self, model_class: type, test_data: dict
+    ) -> list[TransactionTestResult]:
         """Test different transaction isolation levels"""
 
-        isolation_levels = ["READ UNCOMMITTED", "READ COMMITTED", "REPEATABLE READ", "SERIALIZABLE"]
+        isolation_levels = [
+            "READ UNCOMMITTED",
+            "READ COMMITTED",
+            "REPEATABLE READ",
+            "SERIALIZABLE",
+        ]
 
         test_cases = []
         for isolation_level in isolation_levels:
@@ -321,21 +369,29 @@ class DatabaseTransactionTester:
         return results
 
     @standard_exception_handler
-    async def test_concurrent_access(self, model_class: type, test_data: list[dict]) -> list[TransactionTestResult]:
+    async def test_concurrent_access(
+        self, model_class: type, test_data: list[dict]
+    ) -> list[TransactionTestResult]:
         """Test concurrent database access scenarios"""
 
         test_cases = [
             # Concurrent inserts
             TransactionTestCase(
                 name=f"concurrent_inserts_{model_class.__name__}",
-                operations=[lambda s: self._create_record(s, model_class, test_data[0])],
+                operations=[
+                    lambda s: self._create_record(s, model_class, test_data[0])
+                ],
                 expected_result=TransactionTestResult.SUCCESS,
                 concurrent_sessions=5,
             ),
             # Concurrent updates
             TransactionTestCase(
                 name=f"concurrent_updates_{model_class.__name__}",
-                operations=[lambda s: self._update_record(s, model_class, test_data[0], {"updated": True})],
+                operations=[
+                    lambda s: self._update_record(
+                        s, model_class, test_data[0], {"updated": True}
+                    )
+                ],
                 expected_result=TransactionTestResult.SUCCESS,
                 concurrent_sessions=3,
             ),
@@ -344,7 +400,9 @@ class DatabaseTransactionTester:
                 name=f"read_write_conflicts_{model_class.__name__}",
                 operations=[
                     lambda s: self._read_record(s, model_class, test_data[0]),
-                    lambda s: self._update_record(s, model_class, test_data[0], {"version": 2}),
+                    lambda s: self._update_record(
+                        s, model_class, test_data[0], {"version": 2}
+                    ),
                     lambda s: asyncio.sleep(0.1),  # Hold transaction open
                 ],
                 expected_result=TransactionTestResult.SUCCESS,
@@ -367,7 +425,9 @@ class DatabaseTransactionTester:
         session.flush()
         return record
 
-    def _update_record(self, session: Session, model_class: type, filter_data: dict, update_data: dict) -> Any:
+    def _update_record(
+        self, session: Session, model_class: type, filter_data: dict, update_data: dict
+    ) -> Any:
         """Helper to update a database record"""
         record = session.query(model_class).filter_by(**filter_data).first()
         if record:
@@ -377,18 +437,24 @@ class DatabaseTransactionTester:
             session.flush()
         return record
 
-    def _read_record(self, session: Session, model_class: type, filter_data: dict) -> Any:
+    def _read_record(
+        self, session: Session, model_class: type, filter_data: dict
+    ) -> Any:
         """Helper to read a database record"""
         return session.query(model_class).filter_by(**filter_data).first()
 
-    def _verify_record_exists(self, session: Session, model_class: type, filter_data: dict) -> bool:
+    def _verify_record_exists(
+        self, session: Session, model_class: type, filter_data: dict
+    ) -> bool:
         """Verify a record exists"""
         record = session.query(model_class).filter_by(**filter_data).first()
         if not record:
             raise AssertionError(f"Record does not exist: {filter_data}")
         return True
 
-    def _verify_record_not_exists(self, session: Session, model_class: type, filter_data: dict) -> bool:
+    def _verify_record_not_exists(
+        self, session: Session, model_class: type, filter_data: dict
+    ) -> bool:
         """Verify a record does not exist"""
         record = session.query(model_class).filter_by(**filter_data).first()
         if record:
@@ -401,7 +467,9 @@ class DatabaseTransactionTester:
             return {"total": 0, "summary": "No tests run"}
 
         total = len(self.test_results)
-        successful = sum(1 for r in self.test_results if r.result == TransactionTestResult.SUCCESS)
+        successful = sum(
+            1 for r in self.test_results if r.result == TransactionTestResult.SUCCESS
+        )
         failed = total - successful
 
         avg_execution_time = sum(r.execution_time for r in self.test_results) / total
@@ -418,7 +486,9 @@ class DatabaseTransactionTester:
             "success_rate": successful / total * 100,
             "average_execution_time": avg_execution_time,
             "result_breakdown": result_counts,
-            "tests_with_rollbacks": sum(1 for r in self.test_results if r.rollback_occurred),
+            "tests_with_rollbacks": sum(
+                1 for r in self.test_results if r.rollback_occurred
+            ),
         }
 
 
@@ -426,7 +496,10 @@ class DatabaseTransactionTester:
 
 
 async def test_model_transactions(
-    database_url: str, model_class: type, test_data: list[dict], include_concurrent: bool = True
+    database_url: str,
+    model_class: type,
+    test_data: list[dict],
+    include_concurrent: bool = True,
 ) -> dict[str, Any]:
     """
     Comprehensive transaction testing for a model class.
@@ -464,7 +537,9 @@ async def test_model_transactions(
 
 
 async def validate_transaction_integrity(
-    database_url: str, operations: list[Callable], expected_state_validator: Callable[[Session], bool]
+    database_url: str,
+    operations: list[Callable],
+    expected_state_validator: Callable[[Session], bool],
 ) -> bool:
     """
     Validate that a series of operations maintains data integrity.

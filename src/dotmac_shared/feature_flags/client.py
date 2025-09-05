@@ -62,7 +62,10 @@ class FeatureFlagClient:
 
         # Initialize manager
         self.manager = FeatureFlagManager(
-            storage=self.storage, cache_ttl=cache_ttl, environment=environment, service_name=service_name
+            storage=self.storage,
+            cache_ttl=cache_ttl,
+            environment=environment,
+            service_name=service_name,
         )
 
         self._initialized = False
@@ -72,7 +75,9 @@ class FeatureFlagClient:
         if not self._initialized:
             await self.manager.initialize()
             self._initialized = True
-            logger.info(f"FeatureFlagClient initialized for {self.environment} environment")
+            logger.info(
+                f"FeatureFlagClient initialized for {self.environment} environment"
+            )
 
     async def shutdown(self):
         """Shutdown the client"""
@@ -90,21 +95,27 @@ class FeatureFlagClient:
         await self.shutdown()
 
     # Feature flag evaluation methods
-    async def is_enabled(self, flag_key: str, context: Optional[dict[str, Any]] = None) -> bool:
+    async def is_enabled(
+        self, flag_key: str, context: Optional[dict[str, Any]] = None
+    ) -> bool:
         """Check if a feature flag is enabled"""
         if not self._initialized:
             await self.initialize()
 
         return await self.manager.is_enabled(flag_key, context or {})
 
-    async def get_variant(self, flag_key: str, context: Optional[dict[str, Any]] = None) -> Optional[str]:
+    async def get_variant(
+        self, flag_key: str, context: Optional[dict[str, Any]] = None
+    ) -> Optional[str]:
         """Get A/B test variant for a feature flag"""
         if not self._initialized:
             await self.initialize()
 
         return await self.manager.get_variant(flag_key, context or {})
 
-    async def get_payload(self, flag_key: str, context: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
+    async def get_payload(
+        self, flag_key: str, context: Optional[dict[str, Any]] = None
+    ) -> Optional[dict[str, Any]]:
         """Get feature payload for a feature flag"""
         if not self._initialized:
             await self.initialize()
@@ -113,7 +124,12 @@ class FeatureFlagClient:
 
     # Feature flag management methods
     async def create_simple_flag(
-        self, key: str, name: str, description: str = "", enabled: bool = False, tags: Optional[list[str]] = None
+        self,
+        key: str,
+        name: str,
+        description: str = "",
+        enabled: bool = False,
+        tags: Optional[list[str]] = None,
     ) -> bool:
         """Create a simple on/off feature flag"""
         flag = FeatureFlag(
@@ -129,7 +145,12 @@ class FeatureFlagClient:
         return await self.manager.create_flag(flag)
 
     async def create_percentage_flag(
-        self, key: str, name: str, percentage: float, description: str = "", tags: Optional[list[str]] = None
+        self,
+        key: str,
+        name: str,
+        percentage: float,
+        description: str = "",
+        tags: Optional[list[str]] = None,
     ) -> bool:
         """Create a percentage-based rollout flag"""
         flag = FeatureFlag(
@@ -146,7 +167,12 @@ class FeatureFlagClient:
         return await self.manager.create_flag(flag)
 
     async def create_user_list_flag(
-        self, key: str, name: str, user_list: list[str], description: str = "", tags: Optional[list[str]] = None
+        self,
+        key: str,
+        name: str,
+        user_list: list[str],
+        description: str = "",
+        tags: Optional[list[str]] = None,
     ) -> bool:
         """Create a user list based flag"""
         flag = FeatureFlag(
@@ -301,17 +327,27 @@ class FeatureFlagClient:
 
     # Gradual rollout management
     async def start_gradual_rollout(
-        self, key: str, duration_hours: int = 24, start_percentage: float = 0.0, end_percentage: float = 100.0
+        self,
+        key: str,
+        duration_hours: int = 24,
+        start_percentage: float = 0.0,
+        end_percentage: float = 100.0,
     ) -> bool:
         """Start a gradual rollout for an existing flag"""
-        return await self.manager.start_gradual_rollout(key, start_percentage, end_percentage, duration_hours)
+        return await self.manager.start_gradual_rollout(
+            key, start_percentage, end_percentage, duration_hours
+        )
 
-    async def stop_gradual_rollout(self, key: str, final_percentage: Optional[float] = None) -> bool:
+    async def stop_gradual_rollout(
+        self, key: str, final_percentage: Optional[float] = None
+    ) -> bool:
         """Stop a gradual rollout"""
         return await self.manager.stop_gradual_rollout(key, final_percentage)
 
     # Flag information and management
-    async def list_flags(self, tags: Optional[list[str]] = None) -> list[dict[str, Any]]:
+    async def list_flags(
+        self, tags: Optional[list[str]] = None
+    ) -> list[dict[str, Any]]:
         """List all flags with their current status"""
         flags = await self.manager.list_flags(tags)
 
@@ -321,8 +357,12 @@ class FeatureFlagClient:
                 "key": flag.key,
                 "name": flag.name,
                 "description": flag.description,
-                "status": flag.status.value if hasattr(flag.status, "value") else flag.status,
-                "strategy": flag.strategy.value if hasattr(flag.strategy, "value") else flag.strategy,
+                "status": flag.status.value
+                if hasattr(flag.status, "value")
+                else flag.status,
+                "strategy": flag.strategy.value
+                if hasattr(flag.strategy, "value")
+                else flag.strategy,
                 "created_at": flag.created_at.isoformat(),
                 "updated_at": flag.updated_at.isoformat(),
                 "tags": flag.tags,
@@ -334,7 +374,9 @@ class FeatureFlagClient:
             elif flag.strategy == RolloutStrategy.USER_LIST:
                 flag_info["user_count"] = len(flag.user_list)
             elif flag.strategy == RolloutStrategy.GRADUAL and flag.gradual_rollout:
-                flag_info["current_percentage"] = flag.gradual_rollout.get_current_percentage()
+                flag_info[
+                    "current_percentage"
+                ] = flag.gradual_rollout.get_current_percentage()
             elif flag.strategy == RolloutStrategy.AB_TEST and flag.ab_test:
                 flag_info["variants"] = [v.name for v in flag.ab_test.variants]
 
@@ -361,7 +403,9 @@ class FeatureFlagClient:
 
         for flag_key, flag_config in config.items():
             try:
-                flag = FeatureFlag(key=flag_key, environments=[self.environment], **flag_config)
+                flag = FeatureFlag(
+                    key=flag_key, environments=[self.environment], **flag_config
+                )
                 results[flag_key] = await self.manager.create_flag(flag)
             except Exception as e:
                 logger.error(f"Error creating flag {flag_key}: {e}")
@@ -377,7 +421,11 @@ class FeatureFlagClient:
         for flag in flags:
             config[flag.key] = flag.model_dump(exclude={"created_at", "updated_at"})
 
-        return {"environment": self.environment, "exported_at": datetime.utcnow().isoformat(), "flags": config}
+        return {
+            "environment": self.environment,
+            "exported_at": datetime.utcnow().isoformat(),
+            "flags": config,
+        }
 
     # Testing utilities
     async def override_flag_for_testing(self, key: str, enabled: bool):

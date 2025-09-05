@@ -7,13 +7,21 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac.communications.events import create_memory_event_bus, create_redis_event_bus
 from dotmac.communications.events.message import Event as EventRecord
 from dotmac_shared.core.error_utils import publish_event
-from dotmac_shared.provisioning import provision_isp_container, validate_container_health
-from dotmac_shared.provisioning.core.models import InfrastructureType, ISPConfig, PlanType
+from dotmac_shared.provisioning import (
+    provision_isp_container,
+    validate_container_health,
+)
+from dotmac_shared.provisioning.core.models import (
+    InfrastructureType,
+    ISPConfig,
+    PlanType,
+)
 from dotmac_shared.workflows.task import create_sequential_workflow
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.websocket_manager import websocket_manager
 from ..database import async_session_maker
@@ -79,7 +87,11 @@ class OnboardingService:
             if not req:
                 return
 
-            plan = PlanType.PREMIUM if "advanced_analytics" in (request.enabled_features or []) else PlanType.STANDARD
+            plan = (
+                PlanType.PREMIUM
+                if "advanced_analytics" in (request.enabled_features or [])
+                else PlanType.STANDARD
+            )
             isp_config = ISPConfig(
                 tenant_name=request.tenant_info.slug,
                 display_name=request.tenant_info.name,
@@ -89,13 +101,18 @@ class OnboardingService:
 
             async def _emit(event_type: str, payload: dict[str, Any]):
                 if _event_bus:
-                    await publish_event(_event_bus, EventRecord(event_type=event_type, data=payload))
+                    await publish_event(
+                        _event_bus, EventRecord(event_type=event_type, data=payload)
+                    )
                 # Also broadcast to admins via WS
                 try:
                     await websocket_manager.broadcast_to_admins(
                         {
                             "type": event_type,
-                            "onboarding": {"workflow_id": req.workflow_id, "request_id": str(req.id)},
+                            "onboarding": {
+                                "workflow_id": req.workflow_id,
+                                "request_id": str(req.id),
+                            },
                             "payload": payload,
                         }
                     )
@@ -104,10 +121,17 @@ class OnboardingService:
                     pass
 
             async def mark_step(
-                key: str, status: StepStatus, data: Optional[dict[str, Any]] = None, error: Optional[str] = None
+                key: str,
+                status: StepStatus,
+                data: Optional[dict[str, Any]] = None,
+                error: Optional[str] = None,
             ):
-                step = await step_repo.upsert_step(req.id, key, key.replace("_", " ").title())
-                await step_repo.set_status(step.id, status, error_message=error, data=data or {})
+                step = await step_repo.upsert_step(
+                    req.id, key, key.replace("_", " ").title()
+                )
+                await step_repo.set_status(
+                    step.id, status, error_message=error, data=data or {}
+                )
                 await _emit(
                     "onboarding.step.updated",
                     {
@@ -151,7 +175,9 @@ class OnboardingService:
                     "provision_container",
                     StepStatus.COMPLETED if result.success else StepStatus.FAILED,
                     data={"endpoint_url": result.endpoint_url},
-                    error=None if result.success else (result.error_message or "provisioning_failed"),
+                    error=None
+                    if result.success
+                    else (result.error_message or "provisioning_failed"),
                 )
                 if not result.success:
                     raise RuntimeError(result.error_message or "Provisioning failed")
@@ -160,11 +186,14 @@ class OnboardingService:
                 await mark_step("validate_health", StepStatus.RUNNING)
                 if not req.endpoint_url:
                     raise RuntimeError("No endpoint URL for health validation")
-                health = await validate_container_health(base_url=req.endpoint_url, timeout=60)
+                health = await validate_container_health(
+                    base_url=req.endpoint_url, timeout=60
+                )
                 await mark_step(
                     "validate_health",
                     StepStatus.COMPLETED
-                    if getattr(health, "overall_status", None) and health.overall_status.value == "healthy"
+                    if getattr(health, "overall_status", None)
+                    and health.overall_status.value == "healthy"
                     else StepStatus.FAILED,
                     data={
                         "health": getattr(health, "overall_status", None).value
@@ -196,5 +225,7 @@ class OnboardingService:
             finally:
                 await session.flush()
 
-    async def start_async(self, req: OnboardingRequest, request: TenantOnboardingRequest):
+    async def start_async(
+        self, req: OnboardingRequest, request: TenantOnboardingRequest
+    ):
         asyncio.create_task(self.run_workflow(req.id, request))

@@ -105,7 +105,12 @@ class TraceSpan:
 
     def add_log(self, message: str, level: str = "info", **fields):
         """Add a log entry to the span."""
-        log_entry = {"timestamp": datetime.now(timezone.utc).isoformat(), "level": level, "message": message, **fields}
+        log_entry = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "level": level,
+            "message": message,
+            **fields,
+        }
         self.logs.append(log_entry)
 
     def to_dict(self) -> dict[str, Any]:
@@ -177,29 +182,48 @@ class MetricsCollector:
         """Record a metric value."""
         self.metrics[metric.name].append(metric)
 
-    def increment_counter(self, name: str, value: int | float = 1, labels: dict[str, str] | None = None):
+    def increment_counter(
+        self, name: str, value: int | float = 1, labels: dict[str, str] | None = None
+    ):
         """Increment a counter metric."""
-        metric = Metric(name=name, value=value, metric_type=MetricType.COUNTER, labels=labels or {})
+        metric = Metric(
+            name=name, value=value, metric_type=MetricType.COUNTER, labels=labels or {}
+        )
         self.record_metric(metric)
 
-    def set_gauge(self, name: str, value: int | float, labels: dict[str, str] | None = None):
+    def set_gauge(
+        self, name: str, value: int | float, labels: dict[str, str] | None = None
+    ):
         """Set a gauge metric value."""
-        metric = Metric(name=name, value=value, metric_type=MetricType.GAUGE, labels=labels or {})
+        metric = Metric(
+            name=name, value=value, metric_type=MetricType.GAUGE, labels=labels or {}
+        )
         self.record_metric(metric)
 
-    def record_histogram(self, name: str, value: int | float, labels: dict[str, str] | None = None):
+    def record_histogram(
+        self, name: str, value: int | float, labels: dict[str, str] | None = None
+    ):
         """Record a histogram metric."""
-        metric = Metric(name=name, value=value, metric_type=MetricType.HISTOGRAM, labels=labels or {})
+        metric = Metric(
+            name=name,
+            value=value,
+            metric_type=MetricType.HISTOGRAM,
+            labels=labels or {},
+        )
         self.record_metric(metric)
 
-    def get_metric_values(self, name: str, time_range_minutes: int = 60) -> list[Metric]:
+    def get_metric_values(
+        self, name: str, time_range_minutes: int = 60
+    ) -> list[Metric]:
         """Get metric values within a time range."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=time_range_minutes)
         metrics = self.metrics.get(name, deque())
 
         return [m for m in metrics if m.timestamp >= cutoff_time]
 
-    def get_metric_summary(self, name: str, time_range_minutes: int = 60) -> dict[str, Any]:
+    def get_metric_summary(
+        self, name: str, time_range_minutes: int = 60
+    ) -> dict[str, Any]:
         """Get summary statistics for a metric."""
         values = self.get_metric_values(name, time_range_minutes)
         if not values:
@@ -263,17 +287,28 @@ class DistributedTracer:
         """Get summary information for a trace."""
         spans = self.get_trace(trace_id)
         if not spans:
-            return {"trace_id": trace_id, "span_count": 0, "services": [], "duration_ms": 0}
+            return {
+                "trace_id": trace_id,
+                "span_count": 0,
+                "services": [],
+                "duration_ms": 0,
+            }
 
         services = list({span.service_name for span in spans})
-        total_duration = max((span.duration_ms or 0) for span in spans if span.duration_ms) if spans else 0
+        total_duration = (
+            max((span.duration_ms or 0) for span in spans if span.duration_ms)
+            if spans
+            else 0
+        )
 
         return {
             "trace_id": trace_id,
             "span_count": len(spans),
             "services": services,
             "duration_ms": total_duration,
-            "status": "error" if any(span.status == "error" for span in spans) else "ok",
+            "status": "error"
+            if any(span.status == "error" for span in spans)
+            else "ok",
         }
 
 
@@ -422,7 +457,11 @@ class HealthMonitor:
 
     def get_service_health(self, service_name: str) -> dict[str, Any]:
         """Get health status for a specific service."""
-        service_checks = [check for check in self.health_checks.values() if check.service_name == service_name]
+        service_checks = [
+            check
+            for check in self.health_checks.values()
+            if check.service_name == service_name
+        ]
 
         if not service_checks:
             return {"service_name": service_name, "status": "unknown", "checks": []}
@@ -443,7 +482,9 @@ class HealthMonitor:
                 {
                     "name": check.name,
                     "status": check.status,
-                    "last_check": check.last_check.isoformat() if check.last_check else None,
+                    "last_check": check.last_check.isoformat()
+                    if check.last_check
+                    else None,
                     "response_time_ms": check.response_time_ms,
                     "error": check.error_message,
                 }
@@ -455,7 +496,13 @@ class HealthMonitor:
         """Get overall system health summary."""
         all_checks = list(self.health_checks.values())
         if not all_checks:
-            return {"status": "unknown", "total_checks": 0, "healthy": 0, "unhealthy": 0, "degraded": 0}
+            return {
+                "status": "unknown",
+                "total_checks": 0,
+                "healthy": 0,
+                "unhealthy": 0,
+                "degraded": 0,
+            }
 
         status_counts = defaultdict(int)
         for check in all_checks:
@@ -546,7 +593,11 @@ class MonitoringStack:
         metrics = [
             ("http_requests_total", MetricType.COUNTER, "Total HTTP requests"),
             ("http_request_duration_ms", MetricType.HISTOGRAM, "HTTP request duration"),
-            ("service_health_status", MetricType.GAUGE, "Service health status (1=healthy, 0=unhealthy)"),
+            (
+                "service_health_status",
+                MetricType.GAUGE,
+                "Service health status (1=healthy, 0=unhealthy)",
+            ),
             ("active_connections", MetricType.GAUGE, "Number of active connections"),
             ("memory_usage_bytes", MetricType.GAUGE, "Memory usage in bytes"),
             ("cpu_usage_percent", MetricType.GAUGE, "CPU usage percentage"),
@@ -561,15 +612,52 @@ class MonitoringStack:
     def _setup_default_alerts(self):
         """Setup default alert rules."""
         default_alerts = [
-            ("High Error Rate", "system", "error_rate", "greater_than", 5.0, AlertSeverity.HIGH),
-            ("Low Cache Hit Rate", "system", "cache_hit_rate", "less_than", 50.0, AlertSeverity.MEDIUM),
-            ("High CPU Usage", "system", "cpu_usage_percent", "greater_than", 80.0, AlertSeverity.HIGH),
-            ("High Memory Usage", "system", "memory_usage_bytes", "greater_than", 1000000000, AlertSeverity.HIGH),
-            ("Service Unhealthy", "system", "service_health_status", "less_than", 1.0, AlertSeverity.CRITICAL),
+            (
+                "High Error Rate",
+                "system",
+                "error_rate",
+                "greater_than",
+                5.0,
+                AlertSeverity.HIGH,
+            ),
+            (
+                "Low Cache Hit Rate",
+                "system",
+                "cache_hit_rate",
+                "less_than",
+                50.0,
+                AlertSeverity.MEDIUM,
+            ),
+            (
+                "High CPU Usage",
+                "system",
+                "cpu_usage_percent",
+                "greater_than",
+                80.0,
+                AlertSeverity.HIGH,
+            ),
+            (
+                "High Memory Usage",
+                "system",
+                "memory_usage_bytes",
+                "greater_than",
+                1000000000,
+                AlertSeverity.HIGH,
+            ),
+            (
+                "Service Unhealthy",
+                "system",
+                "service_health_status",
+                "less_than",
+                1.0,
+                AlertSeverity.CRITICAL,
+            ),
         ]
 
         for name, service, metric, condition, threshold, severity in default_alerts:
-            self.alert_manager.add_alert_rule(name, service, metric, condition, threshold, severity)
+            self.alert_manager.add_alert_rule(
+                name, service, metric, condition, threshold, severity
+            )
 
     async def _register_service_health_checks(self):
         """Register health checks for discovered services."""
@@ -636,14 +724,22 @@ class MonitoringStack:
         # Collect from service mesh
         if self.service_mesh:
             mesh_metrics = self.service_mesh.get_mesh_metrics()
-            self.metrics_collector.set_gauge("active_connections", mesh_metrics.get("active_connections", 0))
-            self.metrics_collector.set_gauge("service_success_rate", mesh_metrics.get("success_rate_percent", 0))
+            self.metrics_collector.set_gauge(
+                "active_connections", mesh_metrics.get("active_connections", 0)
+            )
+            self.metrics_collector.set_gauge(
+                "service_success_rate", mesh_metrics.get("success_rate_percent", 0)
+            )
 
         # Collect from API gateway
         if self.api_gateway and hasattr(self.api_gateway, "metrics"):
             gateway_metrics = self.api_gateway.metrics.get_summary()
-            self.metrics_collector.increment_counter("http_requests_total", gateway_metrics.get("total_requests", 0))
-            self.metrics_collector.set_gauge("error_rate", 100 - gateway_metrics.get("success_rate", 100))
+            self.metrics_collector.increment_counter(
+                "http_requests_total", gateway_metrics.get("total_requests", 0)
+            )
+            self.metrics_collector.set_gauge(
+                "error_rate", 100 - gateway_metrics.get("success_rate", 100)
+            )
 
         # Collect from performance service
         if self.performance_service:
@@ -652,8 +748,12 @@ class MonitoringStack:
                 cache_metrics = perf_summary.get("cache_stats", {})
                 service_metrics = perf_summary.get("service_metrics", {})
 
-                self.metrics_collector.set_gauge("cache_hit_rate", cache_metrics.get("hit_rate_percent", 0))
-                self.metrics_collector.set_gauge("error_rate", service_metrics.get("error_rate", 0))
+                self.metrics_collector.set_gauge(
+                    "cache_hit_rate", cache_metrics.get("hit_rate_percent", 0)
+                )
+                self.metrics_collector.set_gauge(
+                    "error_rate", service_metrics.get("error_rate", 0)
+                )
             except Exception as e:
                 logger.warning(f"Failed to collect performance metrics: {e}")
 
@@ -678,9 +778,13 @@ class MonitoringStack:
         """Finish a trace span."""
         self.tracer.finish_span(span_id, status)
 
-    def record_metric(self, name: str, value: int | float, labels: dict[str, str] | None = None):
+    def record_metric(
+        self, name: str, value: int | float, labels: dict[str, str] | None = None
+    ):
         """Record a custom metric."""
-        metric = Metric(name=name, value=value, metric_type=MetricType.GAUGE, labels=labels or {})
+        metric = Metric(
+            name=name, value=value, metric_type=MetricType.GAUGE, labels=labels or {}
+        )
         self.metrics_collector.record_metric(metric)
 
     def get_system_overview(self) -> dict[str, Any]:
@@ -690,8 +794,15 @@ class MonitoringStack:
 
         # Get key metrics
         key_metrics = {}
-        for metric_name in ["cpu_usage_percent", "memory_usage_bytes", "error_rate", "cache_hit_rate"]:
-            summary = self.metrics_collector.get_metric_summary(metric_name, 5)  # Last 5 minutes
+        for metric_name in [
+            "cpu_usage_percent",
+            "memory_usage_bytes",
+            "error_rate",
+            "cache_hit_rate",
+        ]:
+            summary = self.metrics_collector.get_metric_summary(
+                metric_name, 5
+            )  # Last 5 minutes
             key_metrics[metric_name] = summary.get("latest", 0)
 
         return {
@@ -710,9 +821,15 @@ class MonitoringStack:
 
         # Get service-specific metrics
         service_metrics = {}
-        for metric_name in ["http_requests_total", "http_request_duration_ms", "error_rate"]:
+        for metric_name in [
+            "http_requests_total",
+            "http_request_duration_ms",
+            "error_rate",
+        ]:
             values = self.metrics_collector.get_metric_values(metric_name, 60)
-            service_values = [m for m in values if m.labels.get("service") == service_name]
+            service_values = [
+                m for m in values if m.labels.get("service") == service_name
+            ]
             if service_values:
                 service_metrics[metric_name] = [m.value for m in service_values]
             else:
@@ -729,7 +846,10 @@ class MonitoringStack:
         """Export metrics in Prometheus format."""
         lines = []
 
-        for metric_name, metric_def in self.metrics_collector.metric_definitions.items():
+        for (
+            metric_name,
+            metric_def,
+        ) in self.metrics_collector.metric_definitions.items():
             # Add help text
             if metric_def["help"]:
                 lines.append(f"# HELP {metric_name} {metric_def['help']}")
@@ -749,13 +869,21 @@ class MonitoringStackFactory:
     """Factory for creating monitoring stack instances."""
 
     @staticmethod
-    def create_monitoring_stack(db_session: AsyncSession, tenant_id: str, **integrations) -> MonitoringStack:
+    def create_monitoring_stack(
+        db_session: AsyncSession, tenant_id: str, **integrations
+    ) -> MonitoringStack:
         """Create a monitoring stack instance."""
-        return MonitoringStack(db_session=db_session, tenant_id=tenant_id, **integrations)
+        return MonitoringStack(
+            db_session=db_session, tenant_id=tenant_id, **integrations
+        )
 
     @staticmethod
     def create_health_check(
-        name: str, service_name: str, endpoint: str, interval_seconds: int = 30, timeout_seconds: int = 5
+        name: str,
+        service_name: str,
+        endpoint: str,
+        interval_seconds: int = 30,
+        timeout_seconds: int = 5,
     ) -> HealthCheck:
         """Create a health check configuration."""
         return HealthCheck(

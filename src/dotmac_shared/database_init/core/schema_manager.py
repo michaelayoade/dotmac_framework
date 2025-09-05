@@ -9,9 +9,8 @@ from typing import Any, Optional
 
 import asyncpg
 import structlog
-from tenacity import retry, stop_after_attempt, wait_exponential
-
 from alembic.config import Config
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .database_creator import DatabaseInstance
 
@@ -21,9 +20,13 @@ logger = structlog.get_logger(__name__)
 class SchemaManager:
     """Manages database schema migrations and initialization."""
 
-    def __init__(self, db_instance: DatabaseInstance, migrations_path: Optional[str] = None):
+    def __init__(
+        self, db_instance: DatabaseInstance, migrations_path: Optional[str] = None
+    ):
         self.db_instance = db_instance
-        self.logger = logger.bind(component="schema_manager", database=db_instance.database_name)
+        self.logger = logger.bind(
+            component="schema_manager", database=db_instance.database_name
+        )
 
         # Set up migrations path
         self.migrations_path = migrations_path or self._get_default_migrations_path()
@@ -45,7 +48,9 @@ class SchemaManager:
         alembic_cfg.set_main_option("script_location", self.migrations_path)
 
         # Set the database URL
-        alembic_cfg.set_main_option("sqlalchemy.url", self.db_instance.connection_string)
+        alembic_cfg.set_main_option(
+            "sqlalchemy.url", self.db_instance.connection_string
+        )
 
         # Set other necessary options
         alembic_cfg.set_main_option(
@@ -56,7 +61,9 @@ class SchemaManager:
 
         return alembic_cfg
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
     async def initialize_schema(self) -> bool:
         """
         Initialize the database schema using Alembic migrations.
@@ -85,7 +92,9 @@ class SchemaManager:
                 raise RuntimeError("Schema integrity check failed")
 
         except Exception as e:
-            self.logger.error("Schema initialization failed", error=str(e), exc_info=True)
+            self.logger.error(
+                "Schema initialization failed", error=str(e), exc_info=True
+            )
             return False
 
     async def _validate_database_connection(self) -> bool:
@@ -326,7 +335,9 @@ def downgrade() -> None:
             conn = await asyncpg.connect(**self.db_instance.get_connection_params())
 
             try:
-                revision = await conn.fetchval("SELECT version_num FROM alembic_version LIMIT 1")
+                revision = await conn.fetchval(
+                    "SELECT version_num FROM alembic_version LIMIT 1"
+                )
                 return revision
 
             finally:
@@ -380,7 +391,9 @@ def downgrade() -> None:
                     migration["revision"],
                 )
 
-            self.logger.info("Migration applied successfully", revision=migration["revision"])
+            self.logger.info(
+                "Migration applied successfully", revision=migration["revision"]
+            )
 
         except Exception as e:
             self.logger.error(
@@ -421,7 +434,9 @@ def downgrade() -> None:
                 # Store backup metadata in Redis (leveraging existing coordination)
                 await self._store_backup_metadata(backup_info)
 
-                self.logger.info("Pre-migration backup created", backup_name=backup_name)
+                self.logger.info(
+                    "Pre-migration backup created", backup_name=backup_name
+                )
                 return backup_info
 
             finally:
@@ -519,20 +534,26 @@ def downgrade() -> None:
                 return True
 
             # Get available migrations for rollback path
-            rollback_path = await self._get_rollback_path(current_revision, target_revision)
+            rollback_path = await self._get_rollback_path(
+                current_revision, target_revision
+            )
 
             # Apply rollbacks in reverse order
             for migration in reversed(rollback_path):
                 await self._apply_rollback_migration(migration)
 
-            self.logger.info("Rollback completed successfully", target_revision=target_revision)
+            self.logger.info(
+                "Rollback completed successfully", target_revision=target_revision
+            )
             return True
 
         except Exception as e:
             self.logger.error("Rollback failed", error=str(e))
             return False
 
-    async def _get_rollback_path(self, from_revision: str, to_revision: str) -> list[dict[str, Any]]:
+    async def _get_rollback_path(
+        self, from_revision: str, to_revision: str
+    ) -> list[dict[str, Any]]:
         """Get the path of migrations to rollback."""
         # For now, return empty list - in production this would parse migration dependencies
         available_migrations = await self._get_available_migrations()
@@ -540,7 +561,10 @@ def downgrade() -> None:
         # Simple implementation: return migrations between revisions
         rollback_migrations = []
         for migration in available_migrations:
-            if migration["revision"] > to_revision and migration["revision"] <= from_revision:
+            if (
+                migration["revision"] > to_revision
+                and migration["revision"] <= from_revision
+            ):
                 rollback_migrations.append(migration)
 
         return rollback_migrations
@@ -557,7 +581,9 @@ def downgrade() -> None:
                 await self._execute_rollback_file(conn, migration)
 
                 # Update version table to previous revision
-                previous_revision = await self._get_previous_revision(migration["revision"])
+                previous_revision = await self._get_previous_revision(
+                    migration["revision"]
+                )
 
                 await conn.execute("DELETE FROM alembic_version")
                 if previous_revision:
@@ -649,9 +675,17 @@ def downgrade() -> None:
             if coordinator._redis_client:
                 backups = await coordinator._redis_client.hgetall("migration_backups")
                 for backup_name, backup_data in backups.items():
-                    if revision in (backup_name.decode() if isinstance(backup_name, bytes) else backup_name):
+                    if revision in (
+                        backup_name.decode()
+                        if isinstance(backup_name, bytes)
+                        else backup_name
+                    ):
                         try:
-                            return json.loads(backup_data.decode() if isinstance(backup_data, bytes) else backup_data)
+                            return json.loads(
+                                backup_data.decode()
+                                if isinstance(backup_data, bytes)
+                                else backup_data
+                            )
                         except (json.JSONDecodeError, ValueError) as e:
                             self.logger.warning(
                                 "Failed to parse backup data",

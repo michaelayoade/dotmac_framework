@@ -1,4 +1,5 @@
 import logging
+
 logger = logging.getLogger(__name__)
 
 """
@@ -28,7 +29,14 @@ try:
     from ..operations.billing_runs import BillingRunOperation
     from ..operations.service_provisioning import ServiceProvisioningOperation
     from ..operations.tenant_provisioning import TenantProvisioningOperation
-    from ..policies import BusinessPolicy, PolicyContext, PolicyEngine, PolicyResult, PolicyRule, RuleOperator
+    from ..policies import (
+        BusinessPolicy,
+        PolicyContext,
+        PolicyEngine,
+        PolicyResult,
+        PolicyRule,
+        RuleOperator,
+    )
     from ..policies.commission_rules import CommissionRulesEngine
     from ..policies.plan_eligibility import PlanEligibilityEngine
 except ImportError as e:
@@ -120,7 +128,9 @@ class TestPolicyFramework:
             "location": {"service_coverage": True},
         }
 
-        result = engine.check_plan_eligibility("residential_basic", customer_data, context)
+        result = engine.check_plan_eligibility(
+            "residential_basic", customer_data, context
+        )
 
         assert result["eligible"] is True
         assert result["plan_type"] == "residential_basic"
@@ -131,7 +141,9 @@ class TestPolicyFramework:
 
         engine = CommissionRulesEngine()
 
-        context = PolicyContext(tenant_id="test-tenant", operation="commission_validation")
+        context = PolicyContext(
+            tenant_id="test-tenant", operation="commission_validation"
+        )
 
         partner_data = {
             "id": "partner123",
@@ -178,7 +190,9 @@ class TestIdempotencyFramework:
     def test_operation_result_structure(self):
         """Test operation result structure"""
 
-        result = OperationResult(success=True, data={"result": "test_data"}, execution_time_ms=100)
+        result = OperationResult(
+            success=True, data={"result": "test_data"}, execution_time_ms=100
+        )
 
         assert result.success is True
         assert result.data["result"] == "test_data"
@@ -200,7 +214,9 @@ class MockIdempotentOperation(IdempotentOperation[dict[str, Any]]):
         if "required_field" not in operation_data:
             raise ValueError("Missing required field")
 
-    async def execute(self, operation_data: dict[str, Any], context: dict[str, Any] = None) -> dict[str, Any]:
+    async def execute(
+        self, operation_data: dict[str, Any], context: dict[str, Any] = None
+    ) -> dict[str, Any]:
         await asyncio.sleep(0.01)  # Simulate async work
         return {"result": "success", "data": operation_data}
 
@@ -214,7 +230,12 @@ class TestBusinessOperations:
         operation = TenantProvisioningOperation()
 
         # Test valid data
-        valid_data = {"name": "Test Tenant", "domain": "test-tenant", "plan": "basic", "admin_email": "admin@test.com"}
+        valid_data = {
+            "name": "Test Tenant",
+            "domain": "test-tenant",
+            "plan": "basic",
+            "admin_email": "admin@test.com",
+        }
 
         # Should not raise exception
         operation.validate_operation_data(valid_data)
@@ -288,7 +309,9 @@ class TestExceptionHandling:
         """Test PolicyViolationError structure"""
 
         error = PolicyViolationError(
-            message="Policy violated", policy_name="test_policy", violated_rules=["rule1", "rule2"]
+            message="Policy violated",
+            policy_name="test_policy",
+            violated_rules=["rule1", "rule2"],
         )
 
         assert error.policy_name == "test_policy"
@@ -359,7 +382,11 @@ def test_module_imports():
 
     # Test operations imports
     try:
-        from ..operations import BillingRunOperation, ServiceProvisioningOperation, TenantProvisioningOperation
+        from ..operations import (
+            BillingRunOperation,
+            ServiceProvisioningOperation,
+            TenantProvisioningOperation,
+        )
 
         logger.info("✅ Operation modules imported successfully")
     except ImportError as e:
@@ -367,7 +394,12 @@ def test_module_imports():
 
     # Test exceptions imports
     try:
-        from ..exceptions import BusinessLogicError, IdempotencyError, PolicyViolationError, SagaError
+        from ..exceptions import (
+            BusinessLogicError,
+            IdempotencyError,
+            PolicyViolationError,
+            SagaError,
+        )
 
         logger.info("✅ Exception modules imported successfully")
     except ImportError as e:

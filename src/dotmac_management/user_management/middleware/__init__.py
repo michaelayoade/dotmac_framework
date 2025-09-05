@@ -8,4 +8,8 @@ from .auth_middleware import (
     add_jwt_authentication_middleware,
 )
 
-__all__ = ["JWTAuthenticationMiddleware", "APIKeyAuthenticationMiddleware", "add_jwt_authentication_middleware"]
+__all__ = [
+    "JWTAuthenticationMiddleware",
+    "APIKeyAuthenticationMiddleware",
+    "add_jwt_authentication_middleware",
+]

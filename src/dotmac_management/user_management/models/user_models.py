@@ -6,25 +6,14 @@ Leverages existing base model patterns for DRY approach.
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from dotmac_management.models.base import BaseModel
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-    Text,
-    UniqueConstraint,
-)
-from sqlalchemy import (
-    Enum as SQLEnum,
-)
+from sqlalchemy import JSON, Boolean, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
+
+from dotmac_management.models.base import BaseModel
 
 from ..schemas.user_schemas import UserStatus, UserType
 
@@ -38,18 +27,35 @@ class UserModel(BaseModel):
     __tablename__ = "users_v2"
 
     # === Core Identity ===
-    username = Column(String(50), nullable=False, unique=True, index=True, comment="Unique username for login")
-    email = Column(String(255), nullable=False, unique=True, index=True, comment="Primary email address")
+    username = Column(
+        String(50),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="Unique username for login",
+    )
+    email = Column(
+        String(255),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="Primary email address",
+    )
 
     # === Personal Information ===
     first_name = Column(String(100), nullable=False, comment="User's first name")
     last_name = Column(String(100), nullable=False, comment="User's last name")
     middle_name = Column(String(100), nullable=True, comment="User's middle name")
-    preferred_name = Column(String(100), nullable=True, comment="Preferred display name")
+    preferred_name = Column(
+        String(100), nullable=True, comment="Preferred display name"
+    )
 
     # === Classification ===
     user_type = Column(
-        SQLEnum(UserType, name="user_type_enum"), nullable=False, index=True, comment="Type of user account"
+        SQLEnum(UserType, name="user_type_enum"),
+        nullable=False,
+        index=True,
+        comment="Type of user account",
     )
     status = Column(
         SQLEnum(UserStatus, name="user_status_enum"),
@@ -60,15 +66,29 @@ class UserModel(BaseModel):
     )
 
     # === Status Flags ===
-    is_active = Column(Boolean, nullable=False, default=True, index=True, comment="Account active flag")
-    is_verified = Column(Boolean, nullable=False, default=False, comment="Email verification status")
-    is_superuser = Column(Boolean, nullable=False, default=False, comment="Superuser privileges flag")
+    is_active = Column(
+        Boolean, nullable=False, default=True, index=True, comment="Account active flag"
+    )
+    is_verified = Column(
+        Boolean, nullable=False, default=False, comment="Email verification status"
+    )
+    is_superuser = Column(
+        Boolean, nullable=False, default=False, comment="Superuser privileges flag"
+    )
 
     # === Verification Status ===
-    email_verified = Column(Boolean, nullable=False, default=False, comment="Email verification flag")
-    phone_verified = Column(Boolean, nullable=False, default=False, comment="Phone verification flag")
-    email_verified_at = Column(DateTime, nullable=True, comment="Email verification timestamp")
-    phone_verified_at = Column(DateTime, nullable=True, comment="Phone verification timestamp")
+    email_verified = Column(
+        Boolean, nullable=False, default=False, comment="Email verification flag"
+    )
+    phone_verified = Column(
+        Boolean, nullable=False, default=False, comment="Phone verification flag"
+    )
+    email_verified_at = Column(
+        DateTime, nullable=True, comment="Email verification timestamp"
+    )
+    phone_verified_at = Column(
+        DateTime, nullable=True, comment="Phone verification timestamp"
+    )
 
     # === Professional Information ===
     job_title = Column(String(200), nullable=True, comment="Job title")
@@ -80,54 +100,109 @@ class UserModel(BaseModel):
     mobile = Column(String(20), nullable=True, comment="Mobile phone number")
 
     # === Settings ===
-    timezone = Column(String(50), nullable=False, default="UTC", comment="User timezone")
-    language = Column(String(10), nullable=False, default="en", comment="Preferred language")
+    timezone = Column(
+        String(50), nullable=False, default="UTC", comment="User timezone"
+    )
+    language = Column(
+        String(10), nullable=False, default="en", comment="Preferred language"
+    )
 
     # === Security Information ===
-    password_changed_at = Column(DateTime, nullable=True, comment="Last password change timestamp")
-    mfa_enabled = Column(Boolean, nullable=False, default=False, comment="Multi-factor authentication enabled")
-    mfa_methods = Column(JSON, nullable=True, default=list, comment="Enabled MFA methods")
+    password_changed_at = Column(
+        DateTime, nullable=True, comment="Last password change timestamp"
+    )
+    mfa_enabled = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        comment="Multi-factor authentication enabled",
+    )
+    mfa_methods = Column(
+        JSON, nullable=True, default=list, comment="Enabled MFA methods"
+    )
 
     # === Activity Tracking ===
     last_login = Column(DateTime, nullable=True, comment="Last successful login")
-    login_count = Column(Integer, nullable=False, default=0, comment="Total login count")
-    failed_login_count = Column(Integer, nullable=False, default=0, comment="Failed login attempts")
-    locked_until = Column(DateTime, nullable=True, comment="Account locked until timestamp")
+    login_count = Column(
+        Integer, nullable=False, default=0, comment="Total login count"
+    )
+    failed_login_count = Column(
+        Integer, nullable=False, default=0, comment="Failed login attempts"
+    )
+    locked_until = Column(
+        DateTime, nullable=True, comment="Account locked until timestamp"
+    )
 
     # === Profile Information ===
     avatar_url = Column(String(500), nullable=True, comment="Avatar image URL")
 
     # === Multi-tenant Support ===
     tenant_id = Column(
-        UUID(as_uuid=True), ForeignKey("customer_tenants.id"), nullable=True, index=True, comment="Tenant association"
+        UUID(as_uuid=True),
+        ForeignKey("customer_tenants.id"),
+        nullable=True,
+        index=True,
+        comment="Tenant association",
     )
 
     # === Platform-specific Data ===
-    platform_metadata = Column(JSON, nullable=True, default=dict, comment="Platform-specific metadata")
+    platform_metadata = Column(
+        JSON, nullable=True, default=dict, comment="Platform-specific metadata"
+    )
 
     # === Legal Compliance ===
-    terms_accepted = Column(Boolean, nullable=False, default=False, comment="Terms of service accepted")
-    privacy_accepted = Column(Boolean, nullable=False, default=False, comment="Privacy policy accepted")
-    marketing_consent = Column(Boolean, nullable=False, default=False, comment="Marketing communications consent")
-    terms_accepted_at = Column(DateTime, nullable=True, comment="Terms acceptance timestamp")
-    privacy_accepted_at = Column(DateTime, nullable=True, comment="Privacy acceptance timestamp")
+    terms_accepted = Column(
+        Boolean, nullable=False, default=False, comment="Terms of service accepted"
+    )
+    privacy_accepted = Column(
+        Boolean, nullable=False, default=False, comment="Privacy policy accepted"
+    )
+    marketing_consent = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        comment="Marketing communications consent",
+    )
+    terms_accepted_at = Column(
+        DateTime, nullable=True, comment="Terms acceptance timestamp"
+    )
+    privacy_accepted_at = Column(
+        DateTime, nullable=True, comment="Privacy acceptance timestamp"
+    )
 
     # === Relationships ===
     tenant = relationship("Tenant", back_populates="users")
 
-    profile = relationship("UserProfileModel", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    profile = relationship(
+        "UserProfileModel",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
-    passwords = relationship("UserPasswordModel", back_populates="user", cascade="all, delete-orphan")
+    passwords = relationship(
+        "UserPasswordModel", back_populates="user", cascade="all, delete-orphan"
+    )
 
-    sessions = relationship("UserSessionModel", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship(
+        "UserSessionModel", back_populates="user", cascade="all, delete-orphan"
+    )
 
-    mfa_settings = relationship("UserMFAModel", back_populates="user", cascade="all, delete-orphan")
+    mfa_settings = relationship(
+        "UserMFAModel", back_populates="user", cascade="all, delete-orphan"
+    )
 
-    api_keys = relationship("UserApiKeyModel", back_populates="user", cascade="all, delete-orphan")
+    api_keys = relationship(
+        "UserApiKeyModel", back_populates="user", cascade="all, delete-orphan"
+    )
 
-    roles = relationship("UserRoleModel", back_populates="user", cascade="all, delete-orphan")
+    roles = relationship(
+        "UserRoleModel", back_populates="user", cascade="all, delete-orphan"
+    )
 
-    audit_events = relationship("AuthAuditModel", back_populates="user", cascade="all, delete-orphan")
+    audit_events = relationship(
+        "AuthAuditModel", back_populates="user", cascade="all, delete-orphan"
+    )
 
     # === Indexes for Performance ===
     __table_args__ = (
@@ -168,7 +243,12 @@ class UserModel(BaseModel):
     @hybrid_property
     def can_login(self) -> bool:
         """Check if user can currently login."""
-        return self.is_active and self.status == UserStatus.ACTIVE and not self.is_locked and self.email_verified
+        return (
+            self.is_active
+            and self.status == UserStatus.ACTIVE
+            and not self.is_locked
+            and self.email_verified
+        )
 
     @hybrid_property
     def needs_password_change(self) -> bool:
@@ -186,7 +266,9 @@ class UserModel(BaseModel):
         """Lock user account for specified duration."""
         from datetime import timedelta
 
-        self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)
+        self.locked_until = datetime.now(timezone.utc) + timedelta(
+            minutes=duration_minutes
+        )
         self.failed_login_count += 1
 
     def unlock_account(self) -> None:
@@ -226,7 +308,9 @@ class UserModel(BaseModel):
             if not self.platform_metadata:
                 self.platform_metadata = {}
             self.platform_metadata["deactivation_reason"] = reason
-            self.platform_metadata["deactivated_at"] = datetime.now(timezone.utc).isoformat()
+            self.platform_metadata["deactivated_at"] = datetime.now(
+                timezone.utc
+            ).isoformat()
 
     def get_effective_permissions(self) -> list[str]:
         """Get all effective permissions for this user."""
@@ -248,7 +332,11 @@ class UserModel(BaseModel):
     def has_role(self, role_name: str) -> bool:
         """Check if user has specific role."""
         for user_role in self.roles:
-            if user_role.role and user_role.role.name == role_name and user_role.is_active:
+            if (
+                user_role.role
+                and user_role.role.name == role_name
+                and user_role.is_active
+            ):
                 return True
         return False
 
@@ -306,7 +394,11 @@ class UserProfileModel(BaseModel):
 
     # === Foreign Key ===
     user_id = Column(
-        UUID(as_uuid=True), ForeignKey("users_v2.id"), nullable=False, unique=True, comment="Reference to user"
+        UUID(as_uuid=True),
+        ForeignKey("users_v2.id"),
+        nullable=False,
+        unique=True,
+        comment="Reference to user",
     )
 
     # === Personal Details ===
@@ -315,7 +407,9 @@ class UserProfileModel(BaseModel):
     gender = Column(String(20), nullable=True, comment="Gender")
 
     # === Additional Contact ===
-    website = Column(String(500), nullable=True, comment="Personal or professional website")
+    website = Column(
+        String(500), nullable=True, comment="Personal or professional website"
+    )
     linkedin_url = Column(String(500), nullable=True, comment="LinkedIn profile URL")
 
     # === Bio Information ===
@@ -324,22 +418,36 @@ class UserProfileModel(BaseModel):
     interests = Column(JSON, nullable=True, default=list, comment="User interests list")
 
     # === Emergency Contact ===
-    emergency_contact_name = Column(String(200), nullable=True, comment="Emergency contact name")
-    emergency_contact_phone = Column(String(20), nullable=True, comment="Emergency contact phone")
-    emergency_contact_relationship = Column(String(100), nullable=True, comment="Emergency contact relationship")
+    emergency_contact_name = Column(
+        String(200), nullable=True, comment="Emergency contact name"
+    )
+    emergency_contact_phone = Column(
+        String(20), nullable=True, comment="Emergency contact phone"
+    )
+    emergency_contact_relationship = Column(
+        String(100), nullable=True, comment="Emergency contact relationship"
+    )
 
     # === Custom Fields ===
-    custom_fields = Column(JSON, nullable=True, default=dict, comment="Custom profile fields")
+    custom_fields = Column(
+        JSON, nullable=True, default=dict, comment="Custom profile fields"
+    )
 
     # === Relationships ===
     user = relationship("UserModel", back_populates="profile")
 
     contact_info = relationship(
-        "UserContactInfoModel", back_populates="profile", uselist=False, cascade="all, delete-orphan"
+        "UserContactInfoModel",
+        back_populates="profile",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
 
     preferences = relationship(
-        "UserPreferencesModel", back_populates="profile", uselist=False, cascade="all, delete-orphan"
+        "UserPreferencesModel",
+        back_populates="profile",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
 
     # === Indexes ===
@@ -378,11 +486,19 @@ class UserContactInfoModel(BaseModel):
     country = Column(String(100), nullable=True, comment="Country")
 
     # === Secondary Address ===
-    billing_address_line1 = Column(String(200), nullable=True, comment="Billing address line 1")
-    billing_address_line2 = Column(String(200), nullable=True, comment="Billing address line 2")
+    billing_address_line1 = Column(
+        String(200), nullable=True, comment="Billing address line 1"
+    )
+    billing_address_line2 = Column(
+        String(200), nullable=True, comment="Billing address line 2"
+    )
     billing_city = Column(String(100), nullable=True, comment="Billing city")
-    billing_state = Column(String(100), nullable=True, comment="Billing state or province")
-    billing_postal_code = Column(String(20), nullable=True, comment="Billing postal/ZIP code")
+    billing_state = Column(
+        String(100), nullable=True, comment="Billing state or province"
+    )
+    billing_postal_code = Column(
+        String(20), nullable=True, comment="Billing postal/ZIP code"
+    )
     billing_country = Column(String(100), nullable=True, comment="Billing country")
 
     # === Geographic Information ===
@@ -448,30 +564,77 @@ class UserPreferencesModel(BaseModel):
     )
 
     # === UI Preferences ===
-    theme = Column(String(20), nullable=False, default="light", comment="UI theme preference")
-    date_format = Column(String(20), nullable=False, default="YYYY-MM-DD", comment="Preferred date format")
-    time_format = Column(String(10), nullable=False, default="24h", comment="Preferred time format")
-    number_format = Column(String(20), nullable=False, default="1,234.56", comment="Preferred number format")
+    theme = Column(
+        String(20), nullable=False, default="light", comment="UI theme preference"
+    )
+    date_format = Column(
+        String(20),
+        nullable=False,
+        default="YYYY-MM-DD",
+        comment="Preferred date format",
+    )
+    time_format = Column(
+        String(10), nullable=False, default="24h", comment="Preferred time format"
+    )
+    number_format = Column(
+        String(20),
+        nullable=False,
+        default="1,234.56",
+        comment="Preferred number format",
+    )
 
     # === Notification Preferences ===
-    email_notifications = Column(Boolean, nullable=False, default=True, comment="Email notifications enabled")
-    sms_notifications = Column(Boolean, nullable=False, default=False, comment="SMS notifications enabled")
-    push_notifications = Column(Boolean, nullable=False, default=True, comment="Push notifications enabled")
-    in_app_notifications = Column(Boolean, nullable=False, default=True, comment="In-app notifications enabled")
+    email_notifications = Column(
+        Boolean, nullable=False, default=True, comment="Email notifications enabled"
+    )
+    sms_notifications = Column(
+        Boolean, nullable=False, default=False, comment="SMS notifications enabled"
+    )
+    push_notifications = Column(
+        Boolean, nullable=False, default=True, comment="Push notifications enabled"
+    )
+    in_app_notifications = Column(
+        Boolean, nullable=False, default=True, comment="In-app notifications enabled"
+    )
 
     # === Notification Types ===
-    security_alerts = Column(Boolean, nullable=False, default=True, comment="Security alert notifications")
-    account_updates = Column(Boolean, nullable=False, default=True, comment="Account update notifications")
-    system_maintenance = Column(Boolean, nullable=False, default=False, comment="System maintenance notifications")
-    marketing_emails = Column(Boolean, nullable=False, default=False, comment="Marketing email notifications")
+    security_alerts = Column(
+        Boolean, nullable=False, default=True, comment="Security alert notifications"
+    )
+    account_updates = Column(
+        Boolean, nullable=False, default=True, comment="Account update notifications"
+    )
+    system_maintenance = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        comment="System maintenance notifications",
+    )
+    marketing_emails = Column(
+        Boolean, nullable=False, default=False, comment="Marketing email notifications"
+    )
 
     # === Privacy Settings ===
-    profile_visibility = Column(String(20), nullable=False, default="private", comment="Profile visibility setting")
-    activity_visibility = Column(String(20), nullable=False, default="private", comment="Activity visibility setting")
+    profile_visibility = Column(
+        String(20),
+        nullable=False,
+        default="private",
+        comment="Profile visibility setting",
+    )
+    activity_visibility = Column(
+        String(20),
+        nullable=False,
+        default="private",
+        comment="Activity visibility setting",
+    )
 
     # === Custom Preferences ===
-    dashboard_layout = Column(JSON, nullable=True, default=dict, comment="Dashboard layout preferences")
-    custom_preferences = Column(JSON, nullable=True, default=dict, comment="Custom user preferences")
+    dashboard_layout = Column(
+        JSON, nullable=True, default=dict, comment="Dashboard layout preferences"
+    )
+    custom_preferences = Column(
+        JSON, nullable=True, default=dict, comment="Custom user preferences"
+    )
 
     # === Relationships ===
     profile = relationship("UserProfileModel", back_populates="preferences")

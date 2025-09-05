@@ -37,11 +37,15 @@ async def test_infrastructure_service():
                 logger.info(f"  {provider_type.title()}:")
                 for name, status in providers.items():
                     status_icon = "✅" if status.get("healthy", False) else "❌"
-                    logger.info(f"    {status_icon} {name}: {status.get('status', 'unknown')}")
+                    logger.info(
+                        f"    {status_icon} {name}: {status.get('status', 'unknown')}"
+                    )
 
         # List available providers
         providers = infra_service.list_available_providers()
-        logger.info(f"\n🏗️  Deployment Providers: {providers.get('deployment_providers', [])}")
+        logger.info(
+            f"\n🏗️  Deployment Providers: {providers.get('deployment_providers', [])}"
+        )
         logger.info(f"🌐 DNS Providers: {providers.get('dns_providers', [])}")
 
         # Test subdomain validation (if DNS provider available)
@@ -51,9 +55,17 @@ async def test_infrastructure_service():
                 result = await infra_service.validate_subdomain_availability(
                     "test-" + str(int(asyncio.get_event_loop().time()))
                 )
-                logger.info(f"   Subdomain validation result: {result.get('available', 'unknown')}")
-            except (PluginError, ExceptionContext.LIFECYCLE_EXCEPTIONS, ValueError) as e:
-                logger.info(f"   ⚠️  Subdomain validation failed (expected if no BASE_DOMAIN): {e}")
+                logger.info(
+                    f"   Subdomain validation result: {result.get('available', 'unknown')}"
+                )
+            except (
+                PluginError,
+                ExceptionContext.LIFECYCLE_EXCEPTIONS,
+                ValueError,
+            ) as e:
+                logger.info(
+                    f"   ⚠️  Subdomain validation failed (expected if no BASE_DOMAIN): {e}"
+                )
 
         logger.info("\n✅ Plugin system validation completed successfully!")
 
@@ -69,7 +81,9 @@ async def main():
     success = await test_infrastructure_service()
 
     if success:
-        logger.info("\n🎉 All tests passed! Infrastructure plugin system is working correctly.")
+        logger.info(
+            "\n🎉 All tests passed! Infrastructure plugin system is working correctly."
+        )
     else:
         logger.info("\n💥 Tests failed! Please check the implementation.")
         sys.exit(1)

@@ -23,9 +23,10 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from playwright.async_api import async_playwright
+
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import BusinessRuleError, DataIntegrityError
-from playwright.async_api import async_playwright
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,11 @@ logger = logging.getLogger(__name__)
 class BackupRestoreDRE2E:
     """End-to-end test suite for backup, restore, and disaster recovery scenarios."""
 
-    def __init__(self, base_url: str = "http://localhost:8000", frontend_url: str = "http://localhost:3000"):
+    def __init__(
+        self,
+        base_url: str = "http://localhost:8000",
+        frontend_url: str = "http://localhost:3000",
+    ):
         self.base_url = base_url
         self.frontend_url = frontend_url
         self.test_tenant_id = str(uuid4())
@@ -81,7 +86,9 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "full_backup_creation",
-                    "status": "completed" if full_backup_result["success"] else "failed",
+                    "status": "completed"
+                    if full_backup_result["success"]
+                    else "failed",
                     "duration": full_backup_result.get("duration", 0),
                     "details": full_backup_result,
                 }
@@ -91,7 +98,9 @@ class BackupRestoreDRE2E:
                 raise BusinessRuleError("Full backup creation failed")
 
             # Step 3: Validate backup integrity
-            integrity_result = await self._validate_backup_integrity(full_backup_result["backup_file"])
+            integrity_result = await self._validate_backup_integrity(
+                full_backup_result["backup_file"]
+            )
             results["steps"].append(
                 {
                     "name": "backup_integrity_validation",
@@ -106,18 +115,24 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "additional_data_creation",
-                    "status": "completed" if additional_data_result["success"] else "failed",
+                    "status": "completed"
+                    if additional_data_result["success"]
+                    else "failed",
                     "duration": additional_data_result.get("duration", 0),
                     "details": additional_data_result,
                 }
             )
 
             # Step 5: Create incremental backup
-            incremental_backup_result = await self._create_incremental_backup(full_backup_result["backup_id"])
+            incremental_backup_result = await self._create_incremental_backup(
+                full_backup_result["backup_id"]
+            )
             results["steps"].append(
                 {
                     "name": "incremental_backup_creation",
-                    "status": "completed" if incremental_backup_result["success"] else "failed",
+                    "status": "completed"
+                    if incremental_backup_result["success"]
+                    else "failed",
                     "duration": incremental_backup_result.get("duration", 0),
                     "details": incremental_backup_result,
                 }
@@ -125,7 +140,10 @@ class BackupRestoreDRE2E:
 
             # Step 6: Validate backup metadata
             metadata_result = await self._validate_backup_metadata(
-                [full_backup_result["backup_id"], incremental_backup_result["backup_id"]]
+                [
+                    full_backup_result["backup_id"],
+                    incremental_backup_result["backup_id"],
+                ]
             )
             results["steps"].append(
                 {
@@ -176,7 +194,9 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "container_setup",
-                    "status": "completed" if container_setup_result["success"] else "failed",
+                    "status": "completed"
+                    if container_setup_result["success"]
+                    else "failed",
                     "duration": container_setup_result.get("duration", 0),
                     "details": container_setup_result,
                 }
@@ -206,14 +226,18 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "container_modification",
-                    "status": "completed" if modification_result["success"] else "failed",
+                    "status": "completed"
+                    if modification_result["success"]
+                    else "failed",
                     "duration": modification_result.get("duration", 0),
                     "details": modification_result,
                 }
             )
 
             # Step 4: Restore container from snapshot
-            restore_result = await self._restore_container_from_snapshot(container_id, snapshot_result["snapshot_id"])
+            restore_result = await self._restore_container_from_snapshot(
+                container_id, snapshot_result["snapshot_id"]
+            )
             results["steps"].append(
                 {
                     "name": "container_restoration",
@@ -261,7 +285,13 @@ class BackupRestoreDRE2E:
         6. Test portal functionality
         """
         test_start = time.time()
-        results = {"test_name": "full_system_restore", "status": "running", "steps": [], "duration": 0, "errors": []}
+        results = {
+            "test_name": "full_system_restore",
+            "status": "running",
+            "steps": [],
+            "duration": 0,
+            "errors": [],
+        }
 
         try:
             # Step 1: Create comprehensive system backup
@@ -269,7 +299,9 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "system_backup_creation",
-                    "status": "completed" if system_backup_result["success"] else "failed",
+                    "status": "completed"
+                    if system_backup_result["success"]
+                    else "failed",
                     "duration": system_backup_result.get("duration", 0),
                     "details": system_backup_result,
                 }
@@ -294,14 +326,18 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "system_failure_simulation",
-                    "status": "completed" if failure_simulation["success"] else "failed",
+                    "status": "completed"
+                    if failure_simulation["success"]
+                    else "failed",
                     "duration": failure_simulation.get("duration", 0),
                     "details": failure_simulation,
                 }
             )
 
             # Step 4: Perform system restore
-            restore_result = await self._perform_system_restore(system_backup_result["backup_bundle"])
+            restore_result = await self._perform_system_restore(
+                system_backup_result["backup_bundle"]
+            )
             results["steps"].append(
                 {
                     "name": "system_restore",
@@ -319,18 +355,24 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "service_validation",
-                    "status": "completed" if service_validation["all_healthy"] else "failed",
+                    "status": "completed"
+                    if service_validation["all_healthy"]
+                    else "failed",
                     "duration": service_validation.get("duration", 0),
                     "details": service_validation,
                 }
             )
 
             # Step 6: Verify data integrity
-            integrity_check = await self._verify_data_integrity_post_restore(pre_failure_state["state"])
+            integrity_check = await self._verify_data_integrity_post_restore(
+                pre_failure_state["state"]
+            )
             results["steps"].append(
                 {
                     "name": "data_integrity_verification",
-                    "status": "completed" if integrity_check["integrity_maintained"] else "failed",
+                    "status": "completed"
+                    if integrity_check["integrity_maintained"]
+                    else "failed",
                     "duration": integrity_check.get("duration", 0),
                     "details": integrity_check,
                 }
@@ -341,7 +383,9 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "portal_functionality_test",
-                    "status": "completed" if portal_test["all_portals_functional"] else "failed",
+                    "status": "completed"
+                    if portal_test["all_portals_functional"]
+                    else "failed",
                     "duration": portal_test.get("duration", 0),
                     "details": portal_test,
                 }
@@ -374,7 +418,13 @@ class BackupRestoreDRE2E:
         6. Validate restored tenant isolation
         """
         test_start = time.time()
-        results = {"test_name": "tenant_isolation_dr", "status": "running", "steps": [], "duration": 0, "errors": []}
+        results = {
+            "test_name": "tenant_isolation_dr",
+            "status": "running",
+            "steps": [],
+            "duration": 0,
+            "errors": [],
+        }
 
         try:
             # Step 1: Create multiple test tenants
@@ -382,7 +432,9 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "multi_tenant_setup",
-                    "status": "completed" if multi_tenant_setup["success"] else "failed",
+                    "status": "completed"
+                    if multi_tenant_setup["success"]
+                    else "failed",
                     "duration": multi_tenant_setup.get("duration", 0),
                     "details": multi_tenant_setup,
                 }
@@ -395,7 +447,9 @@ class BackupRestoreDRE2E:
             other_tenants = multi_tenant_setup["tenants"][1:]
 
             # Step 2: Create tenant-specific backup
-            tenant_backup = await self._create_tenant_specific_backup(target_tenant["id"])
+            tenant_backup = await self._create_tenant_specific_backup(
+                target_tenant["id"]
+            )
             results["steps"].append(
                 {
                     "name": "tenant_backup_creation",
@@ -410,7 +464,9 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "other_tenants_state_capture",
-                    "status": "completed" if other_tenants_state["success"] else "failed",
+                    "status": "completed"
+                    if other_tenants_state["success"]
+                    else "failed",
                     "duration": other_tenants_state.get("duration", 0),
                     "details": other_tenants_state,
                 }
@@ -428,7 +484,9 @@ class BackupRestoreDRE2E:
             )
 
             # Step 5: Restore only affected tenant
-            tenant_restore = await self._restore_specific_tenant(target_tenant["id"], tenant_backup["backup_id"])
+            tenant_restore = await self._restore_specific_tenant(
+                target_tenant["id"], tenant_backup["backup_id"]
+            )
             results["steps"].append(
                 {
                     "name": "tenant_restore",
@@ -445,7 +503,9 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "other_tenants_validation",
-                    "status": "completed" if other_tenants_validation["all_unaffected"] else "failed",
+                    "status": "completed"
+                    if other_tenants_validation["all_unaffected"]
+                    else "failed",
                     "duration": other_tenants_validation.get("duration", 0),
                     "details": other_tenants_validation,
                 }
@@ -458,7 +518,9 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "isolation_validation",
-                    "status": "completed" if isolation_validation["isolation_maintained"] else "failed",
+                    "status": "completed"
+                    if isolation_validation["isolation_maintained"]
+                    else "failed",
                     "duration": isolation_validation.get("duration", 0),
                     "details": isolation_validation,
                 }
@@ -505,14 +567,18 @@ class BackupRestoreDRE2E:
 
             # Generate summary
             total_tests = len(suite_results["tests"])
-            passed_tests = sum(1 for t in suite_results["tests"] if t.get("success", False))
+            passed_tests = sum(
+                1 for t in suite_results["tests"] if t.get("success", False)
+            )
             failed_tests = total_tests - passed_tests
 
             suite_results["summary"] = {
                 "total": total_tests,
                 "passed": passed_tests,
                 "failed": failed_tests,
-                "success_rate": (passed_tests / total_tests) * 100 if total_tests > 0 else 0,
+                "success_rate": (passed_tests / total_tests) * 100
+                if total_tests > 0
+                else 0,
             }
 
             suite_results["status"] = "completed" if failed_tests == 0 else "failed"
@@ -536,7 +602,13 @@ class BackupRestoreDRE2E:
 
         try:
             # Create test data for various entities
-            test_entities = {"users": [], "customers": [], "orders": [], "billing_records": [], "tickets": []}
+            test_entities = {
+                "users": [],
+                "customers": [],
+                "orders": [],
+                "billing_records": [],
+                "tickets": [],
+            }
 
             # Generate users
             for i in range(10):
@@ -583,7 +655,9 @@ class BackupRestoreDRE2E:
                     "customer_id": test_entities["customers"][i % 15]["id"],
                     "amount": round((i + 1) * 29.99, 2),
                     "status": "paid" if i < 25 else "overdue",
-                    "due_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+                    "due_date": (
+                        datetime.now(timezone.utc) + timedelta(days=30)
+                    ).isoformat(),
                 }
                 test_entities["billing_records"].append(billing)
 
@@ -614,7 +688,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_full_database_backup(self) -> dict[str, Any]:
         """Create comprehensive database backup."""
@@ -643,7 +721,9 @@ class BackupRestoreDRE2E:
 
             # Write backup metadata
             with gzip.open(backup_filepath, "wt") as f:
-                json.dump({"metadata": backup_content, "data": self.test_data}, f, indent=2)
+                json.dump(
+                    {"metadata": backup_content, "data": self.test_data}, f, indent=2
+                )
 
             # Store backup metadata
             self.backup_metadata[backup_id] = backup_content
@@ -658,7 +738,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_backup_integrity(self, backup_file: str) -> dict[str, Any]:
         """Validate backup file integrity."""
@@ -685,7 +769,13 @@ class BackupRestoreDRE2E:
                     validation_errors.append(f"Missing metadata field: {field}")
 
             # Validate data structure
-            expected_tables = ["users", "customers", "orders", "billing_records", "tickets"]
+            expected_tables = [
+                "users",
+                "customers",
+                "orders",
+                "billing_records",
+                "tickets",
+            ]
             for table in expected_tables:
                 if table not in data:
                     validation_errors.append(f"Missing table: {table}")
@@ -716,7 +806,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"valid": False, "errors": [str(e)], "duration": time.time() - start_time}
+            return {
+                "valid": False,
+                "errors": [str(e)],
+                "duration": time.time() - start_time,
+            }
 
     async def _create_additional_test_data(self) -> dict[str, Any]:
         """Create additional test data for incremental backup."""
@@ -758,7 +852,9 @@ class BackupRestoreDRE2E:
                 order = {
                     "id": str(uuid4()),
                     "tenant_id": self.test_tenant_id,
-                    "customer_id": self.test_data["customers"][-1]["id"],  # Use recent customer
+                    "customer_id": self.test_data["customers"][-1][
+                        "id"
+                    ],  # Use recent customer
                     "amount": round((i + 1) * 15.99, 2),
                     "status": "pending",
                     "created_at": datetime.now(timezone.utc).isoformat(),
@@ -776,7 +872,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_incremental_backup(self, base_backup_id: str) -> dict[str, Any]:
         """Create incremental backup."""
@@ -784,7 +884,9 @@ class BackupRestoreDRE2E:
 
         try:
             backup_id = str(uuid4())
-            backup_filename = f"backup_incremental_{self.test_tenant_id}_{backup_id}.sql.gz"
+            backup_filename = (
+                f"backup_incremental_{self.test_tenant_id}_{backup_id}.sql.gz"
+            )
             backup_filepath = os.path.join(self.backup_directory, backup_filename)
 
             # Calculate incremental data (mock - in reality would be based on timestamps/WAL)
@@ -814,7 +916,9 @@ class BackupRestoreDRE2E:
 
             # Write incremental backup
             with gzip.open(backup_filepath, "wt") as f:
-                json.dump({"metadata": backup_content, "data": incremental_data}, f, indent=2)
+                json.dump(
+                    {"metadata": backup_content, "data": incremental_data}, f, indent=2
+                )
 
             self.backup_metadata[backup_id] = backup_content
 
@@ -829,7 +933,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_backup_metadata(self, backup_ids: list[str]) -> dict[str, Any]:
         """Validate backup metadata consistency."""
@@ -841,18 +949,34 @@ class BackupRestoreDRE2E:
             for backup_id in backup_ids:
                 metadata = self.backup_metadata.get(backup_id)
                 if not metadata:
-                    validation_results.append({"backup_id": backup_id, "valid": False, "error": "Metadata not found"})
+                    validation_results.append(
+                        {
+                            "backup_id": backup_id,
+                            "valid": False,
+                            "error": "Metadata not found",
+                        }
+                    )
                     continue
 
                 # Validate metadata completeness
-                required_fields = ["backup_type", "backup_id", "tenant_id", "created_at", "checksum"]
-                missing_fields = [field for field in required_fields if not metadata.get(field)]
+                required_fields = [
+                    "backup_type",
+                    "backup_id",
+                    "tenant_id",
+                    "created_at",
+                    "checksum",
+                ]
+                missing_fields = [
+                    field for field in required_fields if not metadata.get(field)
+                ]
 
                 validation_results.append(
                     {
                         "backup_id": backup_id,
                         "valid": len(missing_fields) == 0,
-                        "errors": [f"Missing field: {field}" for field in missing_fields],
+                        "errors": [
+                            f"Missing field: {field}" for field in missing_fields
+                        ],
                         "backup_type": metadata.get("backup_type"),
                         "created_at": metadata.get("created_at"),
                     }
@@ -868,7 +992,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"valid": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "valid": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _setup_test_container(self) -> dict[str, Any]:
         """Setup test container for snapshot testing."""
@@ -883,7 +1011,10 @@ class BackupRestoreDRE2E:
                 "image": "dotmac-platform:test",
                 "tenant_id": self.test_tenant_id,
                 "volumes": ["/data", "/config", "/logs"],
-                "environment": {"TENANT_ID": self.test_tenant_id, "ENVIRONMENT": "test"},
+                "environment": {
+                    "TENANT_ID": self.test_tenant_id,
+                    "ENVIRONMENT": "test",
+                },
                 "created_at": datetime.now(timezone.utc).isoformat(),
             }
 
@@ -899,7 +1030,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_container_snapshot(self, container_id: str) -> dict[str, Any]:
         """Create container snapshot."""
@@ -929,7 +1064,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _modify_container_state(self, container_id: str) -> dict[str, Any]:
         """Modify container state to test restoration."""
@@ -954,9 +1093,15 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _restore_container_from_snapshot(self, container_id: str, snapshot_id: str) -> dict[str, Any]:
+    async def _restore_container_from_snapshot(
+        self, container_id: str, snapshot_id: str
+    ) -> dict[str, Any]:
         """Restore container from snapshot."""
         start_time = time.time()
 
@@ -980,9 +1125,15 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _validate_container_restoration(self, container_id: str) -> dict[str, Any]:
+    async def _validate_container_restoration(
+        self, container_id: str
+    ) -> dict[str, Any]:
         """Validate container restoration state."""
         start_time = time.time()
 
@@ -1003,13 +1154,19 @@ class BackupRestoreDRE2E:
             return {
                 "valid": all_passed,
                 "checks": validation_checks,
-                "passed_checks": sum(1 for c in validation_checks if c["status"] == "pass"),
+                "passed_checks": sum(
+                    1 for c in validation_checks if c["status"] == "pass"
+                ),
                 "total_checks": len(validation_checks),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"valid": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "valid": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_system_backup(self) -> dict[str, Any]:
         """Create comprehensive system backup."""
@@ -1027,7 +1184,11 @@ class BackupRestoreDRE2E:
                     "configs": ["app.conf", "nginx.conf", "redis.conf"],
                     "size_mb": 5,
                 },
-                "secrets_backup": {"id": str(uuid4()), "secrets_count": 12, "encrypted": True},
+                "secrets_backup": {
+                    "id": str(uuid4()),
+                    "secrets_count": 12,
+                    "encrypted": True,
+                },
             }
 
             # Mock additional container snapshots
@@ -1058,7 +1219,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _capture_system_state(self) -> dict[str, Any]:
         """Capture complete system state for comparison."""
@@ -1077,10 +1242,18 @@ class BackupRestoreDRE2E:
 
             await asyncio.sleep(1)
 
-            return {"success": True, "state": system_state, "duration": time.time() - start_time}
+            return {
+                "success": True,
+                "state": system_state,
+                "duration": time.time() - start_time,
+            }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _simulate_system_failure(self) -> dict[str, Any]:
         """Simulate system failure."""
@@ -1105,9 +1278,15 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _perform_system_restore(self, backup_bundle: dict[str, Any]) -> dict[str, Any]:
+    async def _perform_system_restore(
+        self, backup_bundle: dict[str, Any]
+    ) -> dict[str, Any]:
         """Perform complete system restore."""
         start_time = time.time()
 
@@ -1128,7 +1307,11 @@ class BackupRestoreDRE2E:
             for _i, step in enumerate(restoration_steps):
                 await asyncio.sleep(2)  # Each step takes time
                 completed_steps.append(
-                    {"step": step, "status": "completed", "timestamp": datetime.now(timezone.utc).isoformat()}
+                    {
+                        "step": step,
+                        "status": "completed",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
                 )
 
             return {
@@ -1140,7 +1323,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_services_post_restore(self) -> dict[str, Any]:
         """Validate all services after system restore."""
@@ -1164,14 +1351,21 @@ class BackupRestoreDRE2E:
                 "services": services,
                 "healthy_count": sum(1 for s in services if s["status"] == "healthy"),
                 "total_services": len(services),
-                "average_response_time": sum(s["response_time"] for s in services) / len(services),
+                "average_response_time": sum(s["response_time"] for s in services)
+                / len(services),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"all_healthy": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "all_healthy": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _verify_data_integrity_post_restore(self, pre_failure_state: dict[str, Any]) -> dict[str, Any]:
+    async def _verify_data_integrity_post_restore(
+        self, pre_failure_state: dict[str, Any]
+    ) -> dict[str, Any]:
         """Verify data integrity after restore."""
         start_time = time.time()
 
@@ -1209,18 +1403,26 @@ class BackupRestoreDRE2E:
 
             await asyncio.sleep(2)
 
-            integrity_maintained = all(check["status"] == "pass" for check in integrity_checks)
+            integrity_maintained = all(
+                check["status"] == "pass" for check in integrity_checks
+            )
 
             return {
                 "integrity_maintained": integrity_maintained,
                 "checks": integrity_checks,
-                "passed_checks": sum(1 for c in integrity_checks if c["status"] == "pass"),
+                "passed_checks": sum(
+                    1 for c in integrity_checks if c["status"] == "pass"
+                ),
                 "total_checks": len(integrity_checks),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"integrity_maintained": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "integrity_maintained": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_portal_functionality_post_restore(self) -> dict[str, Any]:
         """Test portal functionality after restore."""
@@ -1238,7 +1440,9 @@ class BackupRestoreDRE2E:
                 admin_page = await context.new_page()
                 try:
                     await admin_page.goto(f"{self.frontend_url}/admin/login")
-                    await admin_page.wait_for_selector('[data-testid="login-form"]', timeout=5000)
+                    await admin_page.wait_for_selector(
+                        '[data-testid="login-form"]', timeout=5000
+                    )
                     portal_tests.append({"portal": "admin", "status": "functional"})
                 except Exception:
                     portal_tests.append({"portal": "admin", "status": "failed"})
@@ -1247,25 +1451,35 @@ class BackupRestoreDRE2E:
                 customer_page = await context.new_page()
                 try:
                     await customer_page.goto(f"{self.frontend_url}/customer/login")
-                    await customer_page.wait_for_selector('[data-testid="login-form"]', timeout=5000)
+                    await customer_page.wait_for_selector(
+                        '[data-testid="login-form"]', timeout=5000
+                    )
                     portal_tests.append({"portal": "customer", "status": "functional"})
                 except Exception:
                     portal_tests.append({"portal": "customer", "status": "failed"})
 
                 await browser.close()
 
-            all_functional = all(test["status"] == "functional" for test in portal_tests)
+            all_functional = all(
+                test["status"] == "functional" for test in portal_tests
+            )
 
             return {
                 "all_portals_functional": all_functional,
                 "portal_tests": portal_tests,
-                "functional_count": sum(1 for t in portal_tests if t["status"] == "functional"),
+                "functional_count": sum(
+                    1 for t in portal_tests if t["status"] == "functional"
+                ),
                 "total_portals": len(portal_tests),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"all_portals_functional": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "all_portals_functional": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_multi_tenant_environment(self) -> dict[str, Any]:
         """Create multi-tenant test environment."""
@@ -1318,7 +1532,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_tenant_specific_backup(self, tenant_id: str) -> dict[str, Any]:
         """Create tenant-specific backup."""
@@ -1339,9 +1557,15 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _capture_other_tenants_state(self, other_tenants: list[dict[str, Any]]) -> dict[str, Any]:
+    async def _capture_other_tenants_state(
+        self, other_tenants: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Capture state of other tenants."""
         start_time = time.time()
 
@@ -1366,7 +1590,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _simulate_tenant_failure(self, tenant_id: str) -> dict[str, Any]:
         """Simulate tenant-specific failure."""
@@ -1382,12 +1610,22 @@ class BackupRestoreDRE2E:
 
             await asyncio.sleep(1)
 
-            return {"success": True, "failure_details": failure_details, "duration": time.time() - start_time}
+            return {
+                "success": True,
+                "failure_details": failure_details,
+                "duration": time.time() - start_time,
+            }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _restore_specific_tenant(self, tenant_id: str, backup_id: str) -> dict[str, Any]:
+    async def _restore_specific_tenant(
+        self, tenant_id: str, backup_id: str
+    ) -> dict[str, Any]:
         """Restore specific tenant from backup."""
         start_time = time.time()
 
@@ -1404,7 +1642,11 @@ class BackupRestoreDRE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_other_tenants_unaffected(
         self, other_tenants: list[dict], pre_state: dict[str, Any]
@@ -1437,13 +1679,19 @@ class BackupRestoreDRE2E:
             return {
                 "all_unaffected": all_unaffected,
                 "results": validation_results,
-                "unaffected_count": sum(1 for r in validation_results if r["unaffected"]),
+                "unaffected_count": sum(
+                    1 for r in validation_results if r["unaffected"]
+                ),
                 "total_tenants": len(validation_results),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"all_unaffected": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "all_unaffected": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_tenant_isolation_post_restore(
         self, restored_tenant_id: str, other_tenants: list[dict]
@@ -1477,18 +1725,26 @@ class BackupRestoreDRE2E:
 
             await asyncio.sleep(2)
 
-            isolation_maintained = all(check["status"] == "pass" for check in isolation_checks)
+            isolation_maintained = all(
+                check["status"] == "pass" for check in isolation_checks
+            )
 
             return {
                 "isolation_maintained": isolation_maintained,
                 "checks": isolation_checks,
-                "passed_checks": sum(1 for c in isolation_checks if c["status"] == "pass"),
+                "passed_checks": sum(
+                    1 for c in isolation_checks if c["status"] == "pass"
+                ),
                 "total_checks": len(isolation_checks),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"isolation_maintained": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "isolation_maintained": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _cleanup_test_resources(self) -> None:
         """Clean up test resources."""
@@ -1512,7 +1768,9 @@ async def test_backup_restore_dr_e2e():
 
     # Assert overall success
     assert results["status"] == "completed", f"Test suite failed: {results}"
-    assert results["summary"]["success_rate"] >= 70, f"Success rate too low: {results['summary']}"
+    assert (
+        results["summary"]["success_rate"] >= 70
+    ), f"Success rate too low: {results['summary']}"
 
     # Log results
     logger.info("\nBackup/Restore DR Test Results:")
@@ -1563,4 +1821,9 @@ async def test_system_restore_only():
 
 
 # Export main test class
-__all__ = ["BackupRestoreDRE2E", "test_backup_restore_dr_e2e", "test_database_backup_only", "test_system_restore_only"]
+__all__ = [
+    "BackupRestoreDRE2E",
+    "test_backup_restore_dr_e2e",
+    "test_database_backup_only",
+    "test_system_restore_only",
+]

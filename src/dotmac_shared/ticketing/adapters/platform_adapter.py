@@ -21,7 +21,9 @@ class BasePlatformAdapter(ABC):
         self.ticket_service = ticket_service
 
     @abstractmethod
-    async def get_customer_info(self, tenant_id: str, customer_id: str) -> dict[str, Any]:
+    async def get_customer_info(
+        self, tenant_id: str, customer_id: str
+    ) -> dict[str, Any]:
         """Get customer information from the platform."""
         pass
 
@@ -31,7 +33,9 @@ class BasePlatformAdapter(ABC):
         pass
 
     @abstractmethod
-    async def send_notification(self, notification_type: str, recipient: str, ticket: TicketResponse, **kwargs) -> bool:
+    async def send_notification(
+        self, notification_type: str, recipient: str, ticket: TicketResponse, **kwargs
+    ) -> bool:
         """Send notification about ticket events."""
         pass
 
@@ -43,7 +47,9 @@ class ManagementPlatformAdapter(BasePlatformAdapter):
         super().__init__(ticket_service)
         self.management_client = management_client
 
-    async def get_customer_info(self, tenant_id: str, customer_id: str) -> dict[str, Any]:
+    async def get_customer_info(
+        self, tenant_id: str, customer_id: str
+    ) -> dict[str, Any]:
         """Get customer info from Management Platform."""
         try:
             if self.management_client:
@@ -63,7 +69,9 @@ class ManagementPlatformAdapter(BasePlatformAdapter):
             logger.error(f"Error getting user info: {e}")
             return {"id": user_id, "name": "Unknown User"}
 
-    async def send_notification(self, notification_type: str, recipient: str, ticket: TicketResponse, **kwargs) -> bool:
+    async def send_notification(
+        self, notification_type: str, recipient: str, ticket: TicketResponse, **kwargs
+    ) -> bool:
         """Send notification via Management Platform."""
         try:
             if self.management_client:
@@ -111,7 +119,9 @@ class ISPPlatformAdapter(BasePlatformAdapter):
         super().__init__(ticket_service)
         self.isp_client = isp_client
 
-    async def get_customer_info(self, tenant_id: str, customer_id: str) -> dict[str, Any]:
+    async def get_customer_info(
+        self, tenant_id: str, customer_id: str
+    ) -> dict[str, Any]:
         """Get customer info from ISP Framework."""
         try:
             if self.isp_client:
@@ -131,7 +141,9 @@ class ISPPlatformAdapter(BasePlatformAdapter):
             logger.error(f"Error getting user info: {e}")
             return {"id": user_id, "name": "Unknown Technician"}
 
-    async def send_notification(self, notification_type: str, recipient: str, ticket: TicketResponse, **kwargs) -> bool:
+    async def send_notification(
+        self, notification_type: str, recipient: str, ticket: TicketResponse, **kwargs
+    ) -> bool:
         """Send notification via ISP Framework."""
         try:
             if self.isp_client:
@@ -237,4 +249,6 @@ class TicketingPlatformAdapter:
             return await adapter.create_service_request_ticket(db, tenant_id, **kwargs)
 
         # Fallback to generic ticket creation
-        return await adapter.ticket_service.create_customer_ticket(db, tenant_id, **kwargs)
+        return await adapter.ticket_service.create_customer_ticket(
+            db, tenant_id, **kwargs
+        )

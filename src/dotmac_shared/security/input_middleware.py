@@ -92,7 +92,9 @@ class InputSanitizationMiddleware:
 
             # Log if significant changes were made
             if self.log_suspicious and json_data != sanitized:
-                logger.warning(f"Sanitized suspicious JSON body in request to {request.url.path}")
+                logger.warning(
+                    f"Sanitized suspicious JSON body in request to {request.url.path}"
+                )
 
             return sanitized
 
@@ -113,7 +115,10 @@ class InputSanitizationMiddleware:
         try:
             # Check if request has form data
             content_type = request.headers.get("content-type", "")
-            if not any(ct in content_type for ct in ["application/x-www-form-urlencoded", "multipart/form-data"]):
+            if not any(
+                ct in content_type
+                for ct in ["application/x-www-form-urlencoded", "multipart/form-data"]
+            ):
                 return None
 
             form_data = await request.form()
@@ -155,7 +160,9 @@ class InputSanitizationMiddleware:
                 try:
                     sanitized_params = await self.sanitize_query_params(request)
                     # Update query string in scope
-                    query_string = "&".join([f"{k}={v}" for k, v in sanitized_params.items()])
+                    query_string = "&".join(
+                        [f"{k}={v}" for k, v in sanitized_params.items()]
+                    )
                     sanitized_scope["query_string"] = query_string.encode()
                 except Exception as e:
                     logger.error(f"Error sanitizing query params: {e}")

@@ -52,7 +52,9 @@ class TaskWorkflow(BaseWorkflow):
         try:
             # Execute with optional timeout
             if self.timeout_seconds:
-                result = await asyncio.wait_for(self._execute_task_function(), timeout=self.timeout_seconds)
+                result = await asyncio.wait_for(
+                    self._execute_task_function(), timeout=self.timeout_seconds
+                )
             else:
                 result = await self._execute_task_function()
 
@@ -86,7 +88,9 @@ class TaskWorkflow(BaseWorkflow):
         else:
             # Run sync function in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(None, lambda: self.task_function(*self.task_args, **self.task_kwargs))
+            return await loop.run_in_executor(
+                None, lambda: self.task_function(*self.task_args, **self.task_kwargs)
+            )
 
 
 class SequentialTaskWorkflow(BaseWorkflow):
@@ -150,7 +154,9 @@ class SequentialTaskWorkflow(BaseWorkflow):
                     timeout=timeout,
                 )
             else:
-                result = await self._execute_task_function(task_function, task_args, task_kwargs)
+                result = await self._execute_task_function(
+                    task_function, task_args, task_kwargs
+                )
 
             return WorkflowResult(
                 success=True,
@@ -175,7 +181,9 @@ class SequentialTaskWorkflow(BaseWorkflow):
                 message=f"Task '{step_name}' failed: {str(e)}",
             )
 
-    async def _execute_task_function(self, function: Callable, args: tuple, kwargs: dict[str, Any]) -> Any:
+    async def _execute_task_function(
+        self, function: Callable, args: tuple, kwargs: dict[str, Any]
+    ) -> Any:
         """Execute a task function, handling both sync and async functions."""
         if asyncio.iscoroutinefunction(function):
             return await function(*args, **kwargs)
@@ -186,7 +194,9 @@ class SequentialTaskWorkflow(BaseWorkflow):
 
 
 # Task workflow factory functions
-def create_task_workflow(name: str, function: Callable, *args, timeout: Optional[int] = None, **kwargs) -> TaskWorkflow:
+def create_task_workflow(
+    name: str, function: Callable, *args, timeout: Optional[int] = None, **kwargs
+) -> TaskWorkflow:
     """
     Create a simple task workflow.
 
@@ -232,11 +242,15 @@ def create_sequential_workflow(
             # Handle (name, function) or (name, function, args) or (name, function, args, kwargs)
             task_dict = {"name": task[0], "function": task[1]}
             if len(task) > 2:
-                task_dict["args"] = task[2] if isinstance(task[2], tuple) else (task[2],)
+                task_dict["args"] = (
+                    task[2] if isinstance(task[2], tuple) else (task[2],)
+                )
             if len(task) > 3:
                 task_dict["kwargs"] = task[3]
             task_list.append(task_dict)
         else:
             raise ValueError(f"Invalid task definition at index {i}: {task}")
 
-    return SequentialTaskWorkflow(tasks=task_list, workflow_id=workflow_id, stop_on_failure=stop_on_failure)
+    return SequentialTaskWorkflow(
+        tasks=task_list, workflow_id=workflow_id, stop_on_failure=stop_on_failure
+    )

@@ -14,12 +14,11 @@ from .handlers import (
     handle_lifecycle_exceptions,
     handle_parsing_exceptions,
 )
+
 try:
     # Re-export common exception types for compatibility with tests
-    from dotmac_shared.core.exceptions import (
-        ValidationError,
-        BusinessRuleError as BusinessLogicError,
-    )
+    from dotmac_shared.core.exceptions import BusinessRuleError as BusinessLogicError
+    from dotmac_shared.core.exceptions import ValidationError
 except Exception:  # pragma: no cover - optional in minimal envs
     ValidationError = type("ValidationError", (Exception,), {})  # type: ignore
     BusinessLogicError = type("BusinessLogicError", (Exception,), {})  # type: ignore

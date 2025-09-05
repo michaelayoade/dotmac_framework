@@ -174,7 +174,9 @@ class AppMetricsCollector:
         self._previous_snapshots: dict[str, ApplicationMetricsSnapshot] = {}
         self._collection_timestamps: dict[str, float] = {}
 
-    async def collect_application_metrics(self, container_id: str) -> ApplicationMetricsSnapshot:
+    async def collect_application_metrics(
+        self, container_id: str
+    ) -> ApplicationMetricsSnapshot:
         """
         Collect comprehensive application metrics for a container
 
@@ -195,14 +197,18 @@ class AppMetricsCollector:
             ports = self._get_port_mappings(container)
 
             if not ports:
-                self.logger.warning(f"No accessible ports found for container {container_id}")
+                self.logger.warning(
+                    f"No accessible ports found for container {container_id}"
+                )
                 return snapshot
 
             # Collect metrics from various sources
             collection_tasks = []
 
             if self.prometheus_enabled:
-                collection_tasks.append(self._collect_prometheus_metrics(container_ip, ports, snapshot))
+                collection_tasks.append(
+                    self._collect_prometheus_metrics(container_ip, ports, snapshot)
+                )
 
             collection_tasks.extend(
                 [
@@ -212,10 +218,14 @@ class AppMetricsCollector:
             )
 
             if self.enable_business_metrics:
-                collection_tasks.append(self._collect_business_metrics(container_ip, ports, snapshot))
+                collection_tasks.append(
+                    self._collect_business_metrics(container_ip, ports, snapshot)
+                )
 
             if self.custom_metrics_endpoints:
-                collection_tasks.append(self._collect_custom_metrics(container_ip, ports, snapshot))
+                collection_tasks.append(
+                    self._collect_custom_metrics(container_ip, ports, snapshot)
+                )
 
             # Execute all collection tasks
             await asyncio.gather(*collection_tasks, return_exceptions=True)
@@ -231,7 +241,9 @@ class AppMetricsCollector:
         except docker.errors.NotFound:
             self.logger.error(f"Container {container_id} not found")
         except Exception as e:
-            self.logger.error(f"Application metrics collection failed for {container_id}: {e}")
+            self.logger.error(
+                f"Application metrics collection failed for {container_id}: {e}"
+            )
 
         return snapshot
 
@@ -316,9 +328,13 @@ class AppMetricsCollector:
                                     for key, value in health_data.items():
                                         if isinstance(value, bool):
                                             snapshot.health_checks[key] = value
-                                        elif isinstance(value, str) and value.lower() in ["ok", "healthy", "up"]:
+                                        elif isinstance(
+                                            value, str
+                                        ) and value.lower() in ["ok", "healthy", "up"]:
                                             snapshot.health_checks[key] = True
-                                        elif isinstance(value, str) and value.lower() in [
+                                        elif isinstance(
+                                            value, str
+                                        ) and value.lower() in [
                                             "error",
                                             "unhealthy",
                                             "down",
@@ -405,21 +421,33 @@ class AppMetricsCollector:
                             if isinstance(business_data, dict):
                                 # Tenant metrics
                                 if "active_tenants" in business_data:
-                                    snapshot.active_tenants = int(business_data["active_tenants"])
+                                    snapshot.active_tenants = int(
+                                        business_data["active_tenants"]
+                                    )
                                 elif "tenants" in business_data:
-                                    snapshot.active_tenants = int(business_data["tenants"])
+                                    snapshot.active_tenants = int(
+                                        business_data["tenants"]
+                                    )
 
                                 # Customer metrics
                                 if "active_customers" in business_data:
-                                    snapshot.active_customers = int(business_data["active_customers"])
+                                    snapshot.active_customers = int(
+                                        business_data["active_customers"]
+                                    )
                                 elif "customers" in business_data:
-                                    snapshot.active_customers = int(business_data["customers"])
+                                    snapshot.active_customers = int(
+                                        business_data["customers"]
+                                    )
 
                                 # Operation rates
                                 if "billing_operations" in business_data:
-                                    snapshot.billing_operations_per_min = float(business_data["billing_operations"])
+                                    snapshot.billing_operations_per_min = float(
+                                        business_data["billing_operations"]
+                                    )
                                 if "auth_operations" in business_data:
-                                    snapshot.auth_operations_per_min = float(business_data["auth_operations"])
+                                    snapshot.auth_operations_per_min = float(
+                                        business_data["auth_operations"]
+                                    )
 
                                 # Store other metrics as custom
                                 for key, value in business_data.items():
@@ -430,7 +458,9 @@ class AppMetricsCollector:
                                         "auth_operations",
                                     ]:
                                         if isinstance(value, (int, float, str)):
-                                            snapshot.custom_metrics[f"business_{key}"] = value
+                                            snapshot.custom_metrics[
+                                                f"business_{key}"
+                                            ] = value
 
                             return  # Found working business metrics endpoint
 
@@ -459,13 +489,20 @@ class AppMetricsCollector:
                                 for key, value in custom_data.items():
                                     if isinstance(value, (int, float)):
                                         snapshot.custom_metrics[f"custom_{key}"] = value
-                                    elif isinstance(value, str) and value.replace(".", "").isdigit():
-                                        snapshot.custom_metrics[f"custom_{key}"] = float(value)
+                                    elif (
+                                        isinstance(value, str)
+                                        and value.replace(".", "").isdigit()
+                                    ):
+                                        snapshot.custom_metrics[
+                                            f"custom_{key}"
+                                        ] = float(value)
 
                     except (httpx.RequestError, json.JSONDecodeError):
                         continue
 
-    async def _fetch_prometheus_data(self, container_ip: str, ports: list[int]) -> Optional[str]:
+    async def _fetch_prometheus_data(
+        self, container_ip: str, ports: list[int]
+    ) -> Optional[str]:
         """Fetch Prometheus metrics data"""
         if not HTTP_CLIENT_AVAILABLE:
             return None
@@ -481,14 +518,19 @@ class AppMetricsCollector:
 
                         if response.status_code == 200:
                             content_type = response.headers.get("content-type", "")
-                            if "text/plain" in content_type or "prometheus" in content_type:
+                            if (
+                                "text/plain" in content_type
+                                or "prometheus" in content_type
+                            ):
                                 return response.text
 
                     except httpx.RequestError:
                         continue
         return None
 
-    async def _extract_endpoints_from_openapi(self, api_spec: dict, snapshot: ApplicationMetricsSnapshot) -> None:
+    async def _extract_endpoints_from_openapi(
+        self, api_spec: dict, snapshot: ApplicationMetricsSnapshot
+    ) -> None:
         """Extract endpoint information from OpenAPI specification"""
         try:
             paths = api_spec.get("paths", {})
@@ -502,7 +544,9 @@ class AppMetricsCollector:
         except Exception as e:
             self.logger.error(f"Failed to extract endpoints from OpenAPI spec: {e}")
 
-    async def _parse_api_metrics_response(self, response: httpx.Response, snapshot: ApplicationMetricsSnapshot) -> None:
+    async def _parse_api_metrics_response(
+        self, response: httpx.Response, snapshot: ApplicationMetricsSnapshot
+    ) -> None:
         """Parse API metrics response"""
         try:
             if "application/json" in response.headers.get("content-type", ""):
@@ -516,8 +560,13 @@ class AppMetricsCollector:
                                 snapshot.total_requests += int(value)
                             elif "error" in key.lower() and "count" in key.lower():
                                 snapshot.total_errors += int(value)
-                            elif "response_time" in key.lower() or "latency" in key.lower():
-                                snapshot.avg_response_time = max(snapshot.avg_response_time, float(value))
+                            elif (
+                                "response_time" in key.lower()
+                                or "latency" in key.lower()
+                            ):
+                                snapshot.avg_response_time = max(
+                                    snapshot.avg_response_time, float(value)
+                                )
 
         except json.JSONDecodeError:
             pass
@@ -538,19 +587,35 @@ class AppMetricsCollector:
                 return
 
             # Calculate requests per second
-            request_delta = current_snapshot.total_requests - previous_snapshot.total_requests
+            request_delta = (
+                current_snapshot.total_requests - previous_snapshot.total_requests
+            )
             current_snapshot.requests_per_second = max(0, request_delta / time_delta)
 
             # Calculate error rate
             if current_snapshot.total_requests > 0:
-                current_snapshot.error_rate = current_snapshot.total_errors / current_snapshot.total_requests * 100
+                current_snapshot.error_rate = (
+                    current_snapshot.total_errors
+                    / current_snapshot.total_requests
+                    * 100
+                )
 
             # Calculate business operation rates (convert to per minute)
-            billing_delta = current_snapshot.billing_operations_per_min - previous_snapshot.billing_operations_per_min
-            current_snapshot.billing_operations_per_min = max(0, billing_delta / time_delta * 60)
+            billing_delta = (
+                current_snapshot.billing_operations_per_min
+                - previous_snapshot.billing_operations_per_min
+            )
+            current_snapshot.billing_operations_per_min = max(
+                0, billing_delta / time_delta * 60
+            )
 
-            auth_delta = current_snapshot.auth_operations_per_min - previous_snapshot.auth_operations_per_min
-            current_snapshot.auth_operations_per_min = max(0, auth_delta / time_delta * 60)
+            auth_delta = (
+                current_snapshot.auth_operations_per_min
+                - previous_snapshot.auth_operations_per_min
+            )
+            current_snapshot.auth_operations_per_min = max(
+                0, auth_delta / time_delta * 60
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to calculate rates: {e}")

@@ -27,6 +27,28 @@ class CSRFError(Exception):
     """Error raised for CSRF validation failures."""
 
 
+class CSRFTokenExpiredError(CSRFError):
+    """Raised when CSRF token is expired."""
+
+
+class CSRFTokenMismatchError(CSRFError):
+    """Raised when CSRF token signature or bindings mismatch."""
+
+
+class CSRFViolation(str, Enum):
+    MISSING_TOKEN = "missing_token"
+    TOKEN_MISMATCH = "token_mismatch"
+    TOKEN_EXPIRED = "token_expired"
+    INVALID_ORIGIN = "invalid_origin"
+    MISSING_REFERER = "missing_referer"
+
+
+class CSRFValidationResult:
+    def __init__(self, valid: bool, error: Optional[str] = None, violation: Optional[CSRFViolation] = None):
+        self.valid = valid
+        self.error = error
+        self.violation = violation
+
 class CSRFMode(str, Enum):
     """CSRF protection modes for different scenarios."""
 
@@ -97,7 +119,9 @@ class CSRFToken:
         self.secret_key = secret_key
         self.lifetime = lifetime
 
-    def generate(self, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
+    def generate(
+        self, session_id: Optional[str] = None, user_id: Optional[str] = None
+    ) -> str:
         """
         Generate CSRF token with optional session/user binding.
 
@@ -126,7 +150,12 @@ class CSRFToken:
 
         return f"{token_data}:{signature}"
 
-    def validate(self, token: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> bool:
+    def validate(
+        self,
+        token: str,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+    ) -> bool:
         """
         Validate CSRF token with optional session/user binding check.
 
@@ -188,7 +217,11 @@ class CSRFValidationContext:
     """Context for CSRF validation with portal-specific information."""
 
     def __init__(
-        self, request: Request, config: CSRFConfig, session_id: Optional[str] = None, user_id: Optional[str] = None
+        self,
+        request: Request,
+        config: CSRFConfig,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,
     ):
         self.request = request
         self.config = config
@@ -208,11 +241,14 @@ class CSRFValidationContext:
         content_type = self.request.headers.get("Content-Type", "")
 
         # Check path patterns
-        is_ssr_path = any(path.startswith(ssr_path) for ssr_path in self.config.ssr_paths)
+        is_ssr_path = any(
+            path.startswith(ssr_path) for ssr_path in self.config.ssr_paths
+        )
 
         # Check content type for form submissions
         is_form_submission = (
-            "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type
+            "application/x-www-form-urlencoded" in content_type
+            or "multipart/form-data" in content_type
         )
 
         return is_ssr_path or is_form_submission
@@ -230,11 +266,16 @@ class UnifiedCSRFMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.config = config
         self.token_generator = CSRFToken(
-            secret_key=config.secret_key or python_secrets.token_hex(32), lifetime=config.token_lifetime
+            secret_key=config.secret_key or python_secrets.token_hex(32),
+            lifetime=config.token_lifetime,
         )
 
         # Track token usage for debugging
-        self._token_stats = {"generated": 0, "validated_success": 0, "validated_failed": 0}
+        self._token_stats = {
+            "generated": 0,
+            "validated_success": 0,
+            "validated_failed": 0,
+        }
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with unified CSRF protection."""
@@ -325,7 +366,8 @@ class UnifiedCSRFMiddleware(BaseHTTPMiddleware):
 
             # Double-submit cookie pattern validation
             if (
-                self.config.token_delivery in [CSRFTokenDelivery.COOKIE_ONLY, CSRFTokenDelivery.BOTH]
+                self.config.token_delivery
+                in [CSRFTokenDelivery.COOKIE_ONLY, CSRFTokenDelivery.BOTH]
                 and cookie_token
                 and token_to_validate != cookie_token
             ):
@@ -338,7 +380,9 @@ class UnifiedCSRFMiddleware(BaseHTTPMiddleware):
 
         # Validate the token
         is_valid = self.token_generator.validate(
-            token=token_to_validate, session_id=context.session_id, user_id=context.user_id
+            token=token_to_validate,
+            session_id=context.session_id,
+            user_id=context.user_id,
         )
 
         # Additional referer check if enabled
@@ -348,7 +392,10 @@ class UnifiedCSRFMiddleware(BaseHTTPMiddleware):
         return is_valid
 
     async def _add_csrf_token_to_response(
-        self, request: Request, response: Response, context: Optional[CSRFValidationContext] = None
+        self,
+        request: Request,
+        response: Response,
+        context: Optional[CSRFValidationContext] = None,
     ) -> None:
         """Add CSRF token to response based on configuration."""
 
@@ -356,15 +403,23 @@ class UnifiedCSRFMiddleware(BaseHTTPMiddleware):
         session_id = self._extract_session_id(request) if context else None
         user_id = self._extract_user_id(request) if context else None
 
-        new_token = self.token_generator.generate(session_id=session_id, user_id=user_id)
+        new_token = self.token_generator.generate(
+            session_id=session_id, user_id=user_id
+        )
 
         self._token_stats["generated"] += 1
 
         # Add token based on delivery method
-        if self.config.token_delivery in [CSRFTokenDelivery.HEADER_ONLY, CSRFTokenDelivery.BOTH]:
+        if self.config.token_delivery in [
+            CSRFTokenDelivery.HEADER_ONLY,
+            CSRFTokenDelivery.BOTH,
+        ]:
             response.headers["X-CSRF-Token"] = new_token
 
-        if self.config.token_delivery in [CSRFTokenDelivery.COOKIE_ONLY, CSRFTokenDelivery.BOTH]:
+        if self.config.token_delivery in [
+            CSRFTokenDelivery.COOKIE_ONLY,
+            CSRFTokenDelivery.BOTH,
+        ]:
             response.set_cookie(
                 key="csrf_token",
                 value=new_token,
@@ -410,12 +465,16 @@ class UnifiedCSRFMiddleware(BaseHTTPMiddleware):
 
         # Check against allowed origins
         if self.config.allowed_origins:
-            return any(referer.startswith(origin) for origin in self.config.allowed_origins)
+            return any(
+                referer.startswith(origin) for origin in self.config.allowed_origins
+            )
 
         # Default: same origin check
         host = request.headers.get("Host")
         if host:
-            return referer.startswith(f"https://{host}") or referer.startswith(f"http://{host}")
+            return referer.startswith(f"https://{host}") or referer.startswith(
+                f"http://{host}"
+            )
 
         return False
 
@@ -543,7 +602,9 @@ def create_technician_portal_csrf_config() -> CSRFConfig:
 
 
 # Factory function for creating CSRF middleware
-def create_csrf_middleware(portal_type: str, custom_config: Optional[CSRFConfig] = None) -> UnifiedCSRFMiddleware:
+def create_csrf_middleware(
+    portal_type: str, custom_config: Optional[CSRFConfig] = None
+) -> UnifiedCSRFMiddleware:
     """
     Create CSRF middleware for specific portal type.
 
@@ -572,5 +633,24 @@ def create_csrf_middleware(portal_type: str, custom_config: Optional[CSRFConfig]
 
     config = config_creator()
     return UnifiedCSRFMiddleware(app=None, config=config)
+
+
+def get_portal_csrf_config(portal_type: str) -> CSRFConfig:
+    mapping = {
+        "admin": create_admin_portal_csrf_config,
+        "customer": create_customer_portal_csrf_config,
+        "management": create_management_portal_csrf_config,
+        "reseller": create_reseller_portal_csrf_config,
+        "technician": create_technician_portal_csrf_config,
+        "api": lambda: CSRFConfig(mode=CSRFMode.API_ONLY, token_delivery=CSRFTokenDelivery.HEADER_ONLY),
+    }
+    factory = mapping.get(portal_type)
+    return factory() if factory else CSRFConfig()
+
+
 class CSRFTokenExpiredError(CSRFError):
     """Raised when CSRF token is expired."""
+
+
+class CSRFTokenMismatchError(CSRFError):
+    """Raised when CSRF token signature or bindings mismatch."""

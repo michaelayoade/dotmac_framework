@@ -29,7 +29,9 @@ def get_logger(name: str):
 T = TypeVar("T")
 
 
-def safe_import(module_name: str, class_name: Optional[str] = None, default_value: Any = None):
+def safe_import(
+    module_name: str, class_name: Optional[str] = None, default_value: Any = None
+):
     """
     Safely import a module or class, returning default_value if import fails.
 
@@ -50,7 +52,9 @@ def safe_import(module_name: str, class_name: Optional[str] = None, default_valu
         return default_value
 
 
-def validate_required_field(value: Any, field_name: str, expected_type: Optional[type] = None) -> Any:
+def validate_required_field(
+    value: Any, field_name: str, expected_type: Optional[type] = None
+) -> Any:
     """
     Validate a required field with optional type checking.
 
@@ -74,7 +78,9 @@ def validate_required_field(value: Any, field_name: str, expected_type: Optional
     return value
 
 
-def safe_cast(value: Any, target_type: type[T], default: Optional[T] = None) -> Optional[T]:
+def safe_cast(
+    value: Any, target_type: type[T], default: Optional[T] = None
+) -> Optional[T]:
     """
     Safely cast a value to target type, returning default if cast fails.
 
@@ -113,7 +119,9 @@ def format_duration_ms(start_time: float, end_time: Optional[float] = None) -> f
     return (end_time - start_time) * 1000
 
 
-def sanitize_dict(data: dict[str, Any], sensitive_keys: Optional[set] = None) -> dict[str, Any]:
+def sanitize_dict(
+    data: dict[str, Any], sensitive_keys: Optional[set] = None
+) -> dict[str, Any]:
     """
     Sanitize a dictionary by redacting sensitive keys.
 

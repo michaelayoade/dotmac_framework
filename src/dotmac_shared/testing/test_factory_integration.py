@@ -41,7 +41,9 @@ class TestFactorySystemIntegration:
         assert tenant_factory is not None
 
         # Test instance creation through registry
-        tenant = factory_registry.create_instance("tenant_factory", name="Integration Test ISP")
+        tenant = factory_registry.create_instance(
+            "tenant_factory", name="Integration Test ISP"
+        )
 
         assert tenant.name == "Integration Test ISP"
         assert tenant.id is not None
@@ -60,7 +62,9 @@ class TestFactorySystemIntegration:
         customer = customer_factory.create(name="Dependency Test Customer")
 
         # Create service with customer dependency
-        service = service_factory.create(customer_id=customer.id, service_type="internet")
+        service = service_factory.create(
+            customer_id=customer.id, service_type="internet"
+        )
 
         # Verify relationship
         assert service.customer_id == customer.id
@@ -95,7 +99,9 @@ class TestDataGenerationIntegration:
         company = data_generator.generate(DataType.COMPANY)
 
         # Use generated data in factory
-        customer = customer_factory.build(name=name, email=email, company_name=company, type="business")
+        customer = customer_factory.build(
+            name=name, email=email, company_name=company, type="business"
+        )
 
         assert customer.name == name
         assert customer.email == email
@@ -127,7 +133,9 @@ class TestDataGenerationIntegration:
     def test_sequence_generation_consistency(self, data_generator):
         """Test that sequences generate consistently."""
         # Generate sequences for different entities
-        customer_sequences = [data_generator.next_sequence("customer") for _ in range(5)]
+        customer_sequences = [
+            data_generator.next_sequence("customer") for _ in range(5)
+        ]
         invoice_sequences = [data_generator.next_sequence("invoice") for _ in range(3)]
 
         # Verify customer sequences
@@ -167,18 +175,28 @@ class TestBuilderPatternIntegration:
         result = (
             test_data_builder.relationship()
             .add_step("tenant", "tenant_factory")
-            .add_step("customer", "customer_factory", attributes={"tenant_id": tenant_id})
+            .add_step(
+                "customer", "customer_factory", attributes={"tenant_id": tenant_id}
+            )
             .add_step(
                 "service1",
                 "service_factory",
                 dependencies=["customer"],
-                attributes={"customer_id": "${customer.id}", "tenant_id": tenant_id, "service_type": "internet"},
+                attributes={
+                    "customer_id": "${customer.id}",
+                    "tenant_id": tenant_id,
+                    "service_type": "internet",
+                },
             )
             .add_step(
                 "service2",
                 "service_factory",
                 dependencies=["customer"],
-                attributes={"customer_id": "${customer.id}", "tenant_id": tenant_id, "service_type": "phone"},
+                attributes={
+                    "customer_id": "${customer.id}",
+                    "tenant_id": tenant_id,
+                    "service_type": "phone",
+                },
             )
             .build()
         )
@@ -250,7 +268,14 @@ class TestPytestFixtureIntegration:
 
     def test_complete_scenario_fixture(self, complete_customer_scenario):
         """Test complete scenario fixture with all entities."""
-        expected_entities = ["tenant", "customer", "service", "billing_account", "invoice", "router"]
+        expected_entities = [
+            "tenant",
+            "customer",
+            "service",
+            "billing_account",
+            "invoice",
+            "router",
+        ]
 
         for entity_name in expected_entities:
             assert entity_name in complete_customer_scenario
@@ -362,10 +387,18 @@ class TestCustomizationAndExtension:
         # Define custom factory
         class CustomTestFactory(BaseFactory):
             def _create_metadata(self) -> FactoryMetadata:
-                return FactoryMetadata(name="custom_test_factory", entity_type=MockEntity, provides={"custom_entity"})
+                return FactoryMetadata(
+                    name="custom_test_factory",
+                    entity_type=MockEntity,
+                    provides={"custom_entity"},
+                )
 
             def _create_instance(self, **kwargs) -> MockEntity:
-                defaults = {"id": str(uuid4()), "custom_field": "custom_value", "created_by": "custom_factory"}
+                defaults = {
+                    "id": str(uuid4()),
+                    "custom_field": "custom_value",
+                    "created_by": "custom_factory",
+                }
                 defaults.update(kwargs)
                 return MockEntity(**defaults)
 
@@ -380,7 +413,9 @@ class TestCustomizationAndExtension:
         factory_registry.register_factory(custom_factory)
 
         # Test usage
-        entity = factory_registry.create_instance("custom_test_factory", custom_field="modified_value")
+        entity = factory_registry.create_instance(
+            "custom_test_factory", custom_field="modified_value"
+        )
 
         assert entity.custom_field == "modified_value"
         assert entity.created_by == "custom_factory"
@@ -417,7 +452,13 @@ def test_complete_system_integration():
     DataGenerator()
 
     # Import and register factories
-    from .entity_factories import BillingFactory, CustomerFactory, ServiceFactory, TenantFactory, UserFactory
+    from .entity_factories import (
+        BillingFactory,
+        CustomerFactory,
+        ServiceFactory,
+        TenantFactory,
+        UserFactory,
+    )
 
     registry.register_factory(TenantFactory(registry))
     registry.register_factory(UserFactory(registry=registry))
@@ -435,11 +476,17 @@ def test_complete_system_integration():
 
         service_factory = registry.get_factory("service_factory")
         service_factory.tenant_id = tenant.id
-        service = service_factory.create(customer_id=customer.id, service_type="internet")
+        service = service_factory.create(
+            customer_id=customer.id, service_type="internet"
+        )
 
         billing_factory = registry.get_factory("billing_factory")
         billing_factory.tenant_id = tenant.id
-        invoice = billing_factory.create(entity_type="invoice", customer_id=customer.id, total_amount=Decimal("99.99"))
+        invoice = billing_factory.create(
+            entity_type="invoice",
+            customer_id=customer.id,
+            total_amount=Decimal("99.99"),
+        )
 
         # Verify complete integration
         assert tenant.id is not None

@@ -75,7 +75,9 @@ class ManagementAPISecurityConfig:
             ),
             EndpointSensitivity.READ: SecurityPolicy(
                 sensitivity=EndpointSensitivity.READ,
-                max_requests=int(100 * base_multiplier),  # 100 req/min in prod, 200 in dev
+                max_requests=int(
+                    100 * base_multiplier
+                ),  # 100 req/min in prod, 200 in dev
                 time_window_seconds=60,
                 rate_limit_type=RateLimitType.PER_USER,
                 custom_message="You have exceeded your read request quota. Please wait before making more requests.",
@@ -88,7 +90,10 @@ class ManagementAPISecurityConfig:
                 rate_limit_type=RateLimitType.PER_USER,
                 custom_message="You have exceeded your write request quota. Please wait before making more requests.",
                 require_auth=True,
-                additional_headers={"X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY"},
+                additional_headers={
+                    "X-Content-Type-Options": "nosniff",
+                    "X-Frame-Options": "DENY",
+                },
             ),
             EndpointSensitivity.FINANCIAL: SecurityPolicy(
                 sensitivity=EndpointSensitivity.FINANCIAL,
@@ -164,7 +169,8 @@ class ManagementAPISecurityConfig:
             RateLimitRule(
                 rule_id="financial_read_endpoints",
                 limit_type=financial_policy.rate_limit_type,
-                max_requests=financial_policy.max_requests * 10,  # More lenient for reads
+                max_requests=financial_policy.max_requests
+                * 10,  # More lenient for reads
                 time_window_seconds=financial_policy.time_window_seconds,
                 endpoints=[
                     "/api/v1/commission-config",
@@ -201,7 +207,10 @@ class ManagementAPISecurityConfig:
                 limit_type=write_policy.rate_limit_type,
                 max_requests=write_policy.max_requests * 3,  # More lenient for reads
                 time_window_seconds=write_policy.time_window_seconds,
-                endpoints=["/api/v1/partners/*/brand", "/api/v1/partners/*/brand/theme"],
+                endpoints=[
+                    "/api/v1/partners/*/brand",
+                    "/api/v1/partners/*/brand/theme",
+                ],
                 methods=["GET"],
             )
         )
@@ -212,7 +221,10 @@ class ManagementAPISecurityConfig:
                 limit_type=write_policy.rate_limit_type,
                 max_requests=write_policy.max_requests,
                 time_window_seconds=write_policy.time_window_seconds,
-                endpoints=["/api/v1/partners/*/brand", "/api/v1/partners/*/brand/verify-domain"],
+                endpoints=[
+                    "/api/v1/partners/*/brand",
+                    "/api/v1/partners/*/brand/verify-domain",
+                ],
                 methods=["POST", "PUT", "PATCH", "DELETE"],
             )
         )
@@ -225,7 +237,10 @@ class ManagementAPISecurityConfig:
                 limit_type=admin_policy.rate_limit_type,
                 max_requests=admin_policy.max_requests,
                 time_window_seconds=admin_policy.time_window_seconds,
-                endpoints=["/api/v1/admin/bootstrap-status", "/api/v1/admin/security-checklist"],
+                endpoints=[
+                    "/api/v1/admin/bootstrap-status",
+                    "/api/v1/admin/security-checklist",
+                ],
                 methods=["GET"],
             )
         )
@@ -276,7 +291,12 @@ class ManagementAPISecurityConfig:
                 "X-CSRF-Token",
                 "X-Tenant-ID",
             ],
-            "expose_headers": ["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"],
+            "expose_headers": [
+                "X-RateLimit-Limit",
+                "X-RateLimit-Remaining",
+                "X-RateLimit-Reset",
+                "Retry-After",
+            ],
         }
 
     def get_security_headers_config(self) -> dict[str, str]:
@@ -336,7 +356,9 @@ class ManagementAPISecurityConfig:
         """Get request validation configuration"""
 
         return {
-            "max_request_size": 10_000_000 if self.environment != "production" else 5_000_000,
+            "max_request_size": 10_000_000
+            if self.environment != "production"
+            else 5_000_000,
             "max_json_depth": 10,
             "max_query_params": 50,
             "max_headers": 100,
@@ -346,7 +368,9 @@ class ManagementAPISecurityConfig:
                 "multipart/form-data",
                 "text/plain",
             ],
-            "blocked_user_agents": ["curl", "wget", "python-requests"] if self.environment == "production" else [],
+            "blocked_user_agents": ["curl", "wget", "python-requests"]
+            if self.environment == "production"
+            else [],
         }
 
     def get_authentication_config(self) -> dict[str, Any]:
@@ -354,7 +378,9 @@ class ManagementAPISecurityConfig:
 
         return {
             "jwt_algorithm": "HS256",
-            "token_expiry": 1800 if self.environment == "production" else 3600,  # 30min prod, 1hr dev
+            "token_expiry": 1800
+            if self.environment == "production"
+            else 3600,  # 30min prod, 1hr dev
             "refresh_token_expiry": 86400,  # 24 hours
             "require_tenant_context": True,
             "verify_email": self.environment == "production",
@@ -365,10 +391,14 @@ class ManagementAPISecurityConfig:
             "concurrent_sessions": 3 if self.environment == "production" else 5,
         }
 
-    async def setup_api_security(self, app, jwt_secret_key: str, redis_url: str) -> APISecuritySuite:
+    async def setup_api_security(
+        self, app, jwt_secret_key: str, redis_url: str
+    ) -> APISecuritySuite:
         """Setup complete API security using dotmac_shared components"""
 
-        from dotmac_shared.security.api_security_integration import setup_complete_api_security
+        from dotmac_shared.security.api_security_integration import (
+            setup_complete_api_security,
+        )
 
         # Get tenant domains for CORS
         cors_origins = self.get_cors_config()["allow_origins"]
@@ -384,13 +414,17 @@ class ManagementAPISecurityConfig:
         )
 
         if security_result["status"] != "SUCCESS":
-            raise RuntimeError(f"Failed to setup API security: {security_result.get('message', 'Unknown error')}")
+            raise RuntimeError(
+                f"Failed to setup API security: {security_result.get('message', 'Unknown error')}"
+            )
 
         return security_result["security_suite"]
 
 
 # Global instance for easy import
-management_security = ManagementAPISecurityConfig(environment=os.getenv("ENVIRONMENT", "production"))
+management_security = ManagementAPISecurityConfig(
+    environment=os.getenv("ENVIRONMENT", "production")
+)
 
 
 # Export commonly used configurations
@@ -414,6 +448,8 @@ def get_authentication_config() -> dict[str, Any]:
     return management_security.get_authentication_config()
 
 
-async def setup_management_api_security(app, jwt_secret_key: str, redis_url: str) -> APISecuritySuite:
+async def setup_management_api_security(
+    app, jwt_secret_key: str, redis_url: str
+) -> APISecuritySuite:
     """Setup complete security for management API"""
     return await management_security.setup_api_security(app, jwt_secret_key, redis_url)

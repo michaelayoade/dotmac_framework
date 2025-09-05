@@ -87,12 +87,20 @@ class E2ETestRunner:
         os.environ["ENVIRONMENT"] = "e2e_testing"
         os.environ["LOG_LEVEL"] = "DEBUG" if args.debug else "INFO"
         os.environ["DISABLE_REAL_DEPLOYMENTS"] = "true"
-        os.environ["TEST_CLEANUP_ENABLED"] = "true" if not args.skip_cleanup else "false"
+        os.environ["TEST_CLEANUP_ENABLED"] = (
+            "true" if not args.skip_cleanup else "false"
+        )
 
         # Database URLs for testing
-        os.environ["TEST_MANAGEMENT_DB"] = "postgresql://test_user:test_pass@localhost:5433/test_management"
-        os.environ["TEST_TENANT_A_DB"] = "postgresql://test_user:test_pass@localhost:5434/test_tenant_a"
-        os.environ["TEST_TENANT_B_DB"] = "postgresql://test_user:test_pass@localhost:5435/test_tenant_b"
+        os.environ[
+            "TEST_MANAGEMENT_DB"
+        ] = "postgresql://test_user:test_pass@localhost:5433/test_management"
+        os.environ[
+            "TEST_TENANT_A_DB"
+        ] = "postgresql://test_user:test_pass@localhost:5434/test_tenant_a"
+        os.environ[
+            "TEST_TENANT_B_DB"
+        ] = "postgresql://test_user:test_pass@localhost:5435/test_tenant_b"
 
         # API URLs
         os.environ["TEST_BASE_URL"] = "https://test.dotmac.local"
@@ -108,7 +116,9 @@ class E2ETestRunner:
         pytest_args = []
 
         # Base configuration
-        pytest_args.extend(["--verbose", "--tb=short", "--strict-markers", "--color=yes"])
+        pytest_args.extend(
+            ["--verbose", "--tb=short", "--strict-markers", "--color=yes"]
+        )
 
         # Test selection based on arguments
         if args.provisioning:
@@ -124,7 +134,9 @@ class E2ETestRunner:
 
         # Debug configuration
         if args.debug:
-            pytest_args.extend(["--capture=no", "--log-cli-level=DEBUG", "--show-capture=all"])
+            pytest_args.extend(
+                ["--capture=no", "--log-cli-level=DEBUG", "--show-capture=all"]
+            )
 
         # Parallel execution
         if args.parallel and not args.debug:
@@ -133,7 +145,11 @@ class E2ETestRunner:
         # Coverage reporting
         if args.coverage:
             pytest_args.extend(
-                ["--cov=src/dotmac_management", "--cov-report=term-missing", "--cov-report=html:htmlcov"]
+                [
+                    "--cov=src/dotmac_management",
+                    "--cov-report=term-missing",
+                    "--cov-report=html:htmlcov",
+                ]
             )
 
         # Output options
@@ -199,7 +215,9 @@ class E2ETestRunner:
 
         # Validate cleanup was successful
         if self.cleanup_results["errors"]:
-            logger.warning(f"Cleanup completed with {len(self.cleanup_results['errors'])} errors")
+            logger.warning(
+                f"Cleanup completed with {len(self.cleanup_results['errors'])} errors"
+            )
             for error in self.cleanup_results["errors"]:
                 logger.warning(f"  - {error}")
         else:
@@ -275,22 +293,49 @@ Examples:
 
     # Test selection options
     test_group = parser.add_mutually_exclusive_group()
-    test_group.add_argument("--provisioning", action="store_true", help="Run tenant provisioning tests only")
-    test_group.add_argument("--lifecycle", action="store_true", help="Run container lifecycle tests only")
-    test_group.add_argument("--isolation", action="store_true", help="Run tenant isolation tests only")
-    test_group.add_argument("--cleanup-only", action="store_true", help="Run cleanup validation tests only")
+    test_group.add_argument(
+        "--provisioning", action="store_true", help="Run tenant provisioning tests only"
+    )
+    test_group.add_argument(
+        "--lifecycle", action="store_true", help="Run container lifecycle tests only"
+    )
+    test_group.add_argument(
+        "--isolation", action="store_true", help="Run tenant isolation tests only"
+    )
+    test_group.add_argument(
+        "--cleanup-only", action="store_true", help="Run cleanup validation tests only"
+    )
 
     # Execution options
-    parser.add_argument("--debug", action="store_true", help="Enable debug output and disable parallel execution")
-    parser.add_argument("--parallel", type=int, help="Number of parallel test workers (default: auto)")
-    parser.add_argument("--timeout", type=int, default=1800, help="Test timeout in seconds (default: 1800)")
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug output and disable parallel execution",
+    )
+    parser.add_argument(
+        "--parallel", type=int, help="Number of parallel test workers (default: auto)"
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=1800,
+        help="Test timeout in seconds (default: 1800)",
+    )
 
     # Validation and cleanup options
-    parser.add_argument("--skip-validation", action="store_true", help="Skip pre-test environment validation")
-    parser.add_argument("--skip-cleanup", action="store_true", help="Skip post-test cleanup")
+    parser.add_argument(
+        "--skip-validation",
+        action="store_true",
+        help="Skip pre-test environment validation",
+    )
+    parser.add_argument(
+        "--skip-cleanup", action="store_true", help="Skip post-test cleanup"
+    )
 
     # Reporting options
-    parser.add_argument("--coverage", action="store_true", help="Enable coverage reporting")
+    parser.add_argument(
+        "--coverage", action="store_true", help="Enable coverage reporting"
+    )
     parser.add_argument("--junit-xml", help="Path for JUnit XML report output")
     parser.add_argument("--report-file", help="Path for test execution report")
 

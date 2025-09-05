@@ -50,8 +50,11 @@ class ServiceFactory:
             payment_api_key=os.getenv("PAYMENT_API_KEY"),
             payment_webhook_secret=os.getenv("PAYMENT_WEBHOOK_SECRET"),
             # Notification configuration
-            notification_enabled=os.getenv("NOTIFICATION_ENABLED", "true").lower() == "true",
-            notification_providers=os.getenv("NOTIFICATION_PROVIDERS", "email,sms").split(","),
+            notification_enabled=os.getenv("NOTIFICATION_ENABLED", "true").lower()
+            == "true",
+            notification_providers=os.getenv(
+                "NOTIFICATION_PROVIDERS", "email,sms"
+            ).split(","),
             email_provider=os.getenv("EMAIL_PROVIDER", "sendgrid"),
             sms_provider=os.getenv("SMS_PROVIDER", "twilio"),
             # Analytics configuration
@@ -59,20 +62,27 @@ class ServiceFactory:
             analytics_provider=os.getenv("ANALYTICS_PROVIDER", "prometheus"),
             analytics_endpoint=os.getenv("ANALYTICS_ENDPOINT"),
             # Registry configuration from environment
-            initialization_timeout_seconds=int(os.getenv("SERVICE_INIT_TIMEOUT", "300")),
+            initialization_timeout_seconds=int(
+                os.getenv("SERVICE_INIT_TIMEOUT", "300")
+            ),
             health_check_interval_seconds=int(os.getenv("HEALTH_CHECK_INTERVAL", "30")),
-            retry_failed_services=os.getenv("RETRY_FAILED_SERVICES", "true").lower() == "true",
+            retry_failed_services=os.getenv("RETRY_FAILED_SERVICES", "true").lower()
+            == "true",
             max_retry_attempts=int(os.getenv("MAX_RETRY_ATTEMPTS", "3")),
         )
 
         # Deployment-specific overrides
         if deployment_context:
-            config = ServiceFactory._apply_deployment_overrides(config, deployment_context)
+            config = ServiceFactory._apply_deployment_overrides(
+                config, deployment_context
+            )
 
         return config
 
     @staticmethod
-    def _apply_deployment_overrides(config: ServiceConfig, context: DeploymentContext) -> ServiceConfig:
+    def _apply_deployment_overrides(
+        config: ServiceConfig, context: DeploymentContext
+    ) -> ServiceConfig:
         """Apply deployment-specific configuration overrides."""
 
         if context.mode == DeploymentMode.TENANT_CONTAINER:
@@ -88,7 +98,9 @@ class ServiceFactory:
                 if tenant_jwt_secret:
                     config.auth_jwt_secret = tenant_jwt_secret
 
-                tenant_payment_key = os.getenv(f"TENANT_{tenant_id.upper()}_PAYMENT_API_KEY")
+                tenant_payment_key = os.getenv(
+                    f"TENANT_{tenant_id.upper()}_PAYMENT_API_KEY"
+                )
                 if tenant_payment_key:
                     config.payment_api_key = tenant_payment_key
 
@@ -132,11 +144,15 @@ class ServiceFactory:
 
             service = await create_auth_service(auth_config)
 
-            return ServiceCreationResult(success=True, service_name="auth", service=service)
+            return ServiceCreationResult(
+                success=True, service_name="auth", service=service
+            )
 
         except Exception as e:
             logger.error(f"Failed to create auth service: {e}")
-            return ServiceCreationResult(success=False, service_name="auth", error_message=str(e))
+            return ServiceCreationResult(
+                success=False, service_name="auth", error_message=str(e)
+            )
 
     @staticmethod
     async def create_payment_service(
@@ -160,11 +176,15 @@ class ServiceFactory:
 
             service = await create_payment_service(payment_config)
 
-            return ServiceCreationResult(success=True, service_name="payment", service=service)
+            return ServiceCreationResult(
+                success=True, service_name="payment", service=service
+            )
 
         except Exception as e:
             logger.error(f"Failed to create payment service: {e}")
-            return ServiceCreationResult(success=False, service_name="payment", error_message=str(e))
+            return ServiceCreationResult(
+                success=False, service_name="payment", error_message=str(e)
+            )
 
     @staticmethod
     async def create_notification_service(
@@ -188,7 +208,9 @@ class ServiceFactory:
 
         except Exception as e:
             logger.error(f"Failed to create notification service: {e}")
-            return ServiceCreationResult(success=False, service_name="notification", error_message=str(e))
+            return ServiceCreationResult(
+                success=False, service_name="notification", error_message=str(e)
+            )
 
     @staticmethod
     async def create_analytics_service(
@@ -211,11 +233,15 @@ class ServiceFactory:
 
             service = await create_analytics_service(analytics_config)
 
-            return ServiceCreationResult(success=True, service_name="analytics", service=service)
+            return ServiceCreationResult(
+                success=True, service_name="analytics", service=service
+            )
 
         except Exception as e:
             logger.error(f"Failed to create analytics service: {e}")
-            return ServiceCreationResult(success=False, service_name="analytics", error_message=str(e))
+            return ServiceCreationResult(
+                success=False, service_name="analytics", error_message=str(e)
+            )
 
 
 class DeploymentAwareServiceFactory:
@@ -226,12 +252,16 @@ class DeploymentAwareServiceFactory:
         self.deployment_context = deployment_context
         self.base_factory = ServiceFactory()
 
-    async def create_service_registry(self, additional_services: Optional[dict[str, Any]] = None) -> ServiceRegistry:
+    async def create_service_registry(
+        self, additional_services: Optional[dict[str, Any]] = None
+    ) -> ServiceRegistry:
         """Create a fully configured service registry."""
         logger.info("Creating deployment-aware service registry...")
 
         # Create service configuration
-        service_config = self.base_factory.create_service_config(self.deployment_context)
+        service_config = self.base_factory.create_service_config(
+            self.deployment_context
+        )
 
         # Create registry
         registry = ServiceRegistry(service_config)
@@ -245,7 +275,9 @@ class DeploymentAwareServiceFactory:
 
         return registry
 
-    async def _register_standard_services(self, registry: ServiceRegistry, service_config: ServiceConfig) -> None:
+    async def _register_standard_services(
+        self, registry: ServiceRegistry, service_config: ServiceConfig
+    ) -> None:
         """Register standard business services."""
         service_creators = [
             ("auth", self.base_factory.create_auth_service),
@@ -271,24 +303,32 @@ class DeploymentAwareServiceFactory:
 
                     logger.info(f"✅ Created and registered {service_name} service")
                 else:
-                    logger.warning(f"⚠️ Failed to create {service_name} service: {result.error_message}")
+                    logger.warning(
+                        f"⚠️ Failed to create {service_name} service: {result.error_message}"
+                    )
             except Exception as e:
                 logger.error(f"❌ Exception creating {service_name} service: {e}")
                 creation_results.append(
-                    ServiceCreationResult(success=False, service_name=service_name, error_message=str(e))
+                    ServiceCreationResult(
+                        success=False, service_name=service_name, error_message=str(e)
+                    )
                 )
 
         # Log summary
         successful_services = [r.service_name for r in creation_results if r.success]
         failed_services = [r.service_name for r in creation_results if not r.success]
 
-        logger.info(f"Service registry created: {len(successful_services)} services ready")
+        logger.info(
+            f"Service registry created: {len(successful_services)} services ready"
+        )
         if successful_services:
             logger.info(f"  Ready: {', '.join(successful_services)}")
         if failed_services:
             logger.warning(f"  Failed: {', '.join(failed_services)}")
 
-    async def _register_custom_services(self, registry: ServiceRegistry, custom_services: dict[str, Any]):
+    async def _register_custom_services(
+        self, registry: ServiceRegistry, custom_services: dict[str, Any]
+    ):
         """Register custom services provided by the application."""
         for service_name, service_instance in custom_services.items():
             try:
@@ -334,7 +374,11 @@ class DeploymentAwareServiceFactory:
 
         return {
             "deployment_context": {
-                "mode": (self.deployment_context.mode.value if self.deployment_context.mode else None),
+                "mode": (
+                    self.deployment_context.mode.value
+                    if self.deployment_context.mode
+                    else None
+                ),
                 "tenant_id": self.deployment_context.tenant_id,
                 "platform": self.deployment_context.platform,
                 "environment": self.deployment_context.environment,

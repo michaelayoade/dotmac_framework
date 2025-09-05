@@ -24,7 +24,9 @@ class DatabaseConnection:
         self.connected = False
         logger.info("Database connection closed")
 
-    async def execute(self, query: str, params: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+    async def execute(
+        self, query: str, params: Optional[dict[str, Any]] = None
+    ) -> list[dict[str, Any]]:
         """Execute database query."""
         if not self.connected:
             raise ConnectionError("Database not connected")
@@ -33,12 +35,16 @@ class DatabaseConnection:
         # Mock implementation - return empty result
         return []
 
-    async def fetch_one(self, query: str, params: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
+    async def fetch_one(
+        self, query: str, params: Optional[dict[str, Any]] = None
+    ) -> Optional[dict[str, Any]]:
         """Fetch single record."""
         results = await self.execute(query, params)
         return results[0] if results else None
 
-    async def fetch_all(self, query: str, params: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+    async def fetch_all(
+        self, query: str, params: Optional[dict[str, Any]] = None
+    ) -> list[dict[str, Any]]:
         """Fetch all records."""
         return await self.execute(query, params)
 

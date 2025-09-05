@@ -27,7 +27,9 @@ class CommonValidators:
     """
 
     @staticmethod
-    def validate_required_string(value: str, field_name: str, min_length: int = 2, max_length: int = 100) -> str:
+    def validate_required_string(
+        value: str, field_name: str, min_length: int = 2, max_length: int = 100
+    ) -> str:
         """
         Standard string validation with length requirements.
 
@@ -78,7 +80,9 @@ class CommonValidators:
 
         # Format validation
         if not ValidationPatterns.SUBDOMAIN.match(subdomain):
-            raise ValueError("Subdomain can only contain lowercase letters, numbers, and hyphens")
+            raise ValueError(
+                "Subdomain can only contain lowercase letters, numbers, and hyphens"
+            )
 
         # Length limits
         if len(subdomain) < 3:
@@ -137,7 +141,9 @@ class CommonValidators:
         return CommonValidators.validate_required_string(value, "Name", 2, 80)
 
     @staticmethod
-    def validate_description(value: Optional[str], max_length: int = 500) -> Optional[str]:
+    def validate_description(
+        value: Optional[str], max_length: int = 500
+    ) -> Optional[str]:
         """Optional description validation"""
         if not value:
             return None
@@ -187,7 +193,9 @@ class CommonValidators:
         clean_slug = value.lower().strip()
 
         if not ValidationPatterns.SLUG.match(clean_slug):
-            raise ValueError(f"{field_name} can only contain lowercase letters, numbers, hyphens, and underscores")
+            raise ValueError(
+                f"{field_name} can only contain lowercase letters, numbers, hyphens, and underscores"
+            )
 
         if len(clean_slug) < 2:
             raise ValueError(f"{field_name} must be at least 2 characters")

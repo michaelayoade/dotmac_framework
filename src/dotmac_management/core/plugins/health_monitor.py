@@ -89,7 +89,9 @@ class PluginHealthMonitor:
             self.monitoring_active = True
             self._monitoring_task = asyncio.create_task(self._monitoring_loop())
 
-            logger.info(f"✅ Started plugin health monitoring (interval: {self.check_interval}s)")
+            logger.info(
+                f"✅ Started plugin health monitoring (interval: {self.check_interval}s)"
+            )
             return True
 
         except (OSError, RuntimeError):
@@ -131,9 +133,13 @@ class PluginHealthMonitor:
 
         # Check deployment providers
         for provider_name in self.infrastructure_manager.list_deployment_providers():
-            provider = self.infrastructure_manager.get_deployment_provider(provider_name)
+            provider = self.infrastructure_manager.get_deployment_provider(
+                provider_name
+            )
             if provider:
-                report = await self._check_plugin_health(provider, provider_name, "deployment")
+                report = await self._check_plugin_health(
+                    provider, provider_name, "deployment"
+                )
                 reports[provider_name] = report
 
         # Check DNS providers
@@ -174,11 +180,15 @@ class PluginHealthMonitor:
                 return report
             elif plugin.status != PluginStatus.ACTIVE:
                 report.overall_status = HealthStatus.DEGRADED
-                report.warnings.append(f"Plugin is not ACTIVE (status: {plugin.status})")
+                report.warnings.append(
+                    f"Plugin is not ACTIVE (status: {plugin.status})"
+                )
 
             # Provider-specific health check
             health_result = await plugin.health_check()
-            check_duration = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+            check_duration = (
+                datetime.now(timezone.utc) - start_time
+            ).total_seconds() * 1000
             report.check_duration_ms = check_duration
 
             # Analyze health check results
@@ -191,7 +201,9 @@ class PluginHealthMonitor:
                     report.warnings.append(f"High response time: {response_time:.1f}ms")
                 elif response_time > self.response_time_warning:
                     report.overall_status = HealthStatus.DEGRADED
-                    report.warnings.append(f"Elevated response time: {response_time:.1f}ms")
+                    report.warnings.append(
+                        f"Elevated response time: {response_time:.1f}ms"
+                    )
                 else:
                     report.overall_status = HealthStatus.HEALTHY
 
@@ -214,7 +226,9 @@ class PluginHealthMonitor:
 
             # Store provider-specific data
             report.provider_specific_data = {
-                k: v for k, v in health_result.items() if k not in ["healthy", "error", "response_time_ms"]
+                k: v
+                for k, v in health_result.items()
+                if k not in ["healthy", "error", "response_time_ms"]
             }
 
             # Type-specific health checks
@@ -223,7 +237,9 @@ class PluginHealthMonitor:
         except (OSError, TimeoutError, ConnectionError) as e:
             report.overall_status = HealthStatus.UNHEALTHY
             report.errors.append(f"Health check exception: {e}")
-            report.check_duration_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+            report.check_duration_ms = (
+                datetime.now(timezone.utc) - start_time
+            ).total_seconds() * 1000
             logger.exception("Health check failed for %s", provider_name)
 
         return report
@@ -237,7 +253,9 @@ class PluginHealthMonitor:
         else:
             return HealthStatus.HEALTHY
 
-    async def _add_type_specific_metrics(self, plugin: BasePlugin, plugin_type: str, report: PluginHealthReport):
+    async def _add_type_specific_metrics(
+        self, plugin: BasePlugin, plugin_type: str, report: PluginHealthReport
+    ):
         """Add type-specific health metrics."""
         if plugin_type == "deployment":
             # Deployment provider specific metrics
@@ -282,7 +300,10 @@ class PluginHealthMonitor:
             # Check for status changes
             previous_report = self.health_reports.get(provider_name)
 
-            if previous_report and previous_report.overall_status != report.overall_status:
+            if (
+                previous_report
+                and previous_report.overall_status != report.overall_status
+            ):
                 await self._trigger_alert(
                     "status_change",
                     provider_name,
@@ -293,10 +314,19 @@ class PluginHealthMonitor:
             # Check for new errors
             if report.overall_status == HealthStatus.UNHEALTHY:
                 await self._trigger_alert(
-                    "unhealthy", provider_name, f"Plugin is unhealthy: {', '.join(report.errors)}", report
+                    "unhealthy",
+                    provider_name,
+                    f"Plugin is unhealthy: {', '.join(report.errors)}",
+                    report,
                 )
 
-    async def _trigger_alert(self, alert_type: str, provider_name: str, message: str, report: PluginHealthReport):
+    async def _trigger_alert(
+        self,
+        alert_type: str,
+        provider_name: str,
+        message: str,
+        report: PluginHealthReport,
+    ):
         """Trigger health alert callbacks."""
         alert_data = {
             "type": alert_type,
@@ -338,9 +368,21 @@ class PluginHealthMonitor:
                 "last_check": None,
             }
 
-        healthy_count = sum(1 for r in self.health_reports.values() if r.overall_status == HealthStatus.HEALTHY)
-        degraded_count = sum(1 for r in self.health_reports.values() if r.overall_status == HealthStatus.DEGRADED)
-        unhealthy_count = sum(1 for r in self.health_reports.values() if r.overall_status == HealthStatus.UNHEALTHY)
+        healthy_count = sum(
+            1
+            for r in self.health_reports.values()
+            if r.overall_status == HealthStatus.HEALTHY
+        )
+        degraded_count = sum(
+            1
+            for r in self.health_reports.values()
+            if r.overall_status == HealthStatus.DEGRADED
+        )
+        unhealthy_count = sum(
+            1
+            for r in self.health_reports.values()
+            if r.overall_status == HealthStatus.UNHEALTHY
+        )
 
         # Determine overall status
         if unhealthy_count > 0:
@@ -352,7 +394,11 @@ class PluginHealthMonitor:
         else:
             overall_status = HealthStatus.UNKNOWN
 
-        last_check = max(r.last_check for r in self.health_reports.values()) if self.health_reports else None
+        last_check = (
+            max(r.last_check for r in self.health_reports.values())
+            if self.health_reports
+            else None
+        )
 
         return {
             "overall_status": overall_status,
@@ -360,7 +406,10 @@ class PluginHealthMonitor:
             "healthy_count": healthy_count,
             "degraded_count": degraded_count,
             "unhealthy_count": unhealthy_count,
-            "unknown_count": len(self.health_reports) - healthy_count - degraded_count - unhealthy_count,
+            "unknown_count": len(self.health_reports)
+            - healthy_count
+            - degraded_count
+            - unhealthy_count,
             "last_check": last_check.isoformat() if last_check else None,
             "monitoring_active": self.monitoring_active,
             "check_interval": self.check_interval,
@@ -372,14 +421,24 @@ class PluginHealthMonitor:
 
     def get_unhealthy_plugins(self) -> list[PluginHealthReport]:
         """Get all unhealthy plugins."""
-        return [report for report in self.health_reports.values() if report.overall_status == HealthStatus.UNHEALTHY]
+        return [
+            report
+            for report in self.health_reports.values()
+            if report.overall_status == HealthStatus.UNHEALTHY
+        ]
 
     def get_degraded_plugins(self) -> list[PluginHealthReport]:
         """Get all degraded plugins."""
-        return [report for report in self.health_reports.values() if report.overall_status == HealthStatus.DEGRADED]
+        return [
+            report
+            for report in self.health_reports.values()
+            if report.overall_status == HealthStatus.DEGRADED
+        ]
 
     @standard_exception_handler
-    async def force_health_check(self, plugin_name: Optional[str] = None) -> dict[str, PluginHealthReport]:
+    async def force_health_check(
+        self, plugin_name: Optional[str] = None
+    ) -> dict[str, PluginHealthReport]:
         """Force an immediate health check for specific plugin or all plugins."""
         if plugin_name:
             # Check specific plugin
@@ -391,7 +450,10 @@ class PluginHealthMonitor:
                 raise ValueError(f"Plugin not found: {plugin_name}")
 
             plugin_type = (
-                "deployment" if plugin_name in self.infrastructure_manager.list_deployment_providers() else "dns"
+                "deployment"
+                if plugin_name
+                in self.infrastructure_manager.list_deployment_providers()
+                else "dns"
             )
             report = await self._check_plugin_health(provider, plugin_name, plugin_type)
             self.health_reports[plugin_name] = report

@@ -318,7 +318,9 @@ class CacheMonitoringMixin:
                         tenant_id=self.tenant_id,
                     ).set(hit_ratio)
 
-        return CacheMonitor(self.monitoring, operation, cache_name, tenant_id, self._cache_stats)
+        return CacheMonitor(
+            self.monitoring, operation, cache_name, tenant_id, self._cache_stats
+        )
 
 
 def create_metrics_endpoint(monitoring_service: Optional[BaseMonitoringService] = None):

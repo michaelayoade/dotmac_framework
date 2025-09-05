@@ -19,6 +19,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import DeploymentError, MigrationError
 
@@ -28,7 +29,11 @@ logger = logging.getLogger(__name__)
 class UpgradeMigrationE2E:
     """End-to-end test suite for upgrade and migration scenarios."""
 
-    def __init__(self, base_url: str = "http://localhost:8000", frontend_url: str = "http://localhost:3000"):
+    def __init__(
+        self,
+        base_url: str = "http://localhost:8000",
+        frontend_url: str = "http://localhost:3000",
+    ):
         self.base_url = base_url
         self.frontend_url = frontend_url
         self.test_tenant_id = str(uuid4())
@@ -49,7 +54,13 @@ class UpgradeMigrationE2E:
         6. Test rollback capability
         """
         test_start = time.time()
-        results = {"test_name": "blue_green_deployment", "status": "running", "steps": [], "duration": 0, "errors": []}
+        results = {
+            "test_name": "blue_green_deployment",
+            "status": "running",
+            "steps": [],
+            "duration": 0,
+            "errors": [],
+        }
 
         try:
             # Step 1: Setup blue environment (current production)
@@ -81,11 +92,15 @@ class UpgradeMigrationE2E:
                 raise DeploymentError("Green environment deployment failed")
 
             # Step 3: Run validation tests on green environment
-            green_validation = await self._validate_green_environment(green_deployment["environment_id"])
+            green_validation = await self._validate_green_environment(
+                green_deployment["environment_id"]
+            )
             results["steps"].append(
                 {
                     "name": "green_environment_validation",
-                    "status": "completed" if green_validation["all_tests_passed"] else "failed",
+                    "status": "completed"
+                    if green_validation["all_tests_passed"]
+                    else "failed",
                     "duration": green_validation.get("duration", 0),
                     "details": green_validation,
                 }
@@ -109,7 +124,9 @@ class UpgradeMigrationE2E:
             results["steps"].append(
                 {
                     "name": "service_continuity_validation",
-                    "status": "completed" if continuity_validation["continuity_maintained"] else "failed",
+                    "status": "completed"
+                    if continuity_validation["continuity_maintained"]
+                    else "failed",
                     "duration": continuity_validation.get("duration", 0),
                     "details": continuity_validation,
                 }
@@ -154,7 +171,13 @@ class UpgradeMigrationE2E:
         5. Validate zero-downtime deployment
         """
         test_start = time.time()
-        results = {"test_name": "rolling_upgrade", "status": "running", "steps": [], "duration": 0, "errors": []}
+        results = {
+            "test_name": "rolling_upgrade",
+            "status": "running",
+            "steps": [],
+            "duration": 0,
+            "errors": [],
+        }
 
         try:
             # Step 1: Setup multi-instance cluster
@@ -172,7 +195,9 @@ class UpgradeMigrationE2E:
                 raise DeploymentError("Cluster setup failed")
 
             # Step 2: Start rolling upgrade
-            rolling_upgrade = await self._perform_rolling_upgrade(cluster_setup["instances"])
+            rolling_upgrade = await self._perform_rolling_upgrade(
+                cluster_setup["instances"]
+            )
             results["steps"].append(
                 {
                     "name": "rolling_upgrade_execution",
@@ -187,7 +212,9 @@ class UpgradeMigrationE2E:
             results["steps"].append(
                 {
                     "name": "load_balancing_validation",
-                    "status": "completed" if load_balancing_test["balanced"] else "failed",
+                    "status": "completed"
+                    if load_balancing_test["balanced"]
+                    else "failed",
                     "duration": load_balancing_test.get("duration", 0),
                     "details": load_balancing_test,
                 }
@@ -198,18 +225,24 @@ class UpgradeMigrationE2E:
             results["steps"].append(
                 {
                     "name": "zero_downtime_validation",
-                    "status": "completed" if downtime_test["zero_downtime"] else "failed",
+                    "status": "completed"
+                    if downtime_test["zero_downtime"]
+                    else "failed",
                     "duration": downtime_test.get("duration", 0),
                     "details": downtime_test,
                 }
             )
 
             # Step 5: Verify all instances upgraded successfully
-            upgrade_verification = await self._verify_cluster_upgrade_completion(cluster_setup["instances"])
+            upgrade_verification = await self._verify_cluster_upgrade_completion(
+                cluster_setup["instances"]
+            )
             results["steps"].append(
                 {
                     "name": "upgrade_completion_verification",
-                    "status": "completed" if upgrade_verification["all_upgraded"] else "failed",
+                    "status": "completed"
+                    if upgrade_verification["all_upgraded"]
+                    else "failed",
                     "duration": upgrade_verification.get("duration", 0),
                     "details": upgrade_verification,
                 }
@@ -266,11 +299,15 @@ class UpgradeMigrationE2E:
                 raise MigrationError("Baseline schema setup failed")
 
             # Step 2: Apply forward migrations
-            forward_migrations = await self._apply_forward_migrations(baseline_setup["schema_version"])
+            forward_migrations = await self._apply_forward_migrations(
+                baseline_setup["schema_version"]
+            )
             results["steps"].append(
                 {
                     "name": "forward_migrations_application",
-                    "status": "completed" if forward_migrations["success"] else "failed",
+                    "status": "completed"
+                    if forward_migrations["success"]
+                    else "failed",
                     "duration": forward_migrations.get("duration", 0),
                     "details": forward_migrations,
                 }
@@ -278,7 +315,8 @@ class UpgradeMigrationE2E:
 
             # Step 3: Validate schema changes
             schema_validation = await self._validate_schema_changes(
-                baseline_setup["schema_version"], forward_migrations["new_schema_version"]
+                baseline_setup["schema_version"],
+                forward_migrations["new_schema_version"],
             )
             results["steps"].append(
                 {
@@ -296,14 +334,18 @@ class UpgradeMigrationE2E:
             results["steps"].append(
                 {
                     "name": "backward_compatibility_test",
-                    "status": "completed" if compatibility_test["compatible"] else "failed",
+                    "status": "completed"
+                    if compatibility_test["compatible"]
+                    else "failed",
                     "duration": compatibility_test.get("duration", 0),
                     "details": compatibility_test,
                 }
             )
 
             # Step 5: Create additional test data with new schema
-            new_data_creation = await self._create_data_with_new_schema(forward_migrations["new_schema_version"])
+            new_data_creation = await self._create_data_with_new_schema(
+                forward_migrations["new_schema_version"]
+            )
             results["steps"].append(
                 {
                     "name": "new_schema_data_creation",
@@ -315,23 +357,30 @@ class UpgradeMigrationE2E:
 
             # Step 6: Test rollback migrations
             rollback_migrations = await self._apply_rollback_migrations(
-                forward_migrations["new_schema_version"], baseline_setup["schema_version"]
+                forward_migrations["new_schema_version"],
+                baseline_setup["schema_version"],
             )
             results["steps"].append(
                 {
                     "name": "rollback_migrations_application",
-                    "status": "completed" if rollback_migrations["success"] else "failed",
+                    "status": "completed"
+                    if rollback_migrations["success"]
+                    else "failed",
                     "duration": rollback_migrations.get("duration", 0),
                     "details": rollback_migrations,
                 }
             )
 
             # Step 7: Validate data integrity after rollback
-            integrity_validation = await self._validate_data_integrity_post_rollback(baseline_setup["test_data"])
+            integrity_validation = await self._validate_data_integrity_post_rollback(
+                baseline_setup["test_data"]
+            )
             results["steps"].append(
                 {
                     "name": "post_rollback_integrity_validation",
-                    "status": "completed" if integrity_validation["integrity_maintained"] else "failed",
+                    "status": "completed"
+                    if integrity_validation["integrity_maintained"]
+                    else "failed",
                     "duration": integrity_validation.get("duration", 0),
                     "details": integrity_validation,
                 }
@@ -392,7 +441,9 @@ class UpgradeMigrationE2E:
             results["steps"].append(
                 {
                     "name": "migration_definition",
-                    "status": "completed" if migration_definition["success"] else "failed",
+                    "status": "completed"
+                    if migration_definition["success"]
+                    else "failed",
                     "duration": migration_definition.get("duration", 0),
                     "details": migration_definition,
                 }
@@ -400,7 +451,8 @@ class UpgradeMigrationE2E:
 
             # Step 3: Execute data migration
             data_migration = await self._execute_data_migration(
-                source_data_setup["source_data"], migration_definition["transformations"]
+                source_data_setup["source_data"],
+                migration_definition["transformations"],
             )
             results["steps"].append(
                 {
@@ -420,18 +472,24 @@ class UpgradeMigrationE2E:
             results["steps"].append(
                 {
                     "name": "migration_data_validation",
-                    "status": "completed" if migration_validation["valid"] else "failed",
+                    "status": "completed"
+                    if migration_validation["valid"]
+                    else "failed",
                     "duration": migration_validation.get("duration", 0),
                     "details": migration_validation,
                 }
             )
 
             # Step 5: Test referential integrity
-            integrity_check = await self._validate_referential_integrity(data_migration["migrated_data"])
+            integrity_check = await self._validate_referential_integrity(
+                data_migration["migrated_data"]
+            )
             results["steps"].append(
                 {
                     "name": "referential_integrity_check",
-                    "status": "completed" if integrity_check["integrity_maintained"] else "failed",
+                    "status": "completed"
+                    if integrity_check["integrity_maintained"]
+                    else "failed",
                     "duration": integrity_check.get("duration", 0),
                     "details": integrity_check,
                 }
@@ -444,7 +502,9 @@ class UpgradeMigrationE2E:
             results["steps"].append(
                 {
                     "name": "migration_rollback_test",
-                    "status": "completed" if migration_rollback["success"] else "failed",
+                    "status": "completed"
+                    if migration_rollback["success"]
+                    else "failed",
                     "duration": migration_rollback.get("duration", 0),
                     "details": migration_rollback,
                 }
@@ -491,14 +551,18 @@ class UpgradeMigrationE2E:
 
             # Generate summary
             total_tests = len(suite_results["tests"])
-            passed_tests = sum(1 for t in suite_results["tests"] if t.get("success", False))
+            passed_tests = sum(
+                1 for t in suite_results["tests"] if t.get("success", False)
+            )
             failed_tests = total_tests - passed_tests
 
             suite_results["summary"] = {
                 "total": total_tests,
                 "passed": passed_tests,
                 "failed": failed_tests,
-                "success_rate": (passed_tests / total_tests) * 100 if total_tests > 0 else 0,
+                "success_rate": (passed_tests / total_tests) * 100
+                if total_tests > 0
+                else 0,
             }
 
             suite_results["status"] = "completed" if failed_tests == 0 else "failed"
@@ -529,7 +593,11 @@ class UpgradeMigrationE2E:
                     {"id": "blue_instance_1", "status": "running", "health": "healthy"},
                     {"id": "blue_instance_2", "status": "running", "health": "healthy"},
                 ],
-                "load_balancer": {"id": "lb_blue", "status": "active", "traffic_percentage": 100},
+                "load_balancer": {
+                    "id": "lb_blue",
+                    "status": "active",
+                    "traffic_percentage": 100,
+                },
                 "database": {"version": "13.0", "status": "active"},
             }
 
@@ -547,7 +615,11 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _deploy_green_environment(self) -> dict[str, Any]:
         """Deploy green environment (new version)."""
@@ -561,10 +633,22 @@ class UpgradeMigrationE2E:
                 "environment_id": green_env_id,
                 "version": "1.1.0",
                 "instances": [
-                    {"id": "green_instance_1", "status": "starting", "health": "initializing"},
-                    {"id": "green_instance_2", "status": "starting", "health": "initializing"},
+                    {
+                        "id": "green_instance_1",
+                        "status": "starting",
+                        "health": "initializing",
+                    },
+                    {
+                        "id": "green_instance_2",
+                        "status": "starting",
+                        "health": "initializing",
+                    },
                 ],
-                "load_balancer": {"id": "lb_green", "status": "initializing", "traffic_percentage": 0},
+                "load_balancer": {
+                    "id": "lb_green",
+                    "status": "initializing",
+                    "traffic_percentage": 0,
+                },
                 "database": {"version": "13.1", "status": "migrating"},
                 "deployment_steps": [
                     "Image deployment",
@@ -600,7 +684,11 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_green_environment(self, green_env_id: str) -> dict[str, Any]:
         """Validate green environment before traffic switch."""
@@ -623,23 +711,35 @@ class UpgradeMigrationE2E:
                 # Mock test results
                 test["status"] = "passed"
                 test["duration"] = 1.8
-                test["details"] = f"Test completed successfully for version {green_config['version']}"
+                test[
+                    "details"
+                ] = f"Test completed successfully for version {green_config['version']}"
 
-            all_tests_passed = all(test["status"] == "passed" for test in validation_tests)
+            all_tests_passed = all(
+                test["status"] == "passed" for test in validation_tests
+            )
 
             return {
                 "all_tests_passed": all_tests_passed,
                 "tests": validation_tests,
-                "passed_tests": sum(1 for t in validation_tests if t["status"] == "passed"),
+                "passed_tests": sum(
+                    1 for t in validation_tests if t["status"] == "passed"
+                ),
                 "total_tests": len(validation_tests),
                 "environment_version": green_config["version"],
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"all_tests_passed": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "all_tests_passed": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _perform_traffic_switch(self, blue_env_id: str, green_env_id: str) -> dict[str, Any]:
+    async def _perform_traffic_switch(
+        self, blue_env_id: str, green_env_id: str
+    ) -> dict[str, Any]:
         """Perform gradual traffic switch from blue to green."""
         start_time = time.time()
 
@@ -671,11 +771,17 @@ class UpgradeMigrationE2E:
                     }
                 )
 
-                logger.info(f"Traffic switch: Blue {blue_percentage}%, Green {green_percentage}%")
+                logger.info(
+                    f"Traffic switch: Blue {blue_percentage}%, Green {green_percentage}%"
+                )
 
             # Update deployment configs
-            self.deployment_configs[blue_env_id]["load_balancer"]["traffic_percentage"] = 0
-            self.deployment_configs[green_env_id]["load_balancer"]["traffic_percentage"] = 100
+            self.deployment_configs[blue_env_id]["load_balancer"][
+                "traffic_percentage"
+            ] = 0
+            self.deployment_configs[green_env_id]["load_balancer"][
+                "traffic_percentage"
+            ] = 100
 
             return {
                 "success": True,
@@ -686,7 +792,11 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_service_continuity(self) -> dict[str, Any]:
         """Validate service continuity during deployment."""
@@ -712,7 +822,9 @@ class UpgradeMigrationE2E:
                 continuity_checks.append(check)
 
             # Analyze continuity
-            avg_response_time = sum(c["response_time"] for c in continuity_checks) / len(continuity_checks)
+            avg_response_time = sum(
+                c["response_time"] for c in continuity_checks
+            ) / len(continuity_checks)
             max_error_rate = max(c["error_rate"] for c in continuity_checks)
             availability = all(c["availability"] for c in continuity_checks)
 
@@ -735,9 +847,15 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"continuity_maintained": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "continuity_maintained": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_rollback_capability(self, blue_env_id: str, green_env_id: str) -> dict[str, Any]:
+    async def _test_rollback_capability(
+        self, blue_env_id: str, green_env_id: str
+    ) -> dict[str, Any]:
         """Test rollback capability from green to blue."""
         start_time = time.time()
 
@@ -756,12 +874,20 @@ class UpgradeMigrationE2E:
             for step in rollback_steps:
                 await asyncio.sleep(1)
                 rollback_log.append(
-                    {"step": step, "timestamp": datetime.now(timezone.utc).isoformat(), "status": "completed"}
+                    {
+                        "step": step,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "status": "completed",
+                    }
                 )
 
             # Update traffic back to blue
-            self.deployment_configs[blue_env_id]["load_balancer"]["traffic_percentage"] = 100
-            self.deployment_configs[green_env_id]["load_balancer"]["traffic_percentage"] = 0
+            self.deployment_configs[blue_env_id]["load_balancer"][
+                "traffic_percentage"
+            ] = 100
+            self.deployment_configs[green_env_id]["load_balancer"][
+                "traffic_percentage"
+            ] = 0
 
             # Test blue environment responsiveness
             blue_health_check = await self._check_environment_health(blue_env_id)
@@ -776,7 +902,11 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _setup_multi_instance_cluster(self) -> dict[str, Any]:
         """Setup multi-instance cluster for rolling upgrade."""
@@ -801,8 +931,16 @@ class UpgradeMigrationE2E:
             cluster_config = {
                 "cluster_id": cluster_id,
                 "instances": instances,
-                "load_balancer": {"id": f"lb_{cluster_id}", "algorithm": "round_robin", "health_check_interval": 30},
-                "upgrade_strategy": {"type": "rolling", "batch_size": 1, "wait_between_batches": 30},
+                "load_balancer": {
+                    "id": f"lb_{cluster_id}",
+                    "algorithm": "round_robin",
+                    "health_check_interval": 30,
+                },
+                "upgrade_strategy": {
+                    "type": "rolling",
+                    "batch_size": 1,
+                    "wait_between_batches": 30,
+                },
             }
 
             await asyncio.sleep(2)
@@ -818,9 +956,15 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _perform_rolling_upgrade(self, instances: list[dict[str, Any]]) -> dict[str, Any]:
+    async def _perform_rolling_upgrade(
+        self, instances: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Perform rolling upgrade across all instances."""
         start_time = time.time()
 
@@ -876,7 +1020,11 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_load_balancing_during_upgrade(self) -> dict[str, Any]:
         """Validate load balancing during rolling upgrade."""
@@ -927,7 +1075,11 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"balanced": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "balanced": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_zero_downtime(self) -> dict[str, Any]:
         """Validate zero-downtime deployment."""
@@ -952,7 +1104,9 @@ class UpgradeMigrationE2E:
 
             # Calculate uptime
             total_checks = len(availability_checks)
-            successful_checks = sum(1 for check in availability_checks if check["available"])
+            successful_checks = sum(
+                1 for check in availability_checks if check["available"]
+            )
             uptime_percentage = (successful_checks / total_checks) * 100
 
             zero_downtime = uptime_percentage >= 99.9  # Allow for minimal blips
@@ -962,14 +1116,22 @@ class UpgradeMigrationE2E:
                 "uptime_percentage": uptime_percentage,
                 "total_checks": total_checks,
                 "successful_checks": successful_checks,
-                "availability_checks": availability_checks[-5:],  # Last 5 checks for brevity
+                "availability_checks": availability_checks[
+                    -5:
+                ],  # Last 5 checks for brevity
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"zero_downtime": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "zero_downtime": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _verify_cluster_upgrade_completion(self, instances: list[dict[str, Any]]) -> dict[str, Any]:
+    async def _verify_cluster_upgrade_completion(
+        self, instances: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Verify all instances upgraded successfully."""
         start_time = time.time()
 
@@ -985,7 +1147,8 @@ class UpgradeMigrationE2E:
                     "version_match": instance["version"] == target_version,
                     "status": instance["status"],
                     "health": instance["health"],
-                    "upgraded": instance["version"] == target_version and instance["status"] == "running",
+                    "upgraded": instance["version"] == target_version
+                    and instance["status"] == "running",
                 }
                 verification_results.append(verification)
 
@@ -1001,7 +1164,11 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"all_upgraded": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "all_upgraded": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _setup_baseline_schema(self) -> dict[str, Any]:
         """Setup baseline database schema and test data."""
@@ -1023,7 +1190,13 @@ class UpgradeMigrationE2E:
                         "indexes": ["idx_email", "idx_status"],
                     },
                     "orders": {
-                        "columns": ["id", "customer_id", "total", "status", "created_at"],
+                        "columns": [
+                            "id",
+                            "customer_id",
+                            "total",
+                            "status",
+                            "created_at",
+                        ],
                         "indexes": ["idx_customer_id", "idx_status"],
                         "foreign_keys": ["customer_id -> customers.id"],
                     },
@@ -1080,9 +1253,15 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _apply_forward_migrations(self, current_schema_version: str) -> dict[str, Any]:
+    async def _apply_forward_migrations(
+        self, current_schema_version: str
+    ) -> dict[str, Any]:
         """Apply forward database migrations."""
         start_time = time.time()
 
@@ -1118,7 +1297,12 @@ class UpgradeMigrationE2E:
                     "foreign_keys": ["user_id -> users.id"],
                     "indexes": ["idx_user_id", "idx_read"],
                 },
-                {"operation": "add_index", "table": "orders", "index": "idx_created_at", "columns": ["created_at"]},
+                {
+                    "operation": "add_index",
+                    "table": "orders",
+                    "index": "idx_created_at",
+                    "columns": ["created_at"],
+                },
             ]
 
             # Simulate applying migrations
@@ -1138,7 +1322,9 @@ class UpgradeMigrationE2E:
                     migration_result["type"] = migration["type"]
 
                 applied_migrations.append(migration_result)
-                logger.info(f"Applied migration: {migration['operation']} on {migration['table']}")
+                logger.info(
+                    f"Applied migration: {migration['operation']} on {migration['table']}"
+                )
 
             # Store migration history
             migration_record = {
@@ -1159,9 +1345,15 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _validate_schema_changes(self, old_version: str, new_version: str) -> dict[str, Any]:
+    async def _validate_schema_changes(
+        self, old_version: str, new_version: str
+    ) -> dict[str, Any]:
         """Validate schema changes after migration."""
         start_time = time.time()
 
@@ -1202,20 +1394,28 @@ class UpgradeMigrationE2E:
 
             await asyncio.sleep(2)
 
-            all_checks_passed = all(check["status"] == "passed" for check in validation_checks)
+            all_checks_passed = all(
+                check["status"] == "passed" for check in validation_checks
+            )
 
             return {
                 "valid": all_checks_passed,
                 "old_version": old_version,
                 "new_version": new_version,
                 "validation_checks": validation_checks,
-                "passed_checks": sum(1 for c in validation_checks if c["status"] == "passed"),
+                "passed_checks": sum(
+                    1 for c in validation_checks if c["status"] == "passed"
+                ),
                 "total_checks": len(validation_checks),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"valid": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "valid": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _test_backward_compatibility(
         self, baseline_data: dict[str, Any], new_schema_version: str
@@ -1254,7 +1454,9 @@ class UpgradeMigrationE2E:
             query_tests = [
                 {
                     "query": "SELECT * FROM users WHERE email LIKE '%@test.com'",
-                    "expected_results": len([u for u in baseline_data["users"] if "@test.com" in u["email"]]),
+                    "expected_results": len(
+                        [u for u in baseline_data["users"] if "@test.com" in u["email"]]
+                    ),
                     "compatible": True,
                 },
                 {
@@ -1264,7 +1466,13 @@ class UpgradeMigrationE2E:
                 },
                 {
                     "query": "SELECT * FROM orders WHERE status = 'completed'",
-                    "expected_results": len([o for o in baseline_data["orders"] if o["status"] == "completed"]),
+                    "expected_results": len(
+                        [
+                            o
+                            for o in baseline_data["orders"]
+                            if o["status"] == "completed"
+                        ]
+                    ),
                     "compatible": True,
                 },
             ]
@@ -1273,19 +1481,30 @@ class UpgradeMigrationE2E:
                 await asyncio.sleep(0.5)
                 compatibility_tests.append(query_test)
 
-            all_compatible = all(test.get("compatible", test.get("accessible", False)) for test in compatibility_tests)
+            all_compatible = all(
+                test.get("compatible", test.get("accessible", False))
+                for test in compatibility_tests
+            )
 
             return {
                 "compatible": all_compatible,
                 "schema_version": new_schema_version,
                 "compatibility_tests": compatibility_tests,
-                "passed_tests": sum(1 for t in compatibility_tests if t.get("compatible", t.get("accessible", False))),
+                "passed_tests": sum(
+                    1
+                    for t in compatibility_tests
+                    if t.get("compatible", t.get("accessible", False))
+                ),
                 "total_tests": len(compatibility_tests),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"compatible": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "compatible": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_data_with_new_schema(self, schema_version: str) -> dict[str, Any]:
         """Create test data using new schema features."""
@@ -1300,7 +1519,9 @@ class UpgradeMigrationE2E:
                         "username": f"new_user_{i}",
                         "email": f"newuser{i}@test.com",
                         "created_at": datetime.now(timezone.utc).isoformat(),
-                        "last_login": datetime.now(timezone.utc).isoformat(),  # New column
+                        "last_login": datetime.now(
+                            timezone.utc
+                        ).isoformat(),  # New column
                     }
                     for i in range(5)
                 ],
@@ -1339,21 +1560,35 @@ class UpgradeMigrationE2E:
                 "schema_version": schema_version,
                 "new_data": new_data,
                 "record_counts": {k: len(v) for k, v in new_data.items()},
-                "features_used": ["last_login column", "phone column", "notifications table"],
+                "features_used": [
+                    "last_login column",
+                    "phone column",
+                    "notifications table",
+                ],
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _apply_rollback_migrations(self, current_version: str, target_version: str) -> dict[str, Any]:
+    async def _apply_rollback_migrations(
+        self, current_version: str, target_version: str
+    ) -> dict[str, Any]:
         """Apply rollback migrations."""
         start_time = time.time()
 
         try:
             # Define rollback operations (reverse of forward migrations)
             rollback_operations = [
-                {"operation": "drop_index", "table": "orders", "index": "idx_created_at"},
+                {
+                    "operation": "drop_index",
+                    "table": "orders",
+                    "index": "idx_created_at",
+                },
                 {"operation": "drop_table", "table": "notifications"},
                 {"operation": "drop_column", "table": "customers", "column": "phone"},
                 {"operation": "drop_column", "table": "users", "column": "last_login"},
@@ -1377,7 +1612,9 @@ class UpgradeMigrationE2E:
                     rollback_result["index"] = operation["index"]
 
                 applied_rollbacks.append(rollback_result)
-                logger.info(f"Applied rollback: {operation['operation']} on {operation['table']}")
+                logger.info(
+                    f"Applied rollback: {operation['operation']} on {operation['table']}"
+                )
 
             # Record rollback in migration history
             rollback_record = {
@@ -1399,9 +1636,15 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _validate_data_integrity_post_rollback(self, original_data: dict[str, Any]) -> dict[str, Any]:
+    async def _validate_data_integrity_post_rollback(
+        self, original_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate data integrity after rollback."""
         start_time = time.time()
 
@@ -1413,7 +1656,9 @@ class UpgradeMigrationE2E:
                 integrity_check = {
                     "table": table,
                     "original_record_count": len(records),
-                    "current_record_count": len(records),  # Mock - would query actual DB
+                    "current_record_count": len(
+                        records
+                    ),  # Mock - would query actual DB
                     "records_match": True,
                     "data_intact": True,
                 }
@@ -1433,18 +1678,27 @@ class UpgradeMigrationE2E:
                 integrity_checks.append(integrity_check)
 
             # Overall integrity assessment
-            integrity_maintained = all(check["records_match"] and check["data_intact"] for check in integrity_checks)
+            integrity_maintained = all(
+                check["records_match"] and check["data_intact"]
+                for check in integrity_checks
+            )
 
             return {
                 "integrity_maintained": integrity_maintained,
                 "integrity_checks": integrity_checks,
                 "tables_validated": len(integrity_checks),
-                "total_records": sum(check["original_record_count"] for check in integrity_checks),
+                "total_records": sum(
+                    check["original_record_count"] for check in integrity_checks
+                ),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"integrity_maintained": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "integrity_maintained": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _setup_source_data_for_migration(self) -> dict[str, Any]:
         """Setup source data for data migration testing."""
@@ -1489,7 +1743,11 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _define_migration_transformations(self) -> dict[str, Any]:
         """Define data migration transformations."""
@@ -1574,12 +1832,18 @@ class UpgradeMigrationE2E:
                 "success": True,
                 "transformations": transformations,
                 "transformation_count": len(transformations),
-                "total_field_mappings": sum(len(t["field_mappings"]) for t in transformations.values()),
+                "total_field_mappings": sum(
+                    len(t["field_mappings"]) for t in transformations.values()
+                ),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _execute_data_migration(
         self, source_data: dict[str, Any], transformations: dict[str, Any]
@@ -1606,27 +1870,48 @@ class UpgradeMigrationE2E:
                     migrated_record = {}
 
                     # Apply field mappings and transformations
-                    for source_field, target_field in transform_config["field_mappings"].items():
+                    for source_field, target_field in transform_config[
+                        "field_mappings"
+                    ].items():
                         if isinstance(target_field, list):
                             # Handle split fields (like full_name -> first_name, last_name)
                             if source_field == "full_name":
-                                name_parts = source_record.get(source_field, "").split(" ")
-                                migrated_record["first_name"] = name_parts[0] if name_parts else ""
-                                migrated_record["last_name"] = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
+                                name_parts = source_record.get(source_field, "").split(
+                                    " "
+                                )
+                                migrated_record["first_name"] = (
+                                    name_parts[0] if name_parts else ""
+                                )
+                                migrated_record["last_name"] = (
+                                    " ".join(name_parts[1:])
+                                    if len(name_parts) > 1
+                                    else ""
+                                )
                         else:
                             # Direct field mapping with potential transformation
                             source_value = source_record.get(source_field)
 
                             # Apply transformations
                             if source_field == "user_id" or source_field == "order_id":
-                                migrated_record[target_field] = str(uuid4())  # Generate UUID
+                                migrated_record[target_field] = str(
+                                    uuid4()
+                                )  # Generate UUID
                             elif source_field in ["registration_date", "order_date"]:
-                                migrated_record[target_field] = datetime.now(timezone.utc).isoformat()  # Convert date
+                                migrated_record[target_field] = datetime.now(
+                                    timezone.utc
+                                ).isoformat()  # Convert date
                             elif source_field == "is_active":
-                                migrated_record[target_field] = "active" if source_value == 1 else "inactive"
-                            elif source_field == "user_id" and target_field == "customer_id":
+                                migrated_record[target_field] = (
+                                    "active" if source_value == 1 else "inactive"
+                                )
+                            elif (
+                                source_field == "user_id"
+                                and target_field == "customer_id"
+                            ):
                                 # For orders, we'd normally lookup the migrated user UUID
-                                migrated_record[target_field] = str(uuid4())  # Mock lookup
+                                migrated_record[target_field] = str(
+                                    uuid4()
+                                )  # Mock lookup
                             else:
                                 migrated_record[target_field] = source_value
 
@@ -1640,16 +1925,27 @@ class UpgradeMigrationE2E:
                 "migration_id": migration_id,
                 "migrated_data": migrated_data,
                 "tables_migrated": len(migrated_data),
-                "total_records": sum(len(records) for records in migrated_data.values()),
-                "migration_summary": {table: len(records) for table, records in migrated_data.items()},
+                "total_records": sum(
+                    len(records) for records in migrated_data.values()
+                ),
+                "migration_summary": {
+                    table: len(records) for table, records in migrated_data.items()
+                },
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_migrated_data(
-        self, source_data: dict[str, Any], migrated_data: dict[str, Any], transformations: dict[str, Any]
+        self,
+        source_data: dict[str, Any],
+        migrated_data: dict[str, Any],
+        transformations: dict[str, Any],
     ) -> dict[str, Any]:
         """Validate migrated data against source."""
         start_time = time.time()
@@ -1658,7 +1954,11 @@ class UpgradeMigrationE2E:
             validation_results = []
 
             for table, migrated_records in migrated_data.items():
-                validation = {"table": table, "migrated_record_count": len(migrated_records), "validations": []}
+                validation = {
+                    "table": table,
+                    "migrated_record_count": len(migrated_records),
+                    "validations": [],
+                }
 
                 # Find source table
                 source_table = None
@@ -1687,8 +1987,14 @@ class UpgradeMigrationE2E:
                         migrated_record = migrated_records[i]
 
                         # Check required fields exist
-                        required_fields = ["id", "created_at"] if table == "users" else ["id"]
-                        field_check = {"check": f"Required fields in record {i}", "missing_fields": [], "passed": True}
+                        required_fields = (
+                            ["id", "created_at"] if table == "users" else ["id"]
+                        )
+                        field_check = {
+                            "check": f"Required fields in record {i}",
+                            "missing_fields": [],
+                            "passed": True,
+                        }
 
                         for field in required_fields:
                             if not migrated_record.get(field):
@@ -1702,21 +2008,30 @@ class UpgradeMigrationE2E:
 
             # Overall validation
             all_validations_passed = all(
-                all(v["passed"] for v in result["validations"]) for result in validation_results
+                all(v["passed"] for v in result["validations"])
+                for result in validation_results
             )
 
             return {
                 "valid": all_validations_passed,
                 "validation_results": validation_results,
                 "tables_validated": len(validation_results),
-                "total_checks": sum(len(result["validations"]) for result in validation_results),
+                "total_checks": sum(
+                    len(result["validations"]) for result in validation_results
+                ),
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"valid": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "valid": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _validate_referential_integrity(self, migrated_data: dict[str, Any]) -> dict[str, Any]:
+    async def _validate_referential_integrity(
+        self, migrated_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate referential integrity in migrated data."""
         start_time = time.time()
 
@@ -1746,12 +2061,16 @@ class UpgradeMigrationE2E:
                         integrity_check["invalid_references"] += 1
                         integrity_check["orphaned_orders"].append(order["id"])
 
-                integrity_check["integrity_maintained"] = integrity_check["invalid_references"] == 0
+                integrity_check["integrity_maintained"] = (
+                    integrity_check["invalid_references"] == 0
+                )
                 integrity_checks.append(integrity_check)
 
             await asyncio.sleep(1)
 
-            overall_integrity = all(check["integrity_maintained"] for check in integrity_checks)
+            overall_integrity = all(
+                check["integrity_maintained"] for check in integrity_checks
+            )
 
             return {
                 "integrity_maintained": overall_integrity,
@@ -1761,9 +2080,15 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"integrity_maintained": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "integrity_maintained": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_data_migration_rollback(self, migration_id: str, original_data: dict[str, Any]) -> dict[str, Any]:
+    async def _test_data_migration_rollback(
+        self, migration_id: str, original_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Test data migration rollback."""
         start_time = time.time()
 
@@ -1781,13 +2106,21 @@ class UpgradeMigrationE2E:
             for step in rollback_steps:
                 await asyncio.sleep(1)
                 rollback_log.append(
-                    {"step": step, "timestamp": datetime.now(timezone.utc).isoformat(), "status": "completed"}
+                    {
+                        "step": step,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "status": "completed",
+                    }
                 )
 
             # Validate rollback success
             rollback_validation = {
-                "original_record_count": sum(len(records) for records in original_data.values()),
-                "restored_record_count": sum(len(records) for records in original_data.values()),  # Mock
+                "original_record_count": sum(
+                    len(records) for records in original_data.values()
+                ),
+                "restored_record_count": sum(
+                    len(records) for records in original_data.values()
+                ),  # Mock
                 "data_matches": True,
                 "rollback_successful": True,
             }
@@ -1801,7 +2134,11 @@ class UpgradeMigrationE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _check_environment_health(self, environment_id: str) -> dict[str, Any]:
         """Check health of specific environment."""
@@ -1812,13 +2149,19 @@ class UpgradeMigrationE2E:
                 "environment_id": environment_id,
                 "overall_health": "healthy",
                 "instance_health": [],
-                "load_balancer_status": config.get("load_balancer", {}).get("status", "unknown"),
+                "load_balancer_status": config.get("load_balancer", {}).get(
+                    "status", "unknown"
+                ),
                 "database_status": config.get("database", {}).get("status", "unknown"),
             }
 
             for instance in config.get("instances", []):
                 health_check["instance_health"].append(
-                    {"instance_id": instance["id"], "status": instance["status"], "health": instance["health"]}
+                    {
+                        "instance_id": instance["id"],
+                        "status": instance["status"],
+                        "health": instance["health"],
+                    }
                 )
 
             return health_check
@@ -1836,7 +2179,9 @@ async def test_upgrade_migration_e2e():
 
     # Assert overall success
     assert results["status"] == "completed", f"Test suite failed: {results}"
-    assert results["summary"]["success_rate"] >= 75, f"Success rate too low: {results['summary']}"
+    assert (
+        results["summary"]["success_rate"] >= 75
+    ), f"Success rate too low: {results['summary']}"
 
     # Log results
     logger.info("\nUpgrade/Migration Test Results:")

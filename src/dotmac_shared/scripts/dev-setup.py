@@ -143,7 +143,9 @@ class DevSetup:
             if tool not in version_commands:
                 return False
 
-            result = subprocess.run(version_commands[tool], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                version_commands[tool], capture_output=True, text=True, check=True
+            )
 
             # Simple version check (could be more sophisticated)
             return result.returncode == 0
@@ -160,7 +162,9 @@ class DevSetup:
                 self.log_success(f"{tool} is available")
             else:
                 missing_tools.append(tool)
-                self.log_warning(f"{tool} is missing or outdated (requires {required_version}+)")
+                self.log_warning(
+                    f"{tool} is missing or outdated (requires {required_version}+)"
+                )
 
         if missing_tools:
             self.log_error("Please install missing tools before continuing:")
@@ -205,7 +209,9 @@ class DevSetup:
             self.log_success("Running in virtual environment")
 
         # Upgrade pip
-        if self.run_command([sys.executable, "-m", "pip", "install", "--upgrade", "pip"]):
+        if self.run_command(
+            [sys.executable, "-m", "pip", "install", "--upgrade", "pip"]
+        ):
             self.log_success("pip upgraded")
 
         # Install pip-tools

@@ -15,10 +15,9 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
+import redis
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
-
-import redis
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +107,9 @@ class BruteForceDetector:
         self.time_window = 900  # 15 minutes
         self.lockout_duration = 3600  # 1 hour
 
-    async def track_failed_login(self, ip_address: str, user_id: Optional[str] = None) -> bool:
+    async def track_failed_login(
+        self, ip_address: str, user_id: Optional[str] = None
+    ) -> bool:
         """Track failed login attempt and check if threshold exceeded"""
         current_time = int(time.time())
 
@@ -134,7 +135,9 @@ class BruteForceDetector:
         recent_ip_attempts = self.redis.zcount(ip_key, cutoff_time, current_time)
         recent_user_attempts = 0
         if user_key:
-            recent_user_attempts = self.redis.zcount(user_key, cutoff_time, current_time)
+            recent_user_attempts = self.redis.zcount(
+                user_key, cutoff_time, current_time
+            )
 
         if (
             recent_ip_attempts >= self.failed_attempts_threshold
@@ -169,7 +172,9 @@ class AnomalyDetector:
         self.baseline_window = 3600  # 1 hour for baseline
         self.anomaly_threshold = 3.0  # Standard deviations
 
-    async def track_api_usage(self, user_id: str, endpoint: str, tenant_id: Optional[str] = None):
+    async def track_api_usage(
+        self, user_id: str, endpoint: str, tenant_id: Optional[str] = None
+    ):
         """Track API usage for anomaly detection"""
         current_time = int(time.time())
         hour_key = f"api_usage:{user_id}:{current_time // 3600}"
@@ -184,7 +189,9 @@ class AnomalyDetector:
             self.redis.zincrby(tenant_key, 1, endpoint)
             self.redis.expire(tenant_key, 86400)
 
-    async def detect_data_exfiltration(self, user_id: str, endpoint: str, response_size: int) -> bool:
+    async def detect_data_exfiltration(
+        self, user_id: str, endpoint: str, response_size: int
+    ) -> bool:
         """Detect potential data exfiltration attempts"""
         current_time = int(time.time())
 
@@ -225,7 +232,9 @@ class GeographicAnomalyDetector:
         }  # Example suspicious countries
         self.travel_threshold = 1000  # km/hour (impossible travel speed)
 
-    async def check_geographic_anomaly(self, user_id: str, ip_address: str) -> tuple[bool, str]:
+    async def check_geographic_anomaly(
+        self, user_id: str, ip_address: str
+    ) -> tuple[bool, str]:
         """Check for geographic anomalies"""
         # In production, this would use IP geolocation service
         # For now, simulate with IP-based country detection
@@ -248,7 +257,9 @@ class GeographicAnomalyDetector:
 
             # Check for impossible travel (simplified)
             time_diff = current_time - prev_time
-            if prev_country != current_country and time_diff < 3600:  # Country change in < 1 hour
+            if (
+                prev_country != current_country and time_diff < 3600
+            ):  # Country change in < 1 hour
                 return (
                     True,
                     f"Impossible travel: {prev_country} to {current_country} in {time_diff/60:.1f} minutes",
@@ -291,7 +302,9 @@ class APIThreatDetector:
         redis_url: str = "redis://localhost:6379/2",
     ):
         """__init__ operation."""
-        self.redis = redis_client or redis.Redis.from_url(redis_url, decode_responses=True)
+        self.redis = redis_client or redis.Redis.from_url(
+            redis_url, decode_responses=True
+        )
 
         # Initialize sub-detectors
         self.brute_force_detector = BruteForceDetector(self.redis)
@@ -375,7 +388,9 @@ class APIThreatDetector:
             pass  # Handled by track_failed_login method
 
         # Check for malicious patterns in URL/headers
-        malicious_patterns = self._detect_malicious_patterns(endpoint, dict(request.headers), user_agent)
+        malicious_patterns = self._detect_malicious_patterns(
+            endpoint, dict(request.headers), user_agent
+        )
         for pattern_type, details in malicious_patterns:
             event = SecurityEvent(
                 event_id=self.generate_event_id(),
@@ -396,7 +411,10 @@ class APIThreatDetector:
 
         # Check geographic anomalies
         if user_id:
-            is_geo_anomaly, geo_details = await self.geo_detector.check_geographic_anomaly(user_id, ip_address)
+            (
+                is_geo_anomaly,
+                geo_details,
+            ) = await self.geo_detector.check_geographic_anomaly(user_id, ip_address)
             if is_geo_anomaly:
                 event = SecurityEvent(
                     event_id=self.generate_event_id(),
@@ -580,7 +598,9 @@ class APIThreatDetector:
 
         return [
             {"ip": ip, "threat_count": count}
-            for ip, count in sorted(ip_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            for ip, count in sorted(
+                ip_counts.items(), key=lambda x: x[1], reverse=True
+            )[:10]
         ]
 
     def _calculate_detection_accuracy(self) -> float:
@@ -614,13 +634,21 @@ class APIThreatDetectionMiddleware:
 
             # Extract user context
             user_id = (
-                getattr(request.state, "auth_user", {}).get("user_id") if hasattr(request.state, "auth_user") else None
+                getattr(request.state, "auth_user", {}).get("user_id")
+                if hasattr(request.state, "auth_user")
+                else None
             )
-            tenant_id = getattr(request.state, "tenant_id", None) if hasattr(request.state, "tenant_id") else None
+            tenant_id = (
+                getattr(request.state, "tenant_id", None)
+                if hasattr(request.state, "tenant_id")
+                else None
+            )
 
             # Check if IP is currently locked
             ip_address = request.client.host if request.client else "unknown"
-            is_locked = await self.threat_detector.brute_force_detector.is_locked(ip_address, user_id)
+            is_locked = await self.threat_detector.brute_force_detector.is_locked(
+                ip_address, user_id
+            )
 
             if is_locked:
                 error_response = JSONResponse(
@@ -635,7 +663,9 @@ class APIThreatDetectionMiddleware:
                 return
 
             # Analyze request for threats
-            threat_events = await self.threat_detector.analyze_request(request, user_id, tenant_id)
+            threat_events = await self.threat_detector.analyze_request(
+                request, user_id, tenant_id
+            )
 
             # Check if any events should block the request
             should_block = False
@@ -682,7 +712,9 @@ class APIThreatDetectionMiddleware:
                         self.body = body
 
                 response = MockResponse(response_body)
-                response_events = await self.threat_detector.analyze_response(request, response, user_id)
+                response_events = await self.threat_detector.analyze_response(
+                    request, response, user_id
+                )
 
                 for event in response_events:
                     await self.threat_detector.log_security_event(event)
@@ -698,11 +730,15 @@ def create_threat_detector(
     return APIThreatDetector(redis_url=redis_url)
 
 
-def create_threat_detection_middleware(threat_detector: APIThreatDetector, **kwargs) -> callable:
+def create_threat_detection_middleware(
+    threat_detector: APIThreatDetector, **kwargs
+) -> callable:
     """Factory for creating threat detection middleware"""
 
     def middleware_factory(app):
         """middleware_factory operation."""
-        return APIThreatDetectionMiddleware(app=app, threat_detector=threat_detector, **kwargs)
+        return APIThreatDetectionMiddleware(
+            app=app, threat_detector=threat_detector, **kwargs
+        )
 
     return middleware_factory

@@ -37,7 +37,9 @@ class WorkflowTransientError(WorkflowError):
 class WorkflowStepError(WorkflowError):
     """Raised when a specific workflow step fails."""
 
-    def __init__(self, step_name: str, message: str, original_error: Optional[Exception] = None):
+    def __init__(
+        self, step_name: str, message: str, original_error: Optional[Exception] = None
+    ):
         self.step_name = step_name
         self.original_error = original_error
         super().__init__(f"Step '{step_name}' failed: {message}")

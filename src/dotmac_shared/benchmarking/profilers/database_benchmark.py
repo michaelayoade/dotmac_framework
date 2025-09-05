@@ -152,13 +152,22 @@ class DatabaseQueryBenchmarker:
                 try:
                     # Execute query
                     result = session.execute(text(query), parameters or {})
-                    rows_returned = result.rowcount if hasattr(result, "rowcount") else 0
-                    rows_affected = result.rowcount if hasattr(result, "rowcount") else 0
+                    rows_returned = (
+                        result.rowcount if hasattr(result, "rowcount") else 0
+                    )
+                    rows_affected = (
+                        result.rowcount if hasattr(result, "rowcount") else 0
+                    )
 
                     # Get explain plan if enabled
                     explain_plan = None
-                    if self.config.enable_explain_plans and query.strip().upper().startswith("SELECT"):
-                        explain_result = session.execute(text(f"EXPLAIN ANALYZE {query}"), parameters or {})
+                    if (
+                        self.config.enable_explain_plans
+                        and query.strip().upper().startswith("SELECT")
+                    ):
+                        explain_result = session.execute(
+                            text(f"EXPLAIN ANALYZE {query}"), parameters or {}
+                        )
                         explain_plan = "\n".join([str(row) for row in explain_result])
 
                     session.commit()
@@ -196,7 +205,9 @@ class DatabaseQueryBenchmarker:
 
     @standard_exception_handler
     async def benchmark_query_set(
-        self, queries: list[tuple[str, str, Optional[dict[str, Any]]]], test_name: str = "query_set_benchmark"
+        self,
+        queries: list[tuple[str, str, Optional[dict[str, Any]]]],
+        test_name: str = "query_set_benchmark",
     ) -> DatabaseBenchmarkResults:
         """Benchmark a set of queries with concurrent execution"""
         start_time = time.perf_counter()
@@ -212,7 +223,9 @@ class DatabaseQueryBenchmarker:
         tasks = []
 
         for query_id, query, params in queries:
-            task = self._execute_query_with_semaphore(semaphore, query, params, query_id)
+            task = self._execute_query_with_semaphore(
+                semaphore, query, params, query_id
+            )
             tasks.append(task)
 
         # Execute all queries concurrently
@@ -222,7 +235,11 @@ class DatabaseQueryBenchmarker:
         for result in results:
             if isinstance(result, Exception):
                 errors.append(
-                    {"error": str(result), "type": type(result).__name__, "timestamp": datetime.utcnow().isoformat()}
+                    {
+                        "error": str(result),
+                        "type": type(result).__name__,
+                        "timestamp": datetime.utcnow().isoformat(),
+                    }
                 )
             elif isinstance(result, list):
                 all_metrics.extend(result)
@@ -244,13 +261,23 @@ class DatabaseQueryBenchmarker:
             successful_queries=successful_queries,
             failed_queries=failed_queries,
             queries_per_second=successful_queries / total_time if total_time > 0 else 0,
-            avg_response_time=statistics.mean(execution_times) if execution_times else 0,
-            p50_response_time=statistics.median(execution_times) if execution_times else 0,
-            p95_response_time=self._percentile(execution_times, 0.95) if execution_times else 0,
-            p99_response_time=self._percentile(execution_times, 0.99) if execution_times else 0,
+            avg_response_time=statistics.mean(execution_times)
+            if execution_times
+            else 0,
+            p50_response_time=statistics.median(execution_times)
+            if execution_times
+            else 0,
+            p95_response_time=self._percentile(execution_times, 0.95)
+            if execution_times
+            else 0,
+            p99_response_time=self._percentile(execution_times, 0.99)
+            if execution_times
+            else 0,
             min_response_time=min(execution_times) if execution_times else 0,
             max_response_time=max(execution_times) if execution_times else 0,
-            std_dev_response_time=statistics.stdev(execution_times) if len(execution_times) > 1 else 0,
+            std_dev_response_time=statistics.stdev(execution_times)
+            if len(execution_times) > 1
+            else 0,
             query_metrics=all_metrics,
             connection_pool_metrics=self._get_connection_pool_metrics(),
             resource_usage=self._get_resource_usage(),
@@ -286,12 +313,17 @@ class DatabaseQueryBenchmarker:
                                 query_id=f"txn_{i}_query_{j}",
                                 query_text=query,
                                 execution_time=query_time,
-                                rows_affected=result.rowcount if hasattr(result, "rowcount") else 0,
-                                rows_returned=result.rowcount if hasattr(result, "rowcount") else 0,
+                                rows_affected=result.rowcount
+                                if hasattr(result, "rowcount")
+                                else 0,
+                                rows_returned=result.rowcount
+                                if hasattr(result, "rowcount")
+                                else 0,
                                 cpu_usage_during=0,  # Would need separate monitoring
                                 memory_usage_during=0,  # Would need separate monitoring
                                 connection_time=0,
-                                transaction_time=time.perf_counter() - transaction_start,
+                                transaction_time=time.perf_counter()
+                                - transaction_start,
                             )
                         )
 
@@ -322,13 +354,23 @@ class DatabaseQueryBenchmarker:
             successful_queries=successful_queries,
             failed_queries=failed_queries,
             queries_per_second=successful_queries / total_time if total_time > 0 else 0,
-            avg_response_time=statistics.mean(execution_times) if execution_times else 0,
-            p50_response_time=statistics.median(execution_times) if execution_times else 0,
-            p95_response_time=self._percentile(execution_times, 0.95) if execution_times else 0,
-            p99_response_time=self._percentile(execution_times, 0.99) if execution_times else 0,
+            avg_response_time=statistics.mean(execution_times)
+            if execution_times
+            else 0,
+            p50_response_time=statistics.median(execution_times)
+            if execution_times
+            else 0,
+            p95_response_time=self._percentile(execution_times, 0.95)
+            if execution_times
+            else 0,
+            p99_response_time=self._percentile(execution_times, 0.99)
+            if execution_times
+            else 0,
             min_response_time=min(execution_times) if execution_times else 0,
             max_response_time=max(execution_times) if execution_times else 0,
-            std_dev_response_time=statistics.stdev(execution_times) if len(execution_times) > 1 else 0,
+            std_dev_response_time=statistics.stdev(execution_times)
+            if len(execution_times) > 1
+            else 0,
             query_metrics=all_metrics,
             connection_pool_metrics=self._get_connection_pool_metrics(),
             resource_usage=self._get_resource_usage(),
@@ -354,7 +396,9 @@ class DatabaseQueryBenchmarker:
             self.config.concurrent_connections = connection_count
 
             # Run benchmark
-            result = await self.benchmark_query_set(test_queries, f"connection_scaling_{connection_count}")
+            result = await self.benchmark_query_set(
+                test_queries, f"connection_scaling_{connection_count}"
+            )
             results[connection_count] = result
 
             # Brief pause between tests
@@ -366,13 +410,19 @@ class DatabaseQueryBenchmarker:
         return results
 
     async def _execute_query_with_semaphore(
-        self, semaphore: asyncio.Semaphore, query: str, parameters: Optional[dict[str, Any]], query_id: str
+        self,
+        semaphore: asyncio.Semaphore,
+        query: str,
+        parameters: Optional[dict[str, Any]],
+        query_id: str,
     ) -> list[QueryMetrics]:
         """Execute a query with semaphore control"""
         async with semaphore:
             return await self.benchmark_query(query, parameters, query_id, 1)
 
-    async def _run_warmup_queries(self, queries: list[tuple[str, str, Optional[dict[str, Any]]]]):
+    async def _run_warmup_queries(
+        self, queries: list[tuple[str, str, Optional[dict[str, Any]]]]
+    ):
         """Run warmup queries to stabilize performance"""
         for _ in range(self.config.warmup_queries):
             for _, query, params in queries:
@@ -400,7 +450,9 @@ class DatabaseQueryBenchmarker:
             connection_pool_timeout_count=0,  # Would need tracking
             avg_connection_lifetime=0,  # Would need tracking
             peak_connections=pool.checkedout() + pool.checkedin(),
-            pool_utilization=(pool.checkedout() / (pool.size() + pool.overflow())) * 100 if pool.size() > 0 else 0,
+            pool_utilization=(pool.checkedout() / (pool.size() + pool.overflow())) * 100
+            if pool.size() > 0
+            else 0,
         )
 
     def _get_resource_usage(self) -> dict[str, float]:
@@ -408,13 +460,23 @@ class DatabaseQueryBenchmarker:
         return {
             "cpu_percent": psutil.cpu_percent(),
             "memory_percent": psutil.virtual_memory().percent,
-            "disk_io_read": psutil.disk_io_counters().read_bytes if psutil.disk_io_counters() else 0,
-            "disk_io_write": psutil.disk_io_counters().write_bytes if psutil.disk_io_counters() else 0,
-            "network_sent": psutil.net_io_counters().bytes_sent if psutil.net_io_counters() else 0,
-            "network_recv": psutil.net_io_counters().bytes_recv if psutil.net_io_counters() else 0,
+            "disk_io_read": psutil.disk_io_counters().read_bytes
+            if psutil.disk_io_counters()
+            else 0,
+            "disk_io_write": psutil.disk_io_counters().write_bytes
+            if psutil.disk_io_counters()
+            else 0,
+            "network_sent": psutil.net_io_counters().bytes_sent
+            if psutil.net_io_counters()
+            else 0,
+            "network_recv": psutil.net_io_counters().bytes_recv
+            if psutil.net_io_counters()
+            else 0,
         }
 
-    def _generate_recommendations(self, metrics: list[QueryMetrics], errors: list[dict[str, Any]]) -> list[str]:
+    def _generate_recommendations(
+        self, metrics: list[QueryMetrics], errors: list[dict[str, Any]]
+    ) -> list[str]:
         """Generate performance recommendations based on metrics"""
         recommendations = []
 
@@ -427,17 +489,23 @@ class DatabaseQueryBenchmarker:
         # Slow query detection
         slow_queries = [m for m in metrics if m.execution_time > 5.0]
         if slow_queries:
-            recommendations.append(f"Found {len(slow_queries)} slow queries (>5s). Consider optimization or indexing.")
+            recommendations.append(
+                f"Found {len(slow_queries)} slow queries (>5s). Consider optimization or indexing."
+            )
 
         # High variance detection
         if len(execution_times) > 1:
             std_dev = statistics.stdev(execution_times)
             if std_dev > avg_time * 0.5:
-                recommendations.append("High variance in query execution times. Check for resource contention.")
+                recommendations.append(
+                    "High variance in query execution times. Check for resource contention."
+                )
 
         # Error rate analysis
         total_operations = len(metrics) + len(errors)
-        error_rate = (len(errors) / total_operations) * 100 if total_operations > 0 else 0
+        error_rate = (
+            (len(errors) / total_operations) * 100 if total_operations > 0 else 0
+        )
         if error_rate > 5:
             recommendations.append(
                 f"High error rate ({error_rate:.1f}%). Review query syntax and database constraints."
@@ -446,11 +514,15 @@ class DatabaseQueryBenchmarker:
         # Connection pool utilization
         pool_metrics = self._get_connection_pool_metrics()
         if pool_metrics.pool_utilization > 80:
-            recommendations.append("High connection pool utilization. Consider increasing pool size.")
+            recommendations.append(
+                "High connection pool utilization. Consider increasing pool size."
+            )
 
         # Performance baseline
         if avg_time > 1.0:
-            recommendations.append("Average query time exceeds 1 second. Review query complexity and database design.")
+            recommendations.append(
+                "Average query time exceeds 1 second. Review query complexity and database design."
+            )
 
         return recommendations
 

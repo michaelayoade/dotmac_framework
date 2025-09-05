@@ -140,7 +140,9 @@ class UsageTracker:
         tracking["last_update"] = datetime.now(UTC)
 
         # Track peak bandwidth
-        tracking["peak_download_mbps"] = max(tracking["peak_download_mbps"], download_mbps)
+        tracking["peak_download_mbps"] = max(
+            tracking["peak_download_mbps"], download_mbps
+        )
         tracking["peak_upload_mbps"] = max(tracking["peak_upload_mbps"], upload_mbps)
 
         # Track signal strength
@@ -243,7 +245,8 @@ class UsageTracker:
         sessions = await session_query.all()
 
         total_duration = sum(
-            (session.end_time or datetime.now(UTC) - session.start_time).total_seconds() for session in sessions
+            (session.end_time or datetime.now(UTC) - session.start_time).total_seconds()
+            for session in sessions
         )
 
         return {
@@ -284,7 +287,9 @@ class UsageTracker:
     async def _log_final_usage(self, session_id: str, metrics: UsageMetrics):
         """Log final usage metrics to database."""
         # In a real implementation, update the session record with final metrics
-        logger.info("Final usage logged", session_id=session_id, metrics=metrics.__dict__)
+        logger.info(
+            "Final usage logged", session_id=session_id, metrics=metrics.__dict__
+        )
 
 
 class PaymentProcessor:
@@ -339,7 +344,9 @@ class PaymentProcessor:
                 billing_plan_id,
             )
         elif provider == "paypal":
-            intent_data = await self._create_paypal_payment(transaction, billing_plan_id)
+            intent_data = await self._create_paypal_payment(
+                transaction, billing_plan_id
+            )
         else:
             msg = f"Unsupported payment provider: {provider}"
             raise ValueError(msg)
@@ -711,7 +718,10 @@ class BillingIntegration:
                 )
                 current_usage = {
                     "duration_minutes": duration_minutes,
-                    "data_mb": (tracking["bytes_downloaded"] + tracking["bytes_uploaded"]) / (1024 * 1024),
+                    "data_mb": (
+                        tracking["bytes_downloaded"] + tracking["bytes_uploaded"]
+                    )
+                    / (1024 * 1024),
                 }
             else:
                 current_usage = {"duration_minutes": 0, "data_mb": 0}
@@ -720,11 +730,17 @@ class BillingIntegration:
         violations = []
 
         # Time limit
-        if limits["duration_minutes"] and current_usage["duration_minutes"] >= limits["duration_minutes"]:
+        if (
+            limits["duration_minutes"]
+            and current_usage["duration_minutes"] >= limits["duration_minutes"]
+        ):
             violations.append("time_limit_exceeded")
 
         # Data limit
-        if limits["data_limit_mb"] and current_usage["data_mb"] >= limits["data_limit_mb"]:
+        if (
+            limits["data_limit_mb"]
+            and current_usage["data_mb"] >= limits["data_limit_mb"]
+        ):
             violations.append("data_limit_exceeded")
 
         within_limits = len(violations) == 0
@@ -736,11 +752,19 @@ class BillingIntegration:
             "limits": limits,
             "usage_percentage": {
                 "time": (
-                    (current_usage["duration_minutes"] / limits["duration_minutes"] * 100)
+                    (
+                        current_usage["duration_minutes"]
+                        / limits["duration_minutes"]
+                        * 100
+                    )
                     if limits["duration_minutes"]
                     else 0
                 ),
-                "data": ((current_usage["data_mb"] / limits["data_limit_mb"] * 100) if limits["data_limit_mb"] else 0),
+                "data": (
+                    (current_usage["data_mb"] / limits["data_limit_mb"] * 100)
+                    if limits["data_limit_mb"]
+                    else 0
+                ),
             },
         }
 
@@ -793,14 +817,21 @@ class BillingIntegration:
         usage_charges = Decimal(0)
 
         # Calculate usage-based charges (placeholder logic)
-        if billing_plan and billing_plan.billing_type == "usage_based" and usage_metrics:
+        if (
+            billing_plan
+            and billing_plan.billing_type == "usage_based"
+            and usage_metrics
+        ):
             # Example: charge per GB over limit
             if billing_plan.data_limit_mb > 0:
                 excess_mb = max(
                     0,
-                    usage_metrics.total_bytes / (1024 * 1024) - billing_plan.data_limit_mb,
+                    usage_metrics.total_bytes / (1024 * 1024)
+                    - billing_plan.data_limit_mb,
                 )
-                usage_charges = Decimal(str(excess_mb / 1024)) * Decimal("1.00")  # $1 per GB
+                usage_charges = Decimal(str(excess_mb / 1024)) * Decimal(
+                    "1.00"
+                )  # $1 per GB
 
         total_charges = base_charge + usage_charges
 

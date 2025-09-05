@@ -16,4 +16,3 @@ class BaseResponseSchema(BaseModel):
 
 
 __all__ = ["BaseCreateSchema", "BaseResponseSchema"]
-

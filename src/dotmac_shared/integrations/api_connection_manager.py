@@ -10,18 +10,16 @@ from typing import Any, Optional
 from uuid import UUID, uuid4
 
 import aiohttp
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac.core.schemas.base_schemas import (
     BaseCreateSchema,
     BaseResponseSchema,
     BaseUpdateSchema,
 )
-from dotmac_shared.api.dependencies import (
-    StandardDependencies,
-    get_standard_deps,
-)
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +80,9 @@ class ConnectionPool:
         self.sessions: dict[str, aiohttp.ClientSession] = {}
         self.connection_stats: dict[str, dict[str, Any]] = {}
 
-    async def get_session(self, connection_id: str, connection_config: dict[str, Any]) -> aiohttp.ClientSession:
+    async def get_session(
+        self, connection_id: str, connection_config: dict[str, Any]
+    ) -> aiohttp.ClientSession:
         """Get or create HTTP session for connection."""
 
         if connection_id not in self.sessions:
@@ -95,7 +95,9 @@ class ConnectionPool:
             headers.update(auth_headers)
 
             session = aiohttp.ClientSession(
-                timeout=timeout, headers=headers, connector=aiohttp.TCPConnector(limit=self.max_connections)
+                timeout=timeout,
+                headers=headers,
+                connector=aiohttp.TCPConnector(limit=self.max_connections),
             )
 
             self.sessions[connection_id] = session
@@ -136,7 +138,9 @@ class ConnectionPool:
             username = auth_config.get("username")
             password = auth_config.get("password")
             if username and password:
-                credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
+                credentials = base64.b64encode(
+                    f"{username}:{password}".encode()
+                ).decode()
                 headers["Authorization"] = f"Basic {credentials}"
 
         return headers
@@ -167,7 +171,11 @@ class RateLimiter:
 
     def set_limit(self, connection_id: str, requests: int, window_seconds: int):
         """Set rate limit for connection."""
-        self.limits[connection_id] = {"requests": requests, "window_seconds": window_seconds, "request_times": []}
+        self.limits[connection_id] = {
+            "requests": requests,
+            "window_seconds": window_seconds,
+            "request_times": [],
+        }
 
     async def check_rate_limit(self, connection_id: str) -> bool:
         """Check if request is within rate limit."""
@@ -180,7 +188,9 @@ class RateLimiter:
 
         # Remove old requests outside the window
         limit_config["request_times"] = [
-            req_time for req_time in limit_config["request_times"] if req_time > window_start
+            req_time
+            for req_time in limit_config["request_times"]
+            if req_time > window_start
         ]
 
         # Check if we're within the limit
@@ -206,7 +216,9 @@ class ApiConnectionManager:
         self.rate_limiter = RateLimiter()
 
     @standard_exception_handler
-    async def create(self, data: ConnectionCreateSchema, user_id: UUID) -> ConnectionResponseSchema:
+    async def create(
+        self, data: ConnectionCreateSchema, user_id: UUID
+    ) -> ConnectionResponseSchema:
         """Create a new API connection."""
 
         connection_id = str(uuid4())
@@ -234,7 +246,9 @@ class ApiConnectionManager:
         # Setup rate limiting if configured
         if data.rate_limit:
             self.rate_limiter.set_limit(
-                connection_id, data.rate_limit.get("requests", 100), data.rate_limit.get("window_seconds", 60)
+                connection_id,
+                data.rate_limit.get("requests", 100),
+                data.rate_limit.get("window_seconds", 60),
             )
 
         self.connections[connection_id] = connection_config
@@ -243,7 +257,9 @@ class ApiConnectionManager:
         return self._connection_to_response(connection_config)
 
     @standard_exception_handler
-    async def get_by_id(self, connection_id: UUID, user_id: UUID) -> ConnectionResponseSchema:
+    async def get_by_id(
+        self, connection_id: UUID, user_id: UUID
+    ) -> ConnectionResponseSchema:
         """Get API connection by ID."""
         connection_str = str(connection_id)
 
@@ -285,7 +301,9 @@ class ApiConnectionManager:
             # Update rate limiter
             if data.rate_limit:
                 self.rate_limiter.set_limit(
-                    connection_str, data.rate_limit.get("requests", 100), data.rate_limit.get("window_seconds", 60)
+                    connection_str,
+                    data.rate_limit.get("requests", 100),
+                    data.rate_limit.get("window_seconds", 60),
                 )
         if data.enabled is not None:
             connection_config["enabled"] = data.enabled
@@ -302,7 +320,9 @@ class ApiConnectionManager:
         return self._connection_to_response(connection_config)
 
     @standard_exception_handler
-    async def delete(self, connection_id: UUID, user_id: UUID, soft_delete: bool = True):
+    async def delete(
+        self, connection_id: UUID, user_id: UUID, soft_delete: bool = True
+    ):
         """Delete/disable API connection."""
         connection_str = str(connection_id)
 
@@ -315,11 +335,15 @@ class ApiConnectionManager:
         if soft_delete:
             self.connections[connection_str]["enabled"] = False
             self.connections[connection_str]["status"] = "disabled"
-            self.connections[connection_str]["disabled_at"] = datetime.now(timezone.utc).isoformat()
+            self.connections[connection_str]["disabled_at"] = datetime.now(
+                timezone.utc
+            ).isoformat()
         else:
             del self.connections[connection_str]
 
-        logger.info(f"{'Disabled' if soft_delete else 'Deleted'} API connection: {connection_str}")
+        logger.info(
+            f"{'Disabled' if soft_delete else 'Deleted'} API connection: {connection_str}"
+        )
 
     @standard_exception_handler
     async def list(
@@ -336,9 +360,15 @@ class ApiConnectionManager:
         for connection_config in self.connections.values():
             # Apply filters
             if filters:
-                if "enabled" in filters and connection_config["enabled"] != filters["enabled"]:
+                if (
+                    "enabled" in filters
+                    and connection_config["enabled"] != filters["enabled"]
+                ):
                     continue
-                if "auth_type" in filters and connection_config["auth_type"] != filters["auth_type"]:
+                if (
+                    "auth_type" in filters
+                    and connection_config["auth_type"] != filters["auth_type"]
+                ):
                     continue
 
             connections.append(self._connection_to_response(connection_config))
@@ -347,19 +377,29 @@ class ApiConnectionManager:
         return connections[skip : skip + limit]
 
     @standard_exception_handler
-    async def count(self, filters: Optional[dict[str, Any]] = None, user_id: Optional[UUID] = None) -> int:
+    async def count(
+        self, filters: Optional[dict[str, Any]] = None, user_id: Optional[UUID] = None
+    ) -> int:
         """Count API connections with filters."""
         count = 0
         for connection_config in self.connections.values():
             if filters:
-                if "enabled" in filters and connection_config["enabled"] != filters["enabled"]:
+                if (
+                    "enabled" in filters
+                    and connection_config["enabled"] != filters["enabled"]
+                ):
                     continue
-                if "auth_type" in filters and connection_config["auth_type"] != filters["auth_type"]:
+                if (
+                    "auth_type" in filters
+                    and connection_config["auth_type"] != filters["auth_type"]
+                ):
                     continue
             count += 1
         return count
 
-    def _connection_to_response(self, connection_config: dict[str, Any]) -> ConnectionResponseSchema:
+    def _connection_to_response(
+        self, connection_config: dict[str, Any]
+    ) -> ConnectionResponseSchema:
         """Convert connection config to response schema."""
         return ConnectionResponseSchema(
             id=UUID(connection_config["id"]),
@@ -377,7 +417,9 @@ class ApiConnectionManager:
             error_count=connection_config.get("error_count", 0),
             avg_response_time=connection_config.get("avg_response_time", 0.0),
             created_at=connection_config["created_at"],
-            updated_at=connection_config.get("updated_at", connection_config["created_at"]),
+            updated_at=connection_config.get(
+                "updated_at", connection_config["created_at"]
+            ),
         )
 
     @standard_exception_handler
@@ -426,12 +468,18 @@ class ApiConnectionManager:
                 start_time = time.time()
 
                 async with session.request(
-                    method=method.upper(), url=url, json=data, params=params, headers=request_headers
+                    method=method.upper(),
+                    url=url,
+                    json=data,
+                    params=params,
+                    headers=request_headers,
                 ) as response:
                     response_time = time.time() - start_time
 
                     # Update metrics
-                    self._update_metrics(connection_config, response_time, success=response.status < 400)
+                    self._update_metrics(
+                        connection_config, response_time, success=response.status < 400
+                    )
 
                     if response.status < 400:
                         # Success
@@ -473,24 +521,39 @@ class ApiConnectionManager:
                             }
 
             except Exception as e:
-                response_time = time.time() - start_time if "start_time" in locals() else 0
+                response_time = (
+                    time.time() - start_time if "start_time" in locals() else 0
+                )
                 self._update_metrics(connection_config, response_time, success=False)
 
                 if attempt == max_retries:
-                    return {"success": False, "error": str(e), "response_time": response_time, "attempt": attempt + 1}
+                    return {
+                        "success": False,
+                        "error": str(e),
+                        "response_time": response_time,
+                        "attempt": attempt + 1,
+                    }
 
                 # Wait before retry
                 await asyncio.sleep(2**attempt)
 
-    def _update_metrics(self, connection_config: dict[str, Any], response_time: float, success: bool):
+    def _update_metrics(
+        self, connection_config: dict[str, Any], response_time: float, success: bool
+    ):
         """Update connection metrics."""
         if success:
-            connection_config["success_count"] = connection_config.get("success_count", 0) + 1
+            connection_config["success_count"] = (
+                connection_config.get("success_count", 0) + 1
+            )
         else:
-            connection_config["error_count"] = connection_config.get("error_count", 0) + 1
+            connection_config["error_count"] = (
+                connection_config.get("error_count", 0) + 1
+            )
 
         # Update average response time
-        total_requests = connection_config.get("success_count", 0) + connection_config.get("error_count", 0)
+        total_requests = connection_config.get(
+            "success_count", 0
+        ) + connection_config.get("error_count", 0)
         if total_requests > 1:
             current_avg = connection_config.get("avg_response_time", 0.0)
             connection_config["avg_response_time"] = (
@@ -572,12 +635,19 @@ class ApiConnectionManagerRouter:
             """Make API request through managed connection."""
             manager = ApiConnectionManager(deps.db, deps.tenant_id)
             return await manager.make_request(
-                connection_id=connection_id, method=method, endpoint=endpoint, data=data, params=params, headers=headers
+                connection_id=connection_id,
+                method=method,
+                endpoint=endpoint,
+                data=data,
+                params=params,
+                headers=headers,
             )
 
         @router.get("/pool/stats", response_model=dict[str, Any])
         @standard_exception_handler
-        async def get_pool_stats(deps: StandardDependencies = Depends(get_standard_deps)):
+        async def get_pool_stats(
+            deps: StandardDependencies = Depends(get_standard_deps),
+        ):
             """Get connection pool statistics."""
             manager = ApiConnectionManager(deps.db, deps.tenant_id)
 
@@ -587,7 +657,9 @@ class ApiConnectionManagerRouter:
                 "connection_stats": {
                     conn_id: {
                         "requests_made": stats["requests_made"],
-                        "last_used": stats["last_used"].isoformat() if stats["last_used"] else None,
+                        "last_used": stats["last_used"].isoformat()
+                        if stats["last_used"]
+                        else None,
                     }
                     for conn_id, stats in manager.pool.connection_stats.items()
                 },

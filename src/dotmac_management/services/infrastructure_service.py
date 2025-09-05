@@ -49,7 +49,11 @@ class InfrastructureService:
     async def get_health_status(self) -> dict[str, Any]:
         """Get health status of all infrastructure providers."""
         if not self._initialized:
-            return {"healthy": False, "error": "Service not initialized", "providers": {}}
+            return {
+                "healthy": False,
+                "error": "Service not initialized",
+                "providers": {},
+            }
 
         health_data = await self.infrastructure_manager.get_provider_health()
 
@@ -72,13 +76,17 @@ class InfrastructureService:
         Deploy tenant application using infrastructure plugins.
         Replaces direct CoolifyClient usage in tenant provisioning.
         """
-        logger.info(f"Deploying tenant application: {tenant_config.get('name', 'unnamed')}")
+        logger.info(
+            f"Deploying tenant application: {tenant_config.get('name', 'unnamed')}"
+        )
 
         # Convert tenant config to deployment config
         app_config = self._convert_tenant_to_app_config(tenant_config)
 
         # Deploy using infrastructure manager
-        result = await self.infrastructure_manager.deploy_application(app_config, provider_name)
+        result = await self.infrastructure_manager.deploy_application(
+            app_config, provider_name
+        )
 
         # Add tenant-specific metadata
         result["tenant_id"] = tenant_config.get("tenant_id")
@@ -104,7 +112,9 @@ class InfrastructureService:
         else:
             # Generic database deployment via application deployment
             app_config = self._convert_db_to_app_config(db_config)
-            return await self.infrastructure_manager.deploy_application(app_config, provider_name)
+            return await self.infrastructure_manager.deploy_application(
+                app_config, provider_name
+            )
 
     @standard_exception_handler
     async def create_redis_service(
@@ -122,12 +132,18 @@ class InfrastructureService:
         else:
             # Generic Redis deployment via application deployment
             app_config = self._convert_redis_to_app_config(redis_config)
-            return await self.infrastructure_manager.deploy_application(app_config, provider_name)
+            return await self.infrastructure_manager.deploy_application(
+                app_config, provider_name
+            )
 
     @standard_exception_handler
-    async def get_deployment_status(self, deployment_id: str, provider_name: Optional[str] = None) -> dict[str, Any]:
+    async def get_deployment_status(
+        self, deployment_id: str, provider_name: Optional[str] = None
+    ) -> dict[str, Any]:
         """Get deployment status from infrastructure provider."""
-        return await self.infrastructure_manager.get_deployment_status(deployment_id, provider_name)
+        return await self.infrastructure_manager.get_deployment_status(
+            deployment_id, provider_name
+        )
 
     @standard_exception_handler
     async def set_application_domain(
@@ -143,14 +159,19 @@ class InfrastructureService:
         if hasattr(provider, "set_domain"):
             return await provider.set_domain(deployment_id, domain)
         else:
-            logger.warning(f"Provider {provider.meta.name} does not support domain setting")
+            logger.warning(
+                f"Provider {provider.meta.name} does not support domain setting"
+            )
             return False
 
     # DNS Operations (replaces DNSValidator usage)
 
     @standard_exception_handler
     async def validate_subdomain_availability(
-        self, subdomain: str, base_domain: Optional[str] = None, provider_name: Optional[str] = None
+        self,
+        subdomain: str,
+        base_domain: Optional[str] = None,
+        provider_name: Optional[str] = None,
     ) -> dict[str, Any]:
         """
         Validate subdomain availability using DNS plugins.
@@ -158,7 +179,9 @@ class InfrastructureService:
         """
         logger.info(f"Validating subdomain availability: {subdomain}")
 
-        result = await self.infrastructure_manager.validate_subdomain(subdomain, base_domain, provider_name)
+        result = await self.infrastructure_manager.validate_subdomain(
+            subdomain, base_domain, provider_name
+        )
 
         # Add service-level metadata
         result["validation_timestamp"] = datetime.now(timezone.utc).isoformat()
@@ -170,11 +193,15 @@ class InfrastructureService:
         return result
 
     @standard_exception_handler
-    async def validate_ssl_certificate(self, domain: str, provider_name: Optional[str] = None) -> dict[str, Any]:
+    async def validate_ssl_certificate(
+        self, domain: str, provider_name: Optional[str] = None
+    ) -> dict[str, Any]:
         """Validate SSL certificate for domain."""
         logger.info(f"Validating SSL certificate for: {domain}")
 
-        result = await self.infrastructure_manager.validate_ssl_certificate(domain, provider_name)
+        result = await self.infrastructure_manager.validate_ssl_certificate(
+            domain, provider_name
+        )
 
         # Add service-level metadata
         result["validation_timestamp"] = datetime.now(timezone.utc).isoformat()
@@ -187,7 +214,10 @@ class InfrastructureService:
 
     @standard_exception_handler
     async def check_dns_propagation(
-        self, domain: str, expected_value: Optional[str] = None, provider_name: Optional[str] = None
+        self,
+        domain: str,
+        expected_value: Optional[str] = None,
+        provider_name: Optional[str] = None,
     ) -> dict[str, Any]:
         """Check DNS propagation status."""
         provider = self.infrastructure_manager.get_dns_provider(provider_name)
@@ -205,22 +235,31 @@ class InfrastructureService:
 
     # Utility Methods
 
-    def _convert_tenant_to_app_config(self, tenant_config: dict[str, Any]) -> dict[str, Any]:
+    def _convert_tenant_to_app_config(
+        self, tenant_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Convert tenant configuration to application deployment configuration."""
         return {
-            "name": tenant_config.get("name", f"tenant-{tenant_config.get('tenant_id', 'unknown')}"),
+            "name": tenant_config.get(
+                "name", f"tenant-{tenant_config.get('tenant_id', 'unknown')}"
+            ),
             "description": f"Tenant application for {tenant_config.get('name', 'Unknown')}",
             "docker_compose": tenant_config.get("docker_compose", ""),
             "environment": tenant_config.get("environment_variables", {}),
             "domains": tenant_config.get("domains", []),
             "tenant_id": tenant_config.get("tenant_id"),
-            "tenant_metadata": {"created_at": datetime.now(timezone.utc).isoformat(), "provisioning_type": "automated"},
+            "tenant_metadata": {
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "provisioning_type": "automated",
+            },
         }
 
     def _convert_db_to_app_config(self, db_config: dict[str, Any]) -> dict[str, Any]:
         """Convert database config to application deployment configuration."""
         db_type = db_config.get("type", "postgresql")
-        version = db_config.get("version", "15" if db_type == "postgresql" else "latest")
+        version = db_config.get(
+            "version", "15" if db_type == "postgresql" else "latest"
+        )
 
         # Generate docker-compose for database
         docker_compose = f"""
@@ -254,7 +293,9 @@ volumes:
             "database_type": db_type,
         }
 
-    def _convert_redis_to_app_config(self, redis_config: dict[str, Any]) -> dict[str, Any]:
+    def _convert_redis_to_app_config(
+        self, redis_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Convert Redis config to application deployment configuration."""
         version = redis_config.get("version", "7")
 
@@ -294,16 +335,24 @@ volumes:
 
     @standard_exception_handler
     async def register_custom_provider(
-        self, provider_type: str, provider_name: str, plugin_class: type, config: Optional[dict[str, Any]] = None
+        self,
+        provider_type: str,
+        provider_name: str,
+        plugin_class: type,
+        config: Optional[dict[str, Any]] = None,
     ) -> bool:
         """Register a custom infrastructure provider plugin."""
         try:
             plugin_instance = plugin_class(config or {})
 
             if provider_type == "deployment":
-                return await self.infrastructure_manager.register_deployment_provider(provider_name, plugin_instance)
+                return await self.infrastructure_manager.register_deployment_provider(
+                    provider_name, plugin_instance
+                )
             elif provider_type == "dns":
-                return await self.infrastructure_manager.register_dns_provider(provider_name, plugin_instance)
+                return await self.infrastructure_manager.register_dns_provider(
+                    provider_name, plugin_instance
+                )
             else:
                 raise ValueError(f"Unsupported provider type: {provider_type}")
 

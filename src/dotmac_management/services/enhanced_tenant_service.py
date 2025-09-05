@@ -10,15 +10,14 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac_shared.services_framework.core.registry import (
     ServiceConfig,
     ServiceRegistry,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.application_registry import (
-    initialize_application_registry_with_services,
-)
+from ..core.application_registry import initialize_application_registry_with_services
 from ..core.exceptions import BusinessLogicError, TenantNotFoundError
 from ..core.logging import get_logger, log_audit_event
 from ..core.multi_app_config import (
@@ -28,9 +27,7 @@ from ..core.multi_app_config import (
 )
 from ..models.tenant import TenantStatus
 from ..schemas.tenant import TenantCreate
-from .application_orchestrator import (
-    EnhancedTenantProvisioningService,
-)
+from .application_orchestrator import EnhancedTenantProvisioningService
 from .tenant_service import TenantService
 
 logger = get_logger(__name__)
@@ -56,7 +53,9 @@ class EnhancedTenantService(TenantService):
         self.service_registry = ServiceRegistry(ServiceConfig())
 
         # Initialize application registry with service registry integration
-        self.app_registry = initialize_application_registry_with_services(self.service_registry)
+        self.app_registry = initialize_application_registry_with_services(
+            self.service_registry
+        )
 
         # Initialize enhanced provisioning service
         self.enhanced_provisioning = EnhancedTenantProvisioningService(db)
@@ -76,7 +75,9 @@ class EnhancedTenantService(TenantService):
         deployment on top of the existing infrastructure.
         """
 
-        logger.info(f"Creating multi-app tenant: {tenant_data.name} with {len(applications)} applications")
+        logger.info(
+            f"Creating multi-app tenant: {tenant_data.name} with {len(applications)} applications"
+        )
 
         # Step 1: Create tenant using existing service
         tenant = await super().create_tenant(tenant_data, created_by)
@@ -89,10 +90,16 @@ class EnhancedTenantService(TenantService):
             applications=applications,
         )
         # Step 3: Provision multi-app tenant using enhanced provisioning
-        provisioning_result = await self.enhanced_provisioning.provision_multi_app_tenant(multi_app_config, created_by)
+        provisioning_result = (
+            await self.enhanced_provisioning.provision_multi_app_tenant(
+                multi_app_config, created_by
+            )
+        )
         # Step 4: Store multi-app configuration in tenant config
         if provisioning_result.success:
-            await self._store_multi_app_configuration(tenant.id, multi_app_config, created_by)
+            await self._store_multi_app_configuration(
+                tenant.id, multi_app_config, created_by
+            )
 
         # Step 5: Log audit event
         await log_audit_event(
@@ -102,7 +109,9 @@ class EnhancedTenantService(TenantService):
             user_id=created_by,
             details={
                 "tenant_name": tenant.name,
-                "applications": [f"{app.app_type}:{app.instance_name}" for app in applications],
+                "applications": [
+                    f"{app.app_type}:{app.instance_name}" for app in applications
+                ],
                 "provisioning_success": provisioning_result.success,
                 "deployment_time": provisioning_result.total_deployment_time,
             },
@@ -136,12 +145,16 @@ class EnhancedTenantService(TenantService):
             raise BusinessLogicError(f"Tenant {tenant_id} is not active")
 
         # Deploy application using enhanced provisioning
-        deployment_result = await self.enhanced_provisioning.add_application_to_existing_tenant(
-            str(tenant_id), app_deployment
+        deployment_result = (
+            await self.enhanced_provisioning.add_application_to_existing_tenant(
+                str(tenant_id), app_deployment
+            )
         )
         # Update tenant configuration if successful
         if deployment_result.success:
-            await self._add_application_to_tenant_config(tenant_id, app_deployment, user_id)
+            await self._add_application_to_tenant_config(
+                tenant_id, app_deployment, user_id
+            )
 
         # Log audit event
         await log_audit_event(
@@ -187,20 +200,27 @@ class EnhancedTenantService(TenantService):
             app_info = {
                 "app_type": app_deployment.app_type,
                 "instance_name": app_deployment.instance_name,
-                "status": (app_deployment.status.value if app_deployment.status else "unknown"),
+                "status": (
+                    app_deployment.status.value if app_deployment.status else "unknown"
+                ),
                 "enabled": app_deployment.enabled,
                 "category": template.category.value if template else "unknown",
                 "name": template.name if template else app_deployment.app_type,
-                "version": app_deployment.version or (template.version if template else "unknown"),
+                "version": app_deployment.version
+                or (template.version if template else "unknown"),
                 "endpoint": app_deployment.custom_domain,
-                "resource_tier": (template.resource_requirements.tier.value if template else "unknown"),
+                "resource_tier": (
+                    template.resource_requirements.tier.value if template else "unknown"
+                ),
             }
 
             applications.append(app_info)
 
         return applications
 
-    async def remove_application_from_tenant(self, tenant_id: UUID, instance_name: str, user_id: str) -> dict[str, Any]:
+    async def remove_application_from_tenant(
+        self, tenant_id: UUID, instance_name: str, user_id: str
+    ) -> dict[str, Any]:
         """Remove application from tenant."""
 
         logger.info(f"Removing application {instance_name} from tenant {tenant_id}")
@@ -224,14 +244,18 @@ class EnhancedTenantService(TenantService):
         if app_deployment.app_type == "isp_framework":
             core_apps = config.get_applications_by_type("isp_framework")
             if len(core_apps) <= 1:
-                raise BusinessLogicError("Cannot remove the last ISP Framework instance")
+                raise BusinessLogicError(
+                    "Cannot remove the last ISP Framework instance"
+                )
 
         # Remove application (this would integrate with container orchestration)
         # For now, simulate successful removal
         await asyncio.sleep(0.5)
 
         # Update configuration
-        await self._remove_application_from_tenant_config(tenant_id, instance_name, user_id)
+        await self._remove_application_from_tenant_config(
+            tenant_id, instance_name, user_id
+        )
 
         # Log audit event
         await log_audit_event(
@@ -257,10 +281,14 @@ class EnhancedTenantService(TenantService):
         return {
             "service_registry": {
                 "initialized": self.service_registry is not None,
-                "services_count": (len(self.service_registry.services) if self.service_registry else 0),
+                "services_count": (
+                    len(self.service_registry.services) if self.service_registry else 0
+                ),
             },
             "application_registry": self.app_registry.get_service_registry_integration(),
-            "enhanced_provisioning": {"initialized": self.enhanced_provisioning is not None},
+            "enhanced_provisioning": {
+                "initialized": self.enhanced_provisioning is not None
+            },
         }
 
     # Private helper methods
@@ -299,10 +327,14 @@ class EnhancedTenantService(TenantService):
         )
         logger.info(f"Stored multi-app configuration for tenant {tenant_id}")
 
-    async def _get_multi_app_configuration(self, tenant_id: UUID) -> Optional[MultiAppTenantConfig]:
+    async def _get_multi_app_configuration(
+        self, tenant_id: UUID
+    ) -> Optional[MultiAppTenantConfig]:
         """Get multi-app configuration from tenant configurations."""
 
-        config_data = await self.config_repo.get_configuration_value(tenant_id, "applications", "multi_app_config")
+        config_data = await self.config_repo.get_configuration_value(
+            tenant_id, "applications", "multi_app_config"
+        )
         if not config_data:
             return None
 
@@ -340,10 +372,14 @@ class EnhancedTenantService(TenantService):
             await self._store_multi_app_configuration(tenant_id, config, user_id)
         else:
             # Create new multi-app config
-            new_config = MultiAppTenantConfig(tenant_id=str(tenant_id), applications=[app_deployment])
+            new_config = MultiAppTenantConfig(
+                tenant_id=str(tenant_id), applications=[app_deployment]
+            )
             await self._store_multi_app_configuration(tenant_id, new_config, user_id)
 
-    async def _remove_application_from_tenant_config(self, tenant_id: UUID, instance_name: str, user_id: str) -> None:
+    async def _remove_application_from_tenant_config(
+        self, tenant_id: UUID, instance_name: str, user_id: str
+    ) -> None:
         """Remove application from tenant configuration."""
 
         config = await self._get_multi_app_configuration(tenant_id)

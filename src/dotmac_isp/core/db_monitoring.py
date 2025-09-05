@@ -45,6 +45,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 import asyncpg
+
 from dotmac_shared.monitoring import get_monitoring
 
 logger = logging.getLogger(__name__)
@@ -152,7 +153,9 @@ class DatabaseMonitor:
             return
 
         self._monitoring_task = asyncio.create_task(self._monitoring_loop())
-        logger.info(f"Database monitoring started (interval: {self.monitoring_interval}s)")
+        logger.info(
+            f"Database monitoring started (interval: {self.monitoring_interval}s)"
+        )
 
     async def stop(self):
         """Stop the monitoring loop."""
@@ -239,7 +242,9 @@ class DatabaseMonitor:
                         success=True,
                         tenant_id=tenant_id,
                     )
-                    monitoring.record_error(error_type="slow_query", service="database", tenant_id=tenant_id)
+                    monitoring.record_error(
+                        error_type="slow_query", service="database", tenant_id=tenant_id
+                    )
                     # Log warning for very slow queries
                     if slow_query.mean_time_ms > 5000:  # > 5 seconds
                         logger.warning(
@@ -284,7 +289,10 @@ class DatabaseMonitor:
             return "UPDATE"
         elif query_upper.startswith("DELETE"):
             return "DELETE"
-        elif any(query_upper.startswith(ddl) for ddl in ["CREATE", "ALTER", "DROP", "TRUNCATE"]):
+        elif any(
+            query_upper.startswith(ddl)
+            for ddl in ["CREATE", "ALTER", "DROP", "TRUNCATE"]
+        ):
             return "DDL"
         else:
             return "OTHER"
@@ -376,7 +384,9 @@ class DatabaseMonitor:
 
         return None
 
-    async def get_slow_queries(self, threshold_ms: Optional[float] = None, limit: int = 100) -> list[SlowQuery]:
+    async def get_slow_queries(
+        self, threshold_ms: Optional[float] = None, limit: int = 100
+    ) -> list[SlowQuery]:
         """
         Get slow queries from pg_stat_statements.
 

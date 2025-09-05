@@ -61,7 +61,12 @@ class PluginMeta:
 class PluginError(Exception):
     """Base exception for plugin-related errors."""
 
-    def __init__(self, message: str, plugin_name: Optional[str] = None, error_code: Optional[str] = None):
+    def __init__(
+        self,
+        message: str,
+        plugin_name: Optional[str] = None,
+        error_code: Optional[str] = None,
+    ):
         self.message = message
         self.plugin_name = plugin_name
         self.error_code = error_code
@@ -177,7 +182,9 @@ class BasePlugin(ABC):
         return True
 
 
-async def safe_plugin_call(callable_or_coro, *args, plugin_name: Optional[str] = None, **kwargs) -> tuple[bool, Any, Optional[PluginError]]:
+async def safe_plugin_call(
+    callable_or_coro, *args, plugin_name: Optional[str] = None, **kwargs
+) -> tuple[bool, Any, Optional[PluginError]]:
     """Safely invoke a plugin callable or awaitable, normalizing exceptions to PluginError.
 
     Returns (ok, result, error). Never raises; unexpected exceptions are logged via the caller's logger if provided.
@@ -194,7 +201,14 @@ async def safe_plugin_call(callable_or_coro, *args, plugin_name: Optional[str] =
         return True, res, None
     except PluginError as e:
         return False, None, e
-    except (ImportError, SyntaxError, AttributeError, TypeError, OSError, ValueError) as e:
+    except (
+        ImportError,
+        SyntaxError,
+        AttributeError,
+        TypeError,
+        OSError,
+        ValueError,
+    ) as e:
         return False, None, PluginExecutionError(str(e))
     except Exception as e:  # noqa: BLE001 - normalization boundary for plugin calls
         # The calling site is expected to log context; we normalize to a PluginExecutionError
@@ -251,7 +265,9 @@ class AsyncPlugin(BasePlugin):
 class TenantAwarePlugin(BasePlugin):
     """Base class for plugins that need tenant context."""
 
-    def __init__(self, config: Optional[dict[str, Any]] = None, tenant_id: Optional[UUID] = None):
+    def __init__(
+        self, config: Optional[dict[str, Any]] = None, tenant_id: Optional[UUID] = None
+    ):
         super().__init__(config)
         self.tenant_id = tenant_id
 
@@ -270,7 +286,9 @@ class BillablePlugin(TenantAwarePlugin):
     """Base class for plugins that generate billable usage."""
 
     @abstractmethod
-    async def record_usage(self, usage_type: str, quantity: int, metadata: Optional[dict[str, Any]] = None) -> bool:
+    async def record_usage(
+        self, usage_type: str, quantity: int, metadata: Optional[dict[str, Any]] = None
+    ) -> bool:
         """Record billable usage for this plugin."""
         pass
 

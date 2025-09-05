@@ -3,9 +3,10 @@
 from decimal import Decimal
 from typing import Optional
 
-from dotmac_isp.modules.billing.models import Invoice, InvoiceStatus
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac_isp.modules.billing.models import Invoice, InvoiceStatus
 
 
 class InvoiceService:
@@ -23,7 +24,9 @@ class InvoiceService:
         self, customer_id: str, tenant_id: str, status: Optional[InvoiceStatus] = None
     ) -> list[Invoice]:
         """Get all invoices for a customer."""
-        query = select(Invoice).where(Invoice.customer_id == customer_id, Invoice.tenant_id == tenant_id)
+        query = select(Invoice).where(
+            Invoice.customer_id == customer_id, Invoice.tenant_id == tenant_id
+        )
         if status:
             query = query.where(Invoice.status == status)
 
@@ -42,7 +45,9 @@ class InvoiceService:
     async def calculate_invoice_totals(self, invoice: Invoice) -> None:
         """Recalculate invoice totals based on line items."""
         subtotal = sum(item.line_total for item in invoice.line_items)
-        tax_amount = sum(item.tax_amount or Decimal("0.00") for item in invoice.line_items)
+        tax_amount = sum(
+            item.tax_amount or Decimal("0.00") for item in invoice.line_items
+        )
         discount_amount = invoice.discount_amount or Decimal("0.00")
 
         invoice.subtotal = subtotal

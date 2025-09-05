@@ -81,7 +81,9 @@ class DateTimeUtils:
         return DateTimeUtils.utc_datetime(base_dt) + timedelta(**kwargs)
 
     @staticmethod
-    def is_expired(expiry_time: datetime, current_time: Optional[datetime] = None) -> bool:
+    def is_expired(
+        expiry_time: datetime, current_time: Optional[datetime] = None
+    ) -> bool:
         """Check if a datetime has expired.
 
         Args:
@@ -92,7 +94,9 @@ class DateTimeUtils:
             True if expired, False otherwise
         """
         current = current_time or DateTimeUtils.utc_now()
-        return DateTimeUtils.utc_datetime(current) > DateTimeUtils.utc_datetime(expiry_time)
+        return DateTimeUtils.utc_datetime(current) > DateTimeUtils.utc_datetime(
+            expiry_time
+        )
 
     @staticmethod
     def format_iso(dt: Optional[datetime] = None) -> str:
@@ -125,7 +129,9 @@ class DateTimeUtils:
             raise
 
     @staticmethod
-    def time_until_expiry(expiry_time: datetime, current_time: Optional[datetime] = None) -> timedelta:
+    def time_until_expiry(
+        expiry_time: datetime, current_time: Optional[datetime] = None
+    ) -> timedelta:
         """Get time remaining until expiry.
 
         Args:
@@ -136,10 +142,14 @@ class DateTimeUtils:
             Timedelta until expiry (negative if already expired)
         """
         current = current_time or DateTimeUtils.utc_now()
-        return DateTimeUtils.utc_datetime(expiry_time) - DateTimeUtils.utc_datetime(current)
+        return DateTimeUtils.utc_datetime(expiry_time) - DateTimeUtils.utc_datetime(
+            current
+        )
 
     @staticmethod
-    def create_expiry(ttl_seconds: int, base_time: Optional[datetime] = None) -> datetime:
+    def create_expiry(
+        ttl_seconds: int, base_time: Optional[datetime] = None
+    ) -> datetime:
         """Create expiry datetime from TTL seconds.
 
         Args:

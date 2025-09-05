@@ -292,7 +292,9 @@ class APISecurityMiddleware:
 
         # Add HSTS for HTTPS
         if request.url.scheme == "https" or self.environment == "production":
-            headers["Strict-Transport-Security"] = self.security_headers.get_strict_transport_security()
+            headers[
+                "Strict-Transport-Security"
+            ] = self.security_headers.get_strict_transport_security()
 
         # Add custom headers
         headers.update(self.custom_headers)
@@ -350,12 +352,18 @@ class APISecurityConfig:
 
         app.add_middleware(CORSMiddleware, **cors_config)
 
-        logger.info(f"CORS configured for {environment} environment, {api_type} API type")
+        logger.info(
+            f"CORS configured for {environment} environment, {api_type} API type"
+        )
 
     @staticmethod
-    def add_security_headers_middleware(app, environment: str = "development", api_type: str = "api", **kwargs):
+    def add_security_headers_middleware(
+        app, environment: str = "development", api_type: str = "api", **kwargs
+    ):
         """Add security headers middleware to FastAPI app"""
-        security_middleware = APISecurityMiddleware(app=app, environment=environment, api_type=api_type, **kwargs)
+        security_middleware = APISecurityMiddleware(
+            app=app, environment=environment, api_type=api_type, **kwargs
+        )
 
         app.middleware("http")(security_middleware)
         logger.info(f"Security headers middleware configured for {environment}")
@@ -368,7 +376,8 @@ class APISecurityConfig:
 
         # Check if CORS is configured
         cors_configured = any(
-            isinstance(middleware, CORSMiddleware) for middleware in getattr(app, "user_middleware", [])
+            isinstance(middleware, CORSMiddleware)
+            for middleware in getattr(app, "user_middleware", [])
         )
 
         if not cors_configured:
@@ -391,12 +400,16 @@ class APISecurityConfig:
 
 
 # Factory functions
-def create_security_headers_middleware(environment: str = "development", api_type: str = "api", **kwargs) -> Callable:
+def create_security_headers_middleware(
+    environment: str = "development", api_type: str = "api", **kwargs
+) -> Callable:
     """Factory for creating security headers middleware"""
 
     def middleware_factory(app):
         """middleware_factory operation."""
-        return APISecurityMiddleware(app=app, environment=environment, api_type=api_type, **kwargs)
+        return APISecurityMiddleware(
+            app=app, environment=environment, api_type=api_type, **kwargs
+        )
 
     return middleware_factory
 
@@ -412,10 +425,14 @@ def setup_api_security(
     Complete API security setup with CORS and security headers
     """
     # Configure CORS
-    APISecurityConfig.configure_cors_middleware(app, environment, api_type, tenant_domains)
+    APISecurityConfig.configure_cors_middleware(
+        app, environment, api_type, tenant_domains
+    )
 
     # Add security headers
-    APISecurityConfig.add_security_headers_middleware(app, environment, api_type, **kwargs)
+    APISecurityConfig.add_security_headers_middleware(
+        app, environment, api_type, **kwargs
+    )
 
     logger.info(f"Complete API security setup configured for {environment}")
 

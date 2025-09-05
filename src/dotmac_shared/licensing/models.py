@@ -6,9 +6,19 @@ Database models for license management and enforcement
 from datetime import datetime, timezone
 from enum import Enum
 
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+
 from dotmac.database.base import Base
 from dotmac.database.mixins import TimestampMixin, UUIDMixin
-from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 
 
 class LicenseStatus(str, Enum):
@@ -31,12 +41,16 @@ class LicenseContract(Base, TimestampMixin, UUIDMixin):
     subscription_id = Column(String(100), nullable=False, index=True)
 
     # Status and validity
-    status = Column(String(20), default=LicenseStatus.ACTIVE, nullable=False, index=True)
+    status = Column(
+        String(20), default=LicenseStatus.ACTIVE, nullable=False, index=True
+    )
     valid_from = Column(DateTime, nullable=False)
     valid_until = Column(DateTime, nullable=False)
 
     # Contract details
-    contract_type = Column(String(50), nullable=False)  # starter, professional, enterprise
+    contract_type = Column(
+        String(50), nullable=False
+    )  # starter, professional, enterprise
     contract_hash = Column(String(64), nullable=False)  # Integrity verification
 
     # Resource limits
@@ -53,7 +67,9 @@ class LicenseContract(Base, TimestampMixin, UUIDMixin):
     feature_limits = Column(JSON, default=dict)
 
     # Enforcement configuration
-    enforcement_mode = Column(String(20), default="strict", nullable=False)  # strict, warning, disabled
+    enforcement_mode = Column(
+        String(20), default="strict", nullable=False
+    )  # strict, warning, disabled
 
     # Instance references
     issuer_management_instance = Column(String(100), nullable=False)
@@ -65,7 +81,9 @@ class LicenseContract(Base, TimestampMixin, UUIDMixin):
     last_violation_at = Column(DateTime, nullable=True)
 
     # Management relationship
-    tenant_id = Column(Integer, ForeignKey("customer_tenants.id"), nullable=False, index=True)
+    tenant_id = Column(
+        Integer, ForeignKey("customer_tenants.id"), nullable=False, index=True
+    )
 
     @property
     def is_expired(self) -> bool:
@@ -84,9 +102,7 @@ class LicenseContract(Base, TimestampMixin, UUIDMixin):
         return self.status == LicenseStatus.ACTIVE and not self.is_expired
 
     def __repr__(self):
-        return (
-            f"<LicenseContract(contract_id='{self.contract_id}', type='{self.contract_type}', status='{self.status}')>"
-        )
+        return f"<LicenseContract(contract_id='{self.contract_id}', type='{self.contract_type}', status='{self.status}')>"
 
 
 class LicenseViolation(Base, TimestampMixin, UUIDMixin):
@@ -95,10 +111,17 @@ class LicenseViolation(Base, TimestampMixin, UUIDMixin):
     __tablename__ = "license_violations"
 
     # Contract reference
-    contract_id = Column(String(100), ForeignKey("license_contracts.contract_id"), nullable=False, index=True)
+    contract_id = Column(
+        String(100),
+        ForeignKey("license_contracts.contract_id"),
+        nullable=False,
+        index=True,
+    )
 
     # Violation details
-    violation_type = Column(String(100), nullable=False)  # customer_limit_exceeded, feature_disabled, etc.
+    violation_type = Column(
+        String(100), nullable=False
+    )  # customer_limit_exceeded, feature_disabled, etc.
     severity = Column(String(20), nullable=False)  # warning, error, critical
 
     # Violation data
@@ -132,7 +155,12 @@ class LicenseUsageLog(Base, TimestampMixin):
     id = Column(Integer, primary_key=True)
 
     # Contract reference
-    contract_id = Column(String(100), ForeignKey("license_contracts.contract_id"), nullable=False, index=True)
+    contract_id = Column(
+        String(100),
+        ForeignKey("license_contracts.contract_id"),
+        nullable=False,
+        index=True,
+    )
 
     # Usage period
     log_date = Column(DateTime, nullable=False, index=True)
@@ -165,21 +193,32 @@ class LicenseAlert(Base, TimestampMixin, UUIDMixin):
     __tablename__ = "license_alerts"
 
     # Contract reference
-    contract_id = Column(String(100), ForeignKey("license_contracts.contract_id"), nullable=False, index=True)
+    contract_id = Column(
+        String(100),
+        ForeignKey("license_contracts.contract_id"),
+        nullable=False,
+        index=True,
+    )
 
     # Alert details
-    alert_type = Column(String(100), nullable=False)  # approaching_limit, expired, violation
+    alert_type = Column(
+        String(100), nullable=False
+    )  # approaching_limit, expired, violation
     severity = Column(String(20), nullable=False)  # info, warning, critical
     title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
 
     # Alert triggers
-    trigger_threshold = Column(Integer, nullable=True)  # e.g., 80% for approaching limit
+    trigger_threshold = Column(
+        Integer, nullable=True
+    )  # e.g., 80% for approaching limit
     current_value = Column(Integer, nullable=True)
     limit_value = Column(Integer, nullable=True)
 
     # Alert status
-    status = Column(String(20), default="active", nullable=False)  # active, acknowledged, resolved
+    status = Column(
+        String(20), default="active", nullable=False
+    )  # active, acknowledged, resolved
     acknowledged_at = Column(DateTime, nullable=True)
     acknowledged_by = Column(String(100), nullable=True)
     resolved_at = Column(DateTime, nullable=True)

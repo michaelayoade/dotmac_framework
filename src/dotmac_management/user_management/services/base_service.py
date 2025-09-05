@@ -8,9 +8,14 @@ from abc import ABC
 from typing import Any, Optional, TypeVar
 from uuid import UUID
 
-from dotmac.core.exceptions import AuthorizationError, EntityNotFoundError, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac.core.exceptions import (
+    AuthorizationError,
+    EntityNotFoundError,
+    ValidationError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +36,9 @@ class BaseUserService(ABC):
 
     # === Validation Helpers ===
 
-    def _validate_tenant_access(self, entity_tenant_id: Optional[UUID], operation: str = "access") -> None:
+    def _validate_tenant_access(
+        self, entity_tenant_id: Optional[UUID], operation: str = "access"
+    ) -> None:
         """Validate user has access to entity's tenant."""
         if not self.tenant_id:
             # Super admin or system service
@@ -40,7 +47,9 @@ class BaseUserService(ABC):
         if entity_tenant_id and entity_tenant_id != self.tenant_id:
             raise AuthorizationError(f"Cannot {operation} entity from different tenant")
 
-    def _validate_required_fields(self, data: dict[str, Any], required_fields: list[str]) -> None:
+    def _validate_required_fields(
+        self, data: dict[str, Any], required_fields: list[str]
+    ) -> None:
         """Validate required fields are present."""
         missing_fields = []
 
@@ -49,9 +58,13 @@ class BaseUserService(ABC):
                 missing_fields.append(field)
 
         if missing_fields:
-            raise ValidationError(f"Missing required fields: {', '.join(missing_fields)}")
+            raise ValidationError(
+                f"Missing required fields: {', '.join(missing_fields)}"
+            )
 
-    def _validate_field_formats(self, data: dict[str, Any], format_validators: dict[str, callable]) -> None:
+    def _validate_field_formats(
+        self, data: dict[str, Any], format_validators: dict[str, callable]
+    ) -> None:
         """Validate field formats using provided validators."""
         validation_errors = []
 
@@ -63,7 +76,9 @@ class BaseUserService(ABC):
                     validation_errors.append(f"{field}: {str(e)}")
 
         if validation_errors:
-            raise ValidationError(f"Field validation errors: {'; '.join(validation_errors)}")
+            raise ValidationError(
+                f"Field validation errors: {'; '.join(validation_errors)}"
+            )
 
     def _validate_business_rules(self, operation: str, **context) -> None:
         """Validate business rules for specific operations."""
@@ -78,7 +93,9 @@ class BaseUserService(ABC):
         # For now, we'll implement basic checks
         pass
 
-    def _check_user_can_modify(self, acting_user_id: UUID, target_user_id: UUID) -> None:
+    def _check_user_can_modify(
+        self, acting_user_id: UUID, target_user_id: UUID
+    ) -> None:
         """Check if acting user can modify target user."""
         # Business rule: users can modify their own account or admins can modify others
         if acting_user_id != target_user_id:
@@ -95,7 +112,11 @@ class BaseUserService(ABC):
     # === Audit Helpers ===
 
     def _log_user_action(
-        self, user_id: UUID, action: str, target_id: Optional[UUID] = None, metadata: Optional[dict[str, Any]] = None
+        self,
+        user_id: UUID,
+        action: str,
+        target_id: Optional[UUID] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> None:
         """Log user action for audit trail."""
         audit_data = {
@@ -156,7 +177,15 @@ class BaseUserService(ABC):
         """Mask sensitive data in response."""
         masked = data.copy()
 
-        sensitive_fields = ["password", "password_hash", "secret", "token", "api_key", "private_key", "reset_token"]
+        sensitive_fields = [
+            "password",
+            "password_hash",
+            "secret",
+            "token",
+            "api_key",
+            "private_key",
+            "reset_token",
+        ]
 
         for field in sensitive_fields:
             if field in masked:
@@ -188,7 +217,9 @@ class BaseUserService(ABC):
             self._logger.error(f"Database error during {operation}: {error}")
             raise RuntimeError(f"Database operation failed: {operation}")
 
-    def _validate_entity_exists(self, entity: Optional[Any], entity_type: str, entity_id: UUID) -> Any:
+    def _validate_entity_exists(
+        self, entity: Optional[Any], entity_type: str, entity_id: UUID
+    ) -> Any:
         """Validate entity exists or raise appropriate error."""
         if not entity:
             raise EntityNotFoundError(f"{entity_type} not found with ID: {entity_id}")
@@ -217,7 +248,9 @@ class BaseUserService(ABC):
             "tenant_id": self.tenant_id,
         }
 
-        self._logger.debug(f"Notification queued: {notification_type}", extra=notification_data)
+        self._logger.debug(
+            f"Notification queued: {notification_type}", extra=notification_data
+        )
 
     # === Configuration Helpers ===
 

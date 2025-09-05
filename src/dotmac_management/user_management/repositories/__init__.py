@@ -3,7 +3,13 @@ Production-ready repository layer for user management.
 Implements comprehensive data access patterns.
 """
 
-from .auth_repository import ApiKeyRepository, AuthAuditRepository, AuthRepository, MFARepository, SessionRepository
+from .auth_repository import (
+    ApiKeyRepository,
+    AuthAuditRepository,
+    AuthRepository,
+    MFARepository,
+    SessionRepository,
+)
 from .rbac_repository import (
     PermissionRepository,
     RolePermissionRepository,

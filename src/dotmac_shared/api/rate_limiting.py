@@ -27,7 +27,9 @@ def rate_limit(max_requests: int = 100, time_window_seconds: int = 60):
         async def wrapper(*args, **kwargs):
             # TODO: Implement actual rate limiting logic with Redis
             # For now, just log and continue
-            logger.debug(f"Rate limit check: {max_requests} requests per {time_window_seconds}s for {func.__name__}")
+            logger.debug(
+                f"Rate limit check: {max_requests} requests per {time_window_seconds}s for {func.__name__}"
+            )
             return await func(*args, **kwargs)
 
         return wrapper

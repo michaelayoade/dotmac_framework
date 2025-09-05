@@ -7,13 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Optional, Union
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class RolloutStrategy(str, Enum):
@@ -190,7 +184,10 @@ class ABTestConfig(BaseModel):
                 return variant
 
         # Fallback to control
-        return next((v for v in self.variants if v.name == self.control_variant), self.variants[0])
+        return next(
+            (v for v in self.variants if v.name == self.control_variant),
+            self.variants[0],
+        )
 
 
 class FeatureFlagStatus(str, Enum):
@@ -224,7 +221,9 @@ class FeatureFlag(BaseModel):
     # Metadata
     tags: list[str] = Field(default_factory=list)
     owner: Optional[str] = None
-    environments: list[str] = Field(default_factory=lambda: ["development", "staging", "production"])
+    environments: list[str] = Field(
+        default_factory=lambda: ["development", "staging", "production"]
+    )
 
     # Dates
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -258,11 +257,15 @@ class FeatureFlag(BaseModel):
         elif self.strategy == RolloutStrategy.TENANT_LIST:
             return context.get("tenant_id") in self.tenant_list
         elif self.strategy == RolloutStrategy.PERCENTAGE:
-            return self._is_user_in_percentage(context.get("user_id", ""), self.percentage)
+            return self._is_user_in_percentage(
+                context.get("user_id", ""), self.percentage
+            )
         elif self.strategy == RolloutStrategy.GRADUAL:
             if self.gradual_rollout:
                 current_percentage = self.gradual_rollout.get_current_percentage()
-                return self._is_user_in_percentage(context.get("user_id", ""), current_percentage)
+                return self._is_user_in_percentage(
+                    context.get("user_id", ""), current_percentage
+                )
         elif self.strategy == RolloutStrategy.AB_TEST:
             if self.ab_test:
                 return True  # A/B test participants are "enabled", variant determines behavior
@@ -278,7 +281,9 @@ class FeatureFlag(BaseModel):
                 return variant.name
         return None
 
-    def get_payload_for_context(self, context: dict[str, Any]) -> Optional[dict[str, Any]]:
+    def get_payload_for_context(
+        self, context: dict[str, Any]
+    ) -> Optional[dict[str, Any]]:
         """Get feature payload for context"""
         if self.strategy == RolloutStrategy.AB_TEST and self.ab_test:
             user_id = context.get("user_id", "")

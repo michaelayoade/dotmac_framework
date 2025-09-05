@@ -95,7 +95,9 @@ class MacRegistryManager:
             if device_id:
                 existing.device_id = device_id
                 existing.interface_name = interface_name
-                existing.port_id = f"{device_id}:{interface_name}" if interface_name else None
+                existing.port_id = (
+                    f"{device_id}:{interface_name}" if interface_name else None
+                )
                 existing.device_type = device_type
 
             if kwargs.get("description"):
@@ -117,7 +119,11 @@ class MacRegistryManager:
             vendor=vendor or "Unknown",
             device_id=device_id,
             interface_name=interface_name,
-            port_id=(f"{device_id}:{interface_name}" if device_id and interface_name else None),
+            port_id=(
+                f"{device_id}:{interface_name}"
+                if device_id and interface_name
+                else None
+            ),
             device_type=device_type,
             description=kwargs.get("description", ""),
             first_seen=datetime.now(timezone.utc),
@@ -149,7 +155,9 @@ class MacRegistryManager:
             .first()
         )
 
-    async def update_mac_address(self, mac_address: str, updates: dict[str, Any]) -> Optional[MacAddress]:
+    async def update_mac_address(
+        self, mac_address: str, updates: dict[str, Any]
+    ) -> Optional[MacAddress]:
         """Update MAC address record."""
         mac_record = await self.get_mac_address(mac_address)
         if not mac_record:
@@ -187,7 +195,9 @@ class MacRegistryManager:
         limit: int = 100,
     ) -> list[MacAddress]:
         """Search MAC addresses."""
-        search_query = self.session.query(MacAddress).filter(MacAddress.tenant_id == self.tenant_id)
+        search_query = self.session.query(MacAddress).filter(
+            MacAddress.tenant_id == self.tenant_id
+        )
 
         # Add search filters
         if query:
@@ -249,7 +259,9 @@ class MacRegistryManager:
 
     async def cleanup_stale_records(self, days_inactive: int = 90) -> int:
         """Clean up stale MAC address records."""
-        cutoff_date = datetime.now(timezone.utc) - datetime.timedelta(days=days_inactive)
+        cutoff_date = datetime.now(timezone.utc) - datetime.timedelta(
+            days=days_inactive
+        )
 
         deleted_count = (
             self.session.query(MacAddress)
@@ -274,7 +286,9 @@ class MacRegistryService:
         self.manager = MacRegistryManager(session, tenant_id)
         self.tenant_id = tenant_id
 
-    async def discover_device_macs(self, device_id: str, interface_macs: dict[str, str]) -> dict[str, Any]:
+    async def discover_device_macs(
+        self, device_id: str, interface_macs: dict[str, str]
+    ) -> dict[str, Any]:
         """Discover and register MAC addresses for device interfaces."""
         registered_macs = []
         errors = []
@@ -282,7 +296,9 @@ class MacRegistryService:
         # Verify device exists
         device = (
             self.manager.session.query(Device)
-            .filter(and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id))
+            .filter(
+                and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id)
+            )
             .first()
         )
 
@@ -323,7 +339,9 @@ class MacRegistryService:
             "errors": errors,
         }
 
-    async def track_mac_movement(self, mac_address: str, new_device_id: str, new_interface: str) -> dict[str, Any]:
+    async def track_mac_movement(
+        self, mac_address: str, new_device_id: str, new_interface: str
+    ) -> dict[str, Any]:
         """Track MAC address movement between devices/interfaces."""
         mac_record = await self.manager.get_mac_address(mac_address)
 
@@ -414,7 +432,11 @@ class MacRegistryService:
     async def generate_mac_report(self, report_type: str = "summary") -> dict[str, Any]:
         """Generate MAC address registry report."""
         if report_type == "summary":
-            total_macs = self.manager.session.query(MacAddress).filter(MacAddress.tenant_id == self.tenant_id).count()
+            total_macs = (
+                self.manager.session.query(MacAddress)
+                .filter(MacAddress.tenant_id == self.tenant_id)
+                .count()
+            )
 
             vendor_stats = await self.manager.get_vendor_statistics()
             recent_macs = await self.manager.get_recent_mac_addresses(hours=24)
@@ -440,7 +462,9 @@ class MacRegistryService:
 
         return {"error": f"Unknown report type: {report_type}"}
 
-    async def bulk_register_macs(self, mac_entries: list[dict[str, Any]]) -> dict[str, Any]:
+    async def bulk_register_macs(
+        self, mac_entries: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Bulk register multiple MAC addresses."""
         results = {"registered": [], "updated": [], "errors": []}
 

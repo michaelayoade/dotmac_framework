@@ -5,6 +5,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
 
+from sqlalchemy import and_, func, or_
+from sqlalchemy.orm import Session
+
 from dotmac_isp.shared.base_repository import BaseRepository
 from dotmac_shared.exceptions import NotFoundError, ValidationError
 from dotmac_shared.file_management.models import (
@@ -13,8 +16,6 @@ from dotmac_shared.file_management.models import (
     FilePermission,
     FileUploadSession,
 )
-from sqlalchemy import and_, func, or_
-from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +29,19 @@ class FileRepository(BaseRepository):
 
     # File Metadata Operations
 
-    async def create_file_metadata(self, tenant_id: str, file_data: dict, user_id: str) -> FileMetadata:
+    async def create_file_metadata(
+        self, tenant_id: str, file_data: dict, user_id: str
+    ) -> FileMetadata:
         """Create new file metadata."""
         try:
             file_id = str(uuid4())
 
             file_metadata = FileMetadata(
-                file_id=file_id, tenant_id=tenant_id, owner_user_id=user_id, created_by=user_id, **file_data
+                file_id=file_id,
+                tenant_id=tenant_id,
+                owner_user_id=user_id,
+                created_by=user_id,
+                **file_data,
             )
 
             self.session.add(file_metadata)
@@ -49,11 +56,17 @@ class FileRepository(BaseRepository):
             logger.error(f"Failed to create file metadata: {e}")
             raise ValidationError(f"Failed to create file metadata: {str(e)}") from e
 
-    async def get_file_by_id(self, file_id: str, tenant_id: str) -> Optional[FileMetadata]:
+    async def get_file_by_id(
+        self, file_id: str, tenant_id: str
+    ) -> Optional[FileMetadata]:
         """Get file metadata by ID."""
         return (
             await self.session.query(FileMetadata)
-            .filter(and_(FileMetadata.file_id == file_id, FileMetadata.tenant_id == tenant_id))
+            .filter(
+                and_(
+                    FileMetadata.file_id == file_id, FileMetadata.tenant_id == tenant_id
+                )
+            )
             .first()
         )
 
@@ -63,7 +76,12 @@ class FileRepository(BaseRepository):
         """Get files by owner with pagination."""
         query = (
             self.session.query(FileMetadata)
-            .filter(and_(FileMetadata.tenant_id == tenant_id, FileMetadata.owner_user_id == owner_user_id))
+            .filter(
+                and_(
+                    FileMetadata.tenant_id == tenant_id,
+                    FileMetadata.owner_user_id == owner_user_id,
+                )
+            )
             .order_by(FileMetadata.created_at.desc())
         )
 
@@ -76,7 +94,9 @@ class FileRepository(BaseRepository):
         self, tenant_id: str, filters: dict, skip: int = 0, limit: int = 50
     ) -> tuple[list[FileMetadata], int]:
         """Search files with filters."""
-        query = self.session.query(FileMetadata).filter(FileMetadata.tenant_id == tenant_id)
+        query = self.session.query(FileMetadata).filter(
+            FileMetadata.tenant_id == tenant_id
+        )
 
         # Apply filters
         if filters.get("category"):
@@ -89,7 +109,9 @@ class FileRepository(BaseRepository):
             query = query.filter(FileMetadata.owner_user_id == filters["owner_user_id"])
 
         if filters.get("file_extension"):
-            query = query.filter(FileMetadata.file_extension == filters["file_extension"])
+            query = query.filter(
+                FileMetadata.file_extension == filters["file_extension"]
+            )
 
         if filters.get("tags"):
             for tag in filters["tags"]:
@@ -110,7 +132,10 @@ class FileRepository(BaseRepository):
         if filters.get("query"):
             search_term = f"%{filters['query']}%"
             query = query.filter(
-                or_(FileMetadata.original_filename.ilike(search_term), FileMetadata.description.ilike(search_term))
+                or_(
+                    FileMetadata.original_filename.ilike(search_term),
+                    FileMetadata.description.ilike(search_term),
+                )
             )
 
         # Apply sorting
@@ -129,7 +154,9 @@ class FileRepository(BaseRepository):
 
         return files, total
 
-    async def update_file_metadata(self, file_id: str, tenant_id: str, updates: dict, user_id: str) -> FileMetadata:
+    async def update_file_metadata(
+        self, file_id: str, tenant_id: str, updates: dict, user_id: str
+    ) -> FileMetadata:
         """Update file metadata."""
         file_metadata = await self.get_file_by_id(file_id, tenant_id)
         if not file_metadata:
@@ -154,7 +181,9 @@ class FileRepository(BaseRepository):
             logger.error(f"Failed to update file metadata: {e}")
             raise ValidationError(f"Failed to update file metadata: {str(e)}") from e
 
-    async def delete_file_metadata(self, file_id: str, tenant_id: str, user_id: str) -> bool:
+    async def delete_file_metadata(
+        self, file_id: str, tenant_id: str, user_id: str
+    ) -> bool:
         """Delete file metadata (soft delete)."""
         file_metadata = await self.get_file_by_id(file_id, tenant_id)
         if not file_metadata:
@@ -177,16 +206,25 @@ class FileRepository(BaseRepository):
 
     # File Permission Operations
 
-    async def create_file_permission(self, tenant_id: str, permission_data: dict, user_id: str) -> FilePermission:
+    async def create_file_permission(
+        self, tenant_id: str, permission_data: dict, user_id: str
+    ) -> FilePermission:
         """Create file permission."""
         try:
-            permission = FilePermission(tenant_id=tenant_id, granted_by=user_id, created_by=user_id, **permission_data)
+            permission = FilePermission(
+                tenant_id=tenant_id,
+                granted_by=user_id,
+                created_by=user_id,
+                **permission_data,
+            )
 
             self.session.add(permission)
             await self.session.commit()
             await self.session.refresh(permission)
 
-            logger.info(f"Created file permission for file: {permission_data.get('file_id')}")
+            logger.info(
+                f"Created file permission for file: {permission_data.get('file_id')}"
+            )
             return permission
 
         except Exception as e:
@@ -194,15 +232,24 @@ class FileRepository(BaseRepository):
             logger.error(f"Failed to create file permission: {e}")
             raise ValidationError(f"Failed to create file permission: {str(e)}") from e
 
-    async def get_file_permissions(self, file_id: str, tenant_id: str) -> list[FilePermission]:
+    async def get_file_permissions(
+        self, file_id: str, tenant_id: str
+    ) -> list[FilePermission]:
         """Get all permissions for a file."""
         return (
             await self.session.query(FilePermission)
-            .filter(and_(FilePermission.file_id == file_id, FilePermission.tenant_id == tenant_id))
+            .filter(
+                and_(
+                    FilePermission.file_id == file_id,
+                    FilePermission.tenant_id == tenant_id,
+                )
+            )
             .all()
         )
 
-    async def get_user_file_permissions(self, file_id: str, user_id: str, tenant_id: str) -> Optional[FilePermission]:
+    async def get_user_file_permissions(
+        self, file_id: str, user_id: str, tenant_id: str
+    ) -> Optional[FilePermission]:
         """Get user's permissions for a specific file."""
         return (
             await self.session.query(FilePermission)
@@ -233,11 +280,18 @@ class FileRepository(BaseRepository):
             logger.error(f"Failed to log file access: {e}")
             raise
 
-    async def get_file_access_logs(self, file_id: str, tenant_id: str, limit: int = 100) -> list[FileAccessLog]:
+    async def get_file_access_logs(
+        self, file_id: str, tenant_id: str, limit: int = 100
+    ) -> list[FileAccessLog]:
         """Get file access logs."""
         return (
             await self.session.query(FileAccessLog)
-            .filter(and_(FileAccessLog.file_id == file_id, FileAccessLog.tenant_id == tenant_id))
+            .filter(
+                and_(
+                    FileAccessLog.file_id == file_id,
+                    FileAccessLog.tenant_id == tenant_id,
+                )
+            )
             .order_by(FileAccessLog.access_timestamp.desc())
             .limit(limit)
             .all()
@@ -245,18 +299,24 @@ class FileRepository(BaseRepository):
 
     # Upload Session Management
 
-    async def create_upload_session(self, tenant_id: str, session_data: dict, user_id: str) -> FileUploadSession:
+    async def create_upload_session(
+        self, tenant_id: str, session_data: dict, user_id: str
+    ) -> FileUploadSession:
         """Create file upload session."""
         try:
             session_id = str(uuid4())
-            expires_at = datetime.now(timezone.utc) + timedelta(hours=24)  # 24 hour expiry
+            expires_at = datetime.now(timezone.utc) + timedelta(
+                hours=24
+            )  # 24 hour expiry
 
             upload_session = FileUploadSession(
                 upload_session_id=session_id,
                 tenant_id=tenant_id,
                 user_id=user_id,
                 expires_at=expires_at,
-                max_chunks=session_data["total_size"] // session_data.get("chunk_size", 5242880) + 1,
+                max_chunks=session_data["total_size"]
+                // session_data.get("chunk_size", 5242880)
+                + 1,
                 **session_data,
             )
 
@@ -272,11 +332,18 @@ class FileRepository(BaseRepository):
             logger.error(f"Failed to create upload session: {e}")
             raise ValidationError(f"Failed to create upload session: {str(e)}") from e
 
-    async def get_upload_session(self, session_id: str, tenant_id: str) -> Optional[FileUploadSession]:
+    async def get_upload_session(
+        self, session_id: str, tenant_id: str
+    ) -> Optional[FileUploadSession]:
         """Get upload session by ID."""
         return (
             await self.session.query(FileUploadSession)
-            .filter(and_(FileUploadSession.upload_session_id == session_id, FileUploadSession.tenant_id == tenant_id))
+            .filter(
+                and_(
+                    FileUploadSession.upload_session_id == session_id,
+                    FileUploadSession.tenant_id == tenant_id,
+                )
+            )
             .first()
         )
 
@@ -334,7 +401,9 @@ class FileRepository(BaseRepository):
 
             # Files by category
             category_stats = (
-                await self.session.query(FileMetadata.file_category, func.count(FileMetadata.id))
+                await self.session.query(
+                    FileMetadata.file_category, func.count(FileMetadata.id)
+                )
                 .filter(FileMetadata.tenant_id == tenant_id)
                 .group_by(FileMetadata.file_category)
                 .all()
@@ -342,7 +411,9 @@ class FileRepository(BaseRepository):
 
             # Files by status
             status_stats = (
-                await self.session.query(FileMetadata.file_status, func.count(FileMetadata.id))
+                await self.session.query(
+                    FileMetadata.file_status, func.count(FileMetadata.id)
+                )
                 .filter(FileMetadata.tenant_id == tenant_id)
                 .group_by(FileMetadata.file_status)
                 .all()
@@ -352,7 +423,12 @@ class FileRepository(BaseRepository):
             week_ago = datetime.now(timezone.utc) - timedelta(days=7)
             recent_uploads = (
                 await self.session.query(FileMetadata)
-                .filter(and_(FileMetadata.tenant_id == tenant_id, FileMetadata.created_at >= week_ago))
+                .filter(
+                    and_(
+                        FileMetadata.tenant_id == tenant_id,
+                        FileMetadata.created_at >= week_ago,
+                    )
+                )
                 .order_by(FileMetadata.created_at.desc())
                 .limit(10)
                 .all()
@@ -410,4 +486,6 @@ class FileRepository(BaseRepository):
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Failed to cleanup expired upload sessions: {e}")
-            raise ValidationError(f"Failed to cleanup expired upload sessions: {str(e)}") from e
+            raise ValidationError(
+                f"Failed to cleanup expired upload sessions: {str(e)}"
+            ) from e

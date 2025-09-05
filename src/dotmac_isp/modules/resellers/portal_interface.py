@@ -9,12 +9,13 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Optional
 
-from dotmac.application import standard_exception_handler
-from dotmac_shared.core.logging import get_logger
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac.application import standard_exception_handler
+from dotmac_shared.core.logging import get_logger
 
 from .commission_system import CommissionReportGenerator, CommissionService
 from .db_models import ResellerCustomer
@@ -27,7 +28,12 @@ class ResellerPortalService:
     """Service for reseller portal functionality"""
 
     # TODO: Fix parameter ordering - parameters without defaults must come before those with defaults
-    def __init__(self, db: AsyncSession, tenant_id: Optional[str] = None, timezone: Optional[str] = None):
+    def __init__(
+        self,
+        db: AsyncSession,
+        tenant_id: Optional[str] = None,
+        timezone: Optional[str] = None,
+    ):
         self.db = db
         self.tenant_id = tenant_id
         self.reseller_service = ResellerService(db, tenant_id)
@@ -48,19 +54,29 @@ class ResellerPortalService:
             raise ValueError(f"Reseller {reseller_id} not found")
 
         # Get customer metrics
-        customers = await self.customer_service.list_for_reseller(reseller_id, limit=1000)
+        customers = await self.customer_service.list_for_reseller(
+            reseller_id, limit=1000
+        )
         active_customers = [c for c in customers if c.relationship_status == "active"]
 
         # Calculate financial metrics
         total_mrr = sum(c.monthly_recurring_revenue for c in active_customers)
         total_arr = total_mrr * 12
-        avg_customer_value = total_mrr / len(active_customers) if active_customers else Decimal("0")
+        avg_customer_value = (
+            total_mrr / len(active_customers) if active_customers else Decimal("0")
+        )
 
         # Get recent activity
-        recent_customers = sorted(customers, key=lambda x: x.created_at, reverse=True)[:10]
+        recent_customers = sorted(customers, key=lambda x: x.created_at, reverse=True)[
+            :10
+        ]
 
         # Get commission summary
-        commission_summary = await self.commission_service.get_reseller_commission_summary(reseller_id, last_n_months=6)
+        commission_summary = (
+            await self.commission_service.get_reseller_commission_summary(
+                reseller_id, last_n_months=6
+            )
+        )
 
         dashboard_data = {
             "reseller": {
@@ -81,9 +97,15 @@ class ResellerPortalService:
                 "growth_rate": self._calculate_growth_rate(customers),
             },
             "financial": {
-                "total_commissions_earned": float(commission_summary["commission_summary"]["total_earned"]),
-                "pending_commissions": float(commission_summary["commission_summary"]["total_pending"]),
-                "last_payment_amount": float(commission_summary["commission_summary"]["total_paid"]),
+                "total_commissions_earned": float(
+                    commission_summary["commission_summary"]["total_earned"]
+                ),
+                "pending_commissions": float(
+                    commission_summary["commission_summary"]["total_pending"]
+                ),
+                "last_payment_amount": float(
+                    commission_summary["commission_summary"]["total_paid"]
+                ),
                 "next_payment_due": self._get_next_payment_date(),
                 "commission_rate": float(reseller.base_commission_rate or 0),
             },
@@ -103,14 +125,20 @@ class ResellerPortalService:
 
         return dashboard_data
 
-    async def get_customer_list(self, reseller_id: str, page: int = 1, limit: int = 50) -> dict[str, Any]:
+    async def get_customer_list(
+        self, reseller_id: str, page: int = 1, limit: int = 50
+    ) -> dict[str, Any]:
         """Get paginated customer list for reseller"""
 
         offset = (page - 1) * limit
-        customers = await self.customer_service.list_for_reseller(reseller_id, offset=offset, limit=limit)
+        customers = await self.customer_service.list_for_reseller(
+            reseller_id, offset=offset, limit=limit
+        )
 
         # Get total count (in production, this would be a separate count query)
-        all_customers = await self.customer_service.list_for_reseller(reseller_id, limit=10000)
+        all_customers = await self.customer_service.list_for_reseller(
+            reseller_id, limit=10000
+        )
         total_count = len(all_customers)
 
         customer_data = {
@@ -125,7 +153,9 @@ class ResellerPortalService:
                     "mrr": float(c.monthly_recurring_revenue),
                     "status": c.relationship_status,
                     "created_at": c.created_at.strftime("%Y-%m-%d"),
-                    "last_service_date": c.last_service_date.strftime("%Y-%m-%d") if c.last_service_date else None,
+                    "last_service_date": c.last_service_date.strftime("%Y-%m-%d")
+                    if c.last_service_date
+                    else None,
                 }
                 for c in customers
             ],
@@ -141,7 +171,9 @@ class ResellerPortalService:
 
         return customer_data
 
-    async def get_commission_history(self, reseller_id: str, months: int = 12) -> dict[str, Any]:
+    async def get_commission_history(
+        self, reseller_id: str, months: int = 12
+    ) -> dict[str, Any]:
         """Get commission history for reseller"""
 
         # This would typically query the commission records
@@ -176,7 +208,13 @@ class ResellerPortalService:
                     "status": "paid",
                     "payment_date": "2024-03-15",
                 },
-                {"month": "2024-03", "earnings": 1420.25, "customers": 16, "status": "pending", "payment_date": None},
+                {
+                    "month": "2024-03",
+                    "earnings": 1420.25,
+                    "customers": 16,
+                    "status": "pending",
+                    "payment_date": None,
+                },
             ],
             "payment_schedule": {
                 "frequency": "monthly",
@@ -190,8 +228,10 @@ class ResellerPortalService:
     async def get_performance_analytics(self, reseller_id: str) -> dict[str, Any]:
         """Get performance analytics and trends"""
 
-        performance_report = await self.report_generator.generate_reseller_performance_report(
-            reseller_id, period_months=6
+        performance_report = (
+            await self.report_generator.generate_reseller_performance_report(
+                reseller_id, period_months=6
+            )
         )
 
         # Add trending data
@@ -234,7 +274,9 @@ class ResellerPortalService:
         """Lazy load fast provisioning service."""
         if self._fast_provisioning_service is None:
             try:
-                from dotmac_management.services.fast_deployment_optimizer import get_fast_deployment_optimizer
+                from dotmac_management.services.fast_deployment_optimizer import (
+                    get_fast_deployment_optimizer,
+                )
 
                 self._fast_provisioning_service = await get_fast_deployment_optimizer()
             except ImportError as e:
@@ -243,7 +285,9 @@ class ResellerPortalService:
         return self._fast_provisioning_service
 
     @standard_exception_handler
-    async def provision_tenant_container(self, reseller_id: str, customer_data: dict[str, Any]) -> dict[str, Any]:
+    async def provision_tenant_container(
+        self, reseller_id: str, customer_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Self-service tenant container provisioning for resellers.
 
@@ -251,7 +295,11 @@ class ResellerPortalService:
         """
         provisioning_service = await self.get_provisioning_service()
         if not provisioning_service:
-            return {"success": False, "error": "Provisioning service not available", "provisioning_id": None}
+            return {
+                "success": False,
+                "error": "Provisioning service not available",
+                "provisioning_id": None,
+            }
 
         try:
             # Create tenant database record first
@@ -271,7 +319,9 @@ class ResellerPortalService:
             await self.db.refresh(tenant)
 
             # Start fast provisioning workflow
-            workflow_id = await provisioning_service.fast_provision_tenant(tenant_db_id=tenant.id, priority="HIGH")
+            workflow_id = await provisioning_service.fast_provision_tenant(
+                tenant_db_id=tenant.id, priority="HIGH"
+            )
 
             # Cache provisioning status
             self._provisioning_status_cache[workflow_id] = {
@@ -296,7 +346,9 @@ class ResellerPortalService:
             }
 
         except Exception as e:
-            logger.error(f"Failed to start provisioning for reseller {reseller_id}: {e}")
+            logger.error(
+                f"Failed to start provisioning for reseller {reseller_id}: {e}"
+            )
             return {"success": False, "error": str(e), "workflow_id": None}
 
     @standard_exception_handler
@@ -312,7 +364,9 @@ class ResellerPortalService:
 
         try:
             # Get status from enhanced provisioning service
-            status = await provisioning_service.enhanced_provisioning.get_provisioning_status(workflow_id)
+            status = await provisioning_service.enhanced_provisioning.get_provisioning_status(
+                workflow_id
+            )
             if not status:
                 return {"error": "Workflow not found"}
 
@@ -334,7 +388,11 @@ class ResellerPortalService:
                 "tenant_id": cached_info.get("tenant_id"),
                 "reseller_id": cached_info.get("reseller_id"),
                 "steps_completed": len(
-                    [s for s in status.get("step_statuses", {}).values() if s.get("status") == "completed"]
+                    [
+                        s
+                        for s in status.get("step_statuses", {}).values()
+                        if s.get("status") == "completed"
+                    ]
                 ),
                 "total_steps": len(status.get("step_statuses", {})),
                 "errors": status.get("error_details", []),
@@ -353,7 +411,9 @@ class ResellerPortalService:
         """
         try:
             # Get all customers for reseller (existing functionality)
-            customers = await self.customer_service.list_for_reseller(reseller_id, limit=1000)
+            customers = await self.customer_service.list_for_reseller(
+                reseller_id, limit=1000
+            )
 
             # Filter for customers with active containers
             containers = []
@@ -364,7 +424,9 @@ class ResellerPortalService:
                         "tenant_id": str(customer.tenant_id),
                         "customer_id": str(customer.customer_id),
                         "company_name": customer.company_name,
-                        "subdomain": getattr(customer, "subdomain", f"tenant-{customer.customer_id}"),
+                        "subdomain": getattr(
+                            customer, "subdomain", f"tenant-{customer.customer_id}"
+                        ),
                         "status": customer.relationship_status,
                         "plan": getattr(customer, "plan", "standard"),
                         "mrr": float(customer.monthly_recurring_revenue),
@@ -400,7 +462,10 @@ class ResellerPortalService:
         # Get active provisioning workflows
         active_workflows = []
         for workflow_id in list(self._provisioning_status_cache.keys()):
-            if self._provisioning_status_cache[workflow_id]["reseller_id"] == reseller_id:
+            if (
+                self._provisioning_status_cache[workflow_id]["reseller_id"]
+                == reseller_id
+            ):
                 status = await self.get_provisioning_status(workflow_id)
                 if status.get("status") not in ["completed", "failed", "cancelled"]:
                     active_workflows.append(status)
@@ -415,8 +480,10 @@ class ResellerPortalService:
                     "container_mrr": containers["total_mrr"],
                     "containers": containers["containers"][:10],  # Show recent 10
                     "active_provisioning": active_workflows,
-                    "can_provision": len(active_workflows) < 3,  # Limit concurrent provisioning
-                    "provision_limit_reached": len(containers["containers"]) >= 50,  # Example limit
+                    "can_provision": len(active_workflows)
+                    < 3,  # Limit concurrent provisioning
+                    "provision_limit_reached": len(containers["containers"])
+                    >= 50,  # Example limit
                 }
             }
         )
@@ -429,10 +496,14 @@ class ResellerPortalService:
             return 0.0
 
         # Simple churn calculation - in production this would be more sophisticated
-        inactive_customers = len([c for c in customers if c.relationship_status != "active"])
+        inactive_customers = len(
+            [c for c in customers if c.relationship_status != "active"]
+        )
         total_customers = len(customers)
 
-        return (inactive_customers / total_customers * 100) if total_customers > 0 else 0.0
+        return (
+            (inactive_customers / total_customers * 100) if total_customers > 0 else 0.0
+        )
 
     def _calculate_growth_rate(self, customers: list[ResellerCustomer]) -> float:
         """Calculate customer growth rate"""
@@ -440,7 +511,11 @@ class ResellerPortalService:
             return 0.0
 
         # Simple growth calculation based on recent additions
-        recent_customers = [c for c in customers if c.created_at >= datetime.now(timezone.utc) - timedelta(days=30)]
+        recent_customers = [
+            c
+            for c in customers
+            if c.created_at >= datetime.now(timezone.utc) - timedelta(days=30)
+        ]
         monthly_growth = len(recent_customers)
 
         # Annualized growth rate
@@ -466,7 +541,9 @@ class ResellerPortalRenderer:
     def __init__(self, templates: Jinja2Templates):
         self.templates = templates
 
-    def render_dashboard(self, request: Request, dashboard_data: dict[str, Any]) -> HTMLResponse:
+    def render_dashboard(
+        self, request: Request, dashboard_data: dict[str, Any]
+    ) -> HTMLResponse:
         """Render dashboard page"""
         return self.templates.TemplateResponse(
             "reseller/dashboard.html",
@@ -480,14 +557,22 @@ class ResellerPortalRenderer:
             },
         )
 
-    def render_customers(self, request: Request, customer_data: dict[str, Any]) -> HTMLResponse:
+    def render_customers(
+        self, request: Request, customer_data: dict[str, Any]
+    ) -> HTMLResponse:
         """Render customer management page"""
         return self.templates.TemplateResponse(
             "reseller/customers.html",
-            {"request": request, "customers": customer_data["customers"], "pagination": customer_data["pagination"]},
+            {
+                "request": request,
+                "customers": customer_data["customers"],
+                "pagination": customer_data["pagination"],
+            },
         )
 
-    def render_commissions(self, request: Request, commission_data: dict[str, Any]) -> HTMLResponse:
+    def render_commissions(
+        self, request: Request, commission_data: dict[str, Any]
+    ) -> HTMLResponse:
         """Render commission history page"""
         return self.templates.TemplateResponse(
             "reseller/commissions.html",
@@ -499,7 +584,9 @@ class ResellerPortalRenderer:
             },
         )
 
-    def render_analytics(self, request: Request, analytics_data: dict[str, Any]) -> HTMLResponse:
+    def render_analytics(
+        self, request: Request, analytics_data: dict[str, Any]
+    ) -> HTMLResponse:
         """Render performance analytics page"""
         return self.templates.TemplateResponse(
             "reseller/analytics.html",

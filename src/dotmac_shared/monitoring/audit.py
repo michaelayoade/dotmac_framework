@@ -199,7 +199,11 @@ class AuditEvent:
 
         def serialize_dataclass(obj):
             if hasattr(obj, "__dataclass_fields__"):
-                return {k: serialize_dataclass(v) for k, v in obj.__dict__.items() if v is not None}
+                return {
+                    k: serialize_dataclass(v)
+                    for k, v in obj.__dict__.items()
+                    if v is not None
+                }
             elif isinstance(obj, Enum):
                 return obj.value
             elif isinstance(obj, list):
@@ -292,13 +296,23 @@ class InMemoryAuditStore(AuditStore):
         if end_time:
             filtered_events = [e for e in filtered_events if e.timestamp <= end_time]
         if event_types:
-            filtered_events = [e for e in filtered_events if e.event_type in event_types]
+            filtered_events = [
+                e for e in filtered_events if e.event_type in event_types
+            ]
         if actor_ids and any(e.actor for e in filtered_events):
-            filtered_events = [e for e in filtered_events if e.actor and e.actor.actor_id in actor_ids]
+            filtered_events = [
+                e for e in filtered_events if e.actor and e.actor.actor_id in actor_ids
+            ]
         if resource_types and any(e.resource for e in filtered_events):
-            filtered_events = [e for e in filtered_events if e.resource and e.resource.resource_type in resource_types]
+            filtered_events = [
+                e
+                for e in filtered_events
+                if e.resource and e.resource.resource_type in resource_types
+            ]
         if tenant_id and any(e.actor for e in filtered_events):
-            filtered_events = [e for e in filtered_events if e.actor and e.actor.tenant_id == tenant_id]
+            filtered_events = [
+                e for e in filtered_events if e.actor and e.actor.tenant_id == tenant_id
+            ]
 
         # Sort by timestamp (newest first)
         filtered_events.sort(key=lambda x: x.timestamp, reverse=True)
@@ -373,11 +387,19 @@ class AuditLogger:
     ) -> AuditEvent:
         """Log authentication-related audit event."""
 
-        actor = AuditActor(actor_id=actor_id, actor_type="user", tenant_id=self.tenant_id)
+        actor = AuditActor(
+            actor_id=actor_id, actor_type="user", tenant_id=self.tenant_id
+        )
 
-        context = AuditContext(client_ip=client_ip, user_agent=user_agent, service_name=self.service_name)
+        context = AuditContext(
+            client_ip=client_ip, user_agent=user_agent, service_name=self.service_name
+        )
 
-        severity = AuditSeverity.HIGH if outcome == AuditOutcome.FAILURE else AuditSeverity.MEDIUM
+        severity = (
+            AuditSeverity.HIGH
+            if outcome == AuditOutcome.FAILURE
+            else AuditSeverity.MEDIUM
+        )
 
         return self.log_event(
             event_type=event_type,
@@ -411,12 +433,18 @@ class AuditLogger:
         }
         event_type = event_type_map.get(operation.lower(), AuditEventType.DATA_READ)
 
-        actor = AuditActor(actor_id=actor_id, actor_type="user", tenant_id=self.tenant_id)
+        actor = AuditActor(
+            actor_id=actor_id, actor_type="user", tenant_id=self.tenant_id
+        )
 
         resource = AuditResource(resource_id=resource_id, resource_type=resource_type)
 
         message = f"{operation.title()} {resource_type} {resource_id}"
-        severity = AuditSeverity.HIGH if operation.lower() == "delete" else AuditSeverity.MEDIUM
+        severity = (
+            AuditSeverity.HIGH
+            if operation.lower() == "delete"
+            else AuditSeverity.MEDIUM
+        )
 
         return self.log_event(
             event_type=event_type,
@@ -458,9 +486,13 @@ class AuditLogger:
         """Query audit events from the store."""
         return self.store.query_events(**kwargs)
 
-    def get_event_stats(self, start_time: Optional[float] = None, end_time: Optional[float] = None) -> dict[str, Any]:
+    def get_event_stats(
+        self, start_time: Optional[float] = None, end_time: Optional[float] = None
+    ) -> dict[str, Any]:
         """Get audit event statistics."""
-        events = self.query_events(start_time=start_time, end_time=end_time, limit=10000)
+        events = self.query_events(
+            start_time=start_time, end_time=end_time, limit=10000
+        )
 
         stats = {
             "total_events": len(events),
@@ -474,21 +506,29 @@ class AuditLogger:
         for event in events:
             # Count by type
             event_type = event.event_type.value
-            stats["events_by_type"][event_type] = stats["events_by_type"].get(event_type, 0) + 1
+            stats["events_by_type"][event_type] = (
+                stats["events_by_type"].get(event_type, 0) + 1
+            )
 
             # Count by severity
             severity = event.severity.value
-            stats["events_by_severity"][severity] = stats["events_by_severity"].get(severity, 0) + 1
+            stats["events_by_severity"][severity] = (
+                stats["events_by_severity"].get(severity, 0) + 1
+            )
 
             # Count by outcome
             outcome = event.outcome.value
-            stats["events_by_outcome"][outcome] = stats["events_by_outcome"].get(outcome, 0) + 1
+            stats["events_by_outcome"][outcome] = (
+                stats["events_by_outcome"].get(outcome, 0) + 1
+            )
 
             # Track unique actors and resources
             if event.actor:
                 stats["unique_actors"].add(event.actor.actor_id)
             if event.resource:
-                stats["unique_resources"].add(f"{event.resource.resource_type}:{event.resource.resource_id}")
+                stats["unique_resources"].add(
+                    f"{event.resource.resource_type}:{event.resource.resource_id}"
+                )
 
         # Convert sets to counts
         stats["unique_actors"] = len(stats["unique_actors"])
@@ -538,7 +578,9 @@ def create_audit_event(
     if resource_type:
         resource = AuditResource(resource_type=resource_type, resource_id=resource_id)
 
-    return AuditEvent(event_type=event_type, message=message, actor=actor, resource=resource, **kwargs)
+    return AuditEvent(
+        event_type=event_type, message=message, actor=actor, resource=resource, **kwargs
+    )
 
 
 # Global audit logger instance

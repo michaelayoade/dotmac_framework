@@ -50,7 +50,9 @@ class EnvironmentValidator:
     def __init__(self):
         self.validation_results: list[ValidationResult] = []
 
-    def validate_environment(self, tier: EnvironmentTier = EnvironmentTier.DEVELOPMENT) -> dict[str, Any]:
+    def validate_environment(
+        self, tier: EnvironmentTier = EnvironmentTier.DEVELOPMENT
+    ) -> dict[str, Any]:
         """
         Comprehensive environment validation for the specified tier.
 
@@ -80,9 +82,17 @@ class EnvironmentValidator:
         self._validate_application_config(tier)
 
         # Categorize results
-        errors = [r for r in self.validation_results if r.severity == ValidationSeverity.ERROR]
-        warnings = [r for r in self.validation_results if r.severity == ValidationSeverity.WARNING]
-        info = [r for r in self.validation_results if r.severity == ValidationSeverity.INFO]
+        errors = [
+            r for r in self.validation_results if r.severity == ValidationSeverity.ERROR
+        ]
+        warnings = [
+            r
+            for r in self.validation_results
+            if r.severity == ValidationSeverity.WARNING
+        ]
+        info = [
+            r for r in self.validation_results if r.severity == ValidationSeverity.INFO
+        ]
 
         result = {
             "tier": tier.value,
@@ -106,7 +116,9 @@ class EnvironmentValidator:
             for error in errors:
                 logger.error(f"  - {error.variable}: {error.message}")
         elif warnings:
-            logger.warning(f"Environment validation passed with {len(warnings)} warnings")
+            logger.warning(
+                f"Environment validation passed with {len(warnings)} warnings"
+            )
 
         return result
 
@@ -148,15 +160,23 @@ class EnvironmentValidator:
         if openbao_url:
             if not openbao_url.startswith(("http://", "https://")):
                 self._add_result(
-                    "OPENBAO_URL", False, ValidationSeverity.ERROR, "OPENBAO_URL must be a valid HTTP/HTTPS URL"
+                    "OPENBAO_URL",
+                    False,
+                    ValidationSeverity.ERROR,
+                    "OPENBAO_URL must be a valid HTTP/HTTPS URL",
                 )
 
         # Check for token
         effective_token = openbao_token or vault_token
         if not effective_token:
-            severity = ValidationSeverity.WARNING if optional else ValidationSeverity.ERROR
+            severity = (
+                ValidationSeverity.WARNING if optional else ValidationSeverity.ERROR
+            )
             self._add_result(
-                "OPENBAO_TOKEN", False, severity, "No OpenBao/Vault token found. Set OPENBAO_TOKEN or VAULT_TOKEN."
+                "OPENBAO_TOKEN",
+                False,
+                severity,
+                "No OpenBao/Vault token found. Set OPENBAO_TOKEN or VAULT_TOKEN.",
             )
         elif len(effective_token) < 20:
             self._add_result(
@@ -172,7 +192,11 @@ class EnvironmentValidator:
         db_url = os.getenv("DATABASE_URL")
 
         if not db_url:
-            severity = ValidationSeverity.ERROR if tier == EnvironmentTier.PRODUCTION else ValidationSeverity.WARNING
+            severity = (
+                ValidationSeverity.ERROR
+                if tier == EnvironmentTier.PRODUCTION
+                else ValidationSeverity.WARNING
+            )
             self._add_result("DATABASE_URL", False, severity, "DATABASE_URL is not set")
             return
 
@@ -202,13 +226,20 @@ class EnvironmentValidator:
         redis_url = os.getenv("REDIS_URL")
 
         if not redis_url:
-            severity = ValidationSeverity.ERROR if tier == EnvironmentTier.PRODUCTION else ValidationSeverity.WARNING
+            severity = (
+                ValidationSeverity.ERROR
+                if tier == EnvironmentTier.PRODUCTION
+                else ValidationSeverity.WARNING
+            )
             self._add_result("REDIS_URL", False, severity, "REDIS_URL is not set")
             return
 
         if not redis_url.startswith(("redis://", "rediss://")):
             self._add_result(
-                "REDIS_URL", False, ValidationSeverity.WARNING, "REDIS_URL should start with redis:// or rediss://"
+                "REDIS_URL",
+                False,
+                ValidationSeverity.WARNING,
+                "REDIS_URL should start with redis:// or rediss://",
             )
 
     def _validate_security_config(self, tier: EnvironmentTier) -> None:
@@ -217,7 +248,11 @@ class EnvironmentValidator:
         # JWT Secret
         jwt_secret = os.getenv("JWT_SECRET")
         if not jwt_secret:
-            severity = ValidationSeverity.ERROR if tier == EnvironmentTier.PRODUCTION else ValidationSeverity.WARNING
+            severity = (
+                ValidationSeverity.ERROR
+                if tier == EnvironmentTier.PRODUCTION
+                else ValidationSeverity.WARNING
+            )
             self._add_result("JWT_SECRET", False, severity, "JWT_SECRET is not set")
         elif tier == EnvironmentTier.PRODUCTION and len(jwt_secret) < 32:
             self._add_result(
@@ -231,7 +266,10 @@ class EnvironmentValidator:
         cors_origins = os.getenv("CORS_ORIGINS")
         if tier == EnvironmentTier.PRODUCTION and not cors_origins:
             self._add_result(
-                "CORS_ORIGINS", False, ValidationSeverity.WARNING, "CORS_ORIGINS should be explicitly set in production"
+                "CORS_ORIGINS",
+                False,
+                ValidationSeverity.WARNING,
+                "CORS_ORIGINS should be explicitly set in production",
             )
 
     def _validate_external_services(self, tier: EnvironmentTier) -> None:
@@ -242,7 +280,12 @@ class EnvironmentValidator:
             smtp_vars = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD"]
             for var in smtp_vars:
                 if not os.getenv(var):
-                    self._add_result(var, False, ValidationSeverity.WARNING, f"{var} is set but {var} is missing")
+                    self._add_result(
+                        var,
+                        False,
+                        ValidationSeverity.WARNING,
+                        f"{var} is set but {var} is missing",
+                    )
 
         # Webhook secrets
         webhook_secret = os.getenv("WEBHOOK_SECRET")
@@ -261,7 +304,10 @@ class EnvironmentValidator:
         admin_email = os.getenv("ADMIN_EMAIL")
         if tier == EnvironmentTier.PRODUCTION and not admin_email:
             self._add_result(
-                "ADMIN_EMAIL", False, ValidationSeverity.WARNING, "ADMIN_EMAIL should be set for production"
+                "ADMIN_EMAIL",
+                False,
+                ValidationSeverity.WARNING,
+                "ADMIN_EMAIL should be set for production",
             )
 
         # Application version
@@ -291,8 +337,14 @@ class EnvironmentValidator:
 
         value = os.getenv(var_name)
         if not value:
-            severity = ValidationSeverity.ERROR if tier == EnvironmentTier.PRODUCTION else ValidationSeverity.WARNING
-            self._add_result(var_name, False, severity, f"{var_name} is required but not set")
+            severity = (
+                ValidationSeverity.ERROR
+                if tier == EnvironmentTier.PRODUCTION
+                else ValidationSeverity.WARNING
+            )
+            self._add_result(
+                var_name, False, severity, f"{var_name} is required but not set"
+            )
         else:
             self._add_result(
                 var_name,

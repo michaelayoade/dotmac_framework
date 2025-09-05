@@ -71,7 +71,10 @@ class AgentStatus:
 
     def is_available(self) -> bool:
         """Check if agent is available for new interactions."""
-        return self.status == "available" and self.current_interactions < self.max_interactions
+        return (
+            self.status == "available"
+            and self.current_interactions < self.max_interactions
+        )
 
     def get_workload_ratio(self) -> float:
         """Get current workload as ratio (0.0 = free, 1.0 = at capacity)."""
@@ -82,7 +85,10 @@ class AgentStatus:
     def has_skill(self, skill_name: str, min_proficiency: int = 1) -> bool:
         """Check if agent has required skill."""
         for skill in self.skills:
-            if skill.skill_name.lower() == skill_name.lower() and skill.proficiency_level >= min_proficiency:
+            if (
+                skill.skill_name.lower() == skill_name.lower()
+                and skill.proficiency_level >= min_proficiency
+            ):
                 return True
         return False
 
@@ -147,7 +153,9 @@ class RoutingCondition(BaseModel):
             return False
 
         except Exception as e:
-            logger.error(f"Error evaluating condition {self.field} {self.operator} {self.value}: {e}")
+            logger.error(
+                f"Error evaluating condition {self.field} {self.operator} {self.value}: {e}"
+            )
             return False
 
     def _get_field_value(self, data: dict[str, Any], field_path: str) -> Any:
@@ -219,7 +227,9 @@ class RoutingRule(BaseModel):
         if not self.enabled or not self.conditions:
             return False
 
-        results = [condition.evaluate(interaction_data) for condition in self.conditions]
+        results = [
+            condition.evaluate(interaction_data) for condition in self.conditions
+        ]
 
         if self.condition_logic == "OR":
             return any(results)
@@ -321,7 +331,9 @@ class LeastBusyStrategy(RoutingStrategy_ABC):
             agent_id=selected_agent.agent_id,
             strategy_used=RoutingStrategy.LEAST_BUSY,
             reason=f"Least busy agent (workload: {selected_agent.get_workload_ratio():.1%})",
-            alternative_agents=[a.agent_id for a in sorted_agents[1:5]],  # Top 5 alternatives
+            alternative_agents=[
+                a.agent_id for a in sorted_agents[1:5]
+            ],  # Top 5 alternatives
         )
 
 
@@ -345,7 +357,9 @@ class SkillBasedStrategy(RoutingStrategy_ABC):
         # Filter agents with required skills
         qualified_agents = []
         for agent in available_agents:
-            if all(agent.has_skill(skill, min_skill_level) for skill in required_skills):
+            if all(
+                agent.has_skill(skill, min_skill_level) for skill in required_skills
+            ):
                 qualified_agents.append(agent)
 
         if not qualified_agents:
@@ -358,7 +372,11 @@ class SkillBasedStrategy(RoutingStrategy_ABC):
         if preferred_skills:
             agent_scores = []
             for agent in qualified_agents:
-                score = sum(skill.proficiency_level for skill in agent.skills if skill.skill_name in preferred_skills)
+                score = sum(
+                    skill.proficiency_level
+                    for skill in agent.skills
+                    if skill.skill_name in preferred_skills
+                )
                 agent_scores.append((agent, score))
 
             # Sort by score (descending), then by workload (ascending)
@@ -460,11 +478,15 @@ class RoutingEngine:
         matching_rule.last_used = datetime.now(timezone.utc)
 
         # Execute rule action
-        result = await self._execute_routing_action(matching_rule.action, interaction_data, matching_rule.id)
+        result = await self._execute_routing_action(
+            matching_rule.action, interaction_data, matching_rule.id
+        )
 
         # Track analytics
         if self.analytics_service:
-            await self.analytics_service.track_routing_decision(interaction.id, result, matching_rule.id)
+            await self.analytics_service.track_routing_decision(
+                interaction.id, result, matching_rule.id
+            )
 
         logger.info(
             f"Routed interaction {interaction.id} using rule {matching_rule.name}: "
@@ -560,7 +582,9 @@ class RoutingEngine:
             available_agents = await self.agent_manager.get_available_agents(tenant_id)
 
         if not available_agents:
-            return RoutingResult(success=False, reason="No available agents for default routing")
+            return RoutingResult(
+                success=False, reason="No available agents for default routing"
+            )
 
         # Use least busy strategy as default
         strategy = self.strategies[RoutingStrategy.LEAST_BUSY]
@@ -588,7 +612,9 @@ class RoutingEngine:
             return await self._queue_interaction(action, interaction_data, rule_id)
 
         else:
-            return RoutingResult(success=False, reason=f"Unknown action type: {action.action_type}")
+            return RoutingResult(
+                success=False, reason=f"Unknown action type: {action.action_type}"
+            )
 
     async def _route_to_team(
         self, action: RoutingAction, interaction_data: dict[str, Any], rule_id: str
@@ -599,7 +625,9 @@ class RoutingEngine:
         # Get available agents in team
         available_agents = []
         if self.agent_manager:
-            available_agents = await self.agent_manager.get_team_available_agents(team_id)
+            available_agents = await self.agent_manager.get_team_available_agents(
+                team_id
+            )
 
         if not available_agents:
             return RoutingResult(
@@ -626,7 +654,9 @@ class RoutingEngine:
             "min_skill_level": action.min_skill_level,
         }
 
-        result = await strategy.route(interaction_data, available_agents, routing_context)
+        result = await strategy.route(
+            interaction_data, available_agents, routing_context
+        )
         result.team_id = team_id
         result.rule_id = rule_id
 
@@ -646,7 +676,9 @@ class RoutingEngine:
                 strategy=action.strategy,
                 required_skills=action.required_skills,
             )
-            result = await self._route_to_team(escalation_action, interaction_data, rule_id)
+            result = await self._route_to_team(
+                escalation_action, interaction_data, rule_id
+            )
             result.reason = f"Escalated to team {escalation_team}: {result.reason}"
             return result
 
@@ -693,7 +725,10 @@ class RoutingEngine:
             "custom_fields": interaction.custom_fields,
             "context": interaction.context,
             "created_at": interaction.created_at,
-            "age_minutes": (datetime.now(timezone.utc) - interaction.created_at).total_seconds() / 60,
+            "age_minutes": (
+                datetime.now(timezone.utc) - interaction.created_at
+            ).total_seconds()
+            / 60,
         }
 
     async def get_routing_stats(self, tenant_id: str) -> dict[str, Any]:

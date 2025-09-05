@@ -94,7 +94,9 @@ class Account:
     def lock_account(self, duration_minutes: int = 30) -> None:
         """Lock account for specified duration."""
         self.status = AccountStatus.LOCKED
-        self.locked_until = datetime.now(timezone.utc) + datetime.timedelta(minutes=duration_minutes)
+        self.locked_until = datetime.now(timezone.utc) + datetime.timedelta(
+            minutes=duration_minutes
+        )
 
     def unlock_account(self) -> None:
         """Unlock account."""

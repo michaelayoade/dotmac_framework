@@ -8,19 +8,25 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from dotmac_management.models.vps_customer import VPSCustomer, VPSDeploymentEvent, VPSStatus
-from dotmac_management.services.vps_requirements import VPSRequirementsService
-from dotmac_shared.api.exceptions import standard_exception_handler
-from dotmac_shared.core.logging import get_logger
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
-
-from packages.dotmac_network_automation.dotmac_network.ssh.automation import SSHAutomation
+from packages.dotmac_network_automation.dotmac_network.ssh.automation import (
+    SSHAutomation,
+)
 from packages.dotmac_network_automation.dotmac_network.ssh.types import (
     DeviceCredentials,
     DeviceType,
     SSHConnectionConfig,
 )
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from dotmac_management.models.vps_customer import (
+    VPSCustomer,
+    VPSDeploymentEvent,
+    VPSStatus,
+)
+from dotmac_management.services.vps_requirements import VPSRequirementsService
+from dotmac_shared.api.exceptions import standard_exception_handler
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -54,7 +60,9 @@ class VPSProvisioningService:
                 logger.error(f"VPS customer {customer_db_id} not found for setup")
                 return False
 
-            logger.info(f"Starting VPS setup for customer {customer.customer_id} (correlation: {correlation_id})")
+            logger.info(
+                f"Starting VPS setup for customer {customer.customer_id} (correlation: {correlation_id})"
+            )
 
             # Step 1: Validate VPS connectivity
             if not await self._validate_vps_connectivity(db, customer, correlation_id):
@@ -91,12 +99,19 @@ class VPSProvisioningService:
             await self._handle_setup_failure(db, customer_db_id, str(e), correlation_id)
             return False
 
-    async def _validate_vps_connectivity(self, db: Session, customer: VPSCustomer, correlation_id: str) -> bool:
+    async def _validate_vps_connectivity(
+        self, db: Session, customer: VPSCustomer, correlation_id: str
+    ) -> bool:
         """Test SSH connectivity to customer VPS"""
 
         try:
             await self._update_customer_status(
-                db, customer, VPSStatus.CONNECTION_TEST, "Testing SSH connectivity", correlation_id, 1
+                db,
+                customer,
+                VPSStatus.CONNECTION_TEST,
+                "Testing SSH connectivity",
+                correlation_id,
+                1,
             )
 
             # Prepare SSH credentials
@@ -106,11 +121,16 @@ class VPSProvisioningService:
                 ssh_key=customer.ssh_key,
             )
 
-            config = SSHConnectionConfig(host=customer.vps_ip, port=customer.ssh_port, timeout=30)
+            config = SSHConnectionConfig(
+                host=customer.vps_ip, port=customer.ssh_port, timeout=30
+            )
 
             # Test SSH connection
             connection = await self.ssh_automation.connect(
-                host=customer.vps_ip, credentials=credentials, config=config, device_type=DeviceType.LINUX_SERVER
+                host=customer.vps_ip,
+                credentials=credentials,
+                config=config,
+                device_type=DeviceType.LINUX_SERVER,
             )
 
             # Run basic connectivity test
@@ -127,7 +147,9 @@ class VPSProvisioningService:
             with db_transaction(db):
                 customer.settings = customer.settings or {}
                 customer.settings["ssh_test_passed"] = True
-                customer.settings["ssh_test_timestamp"] = datetime.now(timezone.utc).isoformat()
+                customer.settings["ssh_test_timestamp"] = datetime.now(
+                    timezone.utc
+                ).isoformat()
 
             await self._log_deployment_event(
                 db,
@@ -146,15 +168,24 @@ class VPSProvisioningService:
             return True
 
         except Exception as e:
-            await self._log_deployment_error(db, customer, "ssh_connectivity_failed", str(e), correlation_id, 1)
+            await self._log_deployment_error(
+                db, customer, "ssh_connectivity_failed", str(e), correlation_id, 1
+            )
             return False
 
-    async def _check_server_requirements(self, db: Session, customer: VPSCustomer, correlation_id: str) -> bool:
+    async def _check_server_requirements(
+        self, db: Session, customer: VPSCustomer, correlation_id: str
+    ) -> bool:
         """Check if server meets minimum requirements for plan"""
 
         try:
             await self._update_customer_status(
-                db, customer, VPSStatus.REQUIREMENTS_CHECK, "Checking server requirements", correlation_id, 2
+                db,
+                customer,
+                VPSStatus.REQUIREMENTS_CHECK,
+                "Checking server requirements",
+                correlation_id,
+                2,
             )
 
             # Reconnect to VPS
@@ -180,7 +211,9 @@ class VPSProvisioningService:
 
             with db_transaction(db):
                 customer.settings = customer.settings or {}
-                customer.settings["requirements_passed"] = validation_results["overall_status"] == "pass"
+                customer.settings["requirements_passed"] = (
+                    validation_results["overall_status"] == "pass"
+                )
                 customer.settings["server_specs"] = specs
                 customer.settings["validation_results"] = validation_results
 
@@ -197,26 +230,39 @@ class VPSProvisioningService:
             await self.ssh_automation.disconnect(connection.connection_id)
 
             if validation_results["overall_status"] != "pass":
-                raise Exception(f"Server requirements not met: {validation_results['failures']}")
+                raise Exception(
+                    f"Server requirements not met: {validation_results['failures']}"
+                )
 
             return True
 
         except Exception as e:
-            await self._log_deployment_error(db, customer, "requirements_check_failed", str(e), correlation_id, 2)
+            await self._log_deployment_error(
+                db, customer, "requirements_check_failed", str(e), correlation_id, 2
+            )
             return False
 
-    async def _install_dependencies(self, db: Session, customer: VPSCustomer, correlation_id: str) -> bool:
+    async def _install_dependencies(
+        self, db: Session, customer: VPSCustomer, correlation_id: str
+    ) -> bool:
         """Install Docker and other required dependencies"""
 
         try:
             await self._update_customer_status(
-                db, customer, VPSStatus.DEPLOYING, "Installing dependencies", correlation_id, 3
+                db,
+                customer,
+                VPSStatus.DEPLOYING,
+                "Installing dependencies",
+                correlation_id,
+                3,
             )
 
             connection = await self._get_ssh_connection(customer)
 
             # Install Docker if not present
-            docker_check = await self.ssh_automation.execute_command(connection.connection_id, "docker --version")
+            docker_check = await self.ssh_automation.execute_command(
+                connection.connection_id, "docker --version"
+            )
 
             if not docker_check.success:
                 logger.info(f"Installing Docker for customer {customer.customer_id}")
@@ -235,7 +281,9 @@ class VPSProvisioningService:
                 ]
 
                 for i, cmd in enumerate(install_commands):
-                    response = await self.ssh_automation.execute_command(connection.connection_id, cmd)
+                    response = await self.ssh_automation.execute_command(
+                        connection.connection_id, cmd
+                    )
 
                     await self._log_deployment_event(
                         db,
@@ -246,12 +294,21 @@ class VPSProvisioningService:
                         3,
                         command_executed=cmd,
                         exit_code=response.exit_code,
-                        stdout_output=response.output[:1000] if response.output else None,
-                        stderr_output=response.error_message[:1000] if response.error_message else None,
+                        stdout_output=response.output[:1000]
+                        if response.output
+                        else None,
+                        stderr_output=response.error_message[:1000]
+                        if response.error_message
+                        else None,
                     )
 
-                    if not response.success and "already" not in response.error_message.lower():
-                        raise Exception(f"Docker installation failed at step {i+1}: {response.error_message}")
+                    if (
+                        not response.success
+                        and "already" not in response.error_message.lower()
+                    ):
+                        raise Exception(
+                            f"Docker installation failed at step {i+1}: {response.error_message}"
+                        )
 
             # Verify Docker installation
             docker_verify = await self.ssh_automation.execute_command(
@@ -275,15 +332,29 @@ class VPSProvisioningService:
             return True
 
         except Exception as e:
-            await self._log_deployment_error(db, customer, "dependency_installation_failed", str(e), correlation_id, 3)
+            await self._log_deployment_error(
+                db,
+                customer,
+                "dependency_installation_failed",
+                str(e),
+                correlation_id,
+                3,
+            )
             return False
 
-    async def _deploy_isp_framework(self, db: Session, customer: VPSCustomer, correlation_id: str) -> bool:
+    async def _deploy_isp_framework(
+        self, db: Session, customer: VPSCustomer, correlation_id: str
+    ) -> bool:
         """Deploy DotMac ISP Framework to customer VPS"""
 
         try:
             await self._update_customer_status(
-                db, customer, VPSStatus.CONFIGURING, "Deploying ISP Framework", correlation_id, 4
+                db,
+                customer,
+                VPSStatus.CONFIGURING,
+                "Deploying ISP Framework",
+                correlation_id,
+                4,
             )
 
             connection = await self._get_ssh_connection(customer)
@@ -299,7 +370,9 @@ class VPSProvisioningService:
                     --max-customers={customer.expected_customers}
             """
 
-            response = await self.ssh_automation.execute_command(connection.connection_id, deploy_command)
+            response = await self.ssh_automation.execute_command(
+                connection.connection_id, deploy_command
+            )
 
             await self._log_deployment_event(
                 db,
@@ -311,28 +384,39 @@ class VPSProvisioningService:
                 command_executed=deploy_command,
                 exit_code=response.exit_code,
                 stdout_output=response.output[:2000] if response.output else None,
-                stderr_output=response.error_message[:1000] if response.error_message else None,
+                stderr_output=response.error_message[:1000]
+                if response.error_message
+                else None,
             )
 
             if not response.success:
-                raise Exception(f"ISP Framework deployment failed: {response.error_message}")
+                raise Exception(
+                    f"ISP Framework deployment failed: {response.error_message}"
+                )
 
             # Verify deployment
             verify_response = await self.ssh_automation.execute_command(
                 connection.connection_id, f"docker ps | grep {customer.subdomain}"
             )
 
-            if not verify_response.success or customer.subdomain not in verify_response.output:
+            if (
+                not verify_response.success
+                or customer.subdomain not in verify_response.output
+            ):
                 raise Exception("ISP Framework containers not running after deployment")
 
             await self.ssh_automation.disconnect(connection.connection_id)
             return True
 
         except Exception as e:
-            await self._log_deployment_error(db, customer, "isp_deployment_failed", str(e), correlation_id, 4)
+            await self._log_deployment_error(
+                db, customer, "isp_deployment_failed", str(e), correlation_id, 4
+            )
             return False
 
-    async def _setup_monitoring(self, db: Session, customer: VPSCustomer, correlation_id: str) -> bool:
+    async def _setup_monitoring(
+        self, db: Session, customer: VPSCustomer, correlation_id: str
+    ) -> bool:
         """Set up monitoring for customer VPS"""
 
         try:
@@ -346,7 +430,9 @@ class VPSProvisioningService:
                 ./setup_monitoring.sh
             """
 
-            response = await self.ssh_automation.execute_command(connection.connection_id, monitoring_command)
+            response = await self.ssh_automation.execute_command(
+                connection.connection_id, monitoring_command
+            )
 
             await self._log_deployment_event(
                 db,
@@ -367,12 +453,19 @@ class VPSProvisioningService:
             # Non-critical failure
             return True
 
-    async def _run_health_checks(self, db: Session, customer: VPSCustomer, correlation_id: str) -> bool:
+    async def _run_health_checks(
+        self, db: Session, customer: VPSCustomer, correlation_id: str
+    ) -> bool:
         """Run comprehensive health checks on deployed system"""
 
         try:
             await self._update_customer_status(
-                db, customer, VPSStatus.TESTING, "Running health checks", correlation_id, 6
+                db,
+                customer,
+                VPSStatus.TESTING,
+                "Running health checks",
+                correlation_id,
+                6,
             )
 
             # Test HTTP endpoints
@@ -381,9 +474,13 @@ class VPSProvisioningService:
             async with httpx.AsyncClient() as client:
                 # Test ISP Framework health endpoint
                 try:
-                    response = await client.get(f"http://{customer.vps_ip}:8000/health", timeout=30)
+                    response = await client.get(
+                        f"http://{customer.vps_ip}:8000/health", timeout=30
+                    )
                     if response.status_code != 200:
-                        raise Exception(f"ISP health check failed: HTTP {response.status_code}")
+                        raise Exception(
+                            f"ISP health check failed: HTTP {response.status_code}"
+                        )
                 except Exception as e:
                     raise Exception(f"Could not reach ISP Framework: {e}") from e
 
@@ -395,21 +492,35 @@ class VPSProvisioningService:
                 customer.last_health_check = datetime.now(timezone.utc)
 
             await self._log_deployment_event(
-                db, customer, "health_checks_passed", "All health checks passed", correlation_id, 6
+                db,
+                customer,
+                "health_checks_passed",
+                "All health checks passed",
+                correlation_id,
+                6,
             )
 
             return True
 
         except Exception as e:
-            await self._log_deployment_error(db, customer, "health_checks_failed", str(e), correlation_id, 6)
+            await self._log_deployment_error(
+                db, customer, "health_checks_failed", str(e), correlation_id, 6
+            )
             return False
 
-    async def _finalize_setup(self, db: Session, customer: VPSCustomer, correlation_id: str):
+    async def _finalize_setup(
+        self, db: Session, customer: VPSCustomer, correlation_id: str
+    ):
         """Finalize setup and mark customer as ready"""
 
         # Update final status
         await self._update_customer_status(
-            db, customer, VPSStatus.READY, "VPS setup completed successfully", correlation_id, 7
+            db,
+            customer,
+            VPSStatus.READY,
+            "VPS setup completed successfully",
+            correlation_id,
+            7,
         )
 
         from dotmac_shared.core.error_utils import db_transaction
@@ -418,11 +529,18 @@ class VPSProvisioningService:
             customer.deployment_completed_at = datetime.now(timezone.utc)
             customer.settings = customer.settings or {}
             customer.settings["deployment_ready"] = True
-            customer.settings["setup_completed_at"] = datetime.now(timezone.utc).isoformat()
+            customer.settings["setup_completed_at"] = datetime.now(
+                timezone.utc
+            ).isoformat()
 
         # Set customer to active
         await self._update_customer_status(
-            db, customer, VPSStatus.ACTIVE, "Customer VPS is now active and ready for use", correlation_id, 8
+            db,
+            customer,
+            VPSStatus.ACTIVE,
+            "Customer VPS is now active and ready for use",
+            correlation_id,
+            8,
         )
 
     async def _gather_server_specs(self, connection_id: str) -> dict[str, Any]:
@@ -441,7 +559,9 @@ class VPSProvisioningService:
 
         for spec_name, command in commands.items():
             try:
-                response = await self.ssh_automation.execute_command(connection_id, command)
+                response = await self.ssh_automation.execute_command(
+                    connection_id, command
+                )
                 if response.success:
                     value = response.output.strip()
                     # Convert numeric values
@@ -472,10 +592,15 @@ class VPSProvisioningService:
             ssh_key=customer.ssh_key,
         )
 
-        config = SSHConnectionConfig(host=customer.vps_ip, port=customer.ssh_port, timeout=60)
+        config = SSHConnectionConfig(
+            host=customer.vps_ip, port=customer.ssh_port, timeout=60
+        )
 
         return await self.ssh_automation.connect(
-            host=customer.vps_ip, credentials=credentials, config=config, device_type=DeviceType.LINUX_SERVER
+            host=customer.vps_ip,
+            credentials=credentials,
+            config=config,
+            device_type=DeviceType.LINUX_SERVER,
         )
 
     async def _update_customer_status(
@@ -495,7 +620,12 @@ class VPSProvisioningService:
             customer.status = status
 
         await self._log_deployment_event(
-            db, customer, f"status_change.{status.value}", message, correlation_id, step_number or 0
+            db,
+            customer,
+            f"status_change.{status.value}",
+            message,
+            correlation_id,
+            step_number or 0,
         )
 
         logger.info(f"VPS Customer {customer.customer_id}: {status.value} - {message}")
@@ -555,7 +685,10 @@ class VPSProvisioningService:
             step_number=step_number,
             correlation_id=correlation_id,
             operator="system",
-            error_details={"error": error_message, "timestamp": datetime.now(timezone.utc).isoformat()},
+            error_details={
+                "error": error_message,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
         )
 
         from dotmac_shared.core.error_utils import db_transaction
@@ -563,7 +696,9 @@ class VPSProvisioningService:
         with db_transaction(db):
             db.add(event)
 
-    async def _handle_setup_failure(self, db: Session, customer_db_id: int, error_message: str, correlation_id: str):
+    async def _handle_setup_failure(
+        self, db: Session, customer_db_id: int, error_message: str, correlation_id: str
+    ):
         """Handle setup failure"""
 
         try:
@@ -575,8 +710,12 @@ class VPSProvisioningService:
                     customer.status = VPSStatus.FAILED
                     customer.settings = customer.settings or {}
                     customer.settings["last_error"] = error_message
-                    customer.settings["failed_at"] = datetime.now(timezone.utc).isoformat()
+                    customer.settings["failed_at"] = datetime.now(
+                        timezone.utc
+                    ).isoformat()
 
-                logger.error(f"VPS setup failed: {customer.customer_id} - {error_message}")
+                logger.error(
+                    f"VPS setup failed: {customer.customer_id} - {error_message}"
+                )
         except SQLAlchemyError:
             logger.exception("Failed to handle setup failure due to DB error")

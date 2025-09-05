@@ -37,13 +37,20 @@ class TrafficSplitRule:
 
     service_name: str
     versions: dict[str, int]  # version -> weight percentage
-    match_conditions: dict[str, str] = field(default_factory=dict)  # headers, user attributes
+    match_conditions: dict[str, str] = field(
+        default_factory=dict
+    )  # headers, user attributes
 
 
 class NGINXIstioTrafficManager(TrafficManager):
     """Integrated NGINX + Istio traffic manager for comprehensive routing."""
 
-    def __init__(self, namespace: str, nginx_config_path: str, signoz_endpoint: Optional[str] = None):
+    def __init__(
+        self,
+        namespace: str,
+        nginx_config_path: str,
+        signoz_endpoint: Optional[str] = None,
+    ):
         self.namespace = namespace
         self.nginx_config_path = Path(nginx_config_path)
         self.signoz_endpoint = signoz_endpoint
@@ -56,9 +63,13 @@ class NGINXIstioTrafficManager(TrafficManager):
     def register_service_route(self, route: ServiceRoute):
         """Register a service route for NGINX + Istio coordination."""
         self.service_routes[route.service_name] = route
-        self.logger.info(f"Registered route for {route.service_name}: {route.external_host} -> {route.internal_host}")
+        self.logger.info(
+            f"Registered route for {route.service_name}: {route.external_host} -> {route.internal_host}"
+        )
 
-    async def set_traffic_split(self, service_name: str, version_weights: dict[str, int]):
+    async def set_traffic_split(
+        self, service_name: str, version_weights: dict[str, int]
+    ):
         """Set traffic split using Istio (internal) while maintaining NGINX routing (external)."""
         if service_name not in self.service_routes:
             raise ValueError(f"Service route not registered: {service_name}")
@@ -73,12 +84,18 @@ class NGINXIstioTrafficManager(TrafficManager):
             await self._update_nginx_upstream(route, version_weights)
 
             # Store active split
-            self.active_splits[service_name] = TrafficSplitRule(service_name=service_name, versions=version_weights)
+            self.active_splits[service_name] = TrafficSplitRule(
+                service_name=service_name, versions=version_weights
+            )
 
-            self.logger.info(f"Applied traffic split for {service_name}: {version_weights}")
+            self.logger.info(
+                f"Applied traffic split for {service_name}: {version_weights}"
+            )
 
         except Exception as e:
-            self.logger.error(f"Failed to set traffic split for {service_name}: {str(e)}")
+            self.logger.error(
+                f"Failed to set traffic split for {service_name}: {str(e)}"
+            )
             raise
 
     async def get_current_split(self, service_name: str) -> dict[str, int]:
@@ -148,7 +165,9 @@ class NGINXIstioTrafficManager(TrafficManager):
 
         self.logger.info("Configured all DotMac service routes")
 
-    async def _apply_istio_traffic_split(self, service_name: str, version_weights: dict[str, int]):
+    async def _apply_istio_traffic_split(
+        self, service_name: str, version_weights: dict[str, int]
+    ):
         """Apply Istio VirtualService for traffic splitting."""
 
         virtual_service = {
@@ -166,10 +185,18 @@ class NGINXIstioTrafficManager(TrafficManager):
                         "match": [{"uri": {"prefix": "/"}}],
                         "route": [
                             {
-                                "destination": {"host": f"{service_name}-service", "subset": version},
+                                "destination": {
+                                    "host": f"{service_name}-service",
+                                    "subset": version,
+                                },
                                 "weight": weight,
                                 "headers": {
-                                    "response": {"add": {"x-version": version, "x-canary-weight": str(weight)}}
+                                    "response": {
+                                        "add": {
+                                            "x-version": version,
+                                            "x-canary-weight": str(weight),
+                                        }
+                                    }
                                 },
                             }
                             for version, weight in version_weights.items()
@@ -185,13 +212,23 @@ class NGINXIstioTrafficManager(TrafficManager):
         destination_rule = {
             "apiVersion": "networking.istio.io/v1beta1",
             "kind": "DestinationRule",
-            "metadata": {"name": f"{service_name}-destination", "namespace": self.namespace},
+            "metadata": {
+                "name": f"{service_name}-destination",
+                "namespace": self.namespace,
+            },
             "spec": {
                 "host": f"{service_name}-service",
                 "trafficPolicy": {
-                    "circuitBreaker": {"consecutiveErrors": 5, "interval": "30s", "baseEjectionTime": "30s"}
+                    "circuitBreaker": {
+                        "consecutiveErrors": 5,
+                        "interval": "30s",
+                        "baseEjectionTime": "30s",
+                    }
                 },
-                "subsets": [{"name": version, "labels": {"version": version}} for version in version_weights.keys()],
+                "subsets": [
+                    {"name": version, "labels": {"version": version}}
+                    for version in version_weights.keys()
+                ],
             },
         }
 
@@ -199,7 +236,9 @@ class NGINXIstioTrafficManager(TrafficManager):
         await self._apply_k8s_manifest(virtual_service)
         await self._apply_k8s_manifest(destination_rule)
 
-    async def _update_nginx_upstream(self, route: ServiceRoute, version_weights: dict[str, int]):
+    async def _update_nginx_upstream(
+        self, route: ServiceRoute, version_weights: dict[str, int]
+    ):
         """Update NGINX upstream configuration if needed."""
         # For most canary deployments, NGINX doesn't need changes
         # since Istio handles the internal routing
@@ -210,7 +249,9 @@ class NGINXIstioTrafficManager(TrafficManager):
         if len(version_weights) == 1 and list(version_weights.values())[0] == 100:
             # Full cutover - might need to update NGINX upstream
             new_version = list(version_weights.keys())[0]
-            self.logger.info(f"Full cutover to version {new_version} - NGINX config unchanged (Istio handles routing)")
+            self.logger.info(
+                f"Full cutover to version {new_version} - NGINX config unchanged (Istio handles routing)"
+            )
 
     async def _generate_nginx_config(self):
         """Generate comprehensive NGINX configuration for all DotMac services."""
@@ -341,7 +382,10 @@ http {
         service_entries = {
             "apiVersion": "networking.istio.io/v1beta1",
             "kind": "ServiceEntry",
-            "metadata": {"name": "dotmac-external-services", "namespace": self.namespace},
+            "metadata": {
+                "name": "dotmac-external-services",
+                "namespace": self.namespace,
+            },
             "spec": {
                 "hosts": [
                     "api.stripe.com",  # Payment processing
@@ -358,7 +402,10 @@ http {
         default_destination_rule = {
             "apiVersion": "networking.istio.io/v1beta1",
             "kind": "DestinationRule",
-            "metadata": {"name": "dotmac-default-circuit-breaker", "namespace": self.namespace},
+            "metadata": {
+                "name": "dotmac-default-circuit-breaker",
+                "namespace": self.namespace,
+            },
             "spec": {
                 "host": "*.default.svc.cluster.local",
                 "trafficPolicy": {
@@ -370,7 +417,10 @@ http {
                     },
                     "connectionPool": {
                         "tcp": {"maxConnections": 100},
-                        "http": {"http1MaxPendingRequests": 64, "maxRequestsPerConnection": 2},
+                        "http": {
+                            "http1MaxPendingRequests": 64,
+                            "maxRequestsPerConnection": 2,
+                        },
                     },
                 },
             },
@@ -410,11 +460,15 @@ class DotMacTrafficManagerFactory:
 
     @staticmethod
     def create_integrated_manager(
-        namespace: str = "default", nginx_config_path: str = "/etc/nginx/conf.d", signoz_endpoint: Optional[str] = None
+        namespace: str = "default",
+        nginx_config_path: str = "/etc/nginx/conf.d",
+        signoz_endpoint: Optional[str] = None,
     ) -> NGINXIstioTrafficManager:
         """Create integrated NGINX + Istio traffic manager for DotMac."""
 
-        manager = NGINXIstioTrafficManager(namespace, nginx_config_path, signoz_endpoint)
+        manager = NGINXIstioTrafficManager(
+            namespace, nginx_config_path, signoz_endpoint
+        )
         return manager
 
 

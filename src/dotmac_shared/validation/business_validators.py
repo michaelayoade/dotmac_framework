@@ -84,11 +84,15 @@ class BusinessValidators:
 
         # Username can contain letters, numbers, underscores, hyphens
         if not re.match(r"^[a-z0-9_-]+$", username):
-            raise ValidationError("Username can only contain letters, numbers, underscores, and hyphens")
+            raise ValidationError(
+                "Username can only contain letters, numbers, underscores, and hyphens"
+            )
 
         # Cannot start or end with special characters
         if username.startswith(("-", "_")) or username.endswith(("-", "_")):
-            raise ValidationError("Username cannot start or end with special characters")
+            raise ValidationError(
+                "Username cannot start or end with special characters"
+            )
 
         return username
 
@@ -118,7 +122,9 @@ class BusinessValidators:
 
         # Check for at least one special character
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-            raise ValidationError("Password must contain at least one special character")
+            raise ValidationError(
+                "Password must contain at least one special character"
+            )
 
     @staticmethod
     def validate_url(url: str, field_name: str = "URL") -> str:
@@ -151,7 +157,8 @@ class BusinessValidators:
 
         # Domain validation
         domain_pattern = (
-            r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*" r"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$"
+            r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*"
+            r"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$"
         )
         if not re.match(domain_pattern, domain):
             raise ValidationError("Invalid domain format")
@@ -286,7 +293,9 @@ class BusinessValidators:
         return float(amount)
 
     @staticmethod
-    def validate_tenant_isolation(entity_tenant_id: Optional[str], user_tenant_id: Optional[str]) -> None:
+    def validate_tenant_isolation(
+        entity_tenant_id: Optional[str], user_tenant_id: Optional[str]
+    ) -> None:
         """Validate tenant isolation rules."""
         if not entity_tenant_id and not user_tenant_id:
             return  # Both None is OK
@@ -310,7 +319,9 @@ class BusinessValidators:
 
         # Slug can only contain lowercase letters, numbers, and hyphens
         if not re.match(r"^[a-z0-9-]+$", slug):
-            raise ValidationError(f"{field_name} can only contain lowercase letters, numbers, and hyphens")
+            raise ValidationError(
+                f"{field_name} can only contain lowercase letters, numbers, and hyphens"
+            )
 
         # Cannot start or end with hyphen
         if slug.startswith("-") or slug.endswith("-"):
@@ -334,7 +345,9 @@ class BusinessValidators:
             raise ValidationError(f"Invalid {field_name} format") from e
 
     @staticmethod
-    def validate_json_data(data: Any, required_fields: list[str] | None = None) -> dict[str, Any]:
+    def validate_json_data(
+        data: Any, required_fields: list[str] | None = None
+    ) -> dict[str, Any]:
         """Validate JSON data structure."""
         if not isinstance(data, dict):
             raise ValidationError("Data must be a JSON object")
@@ -342,6 +355,8 @@ class BusinessValidators:
         if required_fields:
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
-                raise ValidationError(f"Missing required fields: {', '.join(missing_fields)}")
+                raise ValidationError(
+                    f"Missing required fields: {', '.join(missing_fields)}"
+                )
 
         return data

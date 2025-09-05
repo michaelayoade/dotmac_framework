@@ -65,9 +65,15 @@ class MonitoringConfig:
 
         # Leverage existing deployment context if available
         if EXISTING_CONFIG_AVAILABLE and deployment_context:
-            self.version = version or getattr(deployment_context, "version", None) or self._detect_version()
+            self.version = (
+                version
+                or getattr(deployment_context, "version", None)
+                or self._detect_version()
+            )
             self.environment = (
-                environment or getattr(deployment_context, "environment", None) or self._detect_environment()
+                environment
+                or getattr(deployment_context, "environment", None)
+                or self._detect_environment()
             )
         else:
             self.version = version or self._detect_version()
@@ -231,7 +237,9 @@ def create_monitoring_config(
     Returns:
         MonitoringConfig: Configured monitoring settings
     """
-    return MonitoringConfig(service_name=service_name, version=version, environment=environment, **kwargs)
+    return MonitoringConfig(
+        service_name=service_name, version=version, environment=environment, **kwargs
+    )
 
 
 def load_monitoring_settings() -> MonitoringSettings:

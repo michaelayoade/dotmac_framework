@@ -21,7 +21,9 @@ class SigNozMetricsCollector(MetricsCollector):
         self.monitoring = monitoring
         self.logger = logging.getLogger(__name__)
 
-    async def collect_metrics(self, service_name: str, version: str, duration_minutes: int) -> dict[str, float]:
+    async def collect_metrics(
+        self, service_name: str, version: str, duration_minutes: int
+    ) -> dict[str, float]:
         """Collect metrics from SigNoz using PromQL queries."""
         try:
             import aiohttp
@@ -62,22 +64,34 @@ class SigNozMetricsCollector(MetricsCollector):
                 ),
             }
 
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as session:
                 for metric_name, query in queries.items():
                     try:
                         # SigNoz exposes Prometheus-compatible query API
                         params = {"query": query, "time": datetime.now().isoformat()}
-                        async with session.get(f"{self.signoz_endpoint}/api/v1/query", params=params) as response:
+                        async with session.get(
+                            f"{self.signoz_endpoint}/api/v1/query", params=params
+                        ) as response:
                             if response.status == 200:
                                 data = await response.json()
                                 result = data.get("data", {}).get("result", [])
-                                if result and len(result) > 0 and result[0].get("value"):
+                                if (
+                                    result
+                                    and len(result) > 0
+                                    and result[0].get("value")
+                                ):
                                     metrics[metric_name] = float(result[0]["value"][1])
                                 else:
                                     metrics[metric_name] = 0.0
-                                    self.logger.debug(f"No data for metric {metric_name}")
+                                    self.logger.debug(
+                                        f"No data for metric {metric_name}"
+                                    )
                             else:
-                                self.logger.warning(f"Failed to query {metric_name}: HTTP {response.status}")
+                                self.logger.warning(
+                                    f"Failed to query {metric_name}: HTTP {response.status}"
+                                )
                                 metrics[metric_name] = 0.0
 
                     except Exception as e:
@@ -85,9 +99,13 @@ class SigNozMetricsCollector(MetricsCollector):
                         metrics[metric_name] = 0.0
 
             # Add SigNoz-specific metrics
-            await self._collect_signoz_specific_metrics(service_name, version, duration_minutes, metrics, session)
+            await self._collect_signoz_specific_metrics(
+                service_name, version, duration_minutes, metrics, session
+            )
 
-            self.logger.info(f"Collected {len(metrics)} metrics from SigNoz for {service_name}:{version}")
+            self.logger.info(
+                f"Collected {len(metrics)} metrics from SigNoz for {service_name}:{version}"
+            )
             return metrics
 
         except Exception as e:
@@ -95,7 +113,12 @@ class SigNozMetricsCollector(MetricsCollector):
             return {}
 
     async def _collect_signoz_specific_metrics(
-        self, service_name: str, version: str, duration_minutes: int, metrics: dict[str, float], session
+        self,
+        service_name: str,
+        version: str,
+        duration_minutes: int,
+        metrics: dict[str, float],
+        session,
     ):
         """Collect SigNoz-specific observability metrics."""
         try:
@@ -121,7 +144,9 @@ class SigNozMetricsCollector(MetricsCollector):
             for metric_name, query in trace_queries.items():
                 try:
                     params = {"query": query, "time": datetime.now().isoformat()}
-                    async with session.get(f"{self.signoz_endpoint}/api/v1/query", params=params) as response:
+                    async with session.get(
+                        f"{self.signoz_endpoint}/api/v1/query", params=params
+                    ) as response:
                         if response.status == 200:
                             data = await response.json()
                             result = data.get("data", {}).get("result", [])
@@ -131,7 +156,9 @@ class SigNozMetricsCollector(MetricsCollector):
                                 metrics[metric_name] = 0.0
 
                 except Exception as e:
-                    self.logger.debug(f"Could not collect trace metric {metric_name}: {str(e)}")
+                    self.logger.debug(
+                        f"Could not collect trace metric {metric_name}: {str(e)}"
+                    )
                     metrics[metric_name] = 0.0
 
         except Exception as e:
@@ -146,7 +173,9 @@ class SigNozIstioTrafficManager:
         self.signoz_endpoint = signoz_endpoint
         self.logger = logging.getLogger(__name__)
 
-    async def set_traffic_split_with_monitoring(self, service_name: str, version_weights: dict[str, int]):
+    async def set_traffic_split_with_monitoring(
+        self, service_name: str, version_weights: dict[str, int]
+    ):
         """Set traffic split and configure SigNoz monitoring."""
         try:
             # Apply Istio VirtualService
@@ -156,10 +185,14 @@ class SigNozIstioTrafficManager:
             await self._configure_signoz_monitoring(service_name, version_weights)
 
         except Exception as e:
-            self.logger.error(f"Failed to configure traffic split with monitoring: {str(e)}")
+            self.logger.error(
+                f"Failed to configure traffic split with monitoring: {str(e)}"
+            )
             raise
 
-    async def _apply_istio_virtual_service(self, service_name: str, version_weights: dict[str, int]):
+    async def _apply_istio_virtual_service(
+        self, service_name: str, version_weights: dict[str, int]
+    ):
         """Apply Istio VirtualService configuration."""
         import tempfile
 
@@ -171,7 +204,10 @@ class SigNozIstioTrafficManager:
             "metadata": {
                 "name": f"{service_name}-traffic-split",
                 "namespace": self.namespace,
-                "annotations": {"signoz.io/monitor": "true", "signoz.io/service": service_name},
+                "annotations": {
+                    "signoz.io/monitor": "true",
+                    "signoz.io/service": service_name,
+                },
             },
             "spec": {
                 "hosts": [service_name],
@@ -180,10 +216,18 @@ class SigNozIstioTrafficManager:
                         "match": [{"headers": {"x-canary": {"exact": "true"}}}],
                         "route": [
                             {
-                                "destination": {"host": service_name, "subset": version},
+                                "destination": {
+                                    "host": service_name,
+                                    "subset": version,
+                                },
                                 "weight": weight,
                                 "headers": {
-                                    "response": {"add": {"x-version": version, "x-traffic-weight": str(weight)}}
+                                    "response": {
+                                        "add": {
+                                            "x-version": version,
+                                            "x-traffic-weight": str(weight),
+                                        }
+                                    }
                                 },
                             }
                             for version, weight in version_weights.items()
@@ -215,7 +259,9 @@ class SigNozIstioTrafficManager:
 
             os.unlink(manifest_file)
 
-    async def _configure_signoz_monitoring(self, service_name: str, version_weights: dict[str, int]):
+    async def _configure_signoz_monitoring(
+        self, service_name: str, version_weights: dict[str, int]
+    ):
         """Configure SigNoz-specific monitoring for traffic split."""
         try:
             # Create SigNoz dashboard for the rollout
@@ -256,7 +302,9 @@ class SigNozIstioTrafficManager:
             }
 
             # In a real implementation, this would call SigNoz API to create the dashboard
-            self.logger.info(f"Configured SigNoz monitoring dashboard for {service_name}")
+            self.logger.info(
+                f"Configured SigNoz monitoring dashboard for {service_name}"
+            )
 
         except Exception as e:
             self.logger.warning(f"Failed to configure SigNoz monitoring: {str(e)}")
@@ -267,7 +315,10 @@ class SigNozRolloutFactory:
 
     @staticmethod
     def create_signoz_istio_rollout(
-        deployment, monitoring: MonitoringStack, signoz_query_endpoint: str, namespace: str = "default"
+        deployment,
+        monitoring: MonitoringStack,
+        signoz_query_endpoint: str,
+        namespace: str = "default",
     ) -> RolloutOrchestrator:
         """Create rollout orchestrator with SigNoz and Istio integration."""
 
@@ -313,6 +364,10 @@ async def setup_signoz_rollout(
     factory = SigNozRolloutFactory()
 
     if use_istio:
-        return factory.create_signoz_istio_rollout(deployment, monitoring, signoz_query_endpoint, namespace)
+        return factory.create_signoz_istio_rollout(
+            deployment, monitoring, signoz_query_endpoint, namespace
+        )
     else:
-        return factory.create_signoz_only_rollout(deployment, monitoring, signoz_query_endpoint)
+        return factory.create_signoz_only_rollout(
+            deployment, monitoring, signoz_query_endpoint
+        )

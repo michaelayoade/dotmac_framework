@@ -124,7 +124,9 @@ class RateLimiter:
 
         # Remove requests older than 1 minute
         cutoff_time = current_time - 60
-        client_history[:] = [req_time for req_time in client_history if req_time > cutoff_time]
+        client_history[:] = [
+            req_time for req_time in client_history if req_time > cutoff_time
+        ]
 
         # Check rate limit
         if len(client_history) >= self.requests_per_minute:
@@ -138,7 +140,10 @@ class RateLimiter:
         # Add current request
         client_history.append(current_time)
 
-        return True, {"remaining": self.requests_per_minute - len(client_history), "reset_time": int(current_time + 60)}
+        return True, {
+            "remaining": self.requests_per_minute - len(client_history),
+            "reset_time": int(current_time + 60),
+        }
 
     async def _cleanup_old_entries(self):
         """Remove old client entries to prevent memory leaks."""
@@ -175,7 +180,10 @@ class CircuitBreaker:
                 self.state = "HALF_OPEN"
                 logger.info("Circuit breaker transitioning to HALF_OPEN")
             else:
-                raise HTTPException(status_code=503, detail="Service temporarily unavailable (circuit breaker open)")
+                raise HTTPException(
+                    status_code=503,
+                    detail="Service temporarily unavailable (circuit breaker open)",
+                )
 
         try:
             if asyncio.iscoroutinefunction(func):
@@ -198,7 +206,9 @@ class CircuitBreaker:
             # Check if we should open the circuit
             if self.failure_count >= self.failure_threshold:
                 self.state = "OPEN"
-                logger.warning(f"Circuit breaker opening due to {self.failure_count} failures")
+                logger.warning(
+                    f"Circuit breaker opening due to {self.failure_count} failures"
+                )
 
             raise e
 
@@ -219,7 +229,12 @@ class GatewayMetrics:
         self.endpoint_stats: dict[str, dict[str, Any]] = {}
 
     def record_request(
-        self, endpoint: str, method: str, status_code: int, response_time: float, cache_hit: bool = False
+        self,
+        endpoint: str,
+        method: str,
+        status_code: int,
+        response_time: float,
+        cache_hit: bool = False,
     ):
         """Record request metrics."""
         self.total_requests += 1
@@ -273,7 +288,9 @@ class GatewayMetrics:
 
         cache_hit_rate = 0.0
         if (self.cache_hits + self.cache_misses) > 0:
-            cache_hit_rate = (self.cache_hits / (self.cache_hits + self.cache_misses)) * 100
+            cache_hit_rate = (
+                self.cache_hits / (self.cache_hits + self.cache_misses)
+            ) * 100
 
         return {
             "uptime_seconds": uptime,
@@ -284,7 +301,9 @@ class GatewayMetrics:
             "cache_hit_rate": round(cache_hit_rate, 2),
             "rate_limited_requests": self.rate_limited_requests,
             "status_codes": self.status_codes,
-            "top_endpoints": sorted(self.endpoint_stats.items(), key=lambda x: x[1]["count"], reverse=True)[:10],
+            "top_endpoints": sorted(
+                self.endpoint_stats.items(), key=lambda x: x[1]["count"], reverse=True
+            )[:10],
         }
 
 
@@ -311,7 +330,9 @@ class RequestTransformer:
 
         return request
 
-    async def transform_response(self, response: Response, request: Request) -> Response:
+    async def transform_response(
+        self, response: Response, request: Request
+    ) -> Response:
         """Transform outgoing response."""
         # Placeholder for response transformation logic
         return response
@@ -339,7 +360,9 @@ class UnifiedAPIGateway:
 
         # Initialize components
         self.rate_limiter = RateLimiter(config.default_rate_limit)
-        self.circuit_breaker = CircuitBreaker(config.circuit_breaker_threshold, config.circuit_breaker_timeout)
+        self.circuit_breaker = CircuitBreaker(
+            config.circuit_breaker_threshold, config.circuit_breaker_timeout
+        )
         self.metrics = GatewayMetrics()
         self.request_transformer = RequestTransformer()
 
@@ -375,7 +398,9 @@ class UnifiedAPIGateway:
             )
 
         if self.config.trusted_hosts:
-            app.add_middleware(TrustedHostMiddleware, allowed_hosts=self.config.trusted_hosts)
+            app.add_middleware(
+                TrustedHostMiddleware, allowed_hosts=self.config.trusted_hosts
+            )
 
         # Add custom middleware
         app.add_middleware(GatewayMiddleware, gateway=self)
@@ -416,18 +441,26 @@ class UnifiedAPIGateway:
             }
 
         # Dynamic service routing
-        @app.api_route("/{service_name}/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+        @app.api_route(
+            "/{service_name}/{path:path}",
+            methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+        )
         async def route_to_service(
             service_name: str,
             path: str,
             request: Request,
-            credentials: HTTPAuthorizationCredentials | None = Depends(HTTPBearer(auto_error=False)),
+            credentials: HTTPAuthorizationCredentials
+            | None = Depends(HTTPBearer(auto_error=False)),
         ):
             """Route requests to consolidated services."""
             return await self.route_request(service_name, path, request, credentials)
 
     async def route_request(
-        self, service_name: str, path: str, request: Request, credentials: HTTPAuthorizationCredentials | None = None
+        self,
+        service_name: str,
+        path: str,
+        request: Request,
+        credentials: HTTPAuthorizationCredentials | None = None,
     ) -> Response:
         """Route request to appropriate service."""
         start_time = time.time()
@@ -437,7 +470,9 @@ class UnifiedAPIGateway:
             if self.config.enable_authentication and credentials:
                 user_info = await self._authenticate_request(credentials.credentials)
                 if not user_info:
-                    raise HTTPException(status_code=401, detail="Invalid authentication")
+                    raise HTTPException(
+                        status_code=401, detail="Invalid authentication"
+                    )
 
             # Rate limiting check
             client_id = self._get_client_id(request)
@@ -446,22 +481,30 @@ class UnifiedAPIGateway:
                 response_time = time.time() - start_time
                 self.metrics.record_request(path, request.method, 429, response_time)
                 return JSONResponse(
-                    status_code=429, content=rate_info, headers={"Retry-After": str(rate_info.get("retry_after", 60))}
+                    status_code=429,
+                    content=rate_info,
+                    headers={"Retry-After": str(rate_info.get("retry_after", 60))},
                 )
 
             # Find service instances
             service_instances = await self._get_service_instances(service_name)
             if not service_instances:
-                raise HTTPException(status_code=503, detail=f"Service '{service_name}' not available")
+                raise HTTPException(
+                    status_code=503, detail=f"Service '{service_name}' not available"
+                )
 
             # Select instance using load balancing strategy
             instance = await self._select_service_instance(service_instances, request)
 
             # Execute with circuit breaker
-            response = await self.circuit_breaker.call(self._forward_request, instance, path, request)
+            response = await self.circuit_breaker.call(
+                self._forward_request, instance, path, request
+            )
 
             response_time = time.time() - start_time
-            self.metrics.record_request(path, request.method, response.status_code, response_time)
+            self.metrics.record_request(
+                path, request.method, response.status_code, response_time
+            )
 
             return response
 
@@ -502,20 +545,31 @@ class UnifiedAPIGateway:
         """Get available instances for a service."""
         # Discover services if cache is stale
         current_time = time.time()
-        if current_time - self.last_service_discovery > self.config.service_discovery_interval:
+        if (
+            current_time - self.last_service_discovery
+            > self.config.service_discovery_interval
+        ):
             await self._discover_services()
 
         return self.service_routes.get(service_name, [])
 
-    async def _select_service_instance(self, instances: list[dict[str, Any]], request: Request) -> dict[str, Any]:
+    async def _select_service_instance(
+        self, instances: list[dict[str, Any]], request: Request
+    ) -> dict[str, Any]:
         """Select service instance using configured strategy."""
         if not instances:
-            raise HTTPException(status_code=503, detail="No healthy service instances available")
+            raise HTTPException(
+                status_code=503, detail="No healthy service instances available"
+            )
 
         # Filter healthy instances
-        healthy_instances = [i for i in instances if i.get("status") == ServiceStatus.HEALTHY]
+        healthy_instances = [
+            i for i in instances if i.get("status") == ServiceStatus.HEALTHY
+        ]
         if not healthy_instances:
-            healthy_instances = instances  # Fall back to all instances if none are healthy
+            healthy_instances = (
+                instances  # Fall back to all instances if none are healthy
+            )
 
         # Apply load balancing strategy
         if self.config.default_route_strategy == RouteStrategy.ROUND_ROBIN:
@@ -530,7 +584,9 @@ class UnifiedAPIGateway:
             # Default to first available
             return healthy_instances[0]
 
-    async def _forward_request(self, instance: dict[str, Any], path: str, request: Request) -> Response:
+    async def _forward_request(
+        self, instance: dict[str, Any], path: str, request: Request
+    ) -> Response:
         """Forward request to service instance."""
         # This would make an actual HTTP request to the service instance
         # For now, return a simulated response
@@ -553,14 +609,18 @@ class UnifiedAPIGateway:
         """Discover available services from marketplace."""
         try:
             # Get all services from marketplace
-            services = await self.service_marketplace.discover_service(healthy_only=False)
+            services = await self.service_marketplace.discover_service(
+                healthy_only=False
+            )
 
             # Update service routes cache
             self.service_routes.clear()
 
             for service in services:
-                service_instances = await self.service_marketplace.get_service_instances(
-                    service.service_id, healthy_only=False
+                service_instances = (
+                    await self.service_marketplace.get_service_instances(
+                        service.service_id, healthy_only=False
+                    )
                 )
 
                 instance_data = []
@@ -572,13 +632,17 @@ class UnifiedAPIGateway:
                             "host": instance.host,
                             "port": instance.port,
                             "status": instance.status,
-                            "health_score": 100 if instance.status == ServiceStatus.HEALTHY else 50,
+                            "health_score": 100
+                            if instance.status == ServiceStatus.HEALTHY
+                            else 50,
                             "last_seen": instance.last_seen.isoformat(),
                         }
                     )
 
                 if instance_data:
-                    self.service_routes[service.name.lower().replace(" ", "_")] = instance_data
+                    self.service_routes[
+                        service.name.lower().replace(" ", "_")
+                    ] = instance_data
 
             self.last_service_discovery = time.time()
             logger.info(f"Discovered {len(self.service_routes)} services")
@@ -639,7 +703,9 @@ class GatewayMiddleware(BaseHTTPMiddleware):
 
         # Log request if enabled
         if self.gateway.config.log_requests:
-            logger.info(f"{request.method} {request.url.path} - {request.client.host if request.client else 'unknown'}")
+            logger.info(
+                f"{request.method} {request.url.path} - {request.client.host if request.client else 'unknown'}"
+            )
 
         # Transform request if needed
         request = await self.gateway.request_transformer.transform_request(request)
@@ -648,12 +714,16 @@ class GatewayMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         # Transform response if needed
-        response = await self.gateway.request_transformer.transform_response(response, request)
+        response = await self.gateway.request_transformer.transform_response(
+            response, request
+        )
 
         # Add gateway headers
         response.headers["X-Gateway"] = "DotMac-Unified-Gateway"
         response.headers["X-Gateway-Version"] = self.gateway.config.version
-        response.headers["X-Response-Time"] = str(int((time.time() - start_time) * 1000))
+        response.headers["X-Response-Time"] = str(
+            int((time.time() - start_time) * 1000)
+        )
 
         return response
 

@@ -5,19 +5,22 @@ from datetime import date, datetime
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+
 from dotmac.application import standard_exception_handler
 from dotmac.platform.auth.dependencies import get_current_tenant, get_current_user
 from dotmac_isp.core.database import get_db
 from dotmac_shared.core.pagination import PaginationParams
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
 
 from . import schemas
 from .service import ServicesService
 
 logger = logging.getLogger(__name__)
 
-services_router = APIRouter(prefix="/services", tags=["services", "service-plans", "subscriptions"])
+services_router = APIRouter(
+    prefix="/services", tags=["services", "service-plans", "subscriptions"]
+)
 
 
 def get_services_service(
@@ -29,7 +32,11 @@ def get_services_service(
     return ServicesService(db, tenant_id)
 
 
-@services_router.post("/plans", response_model=schemas.ServicePlanResponse, status_code=status.HTTP_201_CREATED)
+@services_router.post(
+    "/plans",
+    response_model=schemas.ServicePlanResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @standard_exception_handler
 async def create_service_plan(
     plan_data: schemas.ServicePlanCreate,
@@ -59,7 +66,9 @@ async def list_service_plans(
     if is_public is not None:
         filters["is_public"] = is_public
 
-    return await service.list_service_plans(filters=filters, limit=pagination.limit, offset=pagination.offset)
+    return await service.list_service_plans(
+        filters=filters, limit=pagination.limit, offset=pagination.offset
+    )
 
 
 @services_router.get("/plans/public", response_model=list[schemas.ServicePlanResponse])
@@ -71,7 +80,9 @@ async def get_public_service_plans(
     return await service.get_public_service_plans()
 
 
-@services_router.get("/plans/by-type/{service_type}", response_model=list[schemas.ServicePlanResponse])
+@services_router.get(
+    "/plans/by-type/{service_type}", response_model=list[schemas.ServicePlanResponse]
+)
 @standard_exception_handler
 async def get_service_plans_by_type(
     service_type: str,
@@ -96,7 +107,9 @@ async def get_service_plan(
     return plan
 
 
-@services_router.get("/plans/by-code/{plan_code}", response_model=schemas.ServicePlanResponse)
+@services_router.get(
+    "/plans/by-code/{plan_code}", response_model=schemas.ServicePlanResponse
+)
 @standard_exception_handler
 async def get_service_plan_by_code(
     plan_code: str,
@@ -111,7 +124,9 @@ async def get_service_plan_by_code(
 
 
 @services_router.post(
-    "/activate", response_model=schemas.ServiceActivationResponse, status_code=status.HTTP_201_CREATED
+    "/activate",
+    response_model=schemas.ServiceActivationResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 @standard_exception_handler
 async def activate_service(
@@ -143,10 +158,14 @@ async def list_service_instances(
     if service_type:
         filters["service_type"] = service_type
 
-    return await service.list(filters=filters, limit=pagination.limit, offset=pagination.offset)
+    return await service.list(
+        filters=filters, limit=pagination.limit, offset=pagination.offset
+    )
 
 
-@services_router.get("/instances/{service_id}", response_model=schemas.ServiceInstanceResponse)
+@services_router.get(
+    "/instances/{service_id}", response_model=schemas.ServiceInstanceResponse
+)
 @standard_exception_handler
 async def get_service_instance(
     service_id: UUID,
@@ -160,7 +179,10 @@ async def get_service_instance(
     return instance
 
 
-@services_router.get("/instances/by-number/{service_number}", response_model=schemas.ServiceInstanceResponse)
+@services_router.get(
+    "/instances/by-number/{service_number}",
+    response_model=schemas.ServiceInstanceResponse,
+)
 @standard_exception_handler
 async def get_service_by_number(
     service_number: str,
@@ -174,7 +196,9 @@ async def get_service_by_number(
     return instance
 
 
-@services_router.patch("/instances/{service_id}/status", response_model=schemas.ServiceInstanceResponse)
+@services_router.patch(
+    "/instances/{service_id}/status", response_model=schemas.ServiceInstanceResponse
+)
 @standard_exception_handler
 async def update_service_status(
     service_id: UUID,
@@ -187,7 +211,9 @@ async def update_service_status(
     return await service.update_service_status(service_id, status_update, user_id)
 
 
-@services_router.post("/instances/{service_id}/suspend", response_model=schemas.ServiceInstanceResponse)
+@services_router.post(
+    "/instances/{service_id}/suspend", response_model=schemas.ServiceInstanceResponse
+)
 @standard_exception_handler
 async def suspend_service(
     service_id: UUID,
@@ -200,7 +226,9 @@ async def suspend_service(
     return await service.suspend_service(service_id, reason, user_id)
 
 
-@services_router.post("/instances/{service_id}/reactivate", response_model=schemas.ServiceInstanceResponse)
+@services_router.post(
+    "/instances/{service_id}/reactivate", response_model=schemas.ServiceInstanceResponse
+)
 @standard_exception_handler
 async def reactivate_service(
     service_id: UUID,
@@ -213,12 +241,16 @@ async def reactivate_service(
     return await service.reactivate_service(service_id, reason, user_id)
 
 
-@services_router.post("/instances/{service_id}/cancel", response_model=schemas.ServiceInstanceResponse)
+@services_router.post(
+    "/instances/{service_id}/cancel", response_model=schemas.ServiceInstanceResponse
+)
 @standard_exception_handler
 async def cancel_service(
     service_id: UUID,
     reason: str = Query(..., description="Reason for cancellation"),
-    effective_date: Optional[datetime] = Query(None, description="Effective cancellation date"),
+    effective_date: Optional[datetime] = Query(
+        None, description="Effective cancellation date"
+    ),
     service: ServicesService = Depends(get_services_service),
     current_user: dict = Depends(get_current_user),
 ):
@@ -227,7 +259,9 @@ async def cancel_service(
     return await service.cancel_service(service_id, reason, effective_date, user_id)
 
 
-@services_router.get("/provisioning/pending", response_model=list[schemas.ProvisioningTaskResponse])
+@services_router.get(
+    "/provisioning/pending", response_model=list[schemas.ProvisioningTaskResponse]
+)
 @standard_exception_handler
 async def get_pending_provisioning(
     service: ServicesService = Depends(get_services_service),
@@ -237,7 +271,10 @@ async def get_pending_provisioning(
     return await service.get_pending_provisioning()
 
 
-@services_router.patch("/provisioning/{provisioning_id}/assign", response_model=schemas.ProvisioningTaskResponse)
+@services_router.patch(
+    "/provisioning/{provisioning_id}/assign",
+    response_model=schemas.ProvisioningTaskResponse,
+)
 @standard_exception_handler
 async def assign_provisioning_technician(
     provisioning_id: UUID,
@@ -249,7 +286,10 @@ async def assign_provisioning_technician(
     return await service.assign_provisioning_technician(provisioning_id, technician_id)
 
 
-@services_router.patch("/provisioning/{provisioning_id}/complete", response_model=schemas.ProvisioningTaskResponse)
+@services_router.patch(
+    "/provisioning/{provisioning_id}/complete",
+    response_model=schemas.ProvisioningTaskResponse,
+)
 @standard_exception_handler
 async def complete_provisioning(
     provisioning_id: UUID,
@@ -262,7 +302,9 @@ async def complete_provisioning(
 
 
 @services_router.post(
-    "/instances/{service_id}/usage", response_model=schemas.ServiceUsageResponse, status_code=status.HTTP_201_CREATED
+    "/instances/{service_id}/usage",
+    response_model=schemas.ServiceUsageResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 @standard_exception_handler
 async def record_service_usage(
@@ -279,13 +321,17 @@ async def record_service_usage(
         usage_data.data_uploaded,
         peak_download_speed_mbps=usage_data.peak_download_speed,
         peak_upload_speed_mbps=usage_data.peak_upload_speed,
-        uptime_minutes=int(usage_data.uptime_percentage * 24 * 60 / 100) if usage_data.uptime_percentage else 0,
+        uptime_minutes=int(usage_data.uptime_percentage * 24 * 60 / 100)
+        if usage_data.uptime_percentage
+        else 0,
         downtime_minutes=usage_data.downtime_minutes or 0,
         custom_metrics=usage_data.additional_metrics,
     )
 
 
-@services_router.get("/instances/{service_id}/usage", response_model=list[schemas.ServiceUsageResponse])
+@services_router.get(
+    "/instances/{service_id}/usage", response_model=list[schemas.ServiceUsageResponse]
+)
 @standard_exception_handler
 async def get_service_usage(
     service_id: UUID,
@@ -308,7 +354,9 @@ async def get_service_dashboard(
     return await service.get_service_dashboard()
 
 
-@services_router.post("/bulk-operation", response_model=schemas.BulkServiceOperationResponse)
+@services_router.post(
+    "/bulk-operation", response_model=schemas.BulkServiceOperationResponse
+)
 @standard_exception_handler
 async def bulk_service_operation(
     bulk_request: schemas.BulkServiceOperation,
@@ -325,25 +373,44 @@ async def bulk_service_operation(
     for service_id in bulk_request.service_instance_ids:
         try:
             if bulk_request.operation == "suspend":
-                result = await service.suspend_service(service_id, bulk_request.reason, user_id)
+                result = await service.suspend_service(
+                    service_id, bulk_request.reason, user_id
+                )
                 results.append(
-                    {"service_id": str(service_id), "status": "success", "service_number": result.service_number}
+                    {
+                        "service_id": str(service_id),
+                        "status": "success",
+                        "service_number": result.service_number,
+                    }
                 )
                 successful += 1
 
             elif bulk_request.operation == "reactivate":
-                result = await service.reactivate_service(service_id, bulk_request.reason, user_id)
+                result = await service.reactivate_service(
+                    service_id, bulk_request.reason, user_id
+                )
                 results.append(
-                    {"service_id": str(service_id), "status": "success", "service_number": result.service_number}
+                    {
+                        "service_id": str(service_id),
+                        "status": "success",
+                        "service_number": result.service_number,
+                    }
                 )
                 successful += 1
 
             elif bulk_request.operation == "cancel":
                 result = await service.cancel_service(
-                    service_id, bulk_request.reason, bulk_request.effective_date, user_id
+                    service_id,
+                    bulk_request.reason,
+                    bulk_request.effective_date,
+                    user_id,
                 )
                 results.append(
-                    {"service_id": str(service_id), "status": "success", "service_number": result.service_number}
+                    {
+                        "service_id": str(service_id),
+                        "status": "success",
+                        "service_number": result.service_number,
+                    }
                 )
                 successful += 1
 
@@ -358,7 +425,9 @@ async def bulk_service_operation(
                 failed += 1
 
         except Exception as e:
-            results.append({"service_id": str(service_id), "status": "failed", "error": str(e)})
+            results.append(
+                {"service_id": str(service_id), "status": "failed", "error": str(e)}
+            )
             failed += 1
 
     return schemas.BulkServiceOperationResponse(

@@ -7,13 +7,10 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-from dotmac_isp.modules.gis.models import (
-    NetworkNode,
-    ServiceArea,
-    Territory,
-)
-from dotmac_isp.modules.gis.router import router
 from fastapi.testclient import TestClient
+
+from dotmac_isp.modules.gis.models import NetworkNode, ServiceArea, Territory
+from dotmac_isp.modules.gis.router import router
 
 
 @pytest.fixture
@@ -56,13 +53,17 @@ class TestServiceAreaEndpoints:
 
     def test_create_service_area(self, client, mock_tenant_id, mock_service_area_data):
         """Test POST /service-areas endpoint."""
-        mock_service_area = ServiceArea(id=uuid4(), tenant_id=mock_tenant_id, **mock_service_area_data)
+        mock_service_area = ServiceArea(
+            id=uuid4(), tenant_id=mock_tenant_id, **mock_service_area_data
+        )
 
         with patch(
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.service_area_service, "create", return_value=mock_service_area):
+            with patch.object(
+                router.service_area_service, "create", return_value=mock_service_area
+            ):
                 response = client.post(
                     "/api/v1/service-areas",
                     json=mock_service_area_data,
@@ -96,7 +97,9 @@ class TestServiceAreaEndpoints:
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.service_area_service, "get_all", return_value=mock_areas):
+            with patch.object(
+                router.service_area_service, "get_all", return_value=mock_areas
+            ):
                 response = client.get(
                     "/api/v1/service-areas",
                     headers={"Authorization": "Bearer test-token"},
@@ -108,16 +111,22 @@ class TestServiceAreaEndpoints:
                 assert data[0]["name"] == "Area 1"
                 assert data[1]["name"] == "Area 2"
 
-    def test_get_service_area_by_id(self, client, mock_tenant_id, mock_service_area_data):
+    def test_get_service_area_by_id(
+        self, client, mock_tenant_id, mock_service_area_data
+    ):
         """Test GET /service-areas/{id} endpoint."""
         area_id = uuid4()
-        mock_area = ServiceArea(id=area_id, tenant_id=mock_tenant_id, **mock_service_area_data)
+        mock_area = ServiceArea(
+            id=area_id, tenant_id=mock_tenant_id, **mock_service_area_data
+        )
 
         with patch(
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.service_area_service, "get_by_id", return_value=mock_area):
+            with patch.object(
+                router.service_area_service, "get_by_id", return_value=mock_area
+            ):
                 response = client.get(
                     f"/api/v1/service-areas/{area_id}",
                     headers={"Authorization": "Bearer test-token"},
@@ -142,7 +151,9 @@ class TestServiceAreaEndpoints:
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.gis_analysis_service, "analyze_service_area_coverage") as mock_analyze:
+            with patch.object(
+                router.gis_analysis_service, "analyze_service_area_coverage"
+            ) as mock_analyze:
                 mock_analyze.return_value = mock_analysis_result
 
                 response = client.post(
@@ -177,7 +188,9 @@ class TestNetworkNodeEndpoints:
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.network_node_service, "create", return_value=mock_node):
+            with patch.object(
+                router.network_node_service, "create", return_value=mock_node
+            ):
                 response = client.post(
                     "/api/v1/network-nodes",
                     json=node_data,
@@ -249,13 +262,17 @@ class TestTerritoryEndpoints:
             "revenue_target": 500000.0,
         }
 
-        mock_territory = Territory(id=uuid4(), tenant_id=mock_tenant_id, **territory_data)
+        mock_territory = Territory(
+            id=uuid4(), tenant_id=mock_tenant_id, **territory_data
+        )
 
         with patch(
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.territory_service, "create", return_value=mock_territory):
+            with patch.object(
+                router.territory_service, "create", return_value=mock_territory
+            ):
                 response = client.post(
                     "/api/v1/territories",
                     json=territory_data,
@@ -282,7 +299,9 @@ class TestTerritoryEndpoints:
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.territory_service, "calculate_territory_performance") as mock_calc:
+            with patch.object(
+                router.territory_service, "calculate_territory_performance"
+            ) as mock_calc:
                 mock_calc.return_value = mock_performance
 
                 response = client.get(
@@ -325,7 +344,9 @@ class TestRouteOptimizationEndpoints:
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.route_optimization_service, "optimize_service_route") as mock_optimize:
+            with patch.object(
+                router.route_optimization_service, "optimize_service_route"
+            ) as mock_optimize:
                 mock_optimize.return_value = mock_result
 
                 response = client.post(
@@ -363,7 +384,9 @@ class TestRouteOptimizationEndpoints:
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.route_optimization_service, "batch_route_optimization") as mock_batch:
+            with patch.object(
+                router.route_optimization_service, "batch_route_optimization"
+            ) as mock_batch:
                 mock_batch.return_value = mock_result
 
                 response = client.post(
@@ -399,7 +422,9 @@ class TestErrorHandling:
                     headers={"Authorization": "Bearer test-token"},
                 )
 
-                assert response.status_code == 500  # Will be handled by standard_exception_handler
+                assert (
+                    response.status_code == 500
+                )  # Will be handled by standard_exception_handler
 
     def test_invalid_coordinates(self, client, mock_tenant_id):
         """Test validation error for invalid coordinates."""
@@ -448,7 +473,9 @@ class TestGISAnalyticsEndpoints:
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.gis_analysis_service, "get_coverage_analytics") as mock_analytics_call:
+            with patch.object(
+                router.gis_analysis_service, "get_coverage_analytics"
+            ) as mock_analytics_call:
                 mock_analytics_call.return_value = mock_analytics
 
                 response = client.get(
@@ -477,7 +504,9 @@ class TestGISAnalyticsEndpoints:
             "dotmac_isp.modules.gis.router.get_current_tenant_id",
             return_value=mock_tenant_id,
         ):
-            with patch.object(router.territory_service, "get_performance_analytics") as mock_perf:
+            with patch.object(
+                router.territory_service, "get_performance_analytics"
+            ) as mock_perf:
                 mock_perf.return_value = mock_performance
 
                 response = client.get(

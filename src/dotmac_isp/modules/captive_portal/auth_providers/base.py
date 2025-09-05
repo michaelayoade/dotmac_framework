@@ -31,12 +31,16 @@ class BaseAuthProvider(ABC):
         self.config = config
 
     @abstractmethod
-    async def authenticate(self, request: AuthenticationRequest) -> AuthenticationResult:
+    async def authenticate(
+        self, request: AuthenticationRequest
+    ) -> AuthenticationResult:
         """Authenticate user with provided credentials."""
         pass
 
     @abstractmethod
-    async def prepare_authentication(self, request: AuthenticationRequest) -> dict[str, Any]:
+    async def prepare_authentication(
+        self, request: AuthenticationRequest
+    ) -> dict[str, Any]:
         """Prepare authentication (e.g., send verification code, generate OAuth URL)."""
         pass
 

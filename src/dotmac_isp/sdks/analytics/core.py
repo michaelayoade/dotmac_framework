@@ -38,7 +38,9 @@ class AnalyticsCoreSDK:
         # Mock implementation
         return True
 
-    async def get_metrics(self, metric_name: str, start_time: datetime, end_time: datetime) -> list[MetricData]:
+    async def get_metrics(
+        self, metric_name: str, start_time: datetime, end_time: datetime
+    ) -> list[MetricData]:
         """Get metrics."""
         # Mock implementation
         return []

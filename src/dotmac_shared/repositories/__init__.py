@@ -19,7 +19,12 @@ Usage:
 """
 
 from .async_base_repository import AsyncBaseRepository, AsyncTenantRepository
-from .factory import RepositoryFactory, create_async_repository, create_repository, create_sync_repository
+from .factory import (
+    RepositoryFactory,
+    create_async_repository,
+    create_repository,
+    create_sync_repository,
+)
 from .sync_base_repository import SyncBaseRepository, SyncTenantRepository
 
 __all__ = [

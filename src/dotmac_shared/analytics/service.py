@@ -103,17 +103,25 @@ class WorkflowEvent:
             setattr(self, key, value)
 
 
-class WorkflowAnalyticsService(BaseService[WorkflowEvent, TrackWorkflowRequest, TrackWorkflowRequest, dict]):
+class WorkflowAnalyticsService(
+    BaseService[WorkflowEvent, TrackWorkflowRequest, TrackWorkflowRequest, dict]
+):
     """Workflow analytics service with DRY patterns and business logic."""
 
     def __init__(self, db: AsyncSession, tenant_id: str):
         super().__init__(
-            db, tenant_id, create_schema=TrackWorkflowRequest, update_schema=TrackWorkflowRequest, response_schema=dict
+            db,
+            tenant_id,
+            create_schema=TrackWorkflowRequest,
+            update_schema=TrackWorkflowRequest,
+            response_schema=dict,
         )
         # Initialize in-memory storage for demo purposes (production would use database)
         self._events_cache: list[dict[str, Any]] = []
 
-    async def _apply_create_business_rules(self, data: TrackWorkflowRequest) -> TrackWorkflowRequest:
+    async def _apply_create_business_rules(
+        self, data: TrackWorkflowRequest
+    ) -> TrackWorkflowRequest:
         """Apply business rules for workflow event tracking."""
         # Validate workflow ID
         if not data.workflow_id:
@@ -207,7 +215,8 @@ class WorkflowAnalyticsService(BaseService[WorkflowEvent, TrackWorkflowRequest, 
             filtered_events = [
                 event
                 for event in self._events_cache
-                if event["workflow_type"] == workflow_type.value and event["tenant_id"] == self.tenant_id
+                if event["workflow_type"] == workflow_type.value
+                and event["tenant_id"] == self.tenant_id
             ]
 
             if not filtered_events:
@@ -245,7 +254,8 @@ class WorkflowAnalyticsService(BaseService[WorkflowEvent, TrackWorkflowRequest, 
             filtered_events = [
                 event
                 for event in self._events_cache
-                if event["workflow_type"] == workflow_type.value and event["tenant_id"] == self.tenant_id
+                if event["workflow_type"] == workflow_type.value
+                and event["tenant_id"] == self.tenant_id
             ]
 
             # Count by status
@@ -259,14 +269,21 @@ class WorkflowAnalyticsService(BaseService[WorkflowEvent, TrackWorkflowRequest, 
             raise ValidationError(f"Failed to get status distribution: {str(e)}") from e
 
     async def get_performance_bottlenecks(
-        self, workflow_type: WorkflowType | None = None, user_id: str | None = None, limit: int = 10
+        self,
+        workflow_type: WorkflowType | None = None,
+        user_id: str | None = None,
+        limit: int = 10,
     ) -> list[dict[str, Any]]:
         """Get performance bottlenecks with business logic."""
         try:
             # Analyze events for bottlenecks
             filtered_events = self._events_cache
             if workflow_type:
-                filtered_events = [event for event in filtered_events if event["workflow_type"] == workflow_type.value]
+                filtered_events = [
+                    event
+                    for event in filtered_events
+                    if event["workflow_type"] == workflow_type.value
+                ]
 
             # Group by step_name and calculate metrics
             step_metrics = {}
@@ -299,7 +316,9 @@ class WorkflowAnalyticsService(BaseService[WorkflowEvent, TrackWorkflowRequest, 
                 avg_duration = sum(metrics["durations"]) / len(metrics["durations"])
                 success_rate = metrics["successes"] / metrics["total"]
                 # Impact score based on duration and frequency
-                impact_score = (avg_duration / 1000) * metrics["total"] * (2 - success_rate)
+                impact_score = (
+                    (avg_duration / 1000) * metrics["total"] * (2 - success_rate)
+                )
 
                 bottlenecks.append(
                     {
@@ -317,9 +336,13 @@ class WorkflowAnalyticsService(BaseService[WorkflowEvent, TrackWorkflowRequest, 
             return bottlenecks[:limit]
 
         except Exception as e:
-            raise ValidationError(f"Failed to get performance bottlenecks: {str(e)}") from e
+            raise ValidationError(
+                f"Failed to get performance bottlenecks: {str(e)}"
+            ) from e
 
-    async def get_workflow_trends(self, workflow_type: WorkflowType, user_id: str, days: int = 30) -> dict[str, Any]:
+    async def get_workflow_trends(
+        self, workflow_type: WorkflowType, user_id: str, days: int = 30
+    ) -> dict[str, Any]:
         """Get workflow trends over time."""
         try:
             # Filter events for the specified time period
@@ -353,7 +376,11 @@ class WorkflowAnalyticsService(BaseService[WorkflowEvent, TrackWorkflowRequest, 
                 "total_events": len(filtered_events),
                 "summary": {
                     "avg_daily_volume": len(filtered_events) / days if days > 0 else 0,
-                    "peak_day": max(daily_metrics.items(), key=lambda x: x[1]["total"])[0] if daily_metrics else None,
+                    "peak_day": max(daily_metrics.items(), key=lambda x: x[1]["total"])[
+                        0
+                    ]
+                    if daily_metrics
+                    else None,
                 },
             }
 

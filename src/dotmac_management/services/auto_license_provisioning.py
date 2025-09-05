@@ -7,10 +7,11 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from dotmac_management.models.tenant import CustomerTenant, TenantPlan
-from dotmac_shared.core.logging import get_logger
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
+
+from dotmac_management.models.tenant import CustomerTenant, TenantPlan
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -60,7 +61,12 @@ class AutoLicenseProvisioningService:
                 "sms_notifications",
                 "webhook_integrations",
             ],
-            feature_limits={"service_plans": 5, "admin_users": 2, "custom_fields": 10, "data_retention_days": 365},
+            feature_limits={
+                "service_plans": 5,
+                "admin_users": 2,
+                "custom_fields": 10,
+                "data_retention_days": 365,
+            },
         ),
         TenantPlan.PROFESSIONAL: PlanLimits(
             max_customers=1000,
@@ -128,12 +134,16 @@ class AutoLicenseProvisioningService:
     def __init__(self):
         pass
 
-    async def provision_license_for_tenant(self, tenant: CustomerTenant, db: Session) -> dict[str, Any]:
+    async def provision_license_for_tenant(
+        self, tenant: CustomerTenant, db: Session
+    ) -> dict[str, Any]:
         """
         Automatically provision license contract for new tenant based on their plan
         """
         try:
-            logger.info(f"Auto-provisioning license for tenant {tenant.tenant_id} with plan {tenant.plan}")
+            logger.info(
+                f"Auto-provisioning license for tenant {tenant.tenant_id} with plan {tenant.plan}"
+            )
 
             # Get plan limits
             plan_limits = self._get_plan_limits(tenant.plan)
@@ -147,7 +157,9 @@ class AutoLicenseProvisioningService:
             # Send license to ISP instance
             await self._deploy_license_to_isp(tenant, license_contract)
 
-            logger.info(f"✅ License contract {license_contract['contract_id']} created for tenant {tenant.tenant_id}")
+            logger.info(
+                f"✅ License contract {license_contract['contract_id']} created for tenant {tenant.tenant_id}"
+            )
 
             return {
                 "contract_id": license_contract["contract_id"],
@@ -158,7 +170,9 @@ class AutoLicenseProvisioningService:
             }
 
         except Exception as e:
-            logger.error(f"Failed to provision license for tenant {tenant.tenant_id}: {e}")
+            logger.error(
+                f"Failed to provision license for tenant {tenant.tenant_id}: {e}"
+            )
             raise
 
     def _get_plan_limits(self, plan: TenantPlan) -> PlanLimits:
@@ -170,11 +184,15 @@ class AutoLicenseProvisioningService:
 
         return self.PLAN_LIMITS[plan]
 
-    async def _create_license_contract(self, tenant: CustomerTenant, limits: PlanLimits) -> dict[str, Any]:
+    async def _create_license_contract(
+        self, tenant: CustomerTenant, limits: PlanLimits
+    ) -> dict[str, Any]:
         """Create license contract data structure"""
 
         # Generate unique contract ID
-        contract_id = f"LIC-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
+        contract_id = (
+            f"LIC-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
+        )
 
         # Calculate validity period (1 year from now)
         valid_from = datetime.now(timezone.utc)
@@ -214,7 +232,9 @@ class AutoLicenseProvisioningService:
             "updated_at": valid_from,
         }
 
-    async def _save_license_contract(self, db: Session, tenant: CustomerTenant, contract: dict[str, Any]) -> Any:
+    async def _save_license_contract(
+        self, db: Session, tenant: CustomerTenant, contract: dict[str, Any]
+    ) -> Any:
         """Save license contract to management database"""
 
         from dotmac_shared.licensing.models import LicenseContract, LicenseStatus
@@ -253,7 +273,9 @@ class AutoLicenseProvisioningService:
 
         return license_record
 
-    async def _deploy_license_to_isp(self, tenant: CustomerTenant, contract: dict[str, Any]):
+    async def _deploy_license_to_isp(
+        self, tenant: CustomerTenant, contract: dict[str, Any]
+    ):
         """Deploy license contract to ISP instance"""
 
         import httpx
@@ -286,7 +308,9 @@ class AutoLicenseProvisioningService:
                 if response.status_code not in [200, 201]:
                     raise Exception(f"Failed to deploy license to ISP: {response.text}")
 
-                logger.info(f"License {contract['contract_id']} deployed to ISP instance {tenant.tenant_id}")
+                logger.info(
+                    f"License {contract['contract_id']} deployed to ISP instance {tenant.tenant_id}"
+                )
 
         except Exception as e:
             logger.error(f"Failed to deploy license to ISP instance: {e}")
@@ -299,9 +323,15 @@ class AutoLicenseProvisioningService:
 
         jwt_service = JWTService()
 
-        payload = {"service": "management_platform", "scope": "license_provisioning", "token_type": "service"}
+        payload = {
+            "service": "management_platform",
+            "scope": "license_provisioning",
+            "token_type": "service",
+        }
 
-        return await jwt_service.create_access_token(data=payload, expires_delta=timedelta(hours=1))
+        return await jwt_service.create_access_token(
+            data=payload, expires_delta=timedelta(hours=1)
+        )
 
     def _get_domain_suffix(self) -> str:
         """Get domain suffix for tenant URLs"""

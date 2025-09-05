@@ -5,13 +5,14 @@ Handles one-time initialization of the management platform
 
 import os
 
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
 from dotmac.database.base import get_db_session_sync
 from dotmac.platform.auth.core.password_service import PasswordService
 from dotmac.platform.auth.models import Permission, Role, User
 from dotmac_management.models.tenant import ManagementTenant
 from dotmac_shared.core.logging import get_logger
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 
@@ -28,7 +29,10 @@ class ManagementBootstrap:
             db = get_db_session_sync()
             try:
                 admin_count = (
-                    db.query(User).join(User.roles).filter(Role.name.in_(["super_admin", "platform_admin"])).count()
+                    db.query(User)
+                    .join(User.roles)
+                    .filter(Role.name.in_(["super_admin", "platform_admin"]))
+                    .count()
                 )
                 return admin_count == 0
             finally:
@@ -80,7 +84,9 @@ class ManagementBootstrap:
                 await self._create_core_roles_permissions(db)
 
                 # Create platform admin user
-                admin_user = await self._create_admin_user(db, admin_email, admin_password)
+                admin_user = await self._create_admin_user(
+                    db, admin_email, admin_password
+                )
 
                 # Create management tenant
                 await self._create_management_tenant(db, admin_user)
@@ -111,7 +117,9 @@ class ManagementBootstrap:
             Permission(name="tenant.read", description="View tenant information"),
             Permission(name="tenant.update", description="Update tenant settings"),
             Permission(name="tenant.delete", description="Delete tenants"),
-            Permission(name="tenant.provision", description="Provision tenant infrastructure"),
+            Permission(
+                name="tenant.provision", description="Provision tenant infrastructure"
+            ),
             # User management
             Permission(name="user.create", description="Create users"),
             Permission(name="user.read", description="View users"),
@@ -119,9 +127,15 @@ class ManagementBootstrap:
             Permission(name="user.delete", description="Delete users"),
             Permission(name="user.impersonate", description="Impersonate users"),
             # Platform administration
-            Permission(name="platform.admin", description="Platform administration access"),
-            Permission(name="platform.settings", description="Manage platform settings"),
-            Permission(name="platform.monitoring", description="View platform monitoring"),
+            Permission(
+                name="platform.admin", description="Platform administration access"
+            ),
+            Permission(
+                name="platform.settings", description="Manage platform settings"
+            ),
+            Permission(
+                name="platform.monitoring", description="View platform monitoring"
+            ),
             Permission(name="platform.billing", description="Manage billing settings"),
             # System operations
             Permission(name="system.deploy", description="Deploy system updates"),
@@ -187,7 +201,9 @@ class ManagementBootstrap:
         for role_data in roles_data:
             existing_role = db.query(Role).filter_by(name=role_data["name"]).first()
             if not existing_role:
-                role = Role(name=role_data["name"], description=role_data["description"])
+                role = Role(
+                    name=role_data["name"], description=role_data["description"]
+                )
 
                 # Add permissions to role
                 for perm_name in role_data["permissions"]:
@@ -242,10 +258,16 @@ class ManagementBootstrap:
                 return existing
             raise
 
-    async def _create_management_tenant(self, db: Session, admin_user: User) -> ManagementTenant:
+    async def _create_management_tenant(
+        self, db: Session, admin_user: User
+    ) -> ManagementTenant:
         """Create the management tenant"""
 
-        existing = db.query(ManagementTenant).filter_by(tenant_id="management-platform").first()
+        existing = (
+            db.query(ManagementTenant)
+            .filter_by(tenant_id="management-platform")
+            .first()
+        )
 
         if existing:
             logger.info("Management tenant already exists")
@@ -259,7 +281,12 @@ class ManagementBootstrap:
             owner_id=admin_user.id,
             settings={
                 "max_tenants": -1,  # Unlimited
-                "features": ["tenant_management", "user_management", "billing", "monitoring"],
+                "features": [
+                    "tenant_management",
+                    "user_management",
+                    "billing",
+                    "monitoring",
+                ],
                 "bootstrap_completed": True,
             },
         )

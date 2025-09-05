@@ -44,8 +44,12 @@ class Partner(BaseModel):
 
     # Business Details
     territory = Column(String(100), nullable=False, index=True)
-    tier = Column(String(20), nullable=False, default="bronze", index=True)  # bronze, silver, gold, platinum
-    status = Column(String(20), nullable=False, default="active", index=True)  # active, suspended, inactive
+    tier = Column(
+        String(20), nullable=False, default="bronze", index=True
+    )  # bronze, silver, gold, platinum
+    status = Column(
+        String(20), nullable=False, default="active", index=True
+    )  # active, suspended, inactive
 
     # Targets and Goals
     monthly_customer_target = Column(Integer, default=25)
@@ -90,12 +94,16 @@ class PartnerCustomer(BaseModel):
     territory_validated = Column(Boolean, default=False)
 
     # Service Information
-    service_plan = Column(String(50), nullable=False, index=True)  # residential_basic, etc.
+    service_plan = Column(
+        String(50), nullable=False, index=True
+    )  # residential_basic, etc.
     mrr = Column(Float, nullable=False)  # Monthly Recurring Revenue
     contract_length = Column(Integer, default=12)  # Contract length in months
 
     # Status
-    status = Column(String(20), nullable=False, default="pending", index=True)  # active, pending, suspended, cancelled
+    status = Column(
+        String(20), nullable=False, default="pending", index=True
+    )  # active, pending, suspended, cancelled
     connection_status = Column(String(20), default="offline")  # online, offline
     usage_percentage = Column(Float, default=0.0)
 
@@ -123,7 +131,9 @@ class Commission(BaseModel):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     partner_id = Column(String, ForeignKey("partners.id"), nullable=False, index=True)
-    customer_id = Column(String, ForeignKey("partner_customers.id"), nullable=False, index=True)
+    customer_id = Column(
+        String, ForeignKey("partner_customers.id"), nullable=False, index=True
+    )
 
     # Commission Details
     amount = Column(Float, nullable=False)
@@ -140,12 +150,16 @@ class Commission(BaseModel):
     promotional_adjustment = Column(Float, default=0.0)
 
     # Commission Type and Period
-    commission_type = Column(String(20), default="monthly")  # monthly, one-time, renewal
+    commission_type = Column(
+        String(20), default="monthly"
+    )  # monthly, one-time, renewal
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
 
     # Status and Processing
-    status = Column(String(20), nullable=False, default="pending", index=True)  # pending, approved, paid, disputed
+    status = Column(
+        String(20), nullable=False, default="pending", index=True
+    )  # pending, approved, paid, disputed
     approved_at = Column(DateTime)
     paid_at = Column(DateTime)
     payout_batch_id = Column(String)
@@ -207,7 +221,9 @@ class PartnerPerformanceMetrics(BaseModel):
     partner_id = Column(String, ForeignKey("partners.id"), nullable=False, index=True)
 
     # Time Period
-    period_type = Column(String(20), nullable=False)  # daily, weekly, monthly, quarterly, yearly
+    period_type = Column(
+        String(20), nullable=False
+    )  # daily, weekly, monthly, quarterly, yearly
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
 

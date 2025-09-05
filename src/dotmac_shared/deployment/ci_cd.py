@@ -62,11 +62,17 @@ class PipelineConfig:
     branch: str
     trigger_events: list[str] = field(default_factory=lambda: ["push", "pull_request"])
     stages: list[PipelineStage] = field(
-        default_factory=lambda: [PipelineStage.BUILD, PipelineStage.TEST, PipelineStage.DEPLOY]
+        default_factory=lambda: [
+            PipelineStage.BUILD,
+            PipelineStage.TEST,
+            PipelineStage.DEPLOY,
+        ]
     )
     environment_variables: dict[str, str] = field(default_factory=dict)
     deployment_spec: Optional[DeploymentSpec] = None
-    auto_deploy_branches: list[str] = field(default_factory=lambda: ["main", "production"])
+    auto_deploy_branches: list[str] = field(
+        default_factory=lambda: ["main", "production"]
+    )
     approval_required: bool = False
     notification_channels: list[str] = field(default_factory=list)
     timeout_minutes: int = 60
@@ -115,7 +121,11 @@ class PipelineExecutor(ABC):
 
     @abstractmethod
     async def execute_stage(
-        self, stage: PipelineStage, config: PipelineConfig, run: PipelineRun, context: dict[str, Any]
+        self,
+        stage: PipelineStage,
+        config: PipelineConfig,
+        run: PipelineRun,
+        context: dict[str, Any],
     ) -> dict[str, Any]:
         """Execute a pipeline stage."""
         pass
@@ -135,14 +145,26 @@ class DockerPipelineExecutor(PipelineExecutor):
         self.logger = logging.getLogger(__name__)
 
     async def execute_stage(
-        self, stage: PipelineStage, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any]
+        self,
+        stage: PipelineStage,
+        config: PipelineConfig,
+        run: PipelineRun,
+        context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute a pipeline stage using Docker."""
         stage_start = datetime.now()
-        stage_result = {"status": "success", "start_time": stage_start, "logs": [], "artifacts": {}, "metrics": {}}
+        stage_result = {
+            "status": "success",
+            "start_time": stage_start,
+            "logs": [],
+            "artifacts": {},
+            "metrics": {},
+        }
 
         try:
-            with self.monitoring.create_span(f"pipeline_stage_{stage}", config.name) as span:
+            with self.monitoring.create_span(
+                f"pipeline_stage_{stage}", config.name
+            ) as span:
                 span.set_tag("pipeline", config.name)
                 span.set_tag("stage", stage)
                 span.set_tag("run_id", run.id)
@@ -152,21 +174,33 @@ class DockerPipelineExecutor(PipelineExecutor):
                 elif stage == PipelineStage.TEST:
                     await self._execute_test_stage(config, run, context, stage_result)
                 elif stage == PipelineStage.SECURITY_SCAN:
-                    await self._execute_security_scan_stage(config, run, context, stage_result)
+                    await self._execute_security_scan_stage(
+                        config, run, context, stage_result
+                    )
                 elif stage == PipelineStage.DEPLOY:
                     await self._execute_deploy_stage(config, run, context, stage_result)
                 elif stage == PipelineStage.VALIDATE:
-                    await self._execute_validate_stage(config, run, context, stage_result)
+                    await self._execute_validate_stage(
+                        config, run, context, stage_result
+                    )
                 elif stage == PipelineStage.PROMOTE:
-                    await self._execute_promote_stage(config, run, context, stage_result)
+                    await self._execute_promote_stage(
+                        config, run, context, stage_result
+                    )
 
                 stage_result["end_time"] = datetime.now()
-                stage_duration = (stage_result["end_time"] - stage_start).total_seconds()
+                stage_duration = (
+                    stage_result["end_time"] - stage_start
+                ).total_seconds()
 
                 self.monitoring.record_histogram(
                     "pipeline_stage_duration_seconds",
                     stage_duration,
-                    {"pipeline": config.name, "stage": stage, "status": stage_result["status"]},
+                    {
+                        "pipeline": config.name,
+                        "stage": stage,
+                        "status": stage_result["status"],
+                    },
                 )
 
                 return stage_result
@@ -176,16 +210,23 @@ class DockerPipelineExecutor(PipelineExecutor):
             stage_result["error"] = str(e)
             stage_result["end_time"] = datetime.now()
 
-            self.logger.error(f"Stage {stage} failed for pipeline {config.name}: {str(e)}")
+            self.logger.error(
+                f"Stage {stage} failed for pipeline {config.name}: {str(e)}"
+            )
 
             self.monitoring.increment_counter(
-                "pipeline_stage_errors_total", {"pipeline": config.name, "stage": stage, "error": type(e).__name__}
+                "pipeline_stage_errors_total",
+                {"pipeline": config.name, "stage": stage, "error": type(e).__name__},
             )
 
             raise
 
     async def _execute_build_stage(
-        self, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any], result: Dict[str, Any]
+        self,
+        config: PipelineConfig,
+        run: PipelineRun,
+        context: Dict[str, Any],
+        result: Dict[str, Any],
     ):
         """Execute build stage."""
         self.logger.info(f"Building {config.name} for commit {run.commit_sha}")
@@ -211,11 +252,21 @@ class DockerPipelineExecutor(PipelineExecutor):
             self.logger.info(f"Successfully built image {image_tag}")
 
         except Exception as e:
-            result["logs"].append({"level": "error", "message": str(e), "timestamp": datetime.now().isoformat()})
+            result["logs"].append(
+                {
+                    "level": "error",
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             raise
 
     async def _execute_test_stage(
-        self, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any], result: Dict[str, Any]
+        self,
+        config: PipelineConfig,
+        run: PipelineRun,
+        context: Dict[str, Any],
+        result: Dict[str, Any],
     ):
         """Execute test stage."""
         self.logger.info(f"Running tests for {config.name}")
@@ -257,16 +308,28 @@ class DockerPipelineExecutor(PipelineExecutor):
                 result["artifacts"]["coverage_report"] = str(coverage_file)
                 # Parse coverage percentage
                 coverage_data = await self._parse_coverage_report(coverage_file)
-                result["metrics"]["test_coverage"] = coverage_data.get("coverage_percentage", 0)
+                result["metrics"]["test_coverage"] = coverage_data.get(
+                    "coverage_percentage", 0
+                )
 
             self.logger.info(f"Tests completed for {config.name}")
 
         except Exception as e:
-            result["logs"].append({"level": "error", "message": str(e), "timestamp": datetime.now().isoformat()})
+            result["logs"].append(
+                {
+                    "level": "error",
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             raise
 
     async def _execute_security_scan_stage(
-        self, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any], result: Dict[str, Any]
+        self,
+        config: PipelineConfig,
+        run: PipelineRun,
+        context: Dict[str, Any],
+        result: Dict[str, Any],
     ):
         """Execute security scan stage."""
         self.logger.info(f"Running security scan for {config.name}")
@@ -301,10 +364,34 @@ class DockerPipelineExecutor(PipelineExecutor):
                 # Parse vulnerability data
                 scan_data = json.loads(scan_result["stdout"])
                 result["metrics"]["vulnerabilities"] = {
-                    "critical": len([v for v in scan_data.get("Results", []) if v.get("Severity") == "CRITICAL"]),
-                    "high": len([v for v in scan_data.get("Results", []) if v.get("Severity") == "HIGH"]),
-                    "medium": len([v for v in scan_data.get("Results", []) if v.get("Severity") == "MEDIUM"]),
-                    "low": len([v for v in scan_data.get("Results", []) if v.get("Severity") == "LOW"]),
+                    "critical": len(
+                        [
+                            v
+                            for v in scan_data.get("Results", [])
+                            if v.get("Severity") == "CRITICAL"
+                        ]
+                    ),
+                    "high": len(
+                        [
+                            v
+                            for v in scan_data.get("Results", [])
+                            if v.get("Severity") == "HIGH"
+                        ]
+                    ),
+                    "medium": len(
+                        [
+                            v
+                            for v in scan_data.get("Results", [])
+                            if v.get("Severity") == "MEDIUM"
+                        ]
+                    ),
+                    "low": len(
+                        [
+                            v
+                            for v in scan_data.get("Results", [])
+                            if v.get("Severity") == "LOW"
+                        ]
+                    ),
                 }
 
                 # Fail if critical vulnerabilities found
@@ -316,11 +403,21 @@ class DockerPipelineExecutor(PipelineExecutor):
             self.logger.info(f"Security scan completed for {config.name}")
 
         except Exception as e:
-            result["logs"].append({"level": "error", "message": str(e), "timestamp": datetime.now().isoformat()})
+            result["logs"].append(
+                {
+                    "level": "error",
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             raise
 
     async def _execute_deploy_stage(
-        self, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any], result: Dict[str, Any]
+        self,
+        config: PipelineConfig,
+        run: PipelineRun,
+        context: Dict[str, Any],
+        result: Dict[str, Any],
     ):
         """Execute deployment stage."""
         self.logger.info(f"Deploying {config.name}")
@@ -345,14 +442,26 @@ class DockerPipelineExecutor(PipelineExecutor):
             result["artifacts"]["deployment_id"] = deployment_result.deployment_id
             result["metrics"]["deployment_status"] = deployment_result.status
 
-            self.logger.info(f"Deployment completed for {config.name}: {deployment_result.deployment_id}")
+            self.logger.info(
+                f"Deployment completed for {config.name}: {deployment_result.deployment_id}"
+            )
 
         except Exception as e:
-            result["logs"].append({"level": "error", "message": str(e), "timestamp": datetime.now().isoformat()})
+            result["logs"].append(
+                {
+                    "level": "error",
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             raise
 
     async def _execute_validate_stage(
-        self, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any], result: Dict[str, Any]
+        self,
+        config: PipelineConfig,
+        run: PipelineRun,
+        context: Dict[str, Any],
+        result: Dict[str, Any],
     ):
         """Execute validation stage."""
         self.logger.info(f"Validating deployment for {config.name}")
@@ -367,7 +476,9 @@ class DockerPipelineExecutor(PipelineExecutor):
 
             # Run validation tests
             if config.deployment_spec and config.deployment_spec.health_checks:
-                validation_results = await self._run_validation_tests(config.deployment_spec.health_checks)
+                validation_results = await self._run_validation_tests(
+                    config.deployment_spec.health_checks
+                )
                 result["metrics"]["validation_results"] = validation_results
 
                 # Check if all validations passed
@@ -377,11 +488,21 @@ class DockerPipelineExecutor(PipelineExecutor):
             self.logger.info(f"Validation completed for {config.name}")
 
         except Exception as e:
-            result["logs"].append({"level": "error", "message": str(e), "timestamp": datetime.now().isoformat()})
+            result["logs"].append(
+                {
+                    "level": "error",
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             raise
 
     async def _execute_promote_stage(
-        self, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any], result: Dict[str, Any]
+        self,
+        config: PipelineConfig,
+        run: PipelineRun,
+        context: Dict[str, Any],
+        result: Dict[str, Any],
     ):
         """Execute promotion stage."""
         self.logger.info(f"Promoting {config.name}")
@@ -397,14 +518,22 @@ class DockerPipelineExecutor(PipelineExecutor):
             # Example: Scale up replicas for production
             if config.deployment_spec:
                 production_replicas = config.deployment_spec.replicas * 2
-                await self.deployment.orchestrator.scale(config.deployment_spec.service_name, production_replicas)
+                await self.deployment.orchestrator.scale(
+                    config.deployment_spec.service_name, production_replicas
+                )
 
                 result["metrics"]["promoted_replicas"] = production_replicas
 
             self.logger.info(f"Promotion completed for {config.name}")
 
         except Exception as e:
-            result["logs"].append({"level": "error", "message": str(e), "timestamp": datetime.now().isoformat()})
+            result["logs"].append(
+                {
+                    "level": "error",
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             raise
 
     async def cleanup(self, run: PipelineRun):
@@ -423,13 +552,23 @@ class DockerPipelineExecutor(PipelineExecutor):
         except Exception as e:
             self.logger.warning(f"Cleanup failed for pipeline run {run.id}: {str(e)}")
 
-    async def _prepare_workspace(self, config: PipelineConfig, run: PipelineRun) -> Path:
+    async def _prepare_workspace(
+        self, config: PipelineConfig, run: PipelineRun
+    ) -> Path:
         """Prepare workspace for pipeline execution."""
         workspace = Path(f"/tmp/pipeline-{run.id}")
         workspace.mkdir(parents=True, exist_ok=True)
 
         # Clone repository
-        clone_cmd = ["git", "clone", "--branch", run.branch, "--single-branch", config.repository, str(workspace)]
+        clone_cmd = [
+            "git",
+            "clone",
+            "--branch",
+            run.branch,
+            "--single-branch",
+            config.repository,
+            str(workspace),
+        ]
 
         await self._run_command(clone_cmd)
 
@@ -452,17 +591,36 @@ class DockerPipelineExecutor(PipelineExecutor):
             "stdout": stdout.decode(),
             "stderr": stderr.decode(),
             "logs": [
-                {"level": "info", "message": stdout.decode(), "timestamp": datetime.now().isoformat()},
-                {"level": "error", "message": stderr.decode(), "timestamp": datetime.now().isoformat()},
+                {
+                    "level": "info",
+                    "message": stdout.decode(),
+                    "timestamp": datetime.now().isoformat(),
+                },
+                {
+                    "level": "error",
+                    "message": stderr.decode(),
+                    "timestamp": datetime.now().isoformat(),
+                },
             ]
             if stderr
-            else [{"level": "info", "message": stdout.decode(), "timestamp": datetime.now().isoformat()}],
+            else [
+                {
+                    "level": "info",
+                    "message": stdout.decode(),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ],
         }
 
-    async def _run_command_in_workspace(self, cmd: List[str], workspace: Path) -> Dict[str, Any]:
+    async def _run_command_in_workspace(
+        self, cmd: List[str], workspace: Path
+    ) -> Dict[str, Any]:
         """Run a command in the workspace directory."""
         process = await asyncio.create_subprocess_exec(
-            *cmd, cwd=str(workspace), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            *cmd,
+            cwd=str(workspace),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
 
         stdout, stderr = await process.communicate()
@@ -472,11 +630,25 @@ class DockerPipelineExecutor(PipelineExecutor):
             "stdout": stdout.decode(),
             "stderr": stderr.decode(),
             "logs": [
-                {"level": "info", "message": stdout.decode(), "timestamp": datetime.now().isoformat()},
-                {"level": "error", "message": stderr.decode(), "timestamp": datetime.now().isoformat()},
+                {
+                    "level": "info",
+                    "message": stdout.decode(),
+                    "timestamp": datetime.now().isoformat(),
+                },
+                {
+                    "level": "error",
+                    "message": stderr.decode(),
+                    "timestamp": datetime.now().isoformat(),
+                },
             ]
             if stderr
-            else [{"level": "info", "message": stdout.decode(), "timestamp": datetime.now().isoformat()}],
+            else [
+                {
+                    "level": "info",
+                    "message": stdout.decode(),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ],
         }
 
     async def _parse_coverage_report(self, coverage_file: Path) -> Dict[str, Any]:
@@ -497,7 +669,9 @@ class DockerPipelineExecutor(PipelineExecutor):
 
         return {"coverage_percentage": 0}
 
-    async def _run_validation_tests(self, health_checks: List[HealthCheckConfig]) -> Dict[str, Any]:
+    async def _run_validation_tests(
+        self, health_checks: List[HealthCheckConfig]
+    ) -> Dict[str, Any]:
         """Run validation tests against deployed service."""
         results = {}
 
@@ -508,12 +682,17 @@ class DockerPipelineExecutor(PipelineExecutor):
                 if health_check.type.value == "http":
                     import aiohttp
 
-                    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+                    async with aiohttp.ClientSession(
+                        timeout=aiohttp.ClientTimeout(total=30)
+                    ) as session:
                         async with session.get(
-                            health_check.endpoint, headers=health_check.headers, timeout=health_check.timeout_seconds
+                            health_check.endpoint,
+                            headers=health_check.headers,
+                            timeout=health_check.timeout_seconds,
                         ) as response:
                             results[test_name] = {
-                                "passed": response.status == health_check.expected_status,
+                                "passed": response.status
+                                == health_check.expected_status,
                                 "status_code": response.status,
                                 "expected": health_check.expected_status,
                                 "response_time": 0,  # Would measure actual response time
@@ -532,7 +711,9 @@ class WebhookHandler:
         self.secret_token = secret_token
         self.logger = logging.getLogger(__name__)
 
-    def verify_signature(self, payload: bytes, signature: str, provider: GitProvider) -> bool:
+    def verify_signature(
+        self, payload: bytes, signature: str, provider: GitProvider
+    ) -> bool:
         """Verify webhook signature."""
         if not self.secret_token:
             return True  # Skip verification if no secret configured
@@ -540,7 +721,10 @@ class WebhookHandler:
         try:
             if provider == GitProvider.GITHUB:
                 expected_signature = (
-                    "sha256=" + hmac.new(self.secret_token.encode(), payload, hashlib.sha256).hexdigest()
+                    "sha256="
+                    + hmac.new(
+                        self.secret_token.encode(), payload, hashlib.sha256
+                    ).hexdigest()
                 )
                 return hmac.compare_digest(signature, expected_signature)
 
@@ -553,7 +737,9 @@ class WebhookHandler:
 
         return True
 
-    def parse_webhook(self, payload: Dict[str, Any], provider: GitProvider, event_type: str) -> Optional[WebhookEvent]:
+    def parse_webhook(
+        self, payload: Dict[str, Any], provider: GitProvider, event_type: str
+    ) -> Optional[WebhookEvent]:
         """Parse webhook payload into WebhookEvent."""
         try:
             if provider == GitProvider.GITHUB:
@@ -566,7 +752,9 @@ class WebhookHandler:
 
         return None
 
-    def _parse_github_webhook(self, payload: Dict[str, Any], event_type: str) -> WebhookEvent:
+    def _parse_github_webhook(
+        self, payload: Dict[str, Any], event_type: str
+    ) -> WebhookEvent:
         """Parse GitHub webhook payload."""
         if event_type == "push":
             return WebhookEvent(
@@ -577,7 +765,9 @@ class WebhookHandler:
                 commit_sha=payload["head_commit"]["id"],
                 commit_message=payload["head_commit"]["message"],
                 author=payload["head_commit"]["author"]["name"],
-                timestamp=datetime.fromisoformat(payload["head_commit"]["timestamp"].replace("Z", "+00:00")),
+                timestamp=datetime.fromisoformat(
+                    payload["head_commit"]["timestamp"].replace("Z", "+00:00")
+                ),
                 raw_payload=payload,
             )
 
@@ -590,14 +780,18 @@ class WebhookHandler:
                 commit_sha=payload["pull_request"]["head"]["sha"],
                 commit_message=payload["pull_request"]["title"],
                 author=payload["pull_request"]["user"]["login"],
-                timestamp=datetime.fromisoformat(payload["pull_request"]["created_at"].replace("Z", "+00:00")),
+                timestamp=datetime.fromisoformat(
+                    payload["pull_request"]["created_at"].replace("Z", "+00:00")
+                ),
                 pull_request_id=str(payload["pull_request"]["number"]),
                 raw_payload=payload,
             )
 
         raise ValueError(f"Unsupported GitHub event type: {event_type}")
 
-    def _parse_gitlab_webhook(self, payload: Dict[str, Any], event_type: str) -> WebhookEvent:
+    def _parse_gitlab_webhook(
+        self, payload: Dict[str, Any], event_type: str
+    ) -> WebhookEvent:
         """Parse GitLab webhook payload."""
         if event_type == "Push Hook":
             return WebhookEvent(
@@ -606,7 +800,9 @@ class WebhookHandler:
                 repository=payload["project"]["path_with_namespace"],
                 branch=payload["ref"].replace("refs/heads/", ""),
                 commit_sha=payload["checkout_sha"],
-                commit_message=payload["commits"][0]["message"] if payload["commits"] else "",
+                commit_message=payload["commits"][0]["message"]
+                if payload["commits"]
+                else "",
                 author=payload["user_name"],
                 timestamp=datetime.fromisoformat(payload["commits"][0]["timestamp"])
                 if payload["commits"]
@@ -623,7 +819,9 @@ class WebhookHandler:
                 commit_sha=payload["object_attributes"]["last_commit"]["id"],
                 commit_message=payload["object_attributes"]["title"],
                 author=payload["user"]["name"],
-                timestamp=datetime.fromisoformat(payload["object_attributes"]["created_at"]),
+                timestamp=datetime.fromisoformat(
+                    payload["object_attributes"]["created_at"]
+                ),
                 pull_request_id=str(payload["object_attributes"]["iid"]),
                 raw_payload=payload,
             )
@@ -635,7 +833,10 @@ class CICDPipeline:
     """Main CI/CD pipeline orchestrator."""
 
     def __init__(
-        self, executor: PipelineExecutor, monitoring: MonitoringStack, webhook_handler: Optional[WebhookHandler] = None
+        self,
+        executor: PipelineExecutor,
+        monitoring: MonitoringStack,
+        webhook_handler: Optional[WebhookHandler] = None,
     ):
         self.executor = executor
         self.monitoring = monitoring
@@ -651,13 +852,19 @@ class CICDPipeline:
         self.logger.info(f"Registered pipeline: {config.name}")
 
     async def handle_webhook(
-        self, payload: Dict[str, Any], signature: str, provider: GitProvider, event_type: str
+        self,
+        payload: Dict[str, Any],
+        signature: str,
+        provider: GitProvider,
+        event_type: str,
     ) -> Optional[str]:
         """Handle incoming webhook and trigger pipeline if needed."""
         try:
             # Verify signature
             payload_bytes = json.dumps(payload, separators=(",", ":")).encode()
-            if not self.webhook_handler.verify_signature(payload_bytes, signature, provider):
+            if not self.webhook_handler.verify_signature(
+                payload_bytes, signature, provider
+            ):
                 self.logger.warning("Webhook signature verification failed")
                 return None
 
@@ -670,24 +877,35 @@ class CICDPipeline:
             # Find matching pipeline
             pipeline_config = self._find_matching_pipeline(event)
             if not pipeline_config:
-                self.logger.info(f"No matching pipeline for {event.repository}:{event.branch}")
+                self.logger.info(
+                    f"No matching pipeline for {event.repository}:{event.branch}"
+                )
                 return None
 
             # Check if pipeline should be triggered
             if not self._should_trigger_pipeline(pipeline_config, event):
-                self.logger.info(f"Pipeline {pipeline_config.name} not triggered for event {event_type}")
+                self.logger.info(
+                    f"Pipeline {pipeline_config.name} not triggered for event {event_type}"
+                )
                 return None
 
             # Create and start pipeline run
             run_id = await self.trigger_pipeline(pipeline_config.name, event)
 
-            self.logger.info(f"Pipeline {pipeline_config.name} triggered with run ID: {run_id}")
+            self.logger.info(
+                f"Pipeline {pipeline_config.name} triggered with run ID: {run_id}"
+            )
             return run_id
 
         except Exception as e:
             self.logger.error(f"Webhook handling failed: {str(e)}")
             self.monitoring.increment_counter(
-                "webhook_errors_total", {"provider": provider, "event_type": event_type, "error": type(e).__name__}
+                "webhook_errors_total",
+                {
+                    "provider": provider,
+                    "event_type": event_type,
+                    "error": type(e).__name__,
+                },
             )
             return None
 
@@ -744,7 +962,10 @@ class CICDPipeline:
             return False
 
     async def list_pipeline_runs(
-        self, pipeline_name: Optional[str] = None, status: Optional[PipelineStatus] = None, limit: int = 50
+        self,
+        pipeline_name: Optional[str] = None,
+        status: Optional[PipelineStatus] = None,
+        limit: int = 50,
     ) -> List[PipelineRun]:
         """List pipeline runs with filtering."""
         runs = list(self.pipeline_runs.values())
@@ -785,7 +1006,9 @@ class CICDPipeline:
                 # Record metrics
                 duration = (run.end_time - run.start_time).total_seconds()
                 self.monitoring.record_histogram(
-                    "pipeline_duration_seconds", duration, {"pipeline": config.name, "status": "success"}
+                    "pipeline_duration_seconds",
+                    duration,
+                    {"pipeline": config.name, "status": "success"},
                 )
 
                 self.logger.info(f"Pipeline {run.id} completed successfully")
@@ -801,18 +1024,23 @@ class CICDPipeline:
             if run.end_time:
                 duration = (run.end_time - run.start_time).total_seconds()
                 self.monitoring.record_histogram(
-                    "pipeline_duration_seconds", duration, {"pipeline": config.name, "status": "failure"}
+                    "pipeline_duration_seconds",
+                    duration,
+                    {"pipeline": config.name, "status": "failure"},
                 )
 
             self.monitoring.increment_counter(
-                "pipeline_failures_total", {"pipeline": config.name, "error": type(e).__name__}
+                "pipeline_failures_total",
+                {"pipeline": config.name, "error": type(e).__name__},
             )
 
             # Rollback if configured
             if config.rollback_on_failure and run.deployment_id:
                 try:
                     self.logger.info(f"Rolling back deployment {run.deployment_id}")
-                    await self.executor.deployment.rollback_service(run.deployment_id, f"Pipeline failure: {str(e)}")
+                    await self.executor.deployment.rollback_service(
+                        run.deployment_id, f"Pipeline failure: {str(e)}"
+                    )
                 except Exception as rollback_error:
                     self.logger.error(f"Rollback failed: {str(rollback_error)}")
 
@@ -821,19 +1049,25 @@ class CICDPipeline:
             try:
                 await self.executor.cleanup(run)
             except Exception as cleanup_error:
-                self.logger.warning(f"Cleanup failed for {run.id}: {str(cleanup_error)}")
+                self.logger.warning(
+                    f"Cleanup failed for {run.id}: {str(cleanup_error)}"
+                )
 
             # Remove from running pipelines
             if run.id in self._running_pipelines:
                 del self._running_pipelines[run.id]
 
-    async def _execute_stages_sequential(self, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any]):
+    async def _execute_stages_sequential(
+        self, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any]
+    ):
         """Execute pipeline stages sequentially."""
         for stage in config.stages:
             self.logger.info(f"Executing stage {stage} for pipeline {run.id}")
 
             try:
-                stage_result = await self.executor.execute_stage(stage, config, run, context)
+                stage_result = await self.executor.execute_stage(
+                    stage, config, run, context
+                )
                 run.stages[stage] = stage_result
 
                 if stage_result["status"] != "success":
@@ -848,7 +1082,9 @@ class CICDPipeline:
                 }
                 raise
 
-    async def _execute_stages_parallel(self, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any]):
+    async def _execute_stages_parallel(
+        self, config: PipelineConfig, run: PipelineRun, context: Dict[str, Any]
+    ):
         """Execute pipeline stages in parallel where possible."""
         # For now, just execute sequentially
         # In a full implementation, you'd analyze stage dependencies
@@ -861,7 +1097,9 @@ class CICDPipeline:
                 return config
         return None
 
-    def _pipeline_matches_event(self, config: PipelineConfig, event: WebhookEvent) -> bool:
+    def _pipeline_matches_event(
+        self, config: PipelineConfig, event: WebhookEvent
+    ) -> bool:
         """Check if pipeline configuration matches the webhook event."""
         # Match repository
         if not re.match(config.repository.replace("*", ".*"), event.repository):
@@ -873,7 +1111,9 @@ class CICDPipeline:
 
         return True
 
-    def _should_trigger_pipeline(self, config: PipelineConfig, event: WebhookEvent) -> bool:
+    def _should_trigger_pipeline(
+        self, config: PipelineConfig, event: WebhookEvent
+    ) -> bool:
         """Determine if pipeline should be triggered for the event."""
         # Check trigger events
         if event.event_type.lower() not in [e.lower() for e in config.trigger_events]:
@@ -893,7 +1133,9 @@ class CICDFactory:
 
     @staticmethod
     def create_docker_pipeline(
-        monitoring: MonitoringStack, deployment: DeploymentAutomation, webhook_secret: Optional[str] = None
+        monitoring: MonitoringStack,
+        deployment: DeploymentAutomation,
+        webhook_secret: Optional[str] = None,
     ) -> CICDPipeline:
         """Create Docker-based CI/CD pipeline."""
         executor = DockerPipelineExecutor(monitoring, deployment)
@@ -903,7 +1145,9 @@ class CICDFactory:
 
 # Convenience function for easy setup
 async def setup_cicd_pipeline(
-    monitoring: MonitoringStack, deployment: DeploymentAutomation, webhook_secret: Optional[str] = None
+    monitoring: MonitoringStack,
+    deployment: DeploymentAutomation,
+    webhook_secret: Optional[str] = None,
 ) -> CICDPipeline:
     """Setup CI/CD pipeline with monitoring and deployment integration."""
     factory = CICDFactory()

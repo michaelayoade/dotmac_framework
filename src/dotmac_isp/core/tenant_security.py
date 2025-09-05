@@ -6,8 +6,9 @@ Thin adapter layer that uses the shared tenant security implementation.
 import logging
 from typing import Optional
 
-from dotmac.platform.auth.core.tenant_security import TenantSecurityManager
 from fastapi import FastAPI
+
+from dotmac.platform.auth.core.tenant_security import TenantSecurityManager
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,9 @@ def add_tenant_security_middleware(app: FastAPI):
                 return response
 
         tenant_security_service = get_tenant_security_service()
-        app.add_middleware(ISPTenantSecurityMiddleware, tenant_security_service=tenant_security_service)
+        app.add_middleware(
+            ISPTenantSecurityMiddleware, tenant_security_service=tenant_security_service
+        )
 
         logger.info("ISP tenant security middleware added")
 

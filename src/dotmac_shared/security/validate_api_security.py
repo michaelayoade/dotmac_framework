@@ -15,10 +15,7 @@ logger = logging.getLogger(__name__)
 async def validate_request_validation():
     """Test request validation security features"""
     try:
-        from request_validation import (
-            SecureStringField,
-            SecurityValidators,
-        )
+        from request_validation import SecureStringField, SecurityValidators
 
         results = {"passed": [], "failed": []}
 
@@ -75,7 +72,9 @@ async def validate_rate_limiting():
 
         # Test quota types
         try:
-            basic_quota = TenantQuota(daily_requests=10000, hourly_requests=1000, minute_requests=50)
+            basic_quota = TenantQuota(
+                daily_requests=10000, hourly_requests=1000, minute_requests=50
+            )
             if basic_quota.daily_requests == 10000:
                 results["passed"].append("Quota types working")
             else:
@@ -103,7 +102,9 @@ async def validate_authentication():
 
         # Test JWT validator
         try:
-            JWTTokenValidator(secret_key="test-key-that-is-at-least-32-characters-long")  # noqa: S106 - test value only
+            JWTTokenValidator(
+                secret_key="test-key-that-is-at-least-32-characters-long"
+            )  # noqa: S106 - test value only
             results["passed"].append("JWT validator initialization working")
         except Exception as e:
             results["failed"].append(f"JWT validator failed: {e}")
@@ -194,7 +195,11 @@ async def validate_security_headers():
         # Test default security headers
         try:
             headers = SecurityHeaders.DEFAULT_SECURITY_HEADERS
-            required_headers = ["X-Content-Type-Options", "X-Frame-Options", "X-XSS-Protection"]
+            required_headers = [
+                "X-Content-Type-Options",
+                "X-Frame-Options",
+                "X-XSS-Protection",
+            ]
 
             if all(header in headers for header in required_headers):
                 results["passed"].append("Default security headers configured")

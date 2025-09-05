@@ -20,7 +20,9 @@ LazyAttribute = _factory.LazyAttribute
 SubFactory = _factory.SubFactory
 Sequence = _factory.Sequence
 try:
-    SQLAlchemyModelFactory = importlib.import_module("factory.alchemy").SQLAlchemyModelFactory
+    SQLAlchemyModelFactory = importlib.import_module(
+        "factory.alchemy"
+    ).SQLAlchemyModelFactory
 except Exception:  # Optional
 
     class SQLAlchemyModelFactory:  # type: ignore
@@ -86,7 +88,11 @@ class TenantFactory(Factory, timezone):
             "plan": "professional",
             "region": "us-east-1",
             "status": TenantStatus.READY,  # Start as ready for lifecycle tests
-            "settings": {"enable_container_monitoring": True, "enable_scaling": True, "test_mode": True},
+            "settings": {
+                "enable_container_monitoring": True,
+                "enable_scaling": True,
+                "test_mode": True,
+            },
         }
         defaults.update(kwargs)
         return cls(**defaults)
@@ -119,7 +125,9 @@ class ProvisioningEventFactory(Factory):
     created_at = Faker("date_time_this_hour")
 
     @classmethod
-    def create_provisioning_sequence(cls, tenant_id: str, correlation_id: str) -> list[dict[str, Any]]:
+    def create_provisioning_sequence(
+        cls, tenant_id: str, correlation_id: str
+    ) -> list[dict[str, Any]]:
         """Create a complete provisioning event sequence."""
         events = []
 
@@ -223,26 +231,35 @@ class DatabaseIsolationFactory(Factory):
         }
 
     @classmethod
-    def create_service_data(cls, tenant_prefix: str, customer_id: str) -> dict[str, Any]:
+    def create_service_data(
+        cls, tenant_prefix: str, customer_id: str
+    ) -> dict[str, Any]:
         """Create service data for a customer."""
         return {
             "id": f"{tenant_prefix}_service_{secrets.token_hex(4)}",
             "customer_id": customer_id,
-            "service_type": Faker("random_element", elements=["fiber", "dsl", "wireless"]).generate(),
+            "service_type": Faker(
+                "random_element", elements=["fiber", "dsl", "wireless"]
+            ).generate(),
             "plan_name": f"{tenant_prefix.title()} Internet Plan",
-            "bandwidth": Faker("random_element", elements=["100/10", "500/50", "1000/1000"]).generate(),
+            "bandwidth": Faker(
+                "random_element", elements=["100/10", "500/50", "1000/1000"]
+            ).generate(),
             "monthly_rate": Faker("random_int", min=50, max=200).generate(),
             "status": "active",
             "tenant_id": f"tenant_{tenant_prefix}",
         }
 
     @classmethod
-    def create_billing_data(cls, tenant_prefix: str, customer_id: str) -> dict[str, Any]:
+    def create_billing_data(
+        cls, tenant_prefix: str, customer_id: str
+    ) -> dict[str, Any]:
         """Create billing data for a customer."""
         return {
             "id": f"{tenant_prefix}_bill_{secrets.token_hex(4)}",
             "customer_id": customer_id,
-            "amount": Faker("random_int", min=5000, max=20000).generate() / 100,  # $50-$200
+            "amount": Faker("random_int", min=5000, max=20000).generate()
+            / 100,  # $50-$200
             "due_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
             "status": "unpaid",
             "tenant_id": f"tenant_{tenant_prefix}",
@@ -277,7 +294,9 @@ class ApiTestDataFactory(Factory):
         }
 
     @classmethod
-    def create_test_jwt_payload(cls, tenant_id: Optional[str] = None, role: str = "user") -> dict[str, Any]:
+    def create_test_jwt_payload(
+        cls, tenant_id: Optional[str] = None, role: str = "user"
+    ) -> dict[str, Any]:
         """Create JWT payload for API testing."""
         payload = {
             "sub": f"test_user_{secrets.token_hex(4)}",
@@ -324,10 +343,16 @@ class HealthCheckDataFactory(Factory):
         services[failing_service] = {
             "status": "unhealthy",
             "error": f"{failing_service} connection failed",
-            "last_success": (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat(),
+            "last_success": (
+                datetime.now(timezone.utc) - timedelta(minutes=5)
+            ).isoformat(),
         }
 
-        return {"status": "unhealthy", "timestamp": datetime.now(timezone.utc).isoformat(), "services": services}
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "services": services,
+        }
 
 
 # Export all factories

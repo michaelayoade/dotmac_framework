@@ -48,20 +48,30 @@ class DRYTenantSecurityEnforcer(TenantAwareMiddleware):
         """Enforce tenant boundary with multi-source validation."""
 
         if not headers or not headers.tenant_id:
-            return MiddlewareResult.early_return({"detail": "Tenant context required but not found"}, status=400)
+            return MiddlewareResult.early_return(
+                {"detail": "Tenant context required but not found"}, status=400
+            )
 
         # Validate tenant ID format
         if not self._is_valid_tenant_id(headers.tenant_id):
-            return MiddlewareResult.early_return({"detail": "Invalid tenant ID format"}, status=403)
+            return MiddlewareResult.early_return(
+                {"detail": "Invalid tenant ID format"}, status=403
+            )
 
         # Check for context consistency (gateway vs container)
         if headers.container_tenant and headers.container_tenant != headers.tenant_id:
-            logger.error(f"Tenant mismatch: gateway={headers.tenant_id} vs container={headers.container_tenant}")
-            return MiddlewareResult.early_return({"detail": "Tenant context mismatch detected"}, status=403)
+            logger.error(
+                f"Tenant mismatch: gateway={headers.tenant_id} vs container={headers.container_tenant}"
+            )
+            return MiddlewareResult.early_return(
+                {"detail": "Tenant context mismatch detected"}, status=403
+            )
 
         # Validate tenant exists (placeholder - would integrate with tenant service)
         if not await self._validate_tenant_exists(headers.tenant_id):
-            return MiddlewareResult.early_return({"detail": "Invalid tenant access"}, status=403)
+            return MiddlewareResult.early_return(
+                {"detail": "Invalid tenant access"}, status=403
+            )
 
         # Update request state with validated tenant context
         RequestStateManager.update_tenant_context(
@@ -74,7 +84,9 @@ class DRYTenantSecurityEnforcer(TenantAwareMiddleware):
 
         return None  # Continue processing
 
-    def get_custom_response_headers(self, request: Request, result: MiddlewareResult | None = None) -> dict[str, str]:
+    def get_custom_response_headers(
+        self, request: Request, result: MiddlewareResult | None = None
+    ) -> dict[str, str]:
         """Add tenant context headers."""
         state = RequestStateManager.get_from_request(request)
         if state.tenant_context:
@@ -100,7 +112,9 @@ class DRYAPIVersioningMiddleware(UnifiedMiddlewareProcessor):
     Reduces original 300+ lines to ~80 lines while adding more features.
     """
 
-    def __init__(self, default_version: str = "v1", supported_versions: set[str] | None = None):
+    def __init__(
+        self, default_version: str = "v1", supported_versions: set[str] | None = None
+    ):
         config = MiddlewareConfig(
             name="APIVersioning",
             exempt_paths={"/docs", "/redoc", "/openapi.json", "/health", "/metrics"},
@@ -123,14 +137,19 @@ class DRYAPIVersioningMiddleware(UnifiedMiddlewareProcessor):
             version = self.default_version
 
         # Validate version
-        if version not in self.supported_versions and version not in self.deprecated_versions:
+        if (
+            version not in self.supported_versions
+            and version not in self.deprecated_versions
+        ):
             return MiddlewareResult.early_return(
                 {
                     "detail": f"API version '{version}' not supported",
                     "supported_versions": sorted(self.supported_versions),
                 },
                 status=400,
-                response_headers={"X-Supported-Versions": ", ".join(sorted(self.supported_versions))},
+                response_headers={
+                    "X-Supported-Versions": ", ".join(sorted(self.supported_versions))
+                },
             )
 
         # Update request state
@@ -142,12 +161,17 @@ class DRYAPIVersioningMiddleware(UnifiedMiddlewareProcessor):
 
         return None
 
-    def get_custom_response_headers(self, request: Request, result: MiddlewareResult | None = None) -> dict[str, str]:
+    def get_custom_response_headers(
+        self, request: Request, result: MiddlewareResult | None = None
+    ) -> dict[str, str]:
         """Add versioning headers including deprecation warnings."""
         headers = {"X-Supported-Versions": ", ".join(sorted(self.supported_versions))}
 
         state = RequestStateManager.get_from_request(request)
-        if state.api_version_context and state.api_version_context.version in self.deprecated_versions:
+        if (
+            state.api_version_context
+            and state.api_version_context.version in self.deprecated_versions
+        ):
             headers.update(
                 {
                     "Warning": f'299 - "API version {state.api_version_context.version} is deprecated"',
@@ -183,7 +207,9 @@ class DRYBackgroundOperationsMiddleware(UnifiedMiddlewareProcessor):
             return None  # No idempotency key, continue normally
 
         # Check for existing operation
-        existing = await self.operations_manager.check_idempotency(headers.idempotency_key)
+        existing = await self.operations_manager.check_idempotency(
+            headers.idempotency_key
+        )
         if existing:
             if existing["status"] == "completed":
                 return MiddlewareResult.cache_hit(
@@ -207,7 +233,9 @@ class DRYBackgroundOperationsMiddleware(UnifiedMiddlewareProcessor):
 
         return None
 
-    def get_custom_response_headers(self, request: Request, result: MiddlewareResult | None = None) -> dict[str, str]:
+    def get_custom_response_headers(
+        self, request: Request, result: MiddlewareResult | None = None
+    ) -> dict[str, str]:
         """Add operation tracking headers."""
         state = RequestStateManager.get_from_request(request)
         if state.operation_context and state.operation_context.idempotency_key:

@@ -1,4 +1,3 @@
-
 """
 Test configuration and fixtures for omnichannel service tests.
 """
@@ -9,6 +8,8 @@ from uuid import UUID, uuid4
 
 import pytest
 from dotmac_plugins import PluginManager, PluginRegistry
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac_shared.omnichannel.core.agent_manager import AgentManager
 from dotmac_shared.omnichannel.core.channel_orchestrator import ChannelOrchestrator
 from dotmac_shared.omnichannel.core.interaction_manager import InteractionManager
@@ -19,7 +20,6 @@ from dotmac_shared.omnichannel.models.interaction import (
     InteractionPriority,
     InteractionStatus,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture(scope="session")

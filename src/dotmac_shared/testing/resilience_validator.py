@@ -100,7 +100,10 @@ class ResilienceValidator:
                 description="Validate system behavior during network partitions",
                 level=ResilienceLevel.INTERMEDIATE,
                 timeout_seconds=300,
-                success_criteria={"partition_detection": True, "graceful_degradation": True},
+                success_criteria={
+                    "partition_detection": True,
+                    "graceful_degradation": True,
+                },
                 test_function=self._test_network_partition_tolerance,
                 dependencies=["service_restart_recovery"],
             )
@@ -112,7 +115,10 @@ class ResilienceValidator:
                 description="Validate tenant isolation maintained under stress",
                 level=ResilienceLevel.INTERMEDIATE,
                 timeout_seconds=180,
-                success_criteria={"isolation_maintained": True, "no_cross_tenant_access": True},
+                success_criteria={
+                    "isolation_maintained": True,
+                    "no_cross_tenant_access": True,
+                },
                 test_function=self._test_tenant_isolation_under_stress,
             )
         )
@@ -124,9 +130,15 @@ class ResilienceValidator:
                 description="Validate containment of cascading failures",
                 level=ResilienceLevel.ADVANCED,
                 timeout_seconds=600,
-                success_criteria={"failure_containment": True, "core_services_available": True},
+                success_criteria={
+                    "failure_containment": True,
+                    "core_services_available": True,
+                },
                 test_function=self._test_cascading_failure_containment,
-                dependencies=["network_partition_tolerance", "tenant_isolation_under_stress"],
+                dependencies=[
+                    "network_partition_tolerance",
+                    "tenant_isolation_under_stress",
+                ],
             )
         )
 
@@ -148,7 +160,10 @@ class ResilienceValidator:
                 description="Production-scale load testing with chaos injection",
                 level=ResilienceLevel.PRODUCTION,
                 timeout_seconds=1800,
-                success_criteria={"performance_degradation": "<20%", "error_rate": "<1%"},
+                success_criteria={
+                    "performance_degradation": "<20%",
+                    "error_rate": "<1%",
+                },
                 test_function=self._test_production_load_with_chaos,
                 dependencies=["cascading_failure_containment"],
             )
@@ -160,7 +175,9 @@ class ResilienceValidator:
         logger.info(f"Registered resilience test: {test.name} ({test.level})")
 
     async def validate_resilience(
-        self, level: ResilienceLevel = ResilienceLevel.BASIC, specific_tests: Optional[list[str]] = None
+        self,
+        level: ResilienceLevel = ResilienceLevel.BASIC,
+        specific_tests: Optional[list[str]] = None,
     ) -> list[ResilienceValidationResult]:
         """Run resilience validation tests"""
         logger.info(f"Starting resilience validation at {level} level")
@@ -188,7 +205,9 @@ class ResilienceValidator:
         logger.info(f"Resilience validation completed: {len(results)} tests run")
         return results
 
-    def _get_tests_for_level(self, level: ResilienceLevel, specific_tests: Optional[list[str]]) -> list[str]:
+    def _get_tests_for_level(
+        self, level: ResilienceLevel, specific_tests: Optional[list[str]]
+    ) -> list[str]:
         """Get tests to run for specified level"""
         if specific_tests:
             return [name for name in specific_tests if name in self.tests]
@@ -204,7 +223,9 @@ class ResilienceValidator:
         max_level_index = level_order.index(level)
         included_levels = level_order[: max_level_index + 1]
 
-        return [name for name, test in self.tests.items() if test.level in included_levels]
+        return [
+            name for name, test in self.tests.items() if test.level in included_levels
+        ]
 
     def _order_tests_by_dependencies(self, test_names: list[str]) -> list[str]:
         """Order tests based on their dependencies"""
@@ -221,7 +242,9 @@ class ResilienceValidator:
 
             if not ready_tests:
                 # No tests ready - circular dependency or missing dependency
-                logger.warning(f"Circular or missing dependencies detected: {remaining}")
+                logger.warning(
+                    f"Circular or missing dependencies detected: {remaining}"
+                )
                 ordered.extend(list(remaining))
                 break
 
@@ -231,29 +254,40 @@ class ResilienceValidator:
 
         return ordered
 
-    async def _run_single_test(self, test: ResilienceTest) -> ResilienceValidationResult:
+    async def _run_single_test(
+        self, test: ResilienceTest
+    ) -> ResilienceValidationResult:
         """Run a single resilience test"""
         start_time = utc_now()
 
         try:
             # Check dependencies passed
             for dep in test.dependencies:
-                if dep in self.results and self.results[dep].result == ValidationResult.FAILED:
+                if (
+                    dep in self.results
+                    and self.results[dep].result == ValidationResult.FAILED
+                ):
                     return ResilienceValidationResult(
                         test_name=test.name,
                         result=ValidationResult.FAILED,
                         duration_seconds=0,
                         error_message=f"Dependency {dep} failed",
-                        recommendations=[f"Fix dependency {dep} before running this test"],
+                        recommendations=[
+                            f"Fix dependency {dep} before running this test"
+                        ],
                     )
 
             # Run the test with timeout
-            test_result = await asyncio.wait_for(test.test_function(), timeout=test.timeout_seconds)
+            test_result = await asyncio.wait_for(
+                test.test_function(), timeout=test.timeout_seconds
+            )
 
             duration = (utc_now() - start_time).total_seconds()
 
             # Evaluate success criteria
-            result, recommendations = self._evaluate_success_criteria(test_result, test.success_criteria)
+            result, recommendations = self._evaluate_success_criteria(
+                test_result, test.success_criteria
+            )
 
             return ResilienceValidationResult(
                 test_name=test.name,
@@ -270,7 +304,10 @@ class ResilienceValidator:
                 result=ValidationResult.FAILED,
                 duration_seconds=duration,
                 error_message=f"Test timed out after {test.timeout_seconds}s",
-                recommendations=["Investigate performance issues", "Increase timeout if expected"],
+                recommendations=[
+                    "Investigate performance issues",
+                    "Increase timeout if expected",
+                ],
             )
 
         except Exception as e:
@@ -280,7 +317,10 @@ class ResilienceValidator:
                 result=ValidationResult.FAILED,
                 duration_seconds=duration,
                 error_message=str(e),
-                recommendations=["Review test implementation", "Check system prerequisites"],
+                recommendations=[
+                    "Review test implementation",
+                    "Check system prerequisites",
+                ],
             )
 
     def _evaluate_success_criteria(
@@ -321,7 +361,9 @@ class ResilienceValidator:
             elif criterion.endswith("_compliance"):
                 if not actual:
                     failed_criteria.append(f"{criterion} not met")
-                    recommendations.append(f"Review {criterion} requirements and implementation")
+                    recommendations.append(
+                        f"Review {criterion} requirements and implementation"
+                    )
 
         if failed_criteria:
             return ValidationResult.FAILED, recommendations
@@ -356,7 +398,11 @@ class ResilienceValidator:
         # Simulate database connection failure and recovery
         await asyncio.sleep(1)
 
-        return {"connection_recovery": True, "no_data_loss": True, "recovery_time_seconds": 3.5}
+        return {
+            "connection_recovery": True,
+            "no_data_loss": True,
+            "recovery_time_seconds": 3.5,
+        }
 
     async def _test_network_partition_tolerance(self) -> dict[str, Any]:
         """Test network partition tolerance"""
@@ -369,7 +415,9 @@ class ResilienceValidator:
             "partition_detection": True,
             "graceful_degradation": True,
             "recovery_time_seconds": 15.2,
-            "chaos_result": result.to_dict() if hasattr(result, "to_dict") else str(result),
+            "chaos_result": result.to_dict()
+            if hasattr(result, "to_dict")
+            else str(result),
         }
 
     async def _test_tenant_isolation_under_stress(self) -> dict[str, Any]:
@@ -467,12 +515,16 @@ class ResilienceValidator:
             "chaos_experiments_count": result["total_experiments"],
         }
 
-    def generate_resilience_report(self, results: list[ResilienceValidationResult]) -> dict[str, Any]:
+    def generate_resilience_report(
+        self, results: list[ResilienceValidationResult]
+    ) -> dict[str, Any]:
         """Generate comprehensive resilience report"""
         total_tests = len(results)
         passed_tests = sum(1 for r in results if r.result == ValidationResult.PASSED)
         failed_tests = sum(1 for r in results if r.result == ValidationResult.FAILED)
-        degraded_tests = sum(1 for r in results if r.result == ValidationResult.DEGRADED)
+        degraded_tests = sum(
+            1 for r in results if r.result == ValidationResult.DEGRADED
+        )
 
         total_duration = sum(r.duration_seconds for r in results)
 
@@ -494,18 +546,27 @@ class ResilienceValidator:
                 "passed": passed_tests,
                 "failed": failed_tests,
                 "degraded": degraded_tests,
-                "success_rate": (passed_tests / total_tests) * 100 if total_tests > 0 else 0,
+                "success_rate": (passed_tests / total_tests) * 100
+                if total_tests > 0
+                else 0,
                 "total_duration_seconds": total_duration,
             },
             "test_results": [
-                {"name": r.test_name, "result": r.result, "duration": r.duration_seconds, "error": r.error_message}
+                {
+                    "name": r.test_name,
+                    "result": r.result,
+                    "duration": r.duration_seconds,
+                    "error": r.error_message,
+                }
                 for r in results
             ],
             "recommendations": unique_recommendations,
             "resilience_score": self._calculate_resilience_score(results),
         }
 
-    def _calculate_resilience_score(self, results: list[ResilienceValidationResult]) -> dict[str, Any]:
+    def _calculate_resilience_score(
+        self, results: list[ResilienceValidationResult]
+    ) -> dict[str, Any]:
         """Calculate overall resilience score"""
         if not results:
             return {"score": 0, "grade": "F", "explanation": "No tests run"}

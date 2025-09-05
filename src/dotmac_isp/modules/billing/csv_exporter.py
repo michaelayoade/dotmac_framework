@@ -16,4 +16,3 @@ def export_payments_csv(*args: Any, **kwargs: Any) -> str:  # noqa: ANN001
 
 
 __all__ = ["export_invoices_csv", "export_payments_csv"]
-

@@ -187,7 +187,9 @@ class PerformanceBenchmarkManager:
 
             # Execute main benchmark
             start_time = datetime.now(timezone.utc)
-            measurements = await self._execute_benchmark_iterations(benchmark_function, config, *args, **kwargs)
+            measurements = await self._execute_benchmark_iterations(
+                benchmark_function, config, *args, **kwargs
+            )
             end_time = datetime.now(timezone.utc)
 
             # Stop resource monitoring and collect metrics
@@ -195,7 +197,12 @@ class PerformanceBenchmarkManager:
 
             # Calculate performance metrics
             metrics = self._calculate_metrics(
-                benchmark_id, config, start_time, end_time, measurements, resource_metrics
+                benchmark_id,
+                config,
+                start_time,
+                end_time,
+                measurements,
+                resource_metrics,
             )
 
             # Store results
@@ -264,7 +271,9 @@ class PerformanceBenchmarkManager:
             tasks = []
             for config in suite.benchmarks:
                 if config.name in benchmark_functions:
-                    task = self.execute_benchmark(config, benchmark_functions[config.name])
+                    task = self.execute_benchmark(
+                        config, benchmark_functions[config.name]
+                    )
                     tasks.append((config.name, task))
 
             # Wait for all benchmarks to complete
@@ -279,7 +288,9 @@ class PerformanceBenchmarkManager:
             for config in suite.benchmarks:
                 if config.name in benchmark_functions:
                     try:
-                        result = await self.execute_benchmark(config, benchmark_functions[config.name])
+                        result = await self.execute_benchmark(
+                            config, benchmark_functions[config.name]
+                        )
                         results[config.name] = result
 
                         # Cooldown between benchmarks
@@ -292,7 +303,9 @@ class PerformanceBenchmarkManager:
         logger.info(f"✅ Benchmark suite completed: {suite.name}")
         return results
 
-    async def _execute_warmup(self, benchmark_function: Callable, config: BenchmarkConfig, *args, **kwargs):
+    async def _execute_warmup(
+        self, benchmark_function: Callable, config: BenchmarkConfig, *args, **kwargs
+    ):
         """Execute warmup iterations to stabilize performance"""
 
         for _ in range(config.warmup_iterations):
@@ -338,7 +351,8 @@ class PerformanceBenchmarkManager:
             # Execute with timeout
             try:
                 results = await asyncio.wait_for(
-                    asyncio.gather(*tasks, return_exceptions=True), timeout=config.timeout_seconds
+                    asyncio.gather(*tasks, return_exceptions=True),
+                    timeout=config.timeout_seconds,
                 )
 
                 for result in results:
@@ -351,7 +365,9 @@ class PerformanceBenchmarkManager:
                         errors.append(str(result))
 
             except asyncio.TimeoutError:
-                logger.error(f"Benchmark {config.name} timed out after {config.timeout_seconds}s")
+                logger.error(
+                    f"Benchmark {config.name} timed out after {config.timeout_seconds}s"
+                )
                 errors.append("Benchmark timed out")
 
         else:
@@ -415,10 +431,16 @@ class PerformanceBenchmarkManager:
         # Calculate success rate
         errors = config.parameters.get("errors", [])
         error_count = len(errors)
-        success_rate = ((operations_count - error_count) / operations_count * 100) if operations_count > 0 else 0
+        success_rate = (
+            ((operations_count - error_count) / operations_count * 100)
+            if operations_count > 0
+            else 0
+        )
 
         # Operations per second
-        operations_per_second = operations_count / duration_seconds if duration_seconds > 0 else 0
+        operations_per_second = (
+            operations_count / duration_seconds if duration_seconds > 0 else 0
+        )
 
         return BenchmarkMetrics(
             benchmark_id=benchmark_id,
@@ -448,12 +470,18 @@ class PerformanceBenchmarkManager:
                     "concurrent_workers": config.concurrent_workers,
                     "warmup_iterations": config.warmup_iterations,
                 },
-                "tenant_context": {"tenant_id": config.tenant_context.tenant_id if config.tenant_context else None},
+                "tenant_context": {
+                    "tenant_id": config.tenant_context.tenant_id
+                    if config.tenant_context
+                    else None
+                },
             },
             raw_measurements=measurements if config.collect_raw_data else [],
         )
 
-    def _calculate_percentile(self, sorted_values: list[float], percentile: int) -> float:
+    def _calculate_percentile(
+        self, sorted_values: list[float], percentile: int
+    ) -> float:
         """Calculate percentile value from sorted measurements"""
         if not sorted_values:
             return 0.0
@@ -463,7 +491,9 @@ class PerformanceBenchmarkManager:
             index = len(sorted_values) - 1
         return sorted_values[index]
 
-    async def _start_resource_monitoring(self, benchmark_id: str, config: BenchmarkConfig):
+    async def _start_resource_monitoring(
+        self, benchmark_id: str, config: BenchmarkConfig
+    ):
         """Start monitoring system resources during benchmark"""
         if not (config.monitor_memory or config.monitor_cpu):
             return
@@ -479,7 +509,9 @@ class PerformanceBenchmarkManager:
                 try:
                     if config.monitor_memory:
                         memory_info = psutil.virtual_memory()
-                        measurements["memory_samples"].append(memory_info.used / (1024 * 1024))  # MB
+                        measurements["memory_samples"].append(
+                            memory_info.used / (1024 * 1024)
+                        )  # MB
 
                     if config.monitor_cpu:
                         cpu_percent = psutil.cpu_percent(interval=0.1)
@@ -586,7 +618,9 @@ class PerformanceBenchmarkManager:
             baseline_name = current_metrics.name
 
         if baseline_name not in self.baselines:
-            logger.warning(f"No baseline found for {baseline_name}, setting current as baseline")
+            logger.warning(
+                f"No baseline found for {baseline_name}, setting current as baseline"
+            )
             self.baselines[baseline_name] = current_metrics
             return {"status": "baseline_set", "baseline": baseline_name}
 
@@ -598,22 +632,28 @@ class PerformanceBenchmarkManager:
                 "baseline": baseline.operations_per_second,
                 "current": current_metrics.operations_per_second,
                 "change_percent": self._calculate_change_percent(
-                    baseline.operations_per_second, current_metrics.operations_per_second
+                    baseline.operations_per_second,
+                    current_metrics.operations_per_second,
                 ),
-                "better": current_metrics.operations_per_second > baseline.operations_per_second,
+                "better": current_metrics.operations_per_second
+                > baseline.operations_per_second,
             },
             "average_response_time": {
                 "baseline": baseline.average_response_time,
                 "current": current_metrics.average_response_time,
                 "change_percent": self._calculate_change_percent(
-                    baseline.average_response_time, current_metrics.average_response_time
+                    baseline.average_response_time,
+                    current_metrics.average_response_time,
                 ),
-                "better": current_metrics.average_response_time < baseline.average_response_time,
+                "better": current_metrics.average_response_time
+                < baseline.average_response_time,
             },
             "percentile_95": {
                 "baseline": baseline.percentile_95,
                 "current": current_metrics.percentile_95,
-                "change_percent": self._calculate_change_percent(baseline.percentile_95, current_metrics.percentile_95),
+                "change_percent": self._calculate_change_percent(
+                    baseline.percentile_95, current_metrics.percentile_95
+                ),
                 "better": current_metrics.percentile_95 < baseline.percentile_95,
             },
             "memory_usage": {
@@ -660,7 +700,9 @@ class PerformanceBenchmarkManager:
             "comparisons": comparisons,
             "regressions": regressions,
             "improvements": improvements,
-            "overall_performance": "degraded" if regressions else ("improved" if improvements else "stable"),
+            "overall_performance": "degraded"
+            if regressions
+            else ("improved" if improvements else "stable"),
         }
 
     def _calculate_change_percent(self, baseline: float, current: float) -> float:
@@ -676,11 +718,17 @@ class PerformanceBenchmarkManager:
             return {"total": 0, "summary": "No benchmarks executed"}
 
         total_benchmarks = len(self.benchmark_history)
-        successful_benchmarks = sum(1 for b in self.benchmark_history if b.success_rate > 95)
+        successful_benchmarks = sum(
+            1 for b in self.benchmark_history if b.success_rate > 95
+        )
 
         # Calculate average metrics
-        avg_ops_per_second = statistics.mean([b.operations_per_second for b in self.benchmark_history])
-        avg_response_time = statistics.mean([b.average_response_time for b in self.benchmark_history])
+        avg_ops_per_second = statistics.mean(
+            [b.operations_per_second for b in self.benchmark_history]
+        )
+        avg_response_time = statistics.mean(
+            [b.average_response_time for b in self.benchmark_history]
+        )
 
         # Benchmark types breakdown
         type_breakdown = {}
@@ -693,10 +741,18 @@ class PerformanceBenchmarkManager:
         return {
             "total_benchmarks": total_benchmarks,
             "successful_benchmarks": successful_benchmarks,
-            "success_rate": (successful_benchmarks / total_benchmarks * 100) if total_benchmarks > 0 else 0,
+            "success_rate": (successful_benchmarks / total_benchmarks * 100)
+            if total_benchmarks > 0
+            else 0,
             "average_operations_per_second": avg_ops_per_second,
             "average_response_time": avg_response_time,
             "benchmark_types": type_breakdown,
             "baselines_established": len(self.baselines),
-            "active_benchmarks": len([b for b in self.active_benchmarks.values() if b == BenchmarkStatus.RUNNING]),
+            "active_benchmarks": len(
+                [
+                    b
+                    for b in self.active_benchmarks.values()
+                    if b == BenchmarkStatus.RUNNING
+                ]
+            ),
         }

@@ -18,11 +18,7 @@ from collections.abc import Callable
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import (
-    Any,
-    Optional,
-    TypeVar,
-)
+from typing import Any, Optional, TypeVar
 from uuid import uuid4
 
 from dotmac_shared.utils.datetime_utils import utc_now
@@ -212,7 +208,9 @@ class BaseFactory(ABC):
                     if hasattr(self, "_required_dependencies") and dep_name in getattr(
                         self, "_required_dependencies", set()
                     ):
-                        raise DependencyError(f"Failed to resolve required dependency {dep_name}: {e}") from e
+                        raise DependencyError(
+                            f"Failed to resolve required dependency {dep_name}: {e}"
+                        ) from e
                     logger.debug(f"Optional dependency {dep_name} not resolved: {e}")
 
         return resolved
@@ -250,7 +248,11 @@ class TenantIsolatedFactory(BaseFactory):
     between different tenant test scenarios.
     """
 
-    def __init__(self, registry: Optional["FactoryRegistry"] = None, tenant_id: Optional[str] = None):
+    def __init__(
+        self,
+        registry: Optional["FactoryRegistry"] = None,
+        tenant_id: Optional[str] = None,
+    ):
         """Initialize with tenant context."""
         super().__init__(registry)
         self.tenant_id = tenant_id or str(uuid4())
@@ -310,7 +312,9 @@ class RelationshipManager:
         visit(factory_name)
         return result[:-1]  # Exclude the factory itself
 
-    def establish_relationship(self, relationship_name: str, source_instance: Any, target_instance: Any) -> None:
+    def establish_relationship(
+        self, relationship_name: str, source_instance: Any, target_instance: Any
+    ) -> None:
         """Establish a specific relationship between instances."""
         if relationship_name not in self.relationships:
             raise RelationshipError(f"Unknown relationship: {relationship_name}")
@@ -320,26 +324,44 @@ class RelationshipManager:
             if definition.relationship_type == "one_to_one":
                 self._establish_one_to_one(definition, source_instance, target_instance)
             elif definition.relationship_type == "one_to_many":
-                self._establish_one_to_many(definition, source_instance, target_instance)
+                self._establish_one_to_many(
+                    definition, source_instance, target_instance
+                )
             elif definition.relationship_type == "many_to_many":
-                self._establish_many_to_many(definition, source_instance, target_instance)
+                self._establish_many_to_many(
+                    definition, source_instance, target_instance
+                )
             else:
-                raise RelationshipError(f"Unknown relationship type: {definition.relationship_type}")
+                raise RelationshipError(
+                    f"Unknown relationship type: {definition.relationship_type}"
+                )
 
             # Cache for cleanup
-            cache_key = f"{relationship_name}_{id(source_instance)}_{id(target_instance)}"
-            self._relationship_cache[cache_key] = (definition, source_instance, target_instance)
+            cache_key = (
+                f"{relationship_name}_{id(source_instance)}_{id(target_instance)}"
+            )
+            self._relationship_cache[cache_key] = (
+                definition,
+                source_instance,
+                target_instance,
+            )
         except Exception as e:
-            raise RelationshipError(f"Failed to establish relationship {relationship_name}: {e}") from e
+            raise RelationshipError(
+                f"Failed to establish relationship {relationship_name}: {e}"
+            ) from e
 
-    def _establish_one_to_one(self, definition: RelationshipDefinition, source: Any, target: Any) -> None:
+    def _establish_one_to_one(
+        self, definition: RelationshipDefinition, source: Any, target: Any
+    ) -> None:
         """Establish one-to-one relationship."""
         if definition.foreign_key:
             setattr(source, definition.foreign_key, target.id)
         if definition.back_reference:
             setattr(target, definition.back_reference, source)
 
-    def _establish_one_to_many(self, definition: RelationshipDefinition, source: Any, target: Any) -> None:
+    def _establish_one_to_many(
+        self, definition: RelationshipDefinition, source: Any, target: Any
+    ) -> None:
         """Establish one-to-many relationship."""
         if definition.foreign_key:
             setattr(target, definition.foreign_key, source.id)
@@ -348,7 +370,9 @@ class RelationshipManager:
                 setattr(source, definition.back_reference, [])
             getattr(source, definition.back_reference).append(target)
 
-    def _establish_many_to_many(self, definition: RelationshipDefinition, source: Any, target: Any) -> None:
+    def _establish_many_to_many(
+        self, definition: RelationshipDefinition, source: Any, target: Any
+    ) -> None:
         """Establish many-to-many relationship."""
         # This would typically involve a join table - implementation depends on ORM
         if definition.back_reference:
@@ -419,7 +443,9 @@ class FactoryRegistry:
     def _update_cleanup_order(self) -> None:
         """Update cleanup order based on dependencies and cleanup priorities."""
         # Sort by cleanup order (lower numbers first)
-        self._cleanup_order = sorted(self.metadata.keys(), key=lambda name: self.metadata[name].cleanup_order)
+        self._cleanup_order = sorted(
+            self.metadata.keys(), key=lambda name: self.metadata[name].cleanup_order
+        )
 
     @contextmanager
     def factory_session(self):

@@ -19,9 +19,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from dotmac_shared.core.logging import get_logger
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
+
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -179,7 +180,9 @@ class DatabaseCleaner:
     """Specialized database cleanup utilities."""
 
     @staticmethod
-    async def cleanup_tenant_data(session: Session, tenant_id: str, tables: Optional[list[str]] = None):
+    async def cleanup_tenant_data(
+        session: Session, tenant_id: str, tables: Optional[list[str]] = None
+    ):
         """Clean up all data for a specific tenant."""
         try:
             if tables is None:
@@ -201,12 +204,17 @@ class DatabaseCleaner:
             for table in tables:
                 try:
                     result = session.execute(
-                        text(f"DELETE FROM {table} WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_id}
+                        text(f"DELETE FROM {table} WHERE tenant_id = :tenant_id"),
+                        {"tenant_id": tenant_id},
                     )
-                    logger.debug(f"Cleaned {result.rowcount} rows from {table} for tenant {tenant_id}")
+                    logger.debug(
+                        f"Cleaned {result.rowcount} rows from {table} for tenant {tenant_id}"
+                    )
                 except Exception as table_error:
                     # Table might not exist, log but continue
-                    logger.debug(f"Could not clean table {table} for tenant {tenant_id}: {table_error}")
+                    logger.debug(
+                        f"Could not clean table {table} for tenant {tenant_id}: {table_error}"
+                    )
 
             session.commit()
             logger.info(f"Completed tenant data cleanup for: {tenant_id}")
@@ -221,7 +229,15 @@ class DatabaseCleaner:
         """Clean up test data from management database."""
         try:
             # Clean up test tenants
-            test_tenant_patterns = ["test%", "e2e%", "%test%", "temp%", "isolation%", "provision%", "lifecycle%"]
+            test_tenant_patterns = [
+                "test%",
+                "e2e%",
+                "%test%",
+                "temp%",
+                "isolation%",
+                "provision%",
+                "lifecycle%",
+            ]
 
             for pattern in test_tenant_patterns:
                 # Clean tenant provisioning events first (foreign key dependency)
@@ -240,11 +256,14 @@ class DatabaseCleaner:
 
                 # Clean tenant records
                 result = session.execute(
-                    text("DELETE FROM customer_tenants WHERE subdomain LIKE :pattern"), {"pattern": pattern}
+                    text("DELETE FROM customer_tenants WHERE subdomain LIKE :pattern"),
+                    {"pattern": pattern},
                 )
 
                 if result.rowcount > 0:
-                    logger.info(f"Cleaned {result.rowcount} test tenants matching pattern: {pattern}")
+                    logger.info(
+                        f"Cleaned {result.rowcount} test tenants matching pattern: {pattern}"
+                    )
 
             session.commit()
             logger.info("Completed management test data cleanup")
@@ -261,7 +280,11 @@ class DatabaseCleaner:
             for table in tables:
                 try:
                     # Reset sequence for PostgreSQL
-                    session.execute(text(f"SELECT setval(pg_get_serial_sequence('{table}', 'id'), 1, false)"))
+                    session.execute(
+                        text(
+                            f"SELECT setval(pg_get_serial_sequence('{table}', 'id'), 1, false)"
+                        )
+                    )
                 except Exception as seq_error:
                     logger.debug(f"Could not reset sequence for {table}: {seq_error}")
 
@@ -274,10 +297,17 @@ class DatabaseCleaner:
 
     @staticmethod
     async def verify_database_isolation(
-        tenant_a_session: Session, tenant_b_session: Session, tenant_a_id: str, tenant_b_id: str
+        tenant_a_session: Session,
+        tenant_b_session: Session,
+        tenant_a_id: str,
+        tenant_b_id: str,
     ) -> dict[str, Any]:
         """Verify database isolation after cleanup."""
-        verification_result = {"isolated": True, "cross_contamination_found": False, "issues": []}
+        verification_result = {
+            "isolated": True,
+            "cross_contamination_found": False,
+            "issues": [],
+        }
 
         common_tables = ["customers", "services", "billing", "users", "audit_logs"]
 
@@ -285,23 +315,29 @@ class DatabaseCleaner:
             try:
                 # Check for cross-contamination in tenant A database
                 cross_data_a = tenant_a_session.execute(
-                    text(f"SELECT COUNT(*) FROM {table} WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_b_id}
+                    text(f"SELECT COUNT(*) FROM {table} WHERE tenant_id = :tenant_id"),
+                    {"tenant_id": tenant_b_id},
                 ).scalar()
 
                 if cross_data_a > 0:
                     verification_result["isolated"] = False
                     verification_result["cross_contamination_found"] = True
-                    verification_result["issues"].append(f"Tenant B data found in tenant A database (table: {table})")
+                    verification_result["issues"].append(
+                        f"Tenant B data found in tenant A database (table: {table})"
+                    )
 
                 # Check for cross-contamination in tenant B database
                 cross_data_b = tenant_b_session.execute(
-                    text(f"SELECT COUNT(*) FROM {table} WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_a_id}
+                    text(f"SELECT COUNT(*) FROM {table} WHERE tenant_id = :tenant_id"),
+                    {"tenant_id": tenant_a_id},
                 ).scalar()
 
                 if cross_data_b > 0:
                     verification_result["isolated"] = False
                     verification_result["cross_contamination_found"] = True
-                    verification_result["issues"].append(f"Tenant A data found in tenant B database (table: {table})")
+                    verification_result["issues"].append(
+                        f"Tenant A data found in tenant B database (table: {table})"
+                    )
 
             except Exception as e:
                 logger.debug(f"Could not verify isolation for table {table}: {e}")
@@ -378,7 +414,14 @@ class FilesystemCleaner:
         if not base_path.exists():
             return cleanup_count
 
-        patterns_to_clean = ["e2e_test_*", "test_*.log", "test_*.json", "screenshot_*.png", "backup_test_*", "*.tmp"]
+        patterns_to_clean = [
+            "e2e_test_*",
+            "test_*.log",
+            "test_*.json",
+            "screenshot_*.png",
+            "backup_test_*",
+            "*.tmp",
+        ]
 
         for pattern in patterns_to_clean:
             for item in base_path.glob(pattern):
@@ -412,7 +455,9 @@ async def isolated_test_environment(test_name: str):
         cleanup_results = await cleaner.cleanup_all()
 
         if cleanup_results["errors"]:
-            logger.warning(f"Cleanup completed with {len(cleanup_results['errors'])} errors")
+            logger.warning(
+                f"Cleanup completed with {len(cleanup_results['errors'])} errors"
+            )
         else:
             logger.info("Cleanup completed successfully")
 
@@ -442,7 +487,9 @@ class TestIsolationValidator:
 
     @staticmethod
     async def validate_tenant_isolation(
-        management_session: Session, tenant_sessions: dict[str, Session], tenant_ids: list[str]
+        management_session: Session,
+        tenant_sessions: dict[str, Session],
+        tenant_ids: list[str],
     ) -> dict[str, Any]:
         """Validate complete tenant isolation."""
         validation_results = {
@@ -490,7 +537,9 @@ class TestIsolationValidator:
 
                     if not isolation_check["isolated"]:
                         validation_results["isolation_maintained"] = False
-                        validation_results["contamination_issues"].extend(isolation_check["issues"])
+                        validation_results["contamination_issues"].extend(
+                            isolation_check["issues"]
+                        )
 
         return validation_results
 

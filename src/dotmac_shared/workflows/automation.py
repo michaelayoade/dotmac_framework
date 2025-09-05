@@ -72,7 +72,9 @@ class AutomationRule:
 
         return True
 
-    def _check_condition_operators(self, actual_value: Any, condition: dict[str, Any]) -> bool:
+    def _check_condition_operators(
+        self, actual_value: Any, condition: dict[str, Any]
+    ) -> bool:
         """Check condition with operators."""
         for operator, expected in condition.items():
             if operator == ">=":
@@ -188,7 +190,9 @@ class AutomationWorkflow(BaseWorkflow):
 
         return await self._execute_rule_actions(rule, {})
 
-    async def _execute_rule_actions(self, rule: AutomationRule, event_data: dict[str, Any]) -> WorkflowResult:
+    async def _execute_rule_actions(
+        self, rule: AutomationRule, event_data: dict[str, Any]
+    ) -> WorkflowResult:
         """Execute all actions for a rule."""
         executed_actions = []
         errors = []
@@ -203,14 +207,20 @@ class AutomationWorkflow(BaseWorkflow):
                     continue
 
                 # Execute action handler
-                action_result = await self._call_action_handler(action_handler, action, event_data)
+                action_result = await self._call_action_handler(
+                    action_handler, action, event_data
+                )
 
-                executed_actions.append({"type": action_type, "result": action_result, "success": True})
+                executed_actions.append(
+                    {"type": action_type, "result": action_result, "success": True}
+                )
 
             except Exception as e:
                 error_msg = f"Action '{action.get('type')}' failed: {str(e)}"
                 errors.append(error_msg)
-                executed_actions.append({"type": action.get("type"), "error": str(e), "success": False})
+                executed_actions.append(
+                    {"type": action.get("type"), "error": str(e), "success": False}
+                )
 
         success = len(errors) == 0
         return WorkflowResult(
@@ -227,7 +237,9 @@ class AutomationWorkflow(BaseWorkflow):
             message=f"Executed {len(executed_actions)} actions for rule '{rule.name}'",
         )
 
-    async def _call_action_handler(self, handler: Callable, action: dict[str, Any], event_data: dict[str, Any]) -> Any:
+    async def _call_action_handler(
+        self, handler: Callable, action: dict[str, Any], event_data: dict[str, Any]
+    ) -> Any:
         """Call an action handler, handling both sync and async functions."""
         if asyncio.iscoroutinefunction(handler):
             return await handler(action, event_data)
@@ -248,7 +260,9 @@ async def log_action_handler(action: dict[str, Any], event_data: dict[str, Any])
     return f"Logged message at {level} level"
 
 
-async def notification_action_handler(action: dict[str, Any], event_data: dict[str, Any]) -> str:
+async def notification_action_handler(
+    action: dict[str, Any], event_data: dict[str, Any]
+) -> str:
     """Built-in handler for notification actions."""
     recipient = action.get("recipient", "system")
     message = action.get("message", "Automation notification")
@@ -259,7 +273,9 @@ async def notification_action_handler(action: dict[str, Any], event_data: dict[s
     return f"Notification sent to {recipient}"
 
 
-async def webhook_action_handler(action: dict[str, Any], event_data: dict[str, Any]) -> str:
+async def webhook_action_handler(
+    action: dict[str, Any], event_data: dict[str, Any]
+) -> str:
     """Built-in handler for webhook actions."""
     url = action.get("url", "")
     method = action.get("method", "POST")
@@ -271,7 +287,9 @@ async def webhook_action_handler(action: dict[str, Any], event_data: dict[str, A
 
 
 # Factory functions
-def create_automation_workflow(name: str, rules: Optional[list[AutomationRule]] = None) -> AutomationWorkflow:
+def create_automation_workflow(
+    name: str, rules: Optional[list[AutomationRule]] = None
+) -> AutomationWorkflow:
     """Create an automation workflow with built-in action handlers."""
     workflow = AutomationWorkflow(name, rules)
 

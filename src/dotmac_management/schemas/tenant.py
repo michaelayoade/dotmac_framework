@@ -6,12 +6,11 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.validation.common_validators import CommonValidators, ValidationPatterns
-from pydantic import (
-    BaseModel,
-    EmailStr,
-    Field,
-    field_validator,
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from dotmac_shared.validation.common_validators import (
+    CommonValidators,
+    ValidationPatterns,
 )
 
 from ..core.sanitization import (
@@ -29,8 +28,12 @@ class TenantBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=255, description="Tenant name")
     description: Optional[str] = Field(None, max_length=1000, description="Description")
     contact_email: EmailStr = Field(..., description="Contact email")
-    contact_name: Optional[str] = Field(None, max_length=255, description="Contact name")
-    contact_phone: Optional[str] = Field(None, max_length=50, description="Contact phone")
+    contact_name: Optional[str] = Field(
+        None, max_length=255, description="Contact name"
+    )
+    contact_phone: Optional[str] = Field(
+        None, max_length=50, description="Contact phone"
+    )
 
     @field_validator("name")
     @classmethod
@@ -159,7 +162,9 @@ class TenantStatusUpdate(BaseModel):
     """Schema for updating tenant status."""
 
     status: TenantStatus = Field(..., description="New status")
-    reason: Optional[str] = Field(None, max_length=500, description="Reason for status change")
+    reason: Optional[str] = Field(
+        None, max_length=500, description="Reason for status change"
+    )
 
 
 class TenantConfigurationBase(BaseModel):
@@ -174,11 +179,15 @@ class TenantConfigurationBase(BaseModel):
     @classmethod
     def validate_category(cls, v: str) -> str:
         """Validate configuration category"""
-        clean_category = CommonValidators.validate_required_string(v, "Configuration category", 2, 100)
+        clean_category = CommonValidators.validate_required_string(
+            v, "Configuration category", 2, 100
+        )
 
         # Allow only alphanumeric and underscore for config categories
         if not ValidationPatterns.SLUG.match(clean_category.replace("_", "-")):
-            raise ValueError("Configuration category can only contain lowercase letters, numbers, and underscores")
+            raise ValueError(
+                "Configuration category can only contain lowercase letters, numbers, and underscores"
+            )
 
         return clean_category
 
@@ -186,13 +195,17 @@ class TenantConfigurationBase(BaseModel):
     @classmethod
     def validate_key(cls, v: str) -> str:
         """Validate configuration key"""
-        clean_key = CommonValidators.validate_required_string(v, "Configuration key", 1, 255)
+        clean_key = CommonValidators.validate_required_string(
+            v, "Configuration key", 1, 255
+        )
 
         # Allow alphanumeric, underscore, dot, and hyphen for config keys
         import re
 
         if not re.match(r"^[a-zA-Z0-9._-]+$", clean_key):
-            raise ValueError("Configuration key can only contain letters, numbers, dots, underscores, and hyphens")
+            raise ValueError(
+                "Configuration key can only contain letters, numbers, dots, underscores, and hyphens"
+            )
 
         return clean_key
 
@@ -207,7 +220,9 @@ class TenantConfigurationBase(BaseModel):
 
             # Basic security check - prevent script injection
             if "<script" in v.lower() or "javascript:" in v.lower():
-                raise ValueError("Configuration value contains potentially dangerous content")
+                raise ValueError(
+                    "Configuration value contains potentially dangerous content"
+                )
 
         elif isinstance(v, dict):
             # JSON object size limit
@@ -268,7 +283,9 @@ class TenantOnboardingRequest(BaseModel):
     tenant_info: TenantCreate
     deployment_region: str = Field("us-east-1", description="Deployment region")
     instance_size: str = Field("small", description="Instance size")
-    enabled_features: list[str] = Field(default_factory=list, description="Enabled features")
+    enabled_features: list[str] = Field(
+        default_factory=list, description="Enabled features"
+    )
 
     @field_validator("deployment_region")
     @classmethod
@@ -309,10 +326,14 @@ class TenantOnboardingRequest(BaseModel):
 
             # Feature name format validation
             if not ValidationPatterns.SLUG.match(clean_feature):
-                raise ValueError(f'Feature name "{feature}" contains invalid characters')
+                raise ValueError(
+                    f'Feature name "{feature}" contains invalid characters'
+                )
 
             if len(clean_feature) < 2 or len(clean_feature) > 50:
-                raise ValueError(f'Feature name "{feature}" must be between 2 and 50 characters')
+                raise ValueError(
+                    f'Feature name "{feature}" must be between 2 and 50 characters'
+                )
 
             clean_features.append(clean_feature)
 

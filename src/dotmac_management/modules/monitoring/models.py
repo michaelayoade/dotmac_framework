@@ -1,7 +1,5 @@
 """Monitoring database models for system health, metrics and alerts."""
 
-from dotmac_shared.db.mixins import AuditMixin, TenantMixin
-from dotmac_shared.db.models import Base
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -19,6 +17,9 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+from dotmac_shared.db.mixins import AuditMixin, TenantMixin
+from dotmac_shared.db.models import Base
 
 
 class HealthCheckStatus(str, Enum):
@@ -44,7 +45,9 @@ class ServiceComponent(Base, TenantMixin, AuditMixin):
 
     __tablename__ = "service_components"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
     name = Column(String(100), nullable=False)
     component_type = Column(String(50), nullable=False)
     description = Column(Text)
@@ -57,8 +60,12 @@ class ServiceComponent(Base, TenantMixin, AuditMixin):
     configuration = Column(JSON, default=dict)
     tags = Column(JSON, default=list)
 
-    health_checks = relationship("HealthCheck", back_populates="component", cascade="all, delete-orphan")
-    monitoring_alerts = relationship("MonitoringAlert", back_populates="component", cascade="all, delete-orphan")
+    health_checks = relationship(
+        "HealthCheck", back_populates="component", cascade="all, delete-orphan"
+    )
+    monitoring_alerts = relationship(
+        "MonitoringAlert", back_populates="component", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         UniqueConstraint("tenant_id", "name", name="uq_component_tenant_name"),
@@ -76,8 +83,12 @@ class HealthCheck(Base, TenantMixin, AuditMixin):
 
     __tablename__ = "health_checks"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    component_id = Column(UUID(as_uuid=True), ForeignKey("service_components.id"), nullable=False)
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
+    component_id = Column(
+        UUID(as_uuid=True), ForeignKey("service_components.id"), nullable=False
+    )
     check_timestamp = Column(DateTime, nullable=False, default=func.now())
     status = Column(Enum(HealthCheckStatus), nullable=False)
     response_time_ms = Column(Float)
@@ -93,7 +104,9 @@ class HealthCheck(Base, TenantMixin, AuditMixin):
         Index("idx_health_check_timestamp", "check_timestamp"),
         Index("idx_health_check_component", "component_id"),
         Index("idx_health_check_status", "status"),
-        Index("idx_health_check_component_timestamp", "component_id", "check_timestamp"),
+        Index(
+            "idx_health_check_component_timestamp", "component_id", "check_timestamp"
+        ),
     )
 
     def __repr__(self):
@@ -105,7 +118,9 @@ class SystemMetric(Base, TenantMixin, AuditMixin):
 
     __tablename__ = "system_metrics"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
     metric_name = Column(String(100), nullable=False)
     metric_value = Column(Float, nullable=False)
     unit = Column(String(20))
@@ -133,7 +148,9 @@ class PerformanceMetric(Base, TenantMixin, AuditMixin):
 
     __tablename__ = "performance_metrics"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
     endpoint = Column(String(200), nullable=False)
     method = Column(String(10), nullable=False)
     response_time_ms = Column(Float, nullable=False)
@@ -167,8 +184,12 @@ class MonitoringAlert(Base, TenantMixin, AuditMixin):
 
     __tablename__ = "monitoring_alerts"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    component_id = Column(UUID(as_uuid=True), ForeignKey("service_components.id"), nullable=False)
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
+    component_id = Column(
+        UUID(as_uuid=True), ForeignKey("service_components.id"), nullable=False
+    )
     alert_type = Column(String(50), nullable=False)
     severity = Column(Enum(AlertSeverity), nullable=False)
     title = Column(String(200), nullable=False)
@@ -186,7 +207,9 @@ class MonitoringAlert(Base, TenantMixin, AuditMixin):
     metadata = Column(JSON, default=dict)
 
     component = relationship("ServiceComponent", back_populates="monitoring_alerts")
-    alert_events = relationship("AlertEvent", back_populates="alert", cascade="all, delete-orphan")
+    alert_events = relationship(
+        "AlertEvent", back_populates="alert", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("idx_monitoring_alert_component", "component_id"),
@@ -205,8 +228,12 @@ class AlertEvent(Base, TenantMixin, AuditMixin):
 
     __tablename__ = "alert_events"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    alert_id = Column(UUID(as_uuid=True), ForeignKey("monitoring_alerts.id"), nullable=False)
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
+    alert_id = Column(
+        UUID(as_uuid=True), ForeignKey("monitoring_alerts.id"), nullable=False
+    )
     event_type = Column(String(50), nullable=False)
     event_timestamp = Column(DateTime, nullable=False, default=func.now())
     previous_state = Column(String(50))
@@ -235,7 +262,9 @@ class MonitoringDashboard(Base, TenantMixin, AuditMixin):
 
     __tablename__ = "monitoring_dashboards"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
     name = Column(String(100), nullable=False)
     description = Column(Text)
     dashboard_type = Column(String(50), nullable=False)
@@ -248,7 +277,9 @@ class MonitoringDashboard(Base, TenantMixin, AuditMixin):
     filters = Column(JSON, default=dict)
 
     __table_args__ = (
-        UniqueConstraint("tenant_id", "name", name="uq_monitoring_dashboard_tenant_name"),
+        UniqueConstraint(
+            "tenant_id", "name", name="uq_monitoring_dashboard_tenant_name"
+        ),
         Index("idx_monitoring_dashboard_type", "dashboard_type"),
         Index("idx_monitoring_dashboard_public", "is_public"),
         Index("idx_monitoring_dashboard_default", "is_default"),
@@ -263,19 +294,31 @@ class ServiceDependency(Base, TenantMixin, AuditMixin):
 
     __tablename__ = "service_dependencies"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    parent_component_id = Column(UUID(as_uuid=True), ForeignKey("service_components.id"), nullable=False)
-    child_component_id = Column(UUID(as_uuid=True), ForeignKey("service_components.id"), nullable=False)
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
+    parent_component_id = Column(
+        UUID(as_uuid=True), ForeignKey("service_components.id"), nullable=False
+    )
+    child_component_id = Column(
+        UUID(as_uuid=True), ForeignKey("service_components.id"), nullable=False
+    )
     dependency_type = Column(String(50), nullable=False)
     criticality = Column(String(20), nullable=False, default="medium")
     is_active = Column(Boolean, nullable=False, default=True)
     metadata = Column(JSON, default=dict)
 
-    parent_component = relationship("ServiceComponent", foreign_keys=[parent_component_id])
-    child_component = relationship("ServiceComponent", foreign_keys=[child_component_id])
+    parent_component = relationship(
+        "ServiceComponent", foreign_keys=[parent_component_id]
+    )
+    child_component = relationship(
+        "ServiceComponent", foreign_keys=[child_component_id]
+    )
 
     __table_args__ = (
-        UniqueConstraint("parent_component_id", "child_component_id", name="uq_service_dependency"),
+        UniqueConstraint(
+            "parent_component_id", "child_component_id", name="uq_service_dependency"
+        ),
         Index("idx_service_dependency_parent", "parent_component_id"),
         Index("idx_service_dependency_child", "child_component_id"),
         Index("idx_service_dependency_type", "dependency_type"),
@@ -290,7 +333,9 @@ class MonitoringReport(Base, TenantMixin, AuditMixin):
 
     __tablename__ = "monitoring_reports"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
     report_name = Column(String(100), nullable=False)
     report_type = Column(String(50), nullable=False)
     date_range_start = Column(DateTime, nullable=False)
@@ -313,9 +358,7 @@ class MonitoringReport(Base, TenantMixin, AuditMixin):
     )
 
     def __repr__(self):
-        return (
-            f"<MonitoringReport(id={self.id}, name={self.report_name}, type={self.report_type}, status={self.status})>"
-        )
+        return f"<MonitoringReport(id={self.id}, name={self.report_name}, type={self.report_type}, status={self.status})>"
 
 
 class MetricThreshold(Base, TenantMixin, AuditMixin):
@@ -323,7 +366,9 @@ class MetricThreshold(Base, TenantMixin, AuditMixin):
 
     __tablename__ = "metric_thresholds"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
     metric_name = Column(String(100), nullable=False)
     component_id = Column(UUID(as_uuid=True), ForeignKey("service_components.id"))
     threshold_type = Column(String(50), nullable=False)

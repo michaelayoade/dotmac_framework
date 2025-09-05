@@ -64,7 +64,9 @@ class SecureConfigManager:
                 self._openbao_client = None
                 self._adapter = None
 
-    async def get_secret(self, path: str, env_fallback: Optional[str] = None, required: bool = True) -> str:
+    async def get_secret(
+        self, path: str, env_fallback: Optional[str] = None, required: bool = True
+    ) -> str:
         """
         Get a secret from OpenBao with environment variable fallback.
 
@@ -91,7 +93,9 @@ class SecureConfigManager:
         # Try OpenBao first
         if self._adapter and OPENBAO_AVAILABLE:
             try:
-                secret_result = await self._adapter.get_secret(path=path, secret_type="application_secret")  # noqa: S106 - label for secret backend
+                secret_result = await self._adapter.get_secret(
+                    path=path, secret_type="application_secret"
+                )  # noqa: S106 - label for secret backend
                 if secret_result and hasattr(secret_result, "value"):
                     secret_value = secret_result.value
                     source = "openbao"
@@ -125,13 +129,17 @@ class SecureConfigManager:
 
         return secret_value
 
-    def get_secret_sync(self, path: str, env_fallback: Optional[str] = None, required: bool = True) -> str:
+    def get_secret_sync(
+        self, path: str, env_fallback: Optional[str] = None, required: bool = True
+    ) -> str:
         """
         Synchronous wrapper for get_secret for use in non-async contexts.
         """
         try:
             loop = asyncio.get_event_loop()
-            return loop.run_until_complete(self.get_secret(path, env_fallback, required))
+            return loop.run_until_complete(
+                self.get_secret(path, env_fallback, required)
+            )
         except RuntimeError:
             # No event loop running, create a new one
             return asyncio.run(self.get_secret(path, env_fallback, required))
@@ -152,7 +160,9 @@ class SecureConfigManager:
             return False
 
         try:
-            await self._adapter.store_secret(path=path, value=value, secret_type="application_secret")  # noqa: S106 - label for secret backend
+            await self._adapter.store_secret(
+                path=path, value=value, secret_type="application_secret"
+            )  # noqa: S106 - label for secret backend
 
             # Clear cache for this path
             if path in self._cache:
@@ -201,26 +211,34 @@ async def get_jwt_secret() -> str:
     This replaces the hardcoded 'your-jwt-secret-key' values.
     """
     config_manager = get_config_manager()
-    return await config_manager.get_secret(path="auth/jwt_secret_key", env_fallback="JWT_SECRET_KEY", required=True)
+    return await config_manager.get_secret(
+        path="auth/jwt_secret_key", env_fallback="JWT_SECRET_KEY", required=True
+    )
 
 
 def get_jwt_secret_sync() -> str:
     """Synchronous version of get_jwt_secret for middleware initialization"""
     config_manager = get_config_manager()
-    return config_manager.get_secret_sync(path="auth/jwt_secret_key", env_fallback="JWT_SECRET_KEY", required=True)
+    return config_manager.get_secret_sync(
+        path="auth/jwt_secret_key", env_fallback="JWT_SECRET_KEY", required=True
+    )
 
 
 async def get_database_url() -> str:
     """Get database URL from OpenBao or environment"""
     config_manager = get_config_manager()
-    return await config_manager.get_secret(path="database/primary_url", env_fallback="DATABASE_URL", required=True)
+    return await config_manager.get_secret(
+        path="database/primary_url", env_fallback="DATABASE_URL", required=True
+    )
 
 
 async def get_redis_url() -> str:
     """Get Redis URL from OpenBao or environment"""
     config_manager = get_config_manager()
     return (
-        await config_manager.get_secret(path="cache/redis_url", env_fallback="REDIS_URL", required=False)
+        await config_manager.get_secret(
+            path="cache/redis_url", env_fallback="REDIS_URL", required=False
+        )
         or "redis://localhost:6379/0"
     )
 

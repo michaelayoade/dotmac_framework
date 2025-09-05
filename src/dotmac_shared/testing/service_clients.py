@@ -51,22 +51,35 @@ class ISPServiceClient(ServiceClient):
     def __init__(self, base_url: str = "http://localhost:8001"):
         super().__init__(base_url, "isp_service")
 
-    async def create_service_plan(self, plan_data: dict[str, Any], journey_id: str) -> dict[str, Any]:
+    async def create_service_plan(
+        self, plan_data: dict[str, Any], journey_id: str
+    ) -> dict[str, Any]:
         """Create a service plan"""
-        response = await self.post("/api/service-plans", json=plan_data, headers={"X-Journey-ID": journey_id})
+        response = await self.post(
+            "/api/service-plans", json=plan_data, headers={"X-Journey-ID": journey_id}
+        )
         response.raise_for_status()
         return response.json()
 
-    async def create_subscription(self, subscription_data: dict[str, Any], journey_id: str) -> dict[str, Any]:
+    async def create_subscription(
+        self, subscription_data: dict[str, Any], journey_id: str
+    ) -> dict[str, Any]:
         """Create a service subscription"""
-        response = await self.post("/api/subscriptions", json=subscription_data, headers={"X-Journey-ID": journey_id})
+        response = await self.post(
+            "/api/subscriptions",
+            json=subscription_data,
+            headers={"X-Journey-ID": journey_id},
+        )
         response.raise_for_status()
         return response.json()
 
-    async def provision_service(self, subscription_id: str, journey_id: str) -> dict[str, Any]:
+    async def provision_service(
+        self, subscription_id: str, journey_id: str
+    ) -> dict[str, Any]:
         """Provision a service"""
         response = await self.post(
-            f"/api/subscriptions/{subscription_id}/provision", headers={"X-Journey-ID": journey_id}
+            f"/api/subscriptions/{subscription_id}/provision",
+            headers={"X-Journey-ID": journey_id},
         )
         response.raise_for_status()
         return response.json()
@@ -76,7 +89,9 @@ class ISPServiceClient(ServiceClient):
     ) -> dict[str, Any]:
         """Suspend a service"""
         response = await self.post(
-            f"/api/subscriptions/{subscription_id}/suspend", json=suspension_data, headers={"X-Journey-ID": journey_id}
+            f"/api/subscriptions/{subscription_id}/suspend",
+            json=suspension_data,
+            headers={"X-Journey-ID": journey_id},
         )
         response.raise_for_status()
         return response.json()
@@ -86,7 +101,9 @@ class ISPServiceClient(ServiceClient):
     ) -> dict[str, Any]:
         """Restore a suspended service"""
         response = await self.post(
-            f"/api/subscriptions/{subscription_id}/restore", json=restoration_data, headers={"X-Journey-ID": journey_id}
+            f"/api/subscriptions/{subscription_id}/restore",
+            json=restoration_data,
+            headers={"X-Journey-ID": journey_id},
         )
         response.raise_for_status()
         return response.json()
@@ -110,15 +127,27 @@ class CustomerServiceClient(ServiceClient):
     def __init__(self, base_url: str = "http://localhost:8003"):
         super().__init__(base_url, "customer_service")
 
-    async def register_customer(self, customer_data: dict[str, Any], journey_id: str) -> dict[str, Any]:
+    async def register_customer(
+        self, customer_data: dict[str, Any], journey_id: str
+    ) -> dict[str, Any]:
         """Register a new customer"""
-        response = await self.post("/api/customers/register", json=customer_data, headers={"X-Journey-ID": journey_id})
+        response = await self.post(
+            "/api/customers/register",
+            json=customer_data,
+            headers={"X-Journey-ID": journey_id},
+        )
         response.raise_for_status()
         return response.json()
 
-    async def request_service_upgrade(self, upgrade_data: dict[str, Any], journey_id: str) -> dict[str, Any]:
+    async def request_service_upgrade(
+        self, upgrade_data: dict[str, Any], journey_id: str
+    ) -> dict[str, Any]:
         """Request service upgrade"""
-        response = await self.post("/api/service-upgrades", json=upgrade_data, headers={"X-Journey-ID": journey_id})
+        response = await self.post(
+            "/api/service-upgrades",
+            json=upgrade_data,
+            headers={"X-Journey-ID": journey_id},
+        )
         response.raise_for_status()
         return response.json()
 
@@ -134,7 +163,9 @@ class ManagementServiceClient(ServiceClient):
     ) -> dict[str, Any]:
         """Approve an upgrade request"""
         response = await self.put(
-            f"/api/upgrade-requests/{request_id}/approve", json=approval_data, headers={"X-Journey-ID": journey_id}
+            f"/api/upgrade-requests/{request_id}/approve",
+            json=approval_data,
+            headers={"X-Journey-ID": journey_id},
         )
         response.raise_for_status()
         return response.json()
@@ -146,22 +177,37 @@ class BillingServiceClient(ServiceClient):
     def __init__(self, base_url: str = "http://localhost:8004"):
         super().__init__(base_url, "billing_service")
 
-    async def create_billing_account(self, account_data: dict[str, Any], journey_id: str) -> dict[str, Any]:
+    async def create_billing_account(
+        self, account_data: dict[str, Any], journey_id: str
+    ) -> dict[str, Any]:
         """Create billing account"""
-        response = await self.post("/api/billing-accounts", json=account_data, headers={"X-Journey-ID": journey_id})
+        response = await self.post(
+            "/api/billing-accounts",
+            json=account_data,
+            headers={"X-Journey-ID": journey_id},
+        )
         response.raise_for_status()
         return response.json()
 
-    async def generate_invoice(self, account_id: str, journey_id: str) -> dict[str, Any]:
+    async def generate_invoice(
+        self, account_id: str, journey_id: str
+    ) -> dict[str, Any]:
         """Generate invoice"""
-        response = await self.post(f"/api/billing-accounts/{account_id}/invoices", headers={"X-Journey-ID": journey_id})
+        response = await self.post(
+            f"/api/billing-accounts/{account_id}/invoices",
+            headers={"X-Journey-ID": journey_id},
+        )
         response.raise_for_status()
         return response.json()
 
-    async def process_payment(self, account_id: str, payment_data: dict[str, Any], journey_id: str) -> dict[str, Any]:
+    async def process_payment(
+        self, account_id: str, payment_data: dict[str, Any], journey_id: str
+    ) -> dict[str, Any]:
         """Process payment"""
         response = await self.post(
-            f"/api/billing-accounts/{account_id}/payments", json=payment_data, headers={"X-Journey-ID": journey_id}
+            f"/api/billing-accounts/{account_id}/payments",
+            json=payment_data,
+            headers={"X-Journey-ID": journey_id},
         )
         response.raise_for_status()
         return response.json()
@@ -183,7 +229,9 @@ class BillingServiceClient(ServiceClient):
     ) -> dict[str, Any]:
         """Process billing plan change"""
         response = await self.post(
-            f"/api/billing-accounts/{account_id}/plan-changes", json=change_data, headers={"X-Journey-ID": journey_id}
+            f"/api/billing-accounts/{account_id}/plan-changes",
+            json=change_data,
+            headers={"X-Journey-ID": journey_id},
         )
         response.raise_for_status()
         return response.json()
@@ -195,9 +243,13 @@ class NotificationServiceClient(ServiceClient):
     def __init__(self, base_url: str = "http://localhost:8080"):
         super().__init__(base_url, "notification_service")
 
-    async def get_notifications_by_journey(self, journey_id: str) -> list[dict[str, Any]]:
+    async def get_notifications_by_journey(
+        self, journey_id: str
+    ) -> list[dict[str, Any]]:
         """Get notifications by journey ID"""
-        response = await self.get("/api/notifications", params={"journey_id": journey_id})
+        response = await self.get(
+            "/api/notifications", params={"journey_id": journey_id}
+        )
         response.raise_for_status()
         return response.json()
 

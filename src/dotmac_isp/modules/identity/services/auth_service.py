@@ -83,14 +83,19 @@ class AuthService(BaseService):
                 return None
 
             # Create session
-            session_data = await self._create_user_session(user, portal_type, ip_address, user_agent)
+            session_data = await self._create_user_session(
+                user, portal_type, ip_address, user_agent
+            )
 
             # Update user login info
             await self.user_repo.update_last_login(user.id)
 
             # Log successful authentication
             await self._log_successful_attempt(
-                email=email, ip_address=ip_address, user_agent=user_agent, portal_type=portal_type
+                email=email,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                portal_type=portal_type,
             )
 
             return session_data
@@ -140,7 +145,11 @@ class AuthService(BaseService):
         return password_hash is not None and len(password) >= 8
 
     async def _create_user_session(
-        self, user: User, portal_type: str, ip_address: Optional[str], user_agent: Optional[str]
+        self,
+        user: User,
+        portal_type: str,
+        ip_address: Optional[str],
+        user_agent: Optional[str],
     ) -> dict[str, Any]:
         """Create new user session."""
         session_id = self.session_manager.generate_session_id()

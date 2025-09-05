@@ -14,24 +14,12 @@ This package consolidates captive portal functionality across the DotMac ecosyst
 replacing scattered implementations with a unified, production-ready solution.
 """
 
-from .auth import (
-    AuthenticationManager,
-    RADIUSAuth,
-    SocialAuth,
-    VoucherAuth,
-)
+from .auth import AuthenticationManager, RADIUSAuth, SocialAuth, VoucherAuth
 from .billing import BillingIntegration, PaymentProcessor, UsageTracker
 from .core import CaptivePortal, CaptivePortalConfig
 from .customization import BrandingConfig, PortalCustomizer, Theme
 from .guest_manager import GuestNetwork, GuestNetworkManager
-from .models import (
-    AuthMethod,
-    BillingPlan,
-    GuestUser,
-    Portal,
-    Session,
-    Voucher,
-)
+from .models import AuthMethod, BillingPlan, GuestUser, Portal, Session, Voucher
 
 __version__ = "1.0.0"
 __author__ = "DotMac Development Team"

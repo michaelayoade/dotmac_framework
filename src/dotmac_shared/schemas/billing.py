@@ -12,60 +12,55 @@ from dotmac_business_logic.billing.core.models import (
     SubscriptionStatus,
     TaxType,
 )
-from dotmac_business_logic.billing.schemas.billing_schemas import (
+from dotmac_business_logic.billing.schemas.billing_schemas import (  # Base configuration; Billing Plan schemas; Customer schemas; Invoice schemas; Payment schemas; Analytics schemas; Subscription schemas; Usage Record schemas
     BillingAnalyticsResponse,
-    # Base configuration
     BillingBaseSchema,
-    # Billing Plan schemas
     BillingPlanBase,
     BillingPlanCreate,
     BillingPlanListResponse,
     BillingPlanResponse,
     BillingPlanUpdate,
-    # Customer schemas
-    CustomerCreate,
-    CustomerListResponse,
-    CustomerMetricsResponse,
-    InvoiceBase,
-    InvoiceCreate,
-    # Invoice schemas
-    InvoiceLineItemBase,
-    InvoiceLineItemResponse,
-    InvoiceListResponse,
-    InvoiceResponse,
-    InvoiceUpdate,
-    # Payment schemas
-    PaymentBase,
-    PaymentCreate,
-    PaymentListResponse,
-    PaymentResponse,
-    # Analytics schemas
-    RevenueMetricsResponse,
-    # Subscription schemas
-    SubscriptionBase,
-    SubscriptionCreate,
-    SubscriptionListResponse,
-    SubscriptionMetricsResponse,
-    SubscriptionResponse,
-    SubscriptionUpdate,
-    # Usage Record schemas
-    UsageRecordBase,
-    UsageRecordCreate,
-    UsageRecordListResponse,
-    UsageRecordResponse,
 )
 from dotmac_business_logic.billing.schemas.billing_schemas import (
-    # Customer schemas
-    CustomerBase as BillingCustomerBase,
+    CustomerBase as BillingCustomerBase,  # Customer schemas
 )
+from dotmac_business_logic.billing.schemas.billing_schemas import CustomerCreate
 from dotmac_business_logic.billing.schemas.billing_schemas import (
     CustomerCreate as BillingCustomerCreate,
+)
+from dotmac_business_logic.billing.schemas.billing_schemas import (  # Base configuration; Billing Plan schemas; Customer schemas; Invoice schemas; Payment schemas; Analytics schemas; Subscription schemas; Usage Record schemas
+    CustomerListResponse,
+    CustomerMetricsResponse,
 )
 from dotmac_business_logic.billing.schemas.billing_schemas import (
     CustomerResponse as BillingCustomerResponse,
 )
 from dotmac_business_logic.billing.schemas.billing_schemas import (
     CustomerUpdate as BillingCustomerUpdate,
+)
+from dotmac_business_logic.billing.schemas.billing_schemas import (  # Base configuration; Billing Plan schemas; Customer schemas; Invoice schemas; Payment schemas; Analytics schemas; Subscription schemas; Usage Record schemas
+    InvoiceBase,
+    InvoiceCreate,
+    InvoiceLineItemBase,
+    InvoiceLineItemResponse,
+    InvoiceListResponse,
+    InvoiceResponse,
+    InvoiceUpdate,
+    PaymentBase,
+    PaymentCreate,
+    PaymentListResponse,
+    PaymentResponse,
+    RevenueMetricsResponse,
+    SubscriptionBase,
+    SubscriptionCreate,
+    SubscriptionListResponse,
+    SubscriptionMetricsResponse,
+    SubscriptionResponse,
+    SubscriptionUpdate,
+    UsageRecordBase,
+    UsageRecordCreate,
+    UsageRecordListResponse,
+    UsageRecordResponse,
 )
 
 # Compatibility aliases (temporary)

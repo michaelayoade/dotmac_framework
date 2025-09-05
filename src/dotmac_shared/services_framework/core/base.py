@@ -93,10 +93,17 @@ class BaseService(ABC):
         """Check if configuration key exists."""
         return key in self.config
 
-    async def _set_status(self, status: ServiceStatus, message: str = "", details: Optional[dict[str, Any]] = None):
+    async def _set_status(
+        self,
+        status: ServiceStatus,
+        message: str = "",
+        details: Optional[dict[str, Any]] = None,
+    ):
         """Update service status and health."""
         self.status = status
-        self._health = ServiceHealth(status=status, message=message, details=details or {})
+        self._health = ServiceHealth(
+            status=status, message=message, details=details or {}
+        )
 
         if status == ServiceStatus.ERROR:
             self.logger.error(f"Service {self.name} error: {message}")
@@ -128,7 +135,12 @@ class BaseService(ABC):
 class ConfigurableService(BaseService):
     """Base service with configuration validation."""
 
-    def __init__(self, name: str, config: Optional[dict[str, Any]] = None, required_config: Optional[list] = None):
+    def __init__(
+        self,
+        name: str,
+        config: Optional[dict[str, Any]] = None,
+        required_config: Optional[list] = None,
+    ):
         """__init__ service method."""
         super().__init__(name, config)
         self.required_config = required_config or []
@@ -151,7 +163,9 @@ class ConfigurableService(BaseService):
             if invalid_keys:
                 error_details["invalid_config"] = invalid_keys
 
-            self.logger.error(f"Service {self.name} configuration validation failed: {error_details}")
+            self.logger.error(
+                f"Service {self.name} configuration validation failed: {error_details}"
+            )
             return False
 
         return True
@@ -177,7 +191,9 @@ class ConfigurableService(BaseService):
 
     async def initialize(self) -> bool:
         """Initialize with config validation."""
-        await self._set_status(ServiceStatus.INITIALIZING, f"Validating configuration for {self.name}")
+        await self._set_status(
+            ServiceStatus.INITIALIZING, f"Validating configuration for {self.name}"
+        )
 
         if not self.validate_config():
             config_status = self.get_required_config_status()
@@ -221,7 +237,12 @@ class ConfigurableService(BaseService):
 class StatefulService(ConfigurableService):
     """Base service with state management capabilities."""
 
-    def __init__(self, name: str, config: Optional[dict[str, Any]] = None, required_config: Optional[list] = None):
+    def __init__(
+        self,
+        name: str,
+        config: Optional[dict[str, Any]] = None,
+        required_config: Optional[list] = None,
+    ):
         """__init__ service method."""
         super().__init__(name, config, required_config)
         self._service_state: dict[str, Any] = {}
@@ -252,7 +273,11 @@ class StatefulService(ConfigurableService):
             "state_keys": list(self._service_state.keys()),
             "initialization_time": self._initialization_time,
             "last_activity": self._last_activity,
-            "uptime_seconds": ((time.time() - self._initialization_time) if self._initialization_time else None),
+            "uptime_seconds": (
+                (time.time() - self._initialization_time)
+                if self._initialization_time
+                else None
+            ),
         }
 
     async def _initialize_service(self) -> bool:

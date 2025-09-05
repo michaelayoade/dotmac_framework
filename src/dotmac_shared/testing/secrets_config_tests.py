@@ -20,6 +20,7 @@ from uuid import uuid4
 
 import pytest
 from cryptography.fernet import Fernet
+
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import SecurityError
 from dotmac.platform.auth import JWTService
@@ -56,7 +57,13 @@ class SecretsConfigE2E:
         5. Complete rotation and invalidate old key
         """
         test_start = time.time()
-        results = {"test_name": "jwt_secret_rotation", "status": "running", "steps": [], "duration": 0, "errors": []}
+        results = {
+            "test_name": "jwt_secret_rotation",
+            "status": "running",
+            "steps": [],
+            "duration": 0,
+            "errors": [],
+        }
 
         try:
             # Step 1: Generate initial JWT secret and create tokens
@@ -84,7 +91,9 @@ class SecretsConfigE2E:
             results["steps"].append(
                 {
                     "name": "initial_token_validation",
-                    "status": "completed" if validation_result["all_valid"] else "failed",
+                    "status": "completed"
+                    if validation_result["all_valid"]
+                    else "failed",
                     "duration": validation_result.get("duration", 0),
                     "details": validation_result,
                 }
@@ -95,7 +104,9 @@ class SecretsConfigE2E:
 
             # Step 3: Generate new JWT secret (rotation begins)
             new_secret = await self._generate_jwt_secret()
-            rotation_result = await self._initiate_secret_rotation(initial_secret["secret"], new_secret["secret"])
+            rotation_result = await self._initiate_secret_rotation(
+                initial_secret["secret"], new_secret["secret"]
+            )
 
             results["steps"].append(
                 {
@@ -114,7 +125,9 @@ class SecretsConfigE2E:
             results["steps"].append(
                 {
                     "name": "dual_key_validation",
-                    "status": "completed" if dual_validation_result["success"] else "failed",
+                    "status": "completed"
+                    if dual_validation_result["success"]
+                    else "failed",
                     "duration": dual_validation_result.get("duration", 0),
                     "details": dual_validation_result,
                 }
@@ -129,12 +142,17 @@ class SecretsConfigE2E:
                     "name": "new_token_generation",
                     "status": "completed",
                     "duration": new_tokens.get("duration", 0),
-                    "details": {"secret_id": new_secret["secret_id"], "tokens_created": len(new_tokens["tokens"])},
+                    "details": {
+                        "secret_id": new_secret["secret_id"],
+                        "tokens_created": len(new_tokens["tokens"]),
+                    },
                 }
             )
 
             # Step 6: Complete rotation (invalidate old secret)
-            completion_result = await self._complete_secret_rotation(initial_secret["secret"])
+            completion_result = await self._complete_secret_rotation(
+                initial_secret["secret"]
+            )
 
             results["steps"].append(
                 {
@@ -150,7 +168,9 @@ class SecretsConfigE2E:
             results["steps"].append(
                 {
                     "name": "old_token_invalidation",
-                    "status": "completed" if not old_token_validation["all_valid"] else "failed",
+                    "status": "completed"
+                    if not old_token_validation["all_valid"]
+                    else "failed",
                     "duration": old_token_validation.get("duration", 0),
                     "details": old_token_validation,
                 }
@@ -181,12 +201,20 @@ class SecretsConfigE2E:
         4. Verify session continuity
         """
         test_start = time.time()
-        results = {"test_name": "cookie_secret_rotation", "status": "running", "steps": [], "duration": 0, "errors": []}
+        results = {
+            "test_name": "cookie_secret_rotation",
+            "status": "running",
+            "steps": [],
+            "duration": 0,
+            "errors": [],
+        }
 
         try:
             # Step 1: Generate initial cookie secret
             initial_cookie_secret = await self._generate_cookie_secret()
-            test_sessions = await self._create_test_sessions(initial_cookie_secret["secret"])
+            test_sessions = await self._create_test_sessions(
+                initial_cookie_secret["secret"]
+            )
 
             results["steps"].append(
                 {
@@ -217,20 +245,26 @@ class SecretsConfigE2E:
 
             # Step 3: Test session validation during transition
             session_validation = await self._validate_sessions_during_rotation(
-                test_sessions["sessions"], initial_cookie_secret["secret"], new_cookie_secret["secret"]
+                test_sessions["sessions"],
+                initial_cookie_secret["secret"],
+                new_cookie_secret["secret"],
             )
 
             results["steps"].append(
                 {
                     "name": "session_validation_transition",
-                    "status": "completed" if session_validation["success"] else "failed",
+                    "status": "completed"
+                    if session_validation["success"]
+                    else "failed",
                     "duration": session_validation.get("duration", 0),
                     "details": session_validation,
                 }
             )
 
             # Step 4: Complete cookie rotation
-            cookie_completion = await self._complete_cookie_rotation(initial_cookie_secret["secret"])
+            cookie_completion = await self._complete_cookie_rotation(
+                initial_cookie_secret["secret"]
+            )
 
             results["steps"].append(
                 {
@@ -267,7 +301,13 @@ class SecretsConfigE2E:
         5. Environment deployment
         """
         test_start = time.time()
-        results = {"test_name": "environment_templating", "status": "running", "steps": [], "duration": 0, "errors": []}
+        results = {
+            "test_name": "environment_templating",
+            "status": "running",
+            "steps": [],
+            "duration": 0,
+            "errors": [],
+        }
 
         try:
             # Step 1: Create base configuration template
@@ -286,7 +326,9 @@ class SecretsConfigE2E:
             )
 
             # Step 2: Generate tenant-specific configuration
-            tenant_config = await self._generate_tenant_config(base_template["template"])
+            tenant_config = await self._generate_tenant_config(
+                base_template["template"]
+            )
             results["steps"].append(
                 {
                     "name": "tenant_config_generation",
@@ -297,7 +339,9 @@ class SecretsConfigE2E:
             )
 
             # Step 3: Inject secrets into configuration
-            secret_injection = await self._inject_secrets_into_config(tenant_config["config"])
+            secret_injection = await self._inject_secrets_into_config(
+                tenant_config["config"]
+            )
             results["steps"].append(
                 {
                     "name": "secret_injection",
@@ -308,7 +352,9 @@ class SecretsConfigE2E:
             )
 
             # Step 4: Validate final configuration
-            config_validation = await self._validate_final_configuration(secret_injection["final_config"])
+            config_validation = await self._validate_final_configuration(
+                secret_injection["final_config"]
+            )
             results["steps"].append(
                 {
                     "name": "configuration_validation",
@@ -319,7 +365,9 @@ class SecretsConfigE2E:
             )
 
             # Step 5: Deploy configuration to environment
-            deployment_result = await self._deploy_configuration(secret_injection["final_config"])
+            deployment_result = await self._deploy_configuration(
+                secret_injection["final_config"]
+            )
             results["steps"].append(
                 {
                     "name": "configuration_deployment",
@@ -355,7 +403,13 @@ class SecretsConfigE2E:
         5. Remediation recommendations
         """
         test_start = time.time()
-        results = {"test_name": "config_drift_detection", "status": "running", "steps": [], "duration": 0, "errors": []}
+        results = {
+            "test_name": "config_drift_detection",
+            "status": "running",
+            "steps": [],
+            "duration": 0,
+            "errors": [],
+        }
 
         try:
             # Step 1: Create baseline configuration snapshot
@@ -374,7 +428,9 @@ class SecretsConfigE2E:
             )
 
             # Step 2: Simulate configuration changes (drift)
-            drift_simulation = await self._simulate_config_drift(baseline_snapshot["config_items"])
+            drift_simulation = await self._simulate_config_drift(
+                baseline_snapshot["config_items"]
+            )
             results["steps"].append(
                 {
                     "name": "drift_simulation",
@@ -395,14 +451,18 @@ class SecretsConfigE2E:
             results["steps"].append(
                 {
                     "name": "drift_detection",
-                    "status": "completed" if drift_detection["drift_found"] else "failed",
+                    "status": "completed"
+                    if drift_detection["drift_found"]
+                    else "failed",
                     "duration": drift_detection.get("duration", 0),
                     "details": drift_detection,
                 }
             )
 
             # Step 4: Generate drift report
-            drift_report = await self._generate_drift_report(drift_detection["drift_items"])
+            drift_report = await self._generate_drift_report(
+                drift_detection["drift_items"]
+            )
             results["steps"].append(
                 {
                     "name": "drift_reporting",
@@ -417,7 +477,9 @@ class SecretsConfigE2E:
             )
 
             # Step 5: Test automatic remediation suggestions
-            remediation = await self._generate_remediation_plan(drift_detection["drift_items"])
+            remediation = await self._generate_remediation_plan(
+                drift_detection["drift_items"]
+            )
             results["steps"].append(
                 {
                     "name": "remediation_planning",
@@ -472,14 +534,18 @@ class SecretsConfigE2E:
 
             # Generate summary
             total_tests = len(suite_results["tests"])
-            passed_tests = sum(1 for t in suite_results["tests"] if t.get("success", False))
+            passed_tests = sum(
+                1 for t in suite_results["tests"] if t.get("success", False)
+            )
             failed_tests = total_tests - passed_tests
 
             suite_results["summary"] = {
                 "total": total_tests,
                 "passed": passed_tests,
                 "failed": failed_tests,
-                "success_rate": (passed_tests / total_tests) * 100 if total_tests > 0 else 0,
+                "success_rate": (passed_tests / total_tests) * 100
+                if total_tests > 0
+                else 0,
             }
 
             suite_results["status"] = "completed" if failed_tests == 0 else "failed"
@@ -516,7 +582,11 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_test_tokens(self, user_id: str) -> dict[str, Any]:
         """Create test JWT tokens for validation."""
@@ -534,17 +604,28 @@ class SecretsConfigE2E:
                     "tenant_id": self.test_tenant_id,
                     "type": token_type,
                     "issued_at": datetime.now(timezone.utc).isoformat(),
-                    "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
+                    "expires_at": (
+                        datetime.now(timezone.utc) + timedelta(hours=24)
+                    ).isoformat(),
                 }
 
                 # Generate token using JWT service
                 token = self.jwt_service.encode_token(token_data)
                 tokens.append({"type": token_type, "token": token, "data": token_data})
 
-            return {"success": True, "tokens": tokens, "count": len(tokens), "duration": time.time() - start_time}
+            return {
+                "success": True,
+                "tokens": tokens,
+                "count": len(tokens),
+                "duration": time.time() - start_time,
+            }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_tokens(self, tokens: list[dict[str, Any]]) -> dict[str, Any]:
         """Validate JWT tokens."""
@@ -557,9 +638,21 @@ class SecretsConfigE2E:
                 try:
                     # Validate token
                     decoded = self.jwt_service.decode_token(token_info["token"])
-                    validation_results.append({"token_type": token_info["type"], "valid": True, "decoded": decoded})
+                    validation_results.append(
+                        {
+                            "token_type": token_info["type"],
+                            "valid": True,
+                            "decoded": decoded,
+                        }
+                    )
                 except Exception as e:
-                    validation_results.append({"token_type": token_info["type"], "valid": False, "error": str(e)})
+                    validation_results.append(
+                        {
+                            "token_type": token_info["type"],
+                            "valid": False,
+                            "error": str(e),
+                        }
+                    )
 
             all_valid = all(result["valid"] for result in validation_results)
 
@@ -572,9 +665,15 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"all_valid": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "all_valid": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _initiate_secret_rotation(self, old_secret: str, new_secret: str) -> dict[str, Any]:
+    async def _initiate_secret_rotation(
+        self, old_secret: str, new_secret: str
+    ) -> dict[str, Any]:
         """Initiate JWT secret rotation process."""
         start_time = time.time()
 
@@ -598,9 +697,15 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _test_dual_key_validation(self, tokens: list[dict], old_secret: str, new_secret: str) -> dict[str, Any]:
+    async def _test_dual_key_validation(
+        self, tokens: list[dict], old_secret: str, new_secret: str
+    ) -> dict[str, Any]:
         """Test dual-key validation during rotation period."""
         start_time = time.time()
 
@@ -636,7 +741,11 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _complete_secret_rotation(self, old_secret: str) -> dict[str, Any]:
         """Complete JWT secret rotation by invalidating old secret."""
@@ -659,7 +768,11 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _generate_cookie_secret(self) -> dict[str, Any]:
         """Generate new cookie signing secret."""
@@ -671,10 +784,19 @@ class SecretsConfigE2E:
 
             self.test_secrets[f"cookie_{secret_id}"] = secret_key
 
-            return {"success": True, "secret_id": secret_id, "secret": secret_key, "duration": time.time() - start_time}
+            return {
+                "success": True,
+                "secret_id": secret_id,
+                "secret": secret_key,
+                "duration": time.time() - start_time,
+            }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_test_sessions(self, cookie_secret: str) -> dict[str, Any]:
         """Create test session cookies."""
@@ -690,20 +812,35 @@ class SecretsConfigE2E:
                     "user_id": str(uuid4()),
                     "tenant_id": self.test_tenant_id,
                     "created_at": datetime.now(timezone.utc).isoformat(),
-                    "expires_at": (datetime.now(timezone.utc) + timedelta(hours=8)).isoformat(),
+                    "expires_at": (
+                        datetime.now(timezone.utc) + timedelta(hours=8)
+                    ).isoformat(),
                 }
 
                 # Sign session data (mock implementation)
-                session_signature = hashlib.sha256((json.dumps(session_data) + cookie_secret).encode()).hexdigest()
+                session_signature = hashlib.sha256(
+                    (json.dumps(session_data) + cookie_secret).encode()
+                ).hexdigest()
 
                 sessions.append({"data": session_data, "signature": session_signature})
 
-            return {"success": True, "sessions": sessions, "count": len(sessions), "duration": time.time() - start_time}
+            return {
+                "success": True,
+                "sessions": sessions,
+                "count": len(sessions),
+                "duration": time.time() - start_time,
+            }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _initiate_cookie_rotation(self, old_secret: str, new_secret: str) -> dict[str, Any]:
+    async def _initiate_cookie_rotation(
+        self, old_secret: str, new_secret: str
+    ) -> dict[str, Any]:
         """Initiate cookie secret rotation."""
         start_time = time.time()
 
@@ -719,7 +856,11 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _validate_sessions_during_rotation(
         self, sessions: list[dict], old_secret: str, new_secret: str
@@ -732,7 +873,9 @@ class SecretsConfigE2E:
 
             for session in sessions:
                 # Validate with old secret
-                expected_sig_old = hashlib.sha256((json.dumps(session["data"]) + old_secret).encode()).hexdigest()
+                expected_sig_old = hashlib.sha256(
+                    (json.dumps(session["data"]) + old_secret).encode()
+                ).hexdigest()
 
                 old_valid = session["signature"] == expected_sig_old
 
@@ -752,7 +895,11 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _complete_cookie_rotation(self, old_secret: str) -> dict[str, Any]:
         """Complete cookie secret rotation."""
@@ -769,7 +916,11 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_base_config_template(self) -> dict[str, Any]:
         """Create base configuration template."""
@@ -784,8 +935,16 @@ class SecretsConfigE2E:
                     "user": "{{DB_USER}}",
                     "password": "{{DB_PASSWORD}}",
                 },
-                "redis": {"host": "{{REDIS_HOST}}", "port": "{{REDIS_PORT}}", "password": "{{REDIS_PASSWORD}}"},
-                "jwt": {"secret": "{{JWT_SECRET}}", "algorithm": "HS256", "expiry": "24h"},
+                "redis": {
+                    "host": "{{REDIS_HOST}}",
+                    "port": "{{REDIS_PORT}}",
+                    "password": "{{REDIS_PASSWORD}}",
+                },
+                "jwt": {
+                    "secret": "{{JWT_SECRET}}",
+                    "algorithm": "HS256",
+                    "expiry": "24h",
+                },
                 "smtp": {
                     "host": "{{SMTP_HOST}}",
                     "port": "{{SMTP_PORT}}",
@@ -816,7 +975,11 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _generate_tenant_config(self, template: dict[str, Any]) -> dict[str, Any]:
         """Generate tenant-specific configuration from template."""
@@ -853,9 +1016,15 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _inject_secrets_into_config(self, config: dict[str, Any]) -> dict[str, Any]:
+    async def _inject_secrets_into_config(
+        self, config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Inject secrets into configuration."""
         start_time = time.time()
 
@@ -885,9 +1054,15 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _validate_final_configuration(self, config: dict[str, Any]) -> dict[str, Any]:
+    async def _validate_final_configuration(
+        self, config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate final configuration."""
         start_time = time.time()
 
@@ -903,7 +1078,9 @@ class SecretsConfigE2E:
             # Check for remaining placeholders
             config_str = json.dumps(config)
             if "{{" in config_str:
-                validation_errors.append("Configuration contains unresolved placeholders")
+                validation_errors.append(
+                    "Configuration contains unresolved placeholders"
+                )
 
             # Validate database configuration
             db_config = config.get("database", {})
@@ -920,7 +1097,11 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"valid": False, "errors": [str(e)], "duration": time.time() - start_time}
+            return {
+                "valid": False,
+                "errors": [str(e)],
+                "duration": time.time() - start_time,
+            }
 
     async def _deploy_configuration(self, config: dict[str, Any]) -> dict[str, Any]:
         """Deploy configuration to environment."""
@@ -942,7 +1123,11 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
     async def _create_config_baseline(self) -> dict[str, Any]:
         """Create configuration baseline snapshot."""
@@ -956,9 +1141,18 @@ class SecretsConfigE2E:
                     "version": "1.0.0",
                     "environment": "production",
                 },
-                "database": {"host": "db.example.com", "port": 5432, "ssl_enabled": True, "pool_size": 10},
+                "database": {
+                    "host": "db.example.com",
+                    "port": 5432,
+                    "ssl_enabled": True,
+                    "pool_size": 10,
+                },
                 "redis": {"host": "redis.example.com", "port": 6379, "timeout": 5},
-                "monitoring": {"enabled": True, "metrics_interval": 60, "alerts_enabled": True},
+                "monitoring": {
+                    "enabled": True,
+                    "metrics_interval": 60,
+                    "alerts_enabled": True,
+                },
             }
 
             # Calculate checksum
@@ -976,9 +1170,15 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _simulate_config_drift(self, baseline_config: dict[str, Any]) -> dict[str, Any]:
+    async def _simulate_config_drift(
+        self, baseline_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Simulate configuration drift."""
         start_time = time.time()
 
@@ -991,23 +1191,42 @@ class SecretsConfigE2E:
 
             # 1. Value change
             modified_config["database"]["pool_size"] = 20  # Changed from 10
-            changes.append({"type": "value_change", "path": "database.pool_size", "old_value": 10, "new_value": 20})
+            changes.append(
+                {
+                    "type": "value_change",
+                    "path": "database.pool_size",
+                    "old_value": 10,
+                    "new_value": 20,
+                }
+            )
             change_types.add("value_change")
 
             # 2. New field addition
             modified_config["database"]["backup_enabled"] = True
-            changes.append({"type": "field_added", "path": "database.backup_enabled", "new_value": True})
+            changes.append(
+                {
+                    "type": "field_added",
+                    "path": "database.backup_enabled",
+                    "new_value": True,
+                }
+            )
             change_types.add("field_added")
 
             # 3. Field removal
             del modified_config["redis"]["timeout"]
-            changes.append({"type": "field_removed", "path": "redis.timeout", "old_value": 5})
+            changes.append(
+                {"type": "field_removed", "path": "redis.timeout", "old_value": 5}
+            )
             change_types.add("field_removed")
 
             # 4. Section addition
             modified_config["logging"] = {"level": "INFO", "format": "json"}
             changes.append(
-                {"type": "section_added", "path": "logging", "new_value": {"level": "INFO", "format": "json"}}
+                {
+                    "type": "section_added",
+                    "path": "logging",
+                    "new_value": {"level": "INFO", "format": "json"},
+                }
             )
             change_types.add("section_added")
 
@@ -1022,9 +1241,15 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _detect_config_drift(self, baseline: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
+    async def _detect_config_drift(
+        self, baseline: dict[str, Any], current: dict[str, Any]
+    ) -> dict[str, Any]:
         """Detect configuration drift between baseline and current."""
         start_time = time.time()
 
@@ -1059,7 +1284,9 @@ class SecretsConfigE2E:
                                 }
                             )
                         elif base_obj[key] != curr_obj[key]:
-                            if isinstance(base_obj[key], dict) or isinstance(curr_obj[key], dict):
+                            if isinstance(base_obj[key], dict) or isinstance(
+                                curr_obj[key], dict
+                            ):
                                 compare_configs(base_obj[key], curr_obj[key], new_path)
                             else:
                                 drift_items.append(
@@ -1077,14 +1304,24 @@ class SecretsConfigE2E:
                 "drift_found": len(drift_items) > 0,
                 "drift_items": drift_items,
                 "drift_count": len(drift_items),
-                "severity": "high" if len(drift_items) > 5 else "medium" if len(drift_items) > 2 else "low",
+                "severity": "high"
+                if len(drift_items) > 5
+                else "medium"
+                if len(drift_items) > 2
+                else "low",
                 "duration": time.time() - start_time,
             }
 
         except Exception as e:
-            return {"drift_found": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "drift_found": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _generate_drift_report(self, drift_items: list[dict[str, Any]]) -> dict[str, Any]:
+    async def _generate_drift_report(
+        self, drift_items: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Generate configuration drift report."""
         start_time = time.time()
 
@@ -1101,7 +1338,9 @@ class SecretsConfigE2E:
                     categories["critical"].append(item)
                 elif drift_type == "removed" and "database" in path:
                     categories["critical"].append(item)
-                elif drift_type == "changed" and any(x in path for x in ["port", "host", "timeout"]):
+                elif drift_type == "changed" and any(
+                    x in path for x in ["port", "host", "timeout"]
+                ):
                     categories["warning"].append(item)
                 else:
                     categories["info"].append(item)
@@ -1109,13 +1348,25 @@ class SecretsConfigE2E:
             # Generate recommendations
             recommendations = []
             if categories["critical"]:
-                recommendations.append("Immediate attention required for security-related changes")
+                recommendations.append(
+                    "Immediate attention required for security-related changes"
+                )
             if categories["warning"]:
-                recommendations.append("Review configuration changes that may impact connectivity")
+                recommendations.append(
+                    "Review configuration changes that may impact connectivity"
+                )
             if categories["info"]:
-                recommendations.append("Monitor informational changes for unexpected modifications")
+                recommendations.append(
+                    "Monitor informational changes for unexpected modifications"
+                )
 
-            severity = "critical" if categories["critical"] else "warning" if categories["warning"] else "info"
+            severity = (
+                "critical"
+                if categories["critical"]
+                else "warning"
+                if categories["warning"]
+                else "info"
+            )
 
             return {
                 "report_id": str(uuid4()),
@@ -1128,9 +1379,15 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
-    async def _generate_remediation_plan(self, drift_items: list[dict[str, Any]]) -> dict[str, Any]:
+    async def _generate_remediation_plan(
+        self, drift_items: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Generate automated remediation plan for drift items."""
         start_time = time.time()
 
@@ -1142,7 +1399,9 @@ class SecretsConfigE2E:
             for item in drift_items:
                 if item["type"] == "added":
                     # New configuration items - may be auto-removable
-                    if not any(x in item["path"] for x in ["password", "secret", "key"]):
+                    if not any(
+                        x in item["path"] for x in ["password", "secret", "key"]
+                    ):
                         remediation_steps.append(
                             {
                                 "action": "remove_config",
@@ -1210,7 +1469,11 @@ class SecretsConfigE2E:
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "duration": time.time() - start_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "duration": time.time() - start_time,
+            }
 
 
 # Pytest test functions
@@ -1223,7 +1486,9 @@ async def test_secrets_config_management_e2e():
 
     # Assert overall success
     assert results["status"] == "completed", f"Test suite failed: {results}"
-    assert results["summary"]["success_rate"] >= 75, f"Success rate too low: {results['summary']}"
+    assert (
+        results["summary"]["success_rate"] >= 75
+    ), f"Success rate too low: {results['summary']}"
 
     # Log results
     logger.info("\nSecrets/Config Test Results:")
@@ -1269,4 +1534,9 @@ async def test_config_drift_only():
 
 
 # Export main test class
-__all__ = ["SecretsConfigE2E", "test_secrets_config_management_e2e", "test_jwt_rotation_only", "test_config_drift_only"]
+__all__ = [
+    "SecretsConfigE2E",
+    "test_secrets_config_management_e2e",
+    "test_jwt_rotation_only",
+    "test_config_drift_only",
+]

@@ -11,6 +11,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
+from sqlalchemy.orm import Session
+
 from dotmac.core.exceptions import (
     AuthenticationError,
     BusinessRuleError,
@@ -20,7 +22,6 @@ from dotmac.core.exceptions import (
 )
 from dotmac_shared.logging import get_logger
 from dotmac_shared.services.base import BaseTenantService
-from sqlalchemy.orm import Session
 
 # Import existing ISP services for integration
 # Note: These integrations can be added once the services are properly implemented
@@ -103,8 +104,12 @@ class CaptivePortalService(BaseTenantService):
         # Initialize integrated services if available
         if INTEGRATIONS_AVAILABLE:
             self.user_service = UserService(db, tenant_id) if UserService else None
-            self.customer_service = CustomerService(db, tenant_id) if CustomerService else None
-            self.billing_service = BillingService(db, tenant_id) if BillingService else None
+            self.customer_service = (
+                CustomerService(db, tenant_id) if CustomerService else None
+            )
+            self.billing_service = (
+                BillingService(db, tenant_id) if BillingService else None
+            )
         else:
             self.user_service = None
             self.customer_service = None
@@ -112,7 +117,9 @@ class CaptivePortalService(BaseTenantService):
 
     # Portal Configuration Management
 
-    async def create_portal(self, portal_data: CaptivePortalConfigCreate) -> CaptivePortalConfigResponse:
+    async def create_portal(
+        self, portal_data: CaptivePortalConfigCreate
+    ) -> CaptivePortalConfigResponse:
         """Create a new captive portal configuration."""
         try:
             # Validate SSID availability
@@ -122,12 +129,16 @@ class CaptivePortalService(BaseTenantService):
             # Validate customer exists if provided and service is available
             if portal_data.customer_id and self.customer_service:
                 try:
-                    customer = await self.customer_service.get_customer_by_id(portal_data.customer_id)
+                    customer = await self.customer_service.get_customer_by_id(
+                        portal_data.customer_id
+                    )
                     if not customer:
                         raise ValidationError("Invalid customer ID")
                 except Exception:
                     # If customer service is not available, log warning but allow creation
-                    logger.warning(f"Could not validate customer {portal_data.customer_id}: service unavailable")
+                    logger.warning(
+                        f"Could not validate customer {portal_data.customer_id}: service unavailable"
+                    )
 
             # Create portal configuration
             portal_dict = portal_data.model_dump(exclude_unset=True)
@@ -142,7 +153,9 @@ class CaptivePortalService(BaseTenantService):
             if not portal_data.auth_methods:
                 await self._create_default_auth_methods(created_portal.id)
 
-            logger.info(f"Created captive portal {created_portal.id} for tenant {self.tenant_id}")
+            logger.info(
+                f"Created captive portal {created_portal.id} for tenant {self.tenant_id}"
+            )
             return CaptivePortalConfigResponse.model_validate(created_portal)
 
         except Exception as e:
@@ -175,12 +188,18 @@ class CaptivePortalService(BaseTenantService):
             # Validate SSID availability if being updated
             update_data = portal_updates.model_dump(exclude_unset=True)
             if "ssid" in update_data:
-                if not self.portal_repo.check_ssid_availability(update_data["ssid"], portal_id):
-                    raise BusinessRuleError(f"SSID '{update_data['ssid']}' is already in use")
+                if not self.portal_repo.check_ssid_availability(
+                    update_data["ssid"], portal_id
+                ):
+                    raise BusinessRuleError(
+                        f"SSID '{update_data['ssid']}' is already in use"
+                    )
 
             updated_portal = self.portal_repo.update(portal_id, update_data)
 
-            logger.info(f"Updated captive portal {portal_id} for tenant {self.tenant_id}")
+            logger.info(
+                f"Updated captive portal {portal_id} for tenant {self.tenant_id}"
+            )
             return CaptivePortalConfigResponse.model_validate(updated_portal)
 
         except (EntityNotFoundError, BusinessRuleError):
@@ -199,12 +218,16 @@ class CaptivePortalService(BaseTenantService):
             # Check for active sessions
             active_sessions = self.session_repo.get_active_session_count(portal_id)
             if active_sessions > 0:
-                raise BusinessRuleError(f"Cannot delete portal with {active_sessions} active sessions")
+                raise BusinessRuleError(
+                    f"Cannot delete portal with {active_sessions} active sessions"
+                )
 
             # Soft delete
             self.portal_repo.soft_delete(portal_id)
 
-            logger.info(f"Deleted captive portal {portal_id} for tenant {self.tenant_id}")
+            logger.info(
+                f"Deleted captive portal {portal_id} for tenant {self.tenant_id}"
+            )
             return True
 
         except (EntityNotFoundError, BusinessRuleError):
@@ -215,7 +238,9 @@ class CaptivePortalService(BaseTenantService):
 
     # Authentication Methods
 
-    async def authenticate_user(self, auth_request: AuthenticationRequest) -> AuthenticationResponse:
+    async def authenticate_user(
+        self, auth_request: AuthenticationRequest
+    ) -> AuthenticationResponse:
         """Authenticate user based on the authentication method."""
         try:
             portal = self.portal_repo.get_by_id(auth_request.portal_id)
@@ -223,9 +248,13 @@ class CaptivePortalService(BaseTenantService):
                 raise AuthenticationError("Portal not available for authentication")
 
             # Check session limits
-            active_sessions = self.session_repo.get_active_session_count(auth_request.portal_id)
+            active_sessions = self.session_repo.get_active_session_count(
+                auth_request.portal_id
+            )
             if active_sessions >= portal.max_concurrent_sessions:
-                raise BusinessRuleError("Portal has reached maximum concurrent sessions")
+                raise BusinessRuleError(
+                    "Portal has reached maximum concurrent sessions"
+                )
 
             # Route to appropriate authentication method
             if isinstance(auth_request, EmailAuthRequest):
@@ -267,7 +296,9 @@ class CaptivePortalService(BaseTenantService):
                         user = await self.user_service.create_user(user_data)
                     user_id = user.id if user else None
                 except Exception:
-                    logger.warning("User service unavailable, proceeding without user linkage")
+                    logger.warning(
+                        "User service unavailable, proceeding without user linkage"
+                    )
                     user_id = None
 
             # Create session
@@ -308,11 +339,17 @@ class CaptivePortalService(BaseTenantService):
                 client_ip=auth_request.client_ip,
                 client_mac=auth_request.client_mac,
                 user_agent=auth_request.user_agent,
-                auth_data={"provider": auth_request.provider, "code": auth_request.code},
+                auth_data={
+                    "provider": auth_request.provider,
+                    "code": auth_request.code,
+                },
             )
 
             return AuthenticationResponse(
-                success=True, session_id=session.id, session_token=session.session_token, expires_at=session.expires_at
+                success=True,
+                session_id=session.id,
+                session_token=session.session_token,
+                expires_at=session.expires_at,
             )
 
         except Exception as e:
@@ -324,13 +361,17 @@ class CaptivePortalService(BaseTenantService):
     ) -> AuthenticationResponse:
         """Handle voucher-based authentication."""
         try:
-            voucher = self.voucher_repo.find_by_code(auth_request.voucher_code, auth_request.portal_id)
+            voucher = self.voucher_repo.find_by_code(
+                auth_request.voucher_code, auth_request.portal_id
+            )
 
             if not voucher or not voucher.is_valid_for_redemption:
                 raise AuthenticationError("Invalid or expired voucher")
 
             # Redeem voucher
-            self.voucher_repo.redeem_voucher(voucher.id, None)  # No user ID for voucher auth
+            self.voucher_repo.redeem_voucher(
+                voucher.id, None
+            )  # No user ID for voucher auth
 
             # Create session with voucher limits
             session = await self._create_session(
@@ -344,7 +385,10 @@ class CaptivePortalService(BaseTenantService):
             )
 
             return AuthenticationResponse(
-                success=True, session_id=session.id, session_token=session.session_token, expires_at=session.expires_at
+                success=True,
+                session_id=session.id,
+                session_token=session.session_token,
+                expires_at=session.expires_at,
             )
 
         except AuthenticationError:
@@ -380,7 +424,10 @@ class CaptivePortalService(BaseTenantService):
             )
 
             return AuthenticationResponse(
-                success=True, session_id=session.id, session_token=session.session_token, expires_at=session.expires_at
+                success=True,
+                session_id=session.id,
+                session_token=session.session_token,
+                expires_at=session.expires_at,
             )
 
         except AuthenticationError:
@@ -410,7 +457,9 @@ class CaptivePortalService(BaseTenantService):
 
             # Calculate expiration
             duration_minutes = duration_override or (portal.session_timeout // 60)
-            expires_at = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)
+            expires_at = datetime.now(timezone.utc) + timedelta(
+                minutes=duration_minutes
+            )
 
             session_data = {
                 "id": str(uuid4()),
@@ -447,7 +496,9 @@ class CaptivePortalService(BaseTenantService):
 
             # Update last activity
             session.last_activity = datetime.now(timezone.utc)
-            self.session_repo.update(session.id, {"last_activity": session.last_activity})
+            self.session_repo.update(
+                session.id, {"last_activity": session.last_activity}
+            )
 
             return SessionResponse.model_validate(session)
 
@@ -455,7 +506,9 @@ class CaptivePortalService(BaseTenantService):
             logger.error(f"Error validating session: {e}")
             raise ServiceError(f"Failed to validate session: {str(e)}") from e
 
-    async def terminate_session(self, session_id: str, request: SessionTerminateRequest) -> bool:
+    async def terminate_session(
+        self, session_id: str, request: SessionTerminateRequest
+    ) -> bool:
         """Terminate a user session."""
         try:
             session = self.session_repo.get_by_id(session_id)
@@ -486,10 +539,14 @@ class CaptivePortalService(BaseTenantService):
         """Get active sessions with optional filtering."""
         try:
             if portal_id:
-                sessions, _ = self.session_repo.list_sessions_for_portal(portal_id, status=SessionStatus.ACTIVE)
+                sessions, _ = self.session_repo.list_sessions_for_portal(
+                    portal_id, status=SessionStatus.ACTIVE
+                )
             else:
                 # Get all active sessions for tenant
-                sessions = self.session_repo.find_by_filters({"session_status": SessionStatus.ACTIVE})
+                sessions = self.session_repo.find_by_filters(
+                    {"session_status": SessionStatus.ACTIVE}
+                )
 
             if user_id:
                 sessions = [s for s in sessions if s.user_id == user_id]
@@ -500,10 +557,14 @@ class CaptivePortalService(BaseTenantService):
             logger.error(f"Error getting active sessions: {e}")
             raise ServiceError(f"Failed to get active sessions: {str(e)}") from e
 
-    async def update_session_usage(self, session_id: str, bytes_downloaded: int, bytes_uploaded: int) -> bool:
+    async def update_session_usage(
+        self, session_id: str, bytes_downloaded: int, bytes_uploaded: int
+    ) -> bool:
         """Update session usage statistics."""
         try:
-            success = self.session_repo.update_session_usage(session_id, bytes_downloaded, bytes_uploaded)
+            success = self.session_repo.update_session_usage(
+                session_id, bytes_downloaded, bytes_uploaded
+            )
 
             if success:
                 logger.debug(f"Updated usage for session {session_id}")
@@ -516,16 +577,22 @@ class CaptivePortalService(BaseTenantService):
 
     # Voucher Management
 
-    async def create_vouchers(self, voucher_request: VoucherCreateRequest) -> list[VoucherResponse]:
+    async def create_vouchers(
+        self, voucher_request: VoucherCreateRequest
+    ) -> list[VoucherResponse]:
         """Create vouchers for portal access."""
         try:
             portal = self.portal_repo.get_by_id(voucher_request.portal_id)
             if not portal:
-                raise EntityNotFoundError(f"Portal {voucher_request.portal_id} not found")
+                raise EntityNotFoundError(
+                    f"Portal {voucher_request.portal_id} not found"
+                )
 
             vouchers = []
             for _i in range(voucher_request.quantity):
-                voucher_data = voucher_request.model_dump(exclude={"portal_id", "quantity", "batch_name"})
+                voucher_data = voucher_request.model_dump(
+                    exclude={"portal_id", "quantity", "batch_name"}
+                )
                 voucher_data.update(
                     {
                         "id": str(uuid4()),
@@ -540,7 +607,9 @@ class CaptivePortalService(BaseTenantService):
                 created_voucher = self.voucher_repo.create(voucher)
                 vouchers.append(VoucherResponse.model_validate(created_voucher))
 
-            logger.info(f"Created {len(vouchers)} vouchers for portal {voucher_request.portal_id}")
+            logger.info(
+                f"Created {len(vouchers)} vouchers for portal {voucher_request.portal_id}"
+            )
             return vouchers
 
         except EntityNotFoundError:
@@ -549,7 +618,9 @@ class CaptivePortalService(BaseTenantService):
             logger.error(f"Error creating vouchers: {e}")
             raise ServiceError(f"Failed to create vouchers: {str(e)}") from e
 
-    async def redeem_voucher(self, voucher_code: str, portal_id: str, user_id: str) -> bool:
+    async def redeem_voucher(
+        self, voucher_code: str, portal_id: str, user_id: str
+    ) -> bool:
         """Redeem a voucher for access."""
         try:
             success = self.voucher_repo.redeem_voucher(
@@ -568,7 +639,10 @@ class CaptivePortalService(BaseTenantService):
     # Analytics and Statistics
 
     async def get_portal_stats(
-        self, portal_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+        self,
+        portal_id: str,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> dict[str, Any]:
         """Get portal usage statistics."""
         try:
@@ -591,7 +665,10 @@ class CaptivePortalService(BaseTenantService):
             return {
                 "portal_id": portal_id,
                 "portal_name": portal.name,
-                "period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
+                "period": {
+                    "start": start_date.isoformat(),
+                    "end": end_date.isoformat(),
+                },
                 "current_active_sessions": active_sessions,
                 "statistics": stats,
             }
@@ -608,7 +685,9 @@ class CaptivePortalService(BaseTenantService):
         """Clean up expired sessions."""
         try:
             count = self.session_repo.terminate_expired_sessions()
-            logger.info(f"Cleaned up {count} expired sessions for tenant {self.tenant_id}")
+            logger.info(
+                f"Cleaned up {count} expired sessions for tenant {self.tenant_id}"
+            )
             return count
 
         except Exception as e:
@@ -637,7 +716,13 @@ class CaptivePortalService(BaseTenantService):
             ]
 
             for method_data in default_methods:
-                method_data.update({"id": str(uuid4()), "tenant_id": self.tenant_id, "portal_id": portal_id})
+                method_data.update(
+                    {
+                        "id": str(uuid4()),
+                        "tenant_id": self.tenant_id,
+                        "portal_id": portal_id,
+                    }
+                )
 
                 auth_method = AuthMethod(**method_data)
                 self.auth_method_repo.create(auth_method)

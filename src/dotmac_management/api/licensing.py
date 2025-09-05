@@ -5,6 +5,9 @@ License management endpoints using RouterFactory patterns.
 
 from typing import Any
 
+from fastapi import Depends, Query
+from pydantic import BaseModel, Field
+
 from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
@@ -12,8 +15,6 @@ from dotmac_shared.api.dependencies import (
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import Depends, Query
-from pydantic import BaseModel, Field
 
 # === License Schemas ===
 
@@ -140,7 +141,9 @@ async def update_license(
     return {
         "id": license_id,
         "status": "updated",
-        "updated_fields": {k: v for k, v in request.model_dump().items() if v is not None},
+        "updated_fields": {
+            k: v for k, v in request.model_dump().items() if v is not None
+        },
         "updated_by": deps.user_id,
         "message": "License updated successfully",
     }
@@ -182,7 +185,11 @@ async def get_license_usage(
         "usage": {
             "users": {"current": 245, "limit": 1000, "percentage": 24.5},
             "storage": {"current_gb": 125, "limit_gb": 500, "percentage": 25.0},
-            "api_calls": {"current_monthly": 15420, "limit_monthly": 50000, "percentage": 30.8},
+            "api_calls": {
+                "current_monthly": 15420,
+                "limit_monthly": 50000,
+                "percentage": 30.8,
+            },
         },
         "status": "within_limits",
         "expires_at": "2025-12-31T23:59:59Z",
@@ -214,7 +221,12 @@ async def get_license_templates(
             "name": "Professional",
             "category": "business",
             "description": "Advanced features for growing businesses",
-            "features": ["core_features", "analytics", "api_access", "priority_support"],
+            "features": [
+                "core_features",
+                "analytics",
+                "api_access",
+                "priority_support",
+            ],
             "limits": {"max_users": 100, "max_storage_gb": 100},
             "price_monthly": 99.99,
         },
@@ -223,7 +235,12 @@ async def get_license_templates(
             "name": "Enterprise",
             "category": "enterprise",
             "description": "Full feature set for large organizations",
-            "features": ["all_features", "multi_tenant", "custom_integrations", "dedicated_support"],
+            "features": [
+                "all_features",
+                "multi_tenant",
+                "custom_integrations",
+                "dedicated_support",
+            ],
             "limits": {"max_users": 1000, "max_storage_gb": 500},
             "price_monthly": 299.99,
         },

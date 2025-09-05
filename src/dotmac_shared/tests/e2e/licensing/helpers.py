@@ -3,8 +3,9 @@
 import asyncio
 from typing import Any
 
-from dotmac_shared.core.logging import get_logger
 from playwright.async_api import BrowserContext, Page, expect
+
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -38,7 +39,9 @@ class LicenseTestHelper:
         await self.page.goto(f"{self.base_url}{feature_path}")
         await self.page.wait_for_load_state("networkidle")
 
-    async def check_feature_access(self, feature_selector: str, should_have_access: bool = True):
+    async def check_feature_access(
+        self, feature_selector: str, should_have_access: bool = True
+    ):
         """Check if user has access to a specific feature."""
         feature_element = self.page.locator(feature_selector)
 
@@ -64,7 +67,9 @@ class LicenseTestHelper:
             await self.page.click('[data-testid="add-customer-button"]')
 
             # Fill customer form with test data
-            await self.page.fill('[data-testid="customer-name"]', "Test Customer Overflow")
+            await self.page.fill(
+                '[data-testid="customer-name"]', "Test Customer Overflow"
+            )
             await self.page.fill('[data-testid="customer-email"]', "overflow@test.com")
             await self.page.click('[data-testid="save-customer"]')
 
@@ -93,7 +98,9 @@ class LicenseTestHelper:
             "upgrade_required": '[data-testid="upgrade-required-error"]',
         }
 
-        selector = error_selectors.get(expected_message_type, '[data-testid="license-error"]')
+        selector = error_selectors.get(
+            expected_message_type, '[data-testid="license-error"]'
+        )
         error_element = self.page.locator(selector)
 
         await expect(error_element).to_be_visible()
@@ -104,7 +111,9 @@ class LicenseTestHelper:
 
         return error_text
 
-    async def check_feature_flag_propagation(self, feature_name: str, expected_state: bool):
+    async def check_feature_flag_propagation(
+        self, feature_name: str, expected_state: bool
+    ):
         """Check that feature flag changes have propagated to the UI."""
         # Check feature flag status endpoint
         response = await self.page.evaluate(
@@ -128,7 +137,9 @@ class LicenseTestHelper:
             feature_element = self.page.locator(f'[data-feature="{feature_name}"]')
             await expect(feature_element).not_to_be_visible()
 
-    async def simulate_user_actions_across_apps(self, tenant_id: str, actions: list[dict[str, Any]]):
+    async def simulate_user_actions_across_apps(
+        self, tenant_id: str, actions: list[dict[str, Any]]
+    ):
         """Simulate user actions across multiple apps to test cross-app permissions."""
         apps = {
             "admin": "http://localhost:3000",
@@ -154,17 +165,32 @@ class LicenseTestHelper:
                 try:
                     if expected_access:
                         # Should be able to access the feature
-                        await expect(self.page.locator('[data-testid="main-content"]')).to_be_visible(timeout=5000)
-                        results.append({"app": app, "path": path, "access_granted": True})
+                        await expect(
+                            self.page.locator('[data-testid="main-content"]')
+                        ).to_be_visible(timeout=5000)
+                        results.append(
+                            {"app": app, "path": path, "access_granted": True}
+                        )
                     else:
                         # Should see access denied
-                        access_denied = self.page.locator('[data-testid="access-denied"], [data-testid="unauthorized"]')
+                        access_denied = self.page.locator(
+                            '[data-testid="access-denied"], [data-testid="unauthorized"]'
+                        )
                         await expect(access_denied).to_be_visible(timeout=5000)
-                        results.append({"app": app, "path": path, "access_granted": False})
+                        results.append(
+                            {"app": app, "path": path, "access_granted": False}
+                        )
 
                 except Exception as e:
                     logger.warning(f"Access check failed for {app}{path}: {e}")
-                    results.append({"app": app, "path": path, "access_granted": False, "error": str(e)})
+                    results.append(
+                        {
+                            "app": app,
+                            "path": path,
+                            "access_granted": False,
+                            "error": str(e),
+                        }
+                    )
 
         return results
 
@@ -182,7 +208,9 @@ class LicenseTestHelper:
             # Should have access to enterprise features
             await self.check_feature_access('[data-testid="sso-settings"]', True)
             await self.check_feature_access('[data-testid="advanced-analytics"]', True)
-            await self.check_feature_access('[data-testid="white-label-settings"]', True)
+            await self.check_feature_access(
+                '[data-testid="white-label-settings"]', True
+            )
 
         elif new_plan == "premium":
             # Should have premium features but not enterprise
@@ -206,7 +234,9 @@ class LicenseTestHelper:
         await expect(grace_notice).to_be_visible()
 
         grace_text = await grace_notice.text_content()
-        assert "grace period" in grace_text.lower(), "Grace period notice should be displayed"
+        assert (
+            "grace period" in grace_text.lower()
+        ), "Grace period notice should be displayed"
 
         return grace_text
 
@@ -271,7 +301,9 @@ class MultiAppTestHelper:
 
         await asyncio.gather(*login_tasks)
 
-    async def verify_feature_across_apps(self, feature_name: str, expected_states: dict[str, bool]):
+    async def verify_feature_across_apps(
+        self, feature_name: str, expected_states: dict[str, bool]
+    ):
         """Verify feature availability across multiple apps."""
         results = {}
 
@@ -281,7 +313,9 @@ class MultiAppTestHelper:
                 helper = LicenseTestHelper(page, self.app_urls[app])
 
                 try:
-                    await helper.check_feature_flag_propagation(feature_name, expected_state)
+                    await helper.check_feature_flag_propagation(
+                        feature_name, expected_state
+                    )
                     results[app] = {"success": True, "state": expected_state}
                 except Exception as e:
                     results[app] = {"success": False, "error": str(e)}
@@ -294,7 +328,9 @@ class MultiAppTestHelper:
             await page.close()
         self.app_pages.clear()
 
-    async def _login_to_app(self, page: Page, app_url: str, credentials: dict[str, str]):
+    async def _login_to_app(
+        self, page: Page, app_url: str, credentials: dict[str, str]
+    ):
         """Login to a specific app."""
         await page.goto(f"{app_url}/login")
         await page.fill('[data-testid="email-input"]', credentials["email"])
@@ -302,6 +338,6 @@ class MultiAppTestHelper:
         await page.click('[data-testid="login-button"]')
 
         # Wait for successful login
-        await expect(page.locator('[data-testid="dashboard"], [data-testid="main-content"]')).to_be_visible(
-            timeout=10000
-        )
+        await expect(
+            page.locator('[data-testid="dashboard"], [data-testid="main-content"]')
+        ).to_be_visible(timeout=10000)

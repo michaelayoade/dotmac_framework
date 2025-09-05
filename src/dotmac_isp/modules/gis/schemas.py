@@ -7,6 +7,8 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
+from pydantic import Field, field_validator
+
 from dotmac.core.schemas.base_schemas import (
     BaseCreateSchema,
     BaseResponseSchema,
@@ -14,7 +16,6 @@ from dotmac.core.schemas.base_schemas import (
     CurrencyMixin,
     GeoLocationMixin,
 )
-from pydantic import Field, field_validator
 
 from .models import NetworkNodeTypeEnum, ServiceTypeEnum
 
@@ -26,9 +27,13 @@ from .models import NetworkNodeTypeEnum, ServiceTypeEnum
 class ServiceAreaCreate(BaseCreateSchema, GeoLocationMixin):
     """Create schema for service areas - inherits geo location fields."""
 
-    name: str = Field(..., min_length=1, max_length=200, description="Service area name")
+    name: str = Field(
+        ..., min_length=1, max_length=200, description="Service area name"
+    )
     description: Optional[str] = Field(None, max_length=1000)
-    polygon_coordinates: list[dict[str, float]] = Field(..., description="Area boundary coordinates")
+    polygon_coordinates: list[dict[str, float]] = Field(
+        ..., description="Area boundary coordinates"
+    )
     service_types: list[ServiceTypeEnum] = Field(..., description="Available services")
 
     @field_validator("polygon_coordinates")
@@ -75,7 +80,9 @@ class NetworkNodeCreate(BaseCreateSchema, GeoLocationMixin):
     ip_address: Optional[str] = Field(None, description="IP address")
     mac_address: Optional[str] = Field(None, description="MAC address")
     bandwidth_mbps: Optional[int] = Field(None, ge=1, description="Bandwidth in Mbps")
-    coverage_radius_km: Optional[float] = Field(None, ge=0, description="Coverage radius")
+    coverage_radius_km: Optional[float] = Field(
+        None, ge=0, description="Coverage radius"
+    )
     service_area_id: Optional[UUID] = Field(None, description="Associated service area")
 
 
@@ -119,7 +126,9 @@ class CoverageAnalysisRequest(BaseCreateSchema):
     service_types: list[ServiceTypeEnum] = Field(..., description="Services to analyze")
     include_demographics: bool = Field(True, description="Include demographic data")
     include_competition: bool = Field(False, description="Include competitor analysis")
-    analysis_parameters: Optional[dict[str, Any]] = Field({}, description="Custom parameters")
+    analysis_parameters: Optional[dict[str, Any]] = Field(
+        {}, description="Custom parameters"
+    )
 
 
 class CoverageGapSchema(BaseResponseSchema):
@@ -175,9 +184,13 @@ class TerritoryCreate(BaseCreateSchema):
 
     name: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
-    boundary_coordinates: list[dict[str, float]] = Field(..., description="Territory boundary")
+    boundary_coordinates: list[dict[str, float]] = Field(
+        ..., description="Territory boundary"
+    )
     territory_type: str = Field("sales", description="Territory type")
-    color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Hex color")
+    color: Optional[str] = Field(
+        None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Hex color"
+    )
     assigned_user_id: Optional[UUID] = None
     revenue_target: Optional[float] = Field(None, ge=0)
 
@@ -267,9 +280,13 @@ class RouteOptimizationResponse(BaseResponseSchema):
 class GeocodingRequest(BaseCreateSchema):
     """Geocoding request schema."""
 
-    address: str = Field(..., min_length=1, max_length=500, description="Address to geocode")
+    address: str = Field(
+        ..., min_length=1, max_length=500, description="Address to geocode"
+    )
     country: Optional[str] = Field(None, description="Country filter")
-    bounds: Optional[dict[str, float]] = Field(None, description="Bounding box for results")
+    bounds: Optional[dict[str, float]] = Field(
+        None, description="Bounding box for results"
+    )
 
 
 class ReverseGeocodingRequest(BaseCreateSchema):

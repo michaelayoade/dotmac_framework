@@ -34,7 +34,9 @@ class MultiTenantSecurityValidator:
         # Initialize security components
         self.rls_manager = RLSPolicyManager(self.engine)
         self.audit_logger = DatabaseAuditLogger(self.engine)
-        self.connection_pool = TenantAwareConnectionPool(database_url=database_url, audit_logger=self.audit_logger)
+        self.connection_pool = TenantAwareConnectionPool(
+            database_url=database_url, audit_logger=self.audit_logger
+        )
 
         self.test_results = []
 
@@ -74,7 +76,9 @@ class MultiTenantSecurityValidator:
                 results["total_tests"] += category_results.get("total_tests", 0)
                 results["passed_tests"] += category_results.get("passed_tests", 0)
                 results["failed_tests"] += category_results.get("failed_tests", 0)
-                results["critical_failures"] += category_results.get("critical_failures", 0)
+                results["critical_failures"] += category_results.get(
+                    "critical_failures", 0
+                )
 
                 # Print results
                 "✅ PASS" if category_results.get("all_passed", False) else "❌ FAIL"
@@ -95,10 +99,14 @@ class MultiTenantSecurityValidator:
         # Determine overall status
         if results["critical_failures"] > 0:
             results["overall_status"] = "CRITICAL_FAILURE"
-            results["recommendations"].append("URGENT: Critical security vulnerabilities detected")
+            results["recommendations"].append(
+                "URGENT: Critical security vulnerabilities detected"
+            )
         elif results["failed_tests"] > 0:
             results["overall_status"] = "PARTIAL_FAILURE"
-            results["recommendations"].append("Some security tests failed - review and fix")
+            results["recommendations"].append(
+                "Some security tests failed - review and fix"
+            )
         else:
             results["overall_status"] = "SECURE"
             results["recommendations"].append("All security validations passed")
@@ -107,7 +115,13 @@ class MultiTenantSecurityValidator:
 
     async def validate_database_schema(self) -> dict[str, Any]:
         """Validate database schema for multi-tenant security"""
-        results = {"total_tests": 0, "passed_tests": 0, "failed_tests": 0, "critical_failures": 0, "tests": []}
+        results = {
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "critical_failures": 0,
+            "tests": [],
+        }
 
         try:
             with self.engine.begin() as conn:
@@ -161,26 +175,42 @@ class MultiTenantSecurityValidator:
                 if audit_table_exists:
                     results["passed_tests"] += 1
                     results["tests"].append(
-                        {"test": "audit_table_exists", "status": "PASS", "details": "Audit log table found"}
+                        {
+                            "test": "audit_table_exists",
+                            "status": "PASS",
+                            "details": "Audit log table found",
+                        }
                     )
                 else:
                     results["failed_tests"] += 1
                     results["tests"].append(
-                        {"test": "audit_table_exists", "status": "FAIL", "details": "Audit log table missing"}
+                        {
+                            "test": "audit_table_exists",
+                            "status": "FAIL",
+                            "details": "Audit log table missing",
+                        }
                     )
 
         except Exception as e:
             results["total_tests"] += 1
             results["failed_tests"] += 1
             results["critical_failures"] += 1
-            results["tests"].append({"test": "schema_validation", "status": "ERROR", "details": str(e)})
+            results["tests"].append(
+                {"test": "schema_validation", "status": "ERROR", "details": str(e)}
+            )
 
         results["all_passed"] = results["failed_tests"] == 0
         return results
 
     async def validate_rls_policies(self) -> dict[str, Any]:
         """Validate Row Level Security policies"""
-        results = {"total_tests": 0, "passed_tests": 0, "failed_tests": 0, "critical_failures": 0, "tests": []}
+        results = {
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "critical_failures": 0,
+            "tests": [],
+        }
 
         try:
             session = self.SessionLocal()
@@ -202,7 +232,11 @@ class MultiTenantSecurityValidator:
                 results["failed_tests"] += 1
                 results["critical_failures"] += 1
                 results["tests"].append(
-                    {"test": "rls_policies_active", "status": "CRITICAL_FAIL", "details": "No RLS policies active"}
+                    {
+                        "test": "rls_policies_active",
+                        "status": "CRITICAL_FAIL",
+                        "details": "No RLS policies active",
+                    }
                 )
 
             session.close()
@@ -210,14 +244,22 @@ class MultiTenantSecurityValidator:
         except Exception as e:
             results["total_tests"] += 1
             results["failed_tests"] += 1
-            results["tests"].append({"test": "rls_validation", "status": "ERROR", "details": str(e)})
+            results["tests"].append(
+                {"test": "rls_validation", "status": "ERROR", "details": str(e)}
+            )
 
         results["all_passed"] = results["failed_tests"] == 0
         return results
 
     async def validate_tenant_context(self) -> dict[str, Any]:
         """Validate tenant context management"""
-        results = {"total_tests": 0, "passed_tests": 0, "failed_tests": 0, "critical_failures": 0, "tests": []}
+        results = {
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "critical_failures": 0,
+            "tests": [],
+        }
 
         try:
             test_tenant = "test-tenant-validation-001"
@@ -225,7 +267,9 @@ class MultiTenantSecurityValidator:
             # Test connection pool tenant context
             async with self.connection_pool.get_tenant_session(test_tenant) as session:
                 # Check if tenant context is set
-                current_tenant = session.execute(text("SELECT current_setting('app.current_tenant_id', true)")).scalar()
+                current_tenant = session.execute(
+                    text("SELECT current_setting('app.current_tenant_id', true)")
+                ).scalar()
 
                 results["total_tests"] += 1
                 if current_tenant == test_tenant:
@@ -251,21 +295,35 @@ class MultiTenantSecurityValidator:
         except Exception as e:
             results["total_tests"] += 1
             results["failed_tests"] += 1
-            results["tests"].append({"test": "tenant_context_validation", "status": "ERROR", "details": str(e)})
+            results["tests"].append(
+                {
+                    "test": "tenant_context_validation",
+                    "status": "ERROR",
+                    "details": str(e),
+                }
+            )
 
         results["all_passed"] = results["failed_tests"] == 0
         return results
 
     async def validate_cross_tenant_prevention(self) -> dict[str, Any]:
         """Validate cross-tenant access prevention"""
-        results = {"total_tests": 0, "passed_tests": 0, "failed_tests": 0, "critical_failures": 0, "tests": []}
+        results = {
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "critical_failures": 0,
+            "tests": [],
+        }
 
         try:
             tenant_1 = "validation-tenant-001"
             tenant_2 = "validation-tenant-002"
 
             # Test cross-tenant prevention
-            isolation_results = await self.connection_pool.validate_tenant_isolation(tenant_1, tenant_2)
+            isolation_results = await self.connection_pool.validate_tenant_isolation(
+                tenant_1, tenant_2
+            )
 
             results["total_tests"] += 1
             if isolation_results.get("isolation_test_passed", False):
@@ -291,14 +349,26 @@ class MultiTenantSecurityValidator:
         except Exception as e:
             results["total_tests"] += 1
             results["failed_tests"] += 1
-            results["tests"].append({"test": "cross_tenant_validation", "status": "ERROR", "details": str(e)})
+            results["tests"].append(
+                {
+                    "test": "cross_tenant_validation",
+                    "status": "ERROR",
+                    "details": str(e),
+                }
+            )
 
         results["all_passed"] = results["failed_tests"] == 0
         return results
 
     async def validate_audit_logging(self) -> dict[str, Any]:
         """Validate audit logging functionality"""
-        results = {"total_tests": 0, "passed_tests": 0, "failed_tests": 0, "critical_failures": 0, "tests": []}
+        results = {
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "critical_failures": 0,
+            "tests": [],
+        }
 
         try:
             # Test audit logging
@@ -314,25 +384,45 @@ class MultiTenantSecurityValidator:
             if test_logged:
                 results["passed_tests"] += 1
                 results["tests"].append(
-                    {"test": "audit_logging", "status": "PASS", "details": "Audit event successfully logged"}
+                    {
+                        "test": "audit_logging",
+                        "status": "PASS",
+                        "details": "Audit event successfully logged",
+                    }
                 )
             else:
                 results["failed_tests"] += 1
                 results["tests"].append(
-                    {"test": "audit_logging", "status": "FAIL", "details": "Audit event logging failed"}
+                    {
+                        "test": "audit_logging",
+                        "status": "FAIL",
+                        "details": "Audit event logging failed",
+                    }
                 )
 
         except Exception as e:
             results["total_tests"] += 1
             results["failed_tests"] += 1
-            results["tests"].append({"test": "audit_logging_validation", "status": "ERROR", "details": str(e)})
+            results["tests"].append(
+                {
+                    "test": "audit_logging_validation",
+                    "status": "ERROR",
+                    "details": str(e),
+                }
+            )
 
         results["all_passed"] = results["failed_tests"] == 0
         return results
 
     async def validate_connection_pool(self) -> dict[str, Any]:
         """Validate connection pool security"""
-        results = {"total_tests": 0, "passed_tests": 0, "failed_tests": 0, "critical_failures": 0, "tests": []}
+        results = {
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "critical_failures": 0,
+            "tests": [],
+        }
 
         try:
             # Test connection pool stats
@@ -361,14 +451,26 @@ class MultiTenantSecurityValidator:
         except Exception as e:
             results["total_tests"] += 1
             results["failed_tests"] += 1
-            results["tests"].append({"test": "connection_pool_validation", "status": "ERROR", "details": str(e)})
+            results["tests"].append(
+                {
+                    "test": "connection_pool_validation",
+                    "status": "ERROR",
+                    "details": str(e),
+                }
+            )
 
         results["all_passed"] = results["failed_tests"] == 0
         return results
 
     async def validate_security_middleware(self) -> dict[str, Any]:
         """Validate security middleware components"""
-        results = {"total_tests": 0, "passed_tests": 0, "failed_tests": 0, "critical_failures": 0, "tests": []}
+        results = {
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "critical_failures": 0,
+            "tests": [],
+        }
 
         try:
             # Test middleware imports
@@ -389,10 +491,16 @@ class MultiTenantSecurityValidator:
             sanitized = SecuritySanitizer.sanitize_string(dangerous_input)
 
             results["total_tests"] += 1
-            if dangerous_input != sanitized and not SecuritySanitizer.is_safe_input(dangerous_input):
+            if dangerous_input != sanitized and not SecuritySanitizer.is_safe_input(
+                dangerous_input
+            ):
                 results["passed_tests"] += 1
                 results["tests"].append(
-                    {"test": "input_sanitization", "status": "PASS", "details": "Input sanitization working correctly"}
+                    {
+                        "test": "input_sanitization",
+                        "status": "PASS",
+                        "details": "Input sanitization working correctly",
+                    }
                 )
             else:
                 results["failed_tests"] += 1
@@ -408,13 +516,17 @@ class MultiTenantSecurityValidator:
         except Exception as e:
             results["total_tests"] += 1
             results["failed_tests"] += 1
-            results["tests"].append({"test": "middleware_validation", "status": "ERROR", "details": str(e)})
+            results["tests"].append(
+                {"test": "middleware_validation", "status": "ERROR", "details": str(e)}
+            )
 
         results["all_passed"] = results["failed_tests"] == 0
         return results
 
 
-async def run_validation_suite(database_url: str = "sqlite:///security_validation.db") -> dict[str, Any]:
+async def run_validation_suite(
+    database_url: str = "sqlite:///security_validation.db",
+) -> dict[str, Any]:
     """
     Run the complete multi-tenant security validation suite
     """

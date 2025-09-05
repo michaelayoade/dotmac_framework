@@ -2,11 +2,12 @@
 
 from collections.abc import AsyncGenerator, Generator
 
-from dotmac_isp.core.settings import get_settings
-from dotmac_isp.shared.database.base import Base
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
+
+from dotmac_isp.core.settings import get_settings
+from dotmac_isp.shared.database.base import Base
 
 settings = get_settings()
 
@@ -34,18 +35,26 @@ async_engine_kwargs = base_engine_kwargs.copy()
 # Convert sync URL to async URL based on database type
 async_database_url = settings.database_url
 if "postgresql" in settings.database_url:
-    async_database_url = settings.database_url.replace("postgresql://", "postgresql+asyncpg://")
+    async_database_url = settings.database_url.replace(
+        "postgresql://", "postgresql+asyncpg://"
+    )
     if not async_database_url.startswith("postgresql+asyncpg://"):
-        async_database_url = async_database_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://")
+        async_database_url = async_database_url.replace(
+            "postgresql+psycopg2://", "postgresql+asyncpg://"
+        )
 elif "sqlite" in settings.database_url and "aiosqlite" not in settings.database_url:
-    async_database_url = settings.database_url.replace("sqlite://", "sqlite+aiosqlite://")
+    async_database_url = settings.database_url.replace(
+        "sqlite://", "sqlite+aiosqlite://"
+    )
 
 async_engine = create_async_engine(async_database_url, **async_engine_kwargs)
 
 # Session factories
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-AsyncSessionLocal = async_sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
+AsyncSessionLocal = async_sessionmaker(
+    bind=async_engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 def get_db() -> Generator[Session, None, None]:

@@ -41,7 +41,9 @@ class BaseInventoryAdapter(ABC):
         pass
 
     @abstractmethod
-    async def create_inventory_event(self, event_type: str, data: dict[str, Any]) -> bool:
+    async def create_inventory_event(
+        self, event_type: str, data: dict[str, Any]
+    ) -> bool:
         """Create inventory event in platform system."""
         pass
 
@@ -69,13 +71,17 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
         """Send notification via ISP Framework."""
         try:
             if self.isp_client:
-                return await self.isp_client.send_notification(notification_type, recipient, data)
+                return await self.isp_client.send_notification(
+                    notification_type, recipient, data
+                )
             return True
         except Exception as e:
             logger.error(f"Error sending notification: {e}")
             return False
 
-    async def create_inventory_event(self, event_type: str, data: dict[str, Any]) -> bool:
+    async def create_inventory_event(
+        self, event_type: str, data: dict[str, Any]
+    ) -> bool:
         """Create inventory event in ISP Framework."""
         try:
             if self.isp_client:
@@ -208,7 +214,9 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
                 created_items.append(ItemResponse.model_validate(item))
 
             except Exception as e:
-                logger.warning(f"Failed to create equipment item {equipment_data['name']}: {e}")
+                logger.warning(
+                    f"Failed to create equipment item {equipment_data['name']}: {e}"
+                )
 
         logger.info(f"Created {len(created_items)} ISP equipment items")
         return created_items
@@ -279,13 +287,17 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
 
                 warehouse_create = WarehouseCreate(**warehouse_data)
 
-                warehouse = await self.inventory_service.inventory_manager.create_warehouse(
-                    db, tenant_id, warehouse_create, created_by
+                warehouse = (
+                    await self.inventory_service.inventory_manager.create_warehouse(
+                        db, tenant_id, warehouse_create, created_by
+                    )
                 )
                 created_warehouses.append(WarehouseResponse.model_validate(warehouse))
 
             except Exception as e:
-                logger.warning(f"Failed to create warehouse {warehouse_data['name']}: {e}")
+                logger.warning(
+                    f"Failed to create warehouse {warehouse_data['name']}: {e}"
+                )
 
         logger.info(f"Created {len(created_warehouses)} ISP warehouses")
         return created_warehouses
@@ -309,7 +321,9 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
             warehouse_id = item_data.get("warehouse_id")
 
             # Get item
-            item = await self.inventory_service.inventory_manager.get_item_by_code(db, tenant_id, item_code)
+            item = await self.inventory_service.inventory_manager.get_item_by_code(
+                db, tenant_id, item_code
+            )
             if not item:
                 logger.error(f"Item not found: {item_code}")
                 continue
@@ -355,18 +369,20 @@ class ISPInventoryAdapter(BaseInventoryAdapter):
         movements = []
 
         for item_data in return_items:
-            movement = await self.inventory_service.inventory_manager.create_stock_movement(
-                db,
-                tenant_id,
-                {
-                    "item_id": item_data["item_id"],
-                    "warehouse_id": item_data["warehouse_id"],
-                    "movement_type": MovementType.RETURN,
-                    "quantity": item_data["quantity"],
-                    "reason_description": reason,
-                    "serial_numbers": item_data.get("serial_numbers"),
-                },
-                technician_id,
+            movement = (
+                await self.inventory_service.inventory_manager.create_stock_movement(
+                    db,
+                    tenant_id,
+                    {
+                        "item_id": item_data["item_id"],
+                        "warehouse_id": item_data["warehouse_id"],
+                        "movement_type": MovementType.RETURN,
+                        "quantity": item_data["quantity"],
+                        "reason_description": reason,
+                        "serial_numbers": item_data.get("serial_numbers"),
+                    },
+                    technician_id,
+                )
             )
 
             movements.append(StockMovementResponse.model_validate(movement))
@@ -397,13 +413,17 @@ class ManagementInventoryAdapter(BaseInventoryAdapter):
         """Send notification via Management Platform."""
         try:
             if self.management_client:
-                return await self.management_client.send_notification(notification_type, recipient, data)
+                return await self.management_client.send_notification(
+                    notification_type, recipient, data
+                )
             return True
         except Exception as e:
             logger.error(f"Error sending notification: {e}")
             return False
 
-    async def create_inventory_event(self, event_type: str, data: dict[str, Any]) -> bool:
+    async def create_inventory_event(
+        self, event_type: str, data: dict[str, Any]
+    ) -> bool:
         """Create inventory event in Management Platform."""
         try:
             if self.management_client:
@@ -506,7 +526,9 @@ class ManagementInventoryAdapter(BaseInventoryAdapter):
                 created_items.append(ItemResponse.model_validate(item))
 
             except Exception as e:
-                logger.warning(f"Failed to create datacenter item {equipment_data['name']}: {e}")
+                logger.warning(
+                    f"Failed to create datacenter item {equipment_data['name']}: {e}"
+                )
 
         # Create warehouses
         created_warehouses = []
@@ -531,13 +553,17 @@ class ManagementInventoryAdapter(BaseInventoryAdapter):
 
                 warehouse_create = WarehouseCreate(**warehouse_data)
 
-                warehouse = await self.inventory_service.inventory_manager.create_warehouse(
-                    db, tenant_id, warehouse_create, created_by
+                warehouse = (
+                    await self.inventory_service.inventory_manager.create_warehouse(
+                        db, tenant_id, warehouse_create, created_by
+                    )
                 )
                 created_warehouses.append(WarehouseResponse.model_validate(warehouse))
 
             except Exception as e:
-                logger.warning(f"Failed to create datacenter warehouse {location['name']}: {e}")
+                logger.warning(
+                    f"Failed to create datacenter warehouse {location['name']}: {e}"
+                )
 
         return {
             "items": created_items,
@@ -639,8 +665,12 @@ class InventoryPlatformAdapter:
                 db, tenant_id, config.get("datacenter_locations"), created_by
             )
         elif platform == "isp":
-            equipment_result = await adapter.setup_isp_equipment_catalog(db, tenant_id, created_by)
-            warehouses_result = await adapter.setup_isp_warehouses(db, tenant_id, config.get("locations"), created_by)
+            equipment_result = await adapter.setup_isp_equipment_catalog(
+                db, tenant_id, created_by
+            )
+            warehouses_result = await adapter.setup_isp_warehouses(
+                db, tenant_id, config.get("locations"), created_by
+            )
 
             return {
                 "equipment": equipment_result,
@@ -664,5 +694,7 @@ class InventoryPlatformAdapter:
         """Send notification through appropriate platform."""
         adapter = self.get_adapter(platform)
         if adapter:
-            return await adapter.send_inventory_notification(notification_type, recipient, data, **kwargs)
+            return await adapter.send_inventory_notification(
+                notification_type, recipient, data, **kwargs
+            )
         return False

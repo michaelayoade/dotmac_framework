@@ -168,7 +168,9 @@ async def publish_event(bus: Any, event: Any, logger: Any | None = None) -> bool
         return False
 
 
-def service_operation(service_name: str | None = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def service_operation(
+    service_name: str | None = None,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator for service-layer operations to normalize exceptions.
 
     Maps common infrastructure exceptions to domain-level ones so that upstream layers

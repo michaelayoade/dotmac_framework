@@ -3,8 +3,9 @@
 import asyncio
 from datetime import datetime
 
-from dotmac_shared.core.logging import get_logger
 from playwright.async_api import Page, expect
+
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -13,7 +14,9 @@ class LicenseAssertions:
     """Custom assertions for license testing scenarios."""
 
     @staticmethod
-    async def assert_feature_access_denied(page: Page, feature_selector: str, timeout: int = 5000):
+    async def assert_feature_access_denied(
+        page: Page, feature_selector: str, timeout: int = 5000
+    ):
         """Assert that access to a feature is properly denied."""
         # Check for access denied message
         access_denied_selectors = [
@@ -41,7 +44,9 @@ class LicenseAssertions:
                 await expect(feature_element).to_be_disabled()
 
     @staticmethod
-    async def assert_license_limit_error(page: Page, limit_type: str, expected_limit: int = None):
+    async def assert_license_limit_error(
+        page: Page, limit_type: str, expected_limit: int = None
+    ):
         """Assert that a license limit error is properly displayed."""
         error_messages = {
             "customers": "customer limit",
@@ -66,7 +71,9 @@ class LicenseAssertions:
                 error_element = element
                 break
 
-        assert error_element is not None, f"License limit error not found for {limit_type}"
+        assert (
+            error_element is not None
+        ), f"License limit error not found for {limit_type}"
 
         # Verify error message contains expected content
         error_text = await error_element.text_content()
@@ -82,7 +89,9 @@ class LicenseAssertions:
             ), f"Error message should contain limit value '{expected_limit}', got: {error_text}"
 
     @staticmethod
-    async def assert_feature_flag_state(page: Page, feature_name: str, expected_enabled: bool):
+    async def assert_feature_flag_state(
+        page: Page, feature_name: str, expected_enabled: bool
+    ):
         """Assert feature flag state matches expected value."""
         # Check via API call
         response = await page.evaluate(
@@ -124,7 +133,9 @@ class LicenseAssertions:
         await expect(plan_indicator).to_be_visible()
 
         plan_text = await plan_indicator.text_content()
-        assert expected_plan.lower() in plan_text.lower(), f"Expected plan '{expected_plan}' not found in: {plan_text}"
+        assert (
+            expected_plan.lower() in plan_text.lower()
+        ), f"Expected plan '{expected_plan}' not found in: {plan_text}"
 
         # Verify plan-specific features are available/unavailable
         feature_checks = {
@@ -137,7 +148,12 @@ class LicenseAssertions:
                 "unavailable": ["sso", "white_label", "advanced_security"],
             },
             "enterprise": {
-                "available": ["advanced_analytics", "sso", "white_label", "enterprise_api"],
+                "available": [
+                    "advanced_analytics",
+                    "sso",
+                    "white_label",
+                    "enterprise_api",
+                ],
                 "unavailable": [],
             },
         }
@@ -156,7 +172,9 @@ class LicenseAssertions:
                     await expect(feature_element).not_to_be_visible()
 
     @staticmethod
-    async def assert_grace_period_active(page: Page, remaining_time_minutes: int = None):
+    async def assert_grace_period_active(
+        page: Page, remaining_time_minutes: int = None
+    ):
         """Assert that grace period is properly indicated."""
         grace_indicators = [
             '[data-testid="grace-period-notice"]',
@@ -174,22 +192,32 @@ class LicenseAssertions:
         assert grace_element is not None, "Grace period indicator not found"
 
         grace_text = await grace_element.text_content()
-        assert "grace period" in grace_text.lower(), f"Grace period text not found in: {grace_text}"
+        assert (
+            "grace period" in grace_text.lower()
+        ), f"Grace period text not found in: {grace_text}"
 
         if remaining_time_minutes:
             # Should indicate remaining time
             time_indicators = [str(remaining_time_minutes), "minutes", "min"]
-            time_found = any(indicator in grace_text.lower() for indicator in time_indicators)
-            assert time_found, f"Grace period time not indicated properly in: {grace_text}"
+            time_found = any(
+                indicator in grace_text.lower() for indicator in time_indicators
+            )
+            assert (
+                time_found
+            ), f"Grace period time not indicated properly in: {grace_text}"
 
     @staticmethod
-    async def assert_cross_app_consistency(pages: dict[str, Page], feature_name: str, expected_state: bool):
+    async def assert_cross_app_consistency(
+        pages: dict[str, Page], feature_name: str, expected_state: bool
+    ):
         """Assert feature state is consistent across multiple apps."""
         results = {}
 
         for app_name, page in pages.items():
             try:
-                await LicenseAssertions.assert_feature_flag_state(page, feature_name, expected_state)
+                await LicenseAssertions.assert_feature_flag_state(
+                    page, feature_name, expected_state
+                )
                 results[app_name] = {"success": True, "state": expected_state}
             except Exception as e:
                 results[app_name] = {"success": False, "error": str(e)}
@@ -197,12 +225,16 @@ class LicenseAssertions:
         # All apps should have consistent state
         failed_apps = [app for app, result in results.items() if not result["success"]]
 
-        assert len(failed_apps) == 0, f"Feature '{feature_name}' state inconsistent across apps. Failed: {failed_apps}"
+        assert (
+            len(failed_apps) == 0
+        ), f"Feature '{feature_name}' state inconsistent across apps. Failed: {failed_apps}"
 
         return results
 
     @staticmethod
-    async def assert_audit_log_entry(page: Page, action_type: str, tenant_id: str, within_minutes: int = 5):
+    async def assert_audit_log_entry(
+        page: Page, action_type: str, tenant_id: str, within_minutes: int = 5
+    ):
         """Assert that an audit log entry was created for a license action."""
         await page.goto("/admin/audit-logs")
         await page.wait_for_load_state("networkidle")
@@ -234,10 +266,14 @@ class LicenseAssertions:
 
                 break
 
-        assert matching_entry_found, f"Audit log entry for '{action_type}' not found for tenant {tenant_id}"
+        assert (
+            matching_entry_found
+        ), f"Audit log entry for '{action_type}' not found for tenant {tenant_id}"
 
     @staticmethod
-    async def assert_license_usage_tracking(page: Page, tenant_id: str, usage_type: str, expected_count: int = None):
+    async def assert_license_usage_tracking(
+        page: Page, tenant_id: str, usage_type: str, expected_count: int = None
+    ):
         """Assert that license usage is being tracked correctly."""
         # Navigate to license usage dashboard (admin feature)
         await page.goto(f"/admin/tenants/{tenant_id}/usage")
@@ -249,19 +285,29 @@ class LicenseAssertions:
         usage_text = await usage_metric.text_content()
 
         if expected_count is not None:
-            assert str(expected_count) in usage_text, f"Usage count {expected_count} not found in: {usage_text}"
+            assert (
+                str(expected_count) in usage_text
+            ), f"Usage count {expected_count} not found in: {usage_text}"
 
         # Verify usage percentage if limits are defined
-        usage_percentage = page.locator(f'[data-testid="usage-{usage_type}-percentage"]')
+        usage_percentage = page.locator(
+            f'[data-testid="usage-{usage_type}-percentage"]'
+        )
         if await usage_percentage.is_visible():
             percentage_text = await usage_percentage.text_content()
-            assert "%" in percentage_text, f"Usage percentage should be displayed: {percentage_text}"
+            assert (
+                "%" in percentage_text
+            ), f"Usage percentage should be displayed: {percentage_text}"
 
     @staticmethod
-    async def assert_real_time_updates(page: Page, feature_name: str, initial_state: bool, timeout: int = 30):
+    async def assert_real_time_updates(
+        page: Page, feature_name: str, initial_state: bool, timeout: int = 30
+    ):
         """Assert that feature flag changes are reflected in real-time."""
         # First verify initial state
-        await LicenseAssertions.assert_feature_flag_state(page, feature_name, initial_state)
+        await LicenseAssertions.assert_feature_flag_state(
+            page, feature_name, initial_state
+        )
 
         # Setup listener for changes
         await page.evaluate(
@@ -286,7 +332,9 @@ class LicenseAssertions:
         start_time = datetime.now()
         while (datetime.now() - start_time).seconds < timeout:
             try:
-                await LicenseAssertions.assert_feature_flag_state(page, feature_name, expected_new_state)
+                await LicenseAssertions.assert_feature_flag_state(
+                    page, feature_name, expected_new_state
+                )
                 break  # State changed successfully
             except AssertionError:
                 await asyncio.sleep(1)
@@ -298,7 +346,8 @@ class LicenseAssertions:
         # Verify update was received via real-time channel
         updates = await page.evaluate("window.featureUpdates || []")
         feature_update_found = any(
-            update.get("feature_name") == feature_name and update.get("enabled") == expected_new_state
+            update.get("feature_name") == feature_name
+            and update.get("enabled") == expected_new_state
             for update in updates
         )
 
@@ -309,7 +358,9 @@ class PerformanceAssertions:
     """Performance-related assertions for license testing."""
 
     @staticmethod
-    async def assert_feature_check_performance(page: Page, feature_name: str, max_response_time_ms: int = 100):
+    async def assert_feature_check_performance(
+        page: Page, feature_name: str, max_response_time_ms: int = 100
+    ):
         """Assert that feature flag checks perform within acceptable time limits."""
         start_time = await page.evaluate("Date.now()")
 
@@ -331,7 +382,9 @@ class PerformanceAssertions:
         ), f"Feature check for '{feature_name}' took {response_time}ms, expected <= {max_response_time_ms}ms"
 
     @staticmethod
-    async def assert_license_cache_effectiveness(page: Page, cache_hit_ratio: float = 0.8):
+    async def assert_license_cache_effectiveness(
+        page: Page, cache_hit_ratio: float = 0.8
+    ):
         """Assert that license caching is working effectively."""
         # This would require monitoring cache hit/miss ratios
         cache_stats = await page.evaluate(

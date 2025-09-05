@@ -74,7 +74,9 @@ class APIVersioningMiddleware:
             "v2": APIVersionInfo(version="v2", status=VersionStatus.SUPPORTED),
         }
 
-    async def process_request(self, request: Request) -> tuple[str, dict[str, str] | None]:
+    async def process_request(
+        self, request: Request
+    ) -> tuple[str, dict[str, str] | None]:
         """Process API version from request.
 
         Args:
@@ -107,7 +109,9 @@ class APIVersioningMiddleware:
         # Priority order: header > query param > path > default
 
         # 1. X-API-Version header (preferred)
-        version = request.headers.get("X-API-Version") or request.headers.get("x-api-version")
+        version = request.headers.get("X-API-Version") or request.headers.get(
+            "x-api-version"
+        )
         if version:
             return self._normalize_version(version)
 
@@ -118,7 +122,11 @@ class APIVersioningMiddleware:
 
         # 3. Path prefix (e.g., /api/v1/...)
         path_parts = request.url.path.strip("/").split("/")
-        if len(path_parts) >= 2 and path_parts[0] == "api" and path_parts[1].startswith("v"):
+        if (
+            len(path_parts) >= 2
+            and path_parts[0] == "api"
+            and path_parts[1].startswith("v")
+        ):
             return path_parts[1]
 
         # 4. Default version
@@ -152,13 +160,21 @@ class APIVersioningMiddleware:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"API version '{requested_version}' not supported. Use '{closest}' instead.",
-                    headers={"X-Supported-Versions": ", ".join(self.supported_versions.keys())},
+                    headers={
+                        "X-Supported-Versions": ", ".join(
+                            self.supported_versions.keys()
+                        )
+                    },
                 )
             else:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"API version '{requested_version}' not supported",
-                    headers={"X-Supported-Versions": ", ".join(self.supported_versions.keys())},
+                    headers={
+                        "X-Supported-Versions": ", ".join(
+                            self.supported_versions.keys()
+                        )
+                    },
                 )
 
         # Check if version is sunset
@@ -169,7 +185,9 @@ class APIVersioningMiddleware:
                 detail=f"API version '{requested_version}' is no longer available. Use '{replacement}' instead.",
                 headers={
                     "X-Replacement-Version": replacement,
-                    "X-Sunset-Date": version_info.sunset_date.isoformat() if version_info.sunset_date else "",
+                    "X-Sunset-Date": version_info.sunset_date.isoformat()
+                    if version_info.sunset_date
+                    else "",
                 },
             )
 
@@ -198,7 +216,9 @@ class APIVersioningMiddleware:
         except (ValueError, IndexError):
             return supported[0]
 
-    def _generate_warning_headers(self, version_info: APIVersionInfo) -> dict[str, str] | None:
+    def _generate_warning_headers(
+        self, version_info: APIVersionInfo
+    ) -> dict[str, str] | None:
         """Generate warning headers for deprecated/sunset versions."""
         headers = {}
 
@@ -239,7 +259,9 @@ class APIVersioningMiddleware:
         self.supported_versions[version] = version_info
         logger.info(f"Added API version: {version} ({version_info.status})")
 
-    def deprecate_version(self, version: str, replacement: str, sunset_date: datetime | None = None):
+    def deprecate_version(
+        self, version: str, replacement: str, sunset_date: datetime | None = None
+    ):
         """Mark a version as deprecated."""
         if version in self.supported_versions:
             self.supported_versions[version].status = VersionStatus.DEPRECATED
@@ -255,7 +277,9 @@ class APIVersioningMiddleware:
             logger.info(f"Sunset API version: {version}")
 
 
-async def api_versioning_middleware(request: Request, call_next, versioning: APIVersioningMiddleware):
+async def api_versioning_middleware(
+    request: Request, call_next, versioning: APIVersioningMiddleware
+):
     """FastAPI middleware function for API versioning."""
     try:
         # Process API version
@@ -281,10 +305,14 @@ async def api_versioning_middleware(request: Request, call_next, versioning: API
         )
     except Exception as e:
         logger.error(f"API versioning middleware error: {e}")
-        return JSONResponse(status_code=500, content={"detail": "API versioning validation failed"})
+        return JSONResponse(
+            status_code=500, content={"detail": "API versioning validation failed"}
+        )
 
 
-def add_api_versioning_middleware(app: FastAPI, versioning: APIVersioningMiddleware | None = None):
+def add_api_versioning_middleware(
+    app: FastAPI, versioning: APIVersioningMiddleware | None = None
+):
     """Add API versioning middleware to FastAPI app.
 
     Args:

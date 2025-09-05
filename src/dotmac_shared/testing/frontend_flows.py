@@ -124,7 +124,9 @@ class DRYFrontendFlowTester(BaseTestSuite):
     async def setup_browser_context(self) -> tuple[Browser, BrowserContext]:
         """Set up browser context with consistent configuration."""
         playwright = await async_playwright().start()
-        browser = await playwright.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])
+        browser = await playwright.chromium.launch(
+            headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"]
+        )
 
         context = await browser.new_context(
             viewport={"width": 1920, "height": 1080},
@@ -171,7 +173,9 @@ class DRYFrontendFlowTester(BaseTestSuite):
                 tags={"test_name": test_name, "status": status},
             )
 
-    async def test_application_connectivity(self, page: Page, app_key: str, app_config: dict[str, Any]) -> bool:
+    async def test_application_connectivity(
+        self, page: Page, app_key: str, app_config: dict[str, Any]
+    ) -> bool:
         """Test basic application connectivity and loading."""
         start_time = time.time()
 
@@ -216,7 +220,9 @@ class DRYFrontendFlowTester(BaseTestSuite):
             )
             return False
 
-    async def test_login_form_presence(self, page: Page, app_key: str, app_config: dict[str, Any]) -> bool:
+    async def test_login_form_presence(
+        self, page: Page, app_key: str, app_config: dict[str, Any]
+    ) -> bool:
         """Test login form detection and basic interaction."""
         start_time = time.time()
 
@@ -256,7 +262,10 @@ class DRYFrontendFlowTester(BaseTestSuite):
             # Determine if login form is present (need email + password + submit)
             has_email = any("email" in sel for sel in found_elements)
             has_password = any("password" in sel for sel in found_elements)
-            has_submit = any("submit" in sel or "Login" in sel or "Sign In" in sel for sel in found_elements)
+            has_submit = any(
+                "submit" in sel or "Login" in sel or "Sign In" in sel
+                for sel in found_elements
+            )
 
             success = has_email and has_password
 
@@ -279,7 +288,9 @@ class DRYFrontendFlowTester(BaseTestSuite):
             )
             return False
 
-    async def test_responsive_behavior(self, page: Page, app_key: str, app_config: dict[str, Any]) -> bool:
+    async def test_responsive_behavior(
+        self, page: Page, app_key: str, app_config: dict[str, Any]
+    ) -> bool:
         """Test responsive design across viewports."""
         start_time = time.time()
 
@@ -301,7 +312,9 @@ class DRYFrontendFlowTester(BaseTestSuite):
                 await page.wait_for_load_state("networkidle")
 
                 # Screenshot for each viewport
-                screenshot_path = self.screenshots_dir / f"{app_key}_{viewport['name']}.png"
+                screenshot_path = (
+                    self.screenshots_dir / f"{app_key}_{viewport['name']}.png"
+                )
                 await page.screenshot(path=str(screenshot_path))
 
                 # Basic responsiveness check
@@ -383,7 +396,11 @@ class DRYFrontendFlowTester(BaseTestSuite):
                 "total_tests": len(self.test_results),
                 "passed_tests": sum(1 for r in self.test_results if r.success),
                 "success_rate": (
-                    (sum(1 for r in self.test_results if r.success) / len(self.test_results) * 100)
+                    (
+                        sum(1 for r in self.test_results if r.success)
+                        / len(self.test_results)
+                        * 100
+                    )
                     if self.test_results
                     else 0
                 ),
@@ -391,7 +408,9 @@ class DRYFrontendFlowTester(BaseTestSuite):
             integration_status={
                 "dry_compliance": True,
                 "monitoring_integrated": self.monitoring is not None,
-                "screenshot_count": len([r for r in self.test_results if r.screenshot_path]),
+                "screenshot_count": len(
+                    [r for r in self.test_results if r.screenshot_path]
+                ),
             },
         )
 

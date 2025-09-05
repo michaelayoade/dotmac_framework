@@ -6,6 +6,9 @@ Geographic Information System endpoints using RouterFactory patterns.
 from typing import Any
 from uuid import UUID
 
+from fastapi import Depends, Query
+from pydantic import BaseModel, Field
+
 from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
@@ -13,8 +16,6 @@ from dotmac_shared.api.dependencies import (
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import Depends, Query
-from pydantic import BaseModel, Field
 
 # === GIS Schemas ===
 
@@ -90,9 +91,13 @@ async def list_service_areas(
 
     # Apply filters
     if coverage_type:
-        service_areas = [area for area in service_areas if area["coverage_type"] == coverage_type]
+        service_areas = [
+            area for area in service_areas if area["coverage_type"] == coverage_type
+        ]
     if service_type:
-        service_areas = [area for area in service_areas if service_type in area["service_types"]]
+        service_areas = [
+            area for area in service_areas if service_type in area["service_types"]
+        ]
 
     return service_areas[: deps.pagination.size]
 
@@ -255,7 +260,11 @@ async def optimize_route(
             "estimated_time": "28 minutes",
             "waypoints": [
                 {"lat": 37.7749, "lon": -122.4194, "description": "Start point"},
-                {"lat": 37.7849, "lon": -122.4094, "description": "Service area checkpoint"},
+                {
+                    "lat": 37.7849,
+                    "lon": -122.4094,
+                    "description": "Service area checkpoint",
+                },
                 {"lat": 37.7949, "lon": -122.4194, "description": "End point"},
             ],
         },

@@ -16,13 +16,28 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
-from dotmac_shared.benchmarking.analyzers.benchmark_comparator import BenchmarkComparator, BenchmarkComparisonConfig
-from dotmac_shared.benchmarking.analyzers.regression_detector import RegressionDetectionConfig, RegressionDetector
-from dotmac_shared.benchmarking.collectors.system_metrics import SystemMetricsCollector
-from dotmac_shared.benchmarking.core.benchmark_manager import PerformanceBenchmarkManager
-from dotmac_shared.benchmarking.profilers.api_benchmark import ApiEndpointBenchmarker, ApiLoadTestConfig
-from dotmac_shared.benchmarking.profilers.database_benchmark import DatabaseBenchmarkConfig, DatabaseQueryBenchmarker
 from pydantic import BaseModel, Field
+
+from dotmac_shared.benchmarking.analyzers.benchmark_comparator import (
+    BenchmarkComparator,
+    BenchmarkComparisonConfig,
+)
+from dotmac_shared.benchmarking.analyzers.regression_detector import (
+    RegressionDetectionConfig,
+    RegressionDetector,
+)
+from dotmac_shared.benchmarking.collectors.system_metrics import SystemMetricsCollector
+from dotmac_shared.benchmarking.core.benchmark_manager import (
+    PerformanceBenchmarkManager,
+)
+from dotmac_shared.benchmarking.profilers.api_benchmark import (
+    ApiEndpointBenchmarker,
+    ApiLoadTestConfig,
+)
+from dotmac_shared.benchmarking.profilers.database_benchmark import (
+    DatabaseBenchmarkConfig,
+    DatabaseQueryBenchmarker,
+)
 
 from ..utils.decorators import standard_exception_handler
 
@@ -145,17 +160,24 @@ class PerformancePipelineRunner:
 
         # Initialize components
         self.benchmark_manager = PerformanceBenchmarkManager()
-        self.system_metrics = SystemMetricsCollector() if config.enable_system_metrics else None
+        self.system_metrics = (
+            SystemMetricsCollector() if config.enable_system_metrics else None
+        )
         self.regression_detector = (
             RegressionDetector(
                 RegressionDetectionConfig(
-                    baseline_days=config.baseline_days, regression_threshold_percent=config.regression_threshold_percent
+                    baseline_days=config.baseline_days,
+                    regression_threshold_percent=config.regression_threshold_percent,
                 )
             )
             if config.enable_regression_analysis
             else None
         )
-        self.comparator = BenchmarkComparator(BenchmarkComparisonConfig()) if config.enable_comparison else None
+        self.comparator = (
+            BenchmarkComparator(BenchmarkComparisonConfig())
+            if config.enable_comparison
+            else None
+        )
 
     @standard_exception_handler
     async def run_pipeline(self) -> PipelineResult:
@@ -169,27 +191,42 @@ class PerformancePipelineRunner:
             stages.append(setup_result)
 
             if setup_result.status == PipelineStatus.FAILED and self.config.fail_fast:
-                return self._create_failed_pipeline_result(pipeline_start, stages, "Setup stage failed")
+                return self._create_failed_pipeline_result(
+                    pipeline_start, stages, "Setup stage failed"
+                )
 
             # System metrics collection
             if self.config.enable_system_metrics:
-                metrics_result = await self._run_stage(PipelineStage.SYSTEM_METRICS, self._system_metrics_stage)
+                metrics_result = await self._run_stage(
+                    PipelineStage.SYSTEM_METRICS, self._system_metrics_stage
+                )
                 stages.append(metrics_result)
 
-                if metrics_result.status == PipelineStatus.FAILED and self.config.fail_fast:
-                    return self._create_failed_pipeline_result(pipeline_start, stages, "System metrics stage failed")
+                if (
+                    metrics_result.status == PipelineStatus.FAILED
+                    and self.config.fail_fast
+                ):
+                    return self._create_failed_pipeline_result(
+                        pipeline_start, stages, "System metrics stage failed"
+                    )
 
             # API benchmarks
             if self.config.enable_api_benchmarks and self.config.api_base_url:
-                api_result = await self._run_stage(PipelineStage.API_BENCHMARKS, self._api_benchmarks_stage)
+                api_result = await self._run_stage(
+                    PipelineStage.API_BENCHMARKS, self._api_benchmarks_stage
+                )
                 stages.append(api_result)
 
                 if api_result.status == PipelineStatus.FAILED and self.config.fail_fast:
-                    return self._create_failed_pipeline_result(pipeline_start, stages, "API benchmarks stage failed")
+                    return self._create_failed_pipeline_result(
+                        pipeline_start, stages, "API benchmarks stage failed"
+                    )
 
             # Database benchmarks
             if self.config.enable_database_benchmarks and self.config.database_url:
-                db_result = await self._run_stage(PipelineStage.DATABASE_BENCHMARKS, self._database_benchmarks_stage)
+                db_result = await self._run_stage(
+                    PipelineStage.DATABASE_BENCHMARKS, self._database_benchmarks_stage
+                )
                 stages.append(db_result)
 
                 if db_result.status == PipelineStatus.FAILED and self.config.fail_fast:
@@ -206,15 +243,21 @@ class PerformancePipelineRunner:
 
             # Comparison with baselines
             if self.config.enable_comparison:
-                comparison_result = await self._run_stage(PipelineStage.COMPARISON, self._comparison_stage)
+                comparison_result = await self._run_stage(
+                    PipelineStage.COMPARISON, self._comparison_stage
+                )
                 stages.append(comparison_result)
 
             # Report generation
-            reporting_result = await self._run_stage(PipelineStage.REPORTING, self._reporting_stage, stages)
+            reporting_result = await self._run_stage(
+                PipelineStage.REPORTING, self._reporting_stage, stages
+            )
             stages.append(reporting_result)
 
             # Cleanup
-            cleanup_result = await self._run_stage(PipelineStage.CLEANUP, self._cleanup_stage)
+            cleanup_result = await self._run_stage(
+                PipelineStage.CLEANUP, self._cleanup_stage
+            )
             stages.append(cleanup_result)
 
         except Exception as e:
@@ -235,7 +278,9 @@ class PerformancePipelineRunner:
 
         # Determine overall status
         failed_stages = [s for s in stages if s.status == PipelineStatus.FAILED]
-        overall_status = PipelineStatus.FAILED if failed_stages else PipelineStatus.SUCCESS
+        overall_status = (
+            PipelineStatus.FAILED if failed_stages else PipelineStatus.SUCCESS
+        )
 
         # Calculate performance metrics
         performance_score = self._calculate_overall_performance_score(stages)
@@ -243,8 +288,12 @@ class PerformancePipelineRunner:
         critical_issues = self._extract_critical_issues(stages)
 
         # Generate summary
-        summary = self._generate_pipeline_summary(stages, performance_score, regression_detected)
-        recommendations = self._generate_pipeline_recommendations(stages, critical_issues)
+        summary = self._generate_pipeline_summary(
+            stages, performance_score, regression_detected
+        )
+        recommendations = self._generate_pipeline_recommendations(
+            stages, critical_issues
+        )
 
         # Collect artifacts
         artifacts = []
@@ -264,10 +313,15 @@ class PerformancePipelineRunner:
             summary=summary,
             recommendations=recommendations,
             artifacts=artifacts,
-            metadata={"config": self.config.model_dump(), "environment": os.environ.copy()},
+            metadata={
+                "config": self.config.model_dump(),
+                "environment": os.environ.copy(),
+            },
         )
 
-    async def _run_stage(self, stage: PipelineStage, stage_func: Callable, *args) -> PipelineStageResult:
+    async def _run_stage(
+        self, stage: PipelineStage, stage_func: Callable, *args
+    ) -> PipelineStageResult:
         """Run a single pipeline stage with error handling and timing"""
         start_time = datetime.utcnow()
 
@@ -286,7 +340,9 @@ class PerformancePipelineRunner:
                 start_time=start_time,
                 end_time=end_time,
                 output=result if isinstance(result, dict) else {"result": result},
-                artifacts=result.get("artifacts", []) if isinstance(result, dict) else [],
+                artifacts=result.get("artifacts", [])
+                if isinstance(result, dict)
+                else [],
             )
 
         except asyncio.TimeoutError:
@@ -297,7 +353,9 @@ class PerformancePipelineRunner:
                 execution_time=(end_time - start_time).total_seconds(),
                 start_time=start_time,
                 end_time=end_time,
-                errors=[f"Stage {stage.value} timed out after {self.config.timeout_minutes} minutes"],
+                errors=[
+                    f"Stage {stage.value} timed out after {self.config.timeout_minutes} minutes"
+                ],
             )
 
         except Exception as e:
@@ -327,7 +385,9 @@ class PerformancePipelineRunner:
             validation_errors.append("API benchmarks enabled but no base URL provided")
 
         if self.config.enable_database_benchmarks and not self.config.database_url:
-            validation_errors.append("Database benchmarks enabled but no database URL provided")
+            validation_errors.append(
+                "Database benchmarks enabled but no database URL provided"
+            )
 
         if validation_errors:
             setup_info["configuration_valid"] = False
@@ -352,19 +412,29 @@ class PerformancePipelineRunner:
         current_metrics = self.system_metrics.get_current_metrics()
 
         # Establish baseline if not exists
-        baseline = self.system_metrics.establish_baseline(duration_seconds=min(duration, 60))
+        baseline = self.system_metrics.establish_baseline(
+            duration_seconds=min(duration, 60)
+        )
 
         # Save metrics to file
         metrics_file = self.output_dir / f"system_metrics_{self.pipeline_id}.json"
         with open(metrics_file, "w") as f:
             json.dump(
-                {"current_metrics": current_metrics, "baseline": baseline, "collection_duration": duration},
+                {
+                    "current_metrics": current_metrics,
+                    "baseline": baseline,
+                    "collection_duration": duration,
+                },
                 f,
                 indent=2,
                 default=str,
             )
 
-        return {"metrics": current_metrics, "baseline": baseline, "artifacts": [str(metrics_file)]}
+        return {
+            "metrics": current_metrics,
+            "baseline": baseline,
+            "artifacts": [str(metrics_file)],
+        }
 
     async def _api_benchmarks_stage(self) -> dict[str, Any]:
         """API benchmarks stage"""
@@ -378,7 +448,9 @@ class PerformancePipelineRunner:
             ramp_up_seconds=10,
         )
 
-        benchmarker = ApiEndpointBenchmarker(self.config.api_base_url, self.config.api_auth_token)
+        benchmarker = ApiEndpointBenchmarker(
+            self.config.api_base_url, self.config.api_auth_token
+        )
 
         # Define test requests
         test_requests = []
@@ -389,16 +461,30 @@ class PerformancePipelineRunner:
 
         # Add default health check test if no custom tests
         if not test_requests:
-            test_requests = [{"method": "GET", "path": "/health", "name": "health_check", "expected_status": 200}]
+            test_requests = [
+                {
+                    "method": "GET",
+                    "path": "/health",
+                    "name": "health_check",
+                    "expected_status": 200,
+                }
+            ]
 
         # Run load test
-        results = await benchmarker.run_load_test(test_requests, api_config, "pipeline_api_test")
+        results = await benchmarker.run_load_test(
+            test_requests, api_config, "pipeline_api_test"
+        )
 
         # Save results
         api_results_file = self.output_dir / f"api_benchmark_{self.pipeline_id}.json"
         with open(api_results_file, "w") as f:
             json.dump(
-                results.model_dump() if hasattr(results, "model_dump") else results.__dict__, f, indent=2, default=str
+                results.model_dump()
+                if hasattr(results, "model_dump")
+                else results.__dict__,
+                f,
+                indent=2,
+                default=str,
             )
 
         return {
@@ -436,10 +522,15 @@ class PerformancePipelineRunner:
 
             # Add default queries if no custom queries
             if not test_queries:
-                test_queries = [("simple_select", "SELECT 1", {}), ("timestamp_query", "SELECT current_timestamp", {})]
+                test_queries = [
+                    ("simple_select", "SELECT 1", {}),
+                    ("timestamp_query", "SELECT current_timestamp", {}),
+                ]
 
             # Run benchmark
-            results = await benchmarker.benchmark_query_set(test_queries, "pipeline_db_test")
+            results = await benchmarker.benchmark_query_set(
+                test_queries, "pipeline_db_test"
+            )
 
             # Save results
             db_results_file = self.output_dir / f"db_benchmark_{self.pipeline_id}.json"
@@ -461,13 +552,17 @@ class PerformancePipelineRunner:
         analyses = self.regression_detector.analyze_all_metrics()
 
         # Save analysis results
-        regression_file = self.output_dir / f"regression_analysis_{self.pipeline_id}.json"
+        regression_file = (
+            self.output_dir / f"regression_analysis_{self.pipeline_id}.json"
+        )
         with open(regression_file, "w") as f:
             json.dump([a.__dict__ for a in analyses], f, indent=2, default=str)
 
         return {
             "analyses": [a.__dict__ for a in analyses],
-            "regressions_detected": len([a for a in analyses if a.severity.value != "none"]),
+            "regressions_detected": len(
+                [a for a in analyses if a.severity.value != "none"]
+            ),
             "artifacts": [str(regression_file)],
         }
 
@@ -480,7 +575,9 @@ class PerformancePipelineRunner:
         # For now, return placeholder results
         return {"status": "completed", "message": "Comparison with baseline completed"}
 
-    async def _reporting_stage(self, stages: list[PipelineStageResult]) -> dict[str, Any]:
+    async def _reporting_stage(
+        self, stages: list[PipelineStageResult]
+    ) -> dict[str, Any]:
         """Report generation stage"""
         artifacts = []
 
@@ -489,7 +586,9 @@ class PerformancePipelineRunner:
             json_report = {
                 "pipeline_id": self.pipeline_id,
                 "execution_summary": {
-                    "start_time": stages[0].start_time.isoformat() if stages else datetime.utcnow().isoformat(),
+                    "start_time": stages[0].start_time.isoformat()
+                    if stages
+                    else datetime.utcnow().isoformat(),
                     "stages": [
                         {
                             "stage": s.stage.value,
@@ -529,9 +628,13 @@ class PerformancePipelineRunner:
 
         return {"cleanup_actions": cleanup_actions}
 
-    def _calculate_overall_performance_score(self, stages: list[PipelineStageResult]) -> float:
+    def _calculate_overall_performance_score(
+        self, stages: list[PipelineStageResult]
+    ) -> float:
         """Calculate overall performance score (0-100)"""
-        successful_stages = len([s for s in stages if s.status == PipelineStatus.SUCCESS])
+        successful_stages = len(
+            [s for s in stages if s.status == PipelineStatus.SUCCESS]
+        )
         total_stages = len(stages)
 
         if total_stages == 0:
@@ -547,7 +650,9 @@ class PerformancePipelineRunner:
                 return output.get("regressions_detected", 0) > 0
         return False
 
-    def _extract_critical_issues(self, stages: list[PipelineStageResult]) -> list[dict[str, Any]]:
+    def _extract_critical_issues(
+        self, stages: list[PipelineStageResult]
+    ) -> list[dict[str, Any]]:
         """Extract critical issues from all stages"""
         issues = []
 
@@ -566,7 +671,10 @@ class PerformancePipelineRunner:
         return issues
 
     def _generate_pipeline_summary(
-        self, stages: list[PipelineStageResult], performance_score: float, regression_detected: bool
+        self,
+        stages: list[PipelineStageResult],
+        performance_score: float,
+        regression_detected: bool,
     ) -> str:
         """Generate human-readable pipeline summary"""
         len([s for s in stages if s.status == PipelineStatus.SUCCESS])
@@ -586,18 +694,26 @@ class PerformancePipelineRunner:
         recommendations = []
 
         if critical_issues:
-            recommendations.append(f"🚨 {len(critical_issues)} critical issues detected - review stage outputs")
+            recommendations.append(
+                f"🚨 {len(critical_issues)} critical issues detected - review stage outputs"
+            )
 
         failed_stages = [s for s in stages if s.status == PipelineStatus.FAILED]
         if failed_stages:
-            recommendations.append("⚠️ Some pipeline stages failed - check configuration and environment")
+            recommendations.append(
+                "⚠️ Some pipeline stages failed - check configuration and environment"
+            )
 
         timeout_stages = [s for s in stages if s.status == PipelineStatus.TIMEOUT]
         if timeout_stages:
-            recommendations.append("⏰ Some stages timed out - consider increasing timeout or optimizing tests")
+            recommendations.append(
+                "⏰ Some stages timed out - consider increasing timeout or optimizing tests"
+            )
 
         if not recommendations:
-            recommendations.append("✅ Pipeline executed successfully without major issues")
+            recommendations.append(
+                "✅ Pipeline executed successfully without major issues"
+            )
 
         return recommendations
 
@@ -661,7 +777,13 @@ class PerformancePipelineRunner:
             stages=stages,
             overall_performance_score=0.0,
             regression_detected=False,
-            critical_issues=[{"type": "pipeline_failure", "message": reason, "timestamp": end_time.isoformat()}],
+            critical_issues=[
+                {
+                    "type": "pipeline_failure",
+                    "message": reason,
+                    "timestamp": end_time.isoformat(),
+                }
+            ],
             summary=f"Pipeline failed: {reason}",
             recommendations=[f"❌ Pipeline execution failed: {reason}"],
         )

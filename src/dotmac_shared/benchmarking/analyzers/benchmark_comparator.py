@@ -109,14 +109,18 @@ class BenchmarkComparator:
         common_metrics = set(baseline_results.keys()) & set(target_results.keys())
 
         if not common_metrics:
-            return self._create_empty_comparison(baseline_name, target_name, comparison_type, "No common metrics found")
+            return self._create_empty_comparison(
+                baseline_name, target_name, comparison_type, "No common metrics found"
+            )
 
         # Calculate differences for each metric
         all_diffs = []
         significant_changes = []
 
         for metric_name in common_metrics:
-            diff = self._calculate_metric_diff(metric_name, baseline_results[metric_name], target_results[metric_name])
+            diff = self._calculate_metric_diff(
+                metric_name, baseline_results[metric_name], target_results[metric_name]
+            )
             all_diffs.append(diff)
 
             if self._is_significant_change(diff):
@@ -125,19 +129,28 @@ class BenchmarkComparator:
         # Calculate summary statistics
         improved_count = sum(1 for d in all_diffs if d.is_improvement)
         degraded_count = sum(
-            1 for d in all_diffs if not d.is_improvement and d.significance != ChangeSignificance.INSIGNIFICANT
+            1
+            for d in all_diffs
+            if not d.is_improvement
+            and d.significance != ChangeSignificance.INSIGNIFICANT
         )
         unchanged_count = len(all_diffs) - improved_count - degraded_count
 
         # Calculate overall performance change
         percentage_changes = [
-            d.percentage_change for d in all_diffs if d.significance != ChangeSignificance.INSIGNIFICANT
+            d.percentage_change
+            for d in all_diffs
+            if d.significance != ChangeSignificance.INSIGNIFICANT
         ]
-        overall_change = statistics.mean(percentage_changes) if percentage_changes else 0.0
+        overall_change = (
+            statistics.mean(percentage_changes) if percentage_changes else 0.0
+        )
 
         # Generate summary and recommendations
         summary = self._generate_comparison_summary(all_diffs, overall_change)
-        recommendations = self._generate_comparison_recommendations(all_diffs, overall_change)
+        recommendations = self._generate_comparison_recommendations(
+            all_diffs, overall_change
+        )
 
         execution_time = (datetime.utcnow() - start_time).total_seconds()
 
@@ -189,7 +202,9 @@ class BenchmarkComparator:
 
         # Aggregate baseline data
         baseline_data = {}
-        baseline_timestamps = [ts for ts in sorted_timestamps if baseline_start <= ts <= baseline_end]
+        baseline_timestamps = [
+            ts for ts in sorted_timestamps if baseline_start <= ts <= baseline_end
+        ]
 
         if baseline_timestamps:
             for metric_name in time_series_data[baseline_timestamps[0]].keys():
@@ -199,11 +214,15 @@ class BenchmarkComparator:
                     if metric_name in time_series_data[ts]
                 ]
                 if values:
-                    baseline_data[metric_name] = statistics.median(values)  # Use median for robustness
+                    baseline_data[metric_name] = statistics.median(
+                        values
+                    )  # Use median for robustness
 
         # Aggregate comparison data
         comparison_data = {}
-        comparison_timestamps = [ts for ts in sorted_timestamps if ts >= comparison_start]
+        comparison_timestamps = [
+            ts for ts in sorted_timestamps if ts >= comparison_start
+        ]
 
         if comparison_timestamps:
             for metric_name in time_series_data[comparison_timestamps[0]].keys():
@@ -230,7 +249,9 @@ class BenchmarkComparator:
 
     @standard_exception_handler
     def compare_environments(
-        self, environment_results: dict[str, dict[str, float]], reference_environment: Optional[str] = None
+        self,
+        environment_results: dict[str, dict[str, float]],
+        reference_environment: Optional[str] = None,
     ) -> list[ComparisonResult]:
         """Compare performance across different environments"""
         if len(environment_results) < 2:
@@ -261,7 +282,9 @@ class BenchmarkComparator:
 
     @standard_exception_handler
     def compare_versions(
-        self, version_results: dict[str, dict[str, float]], version_order: Optional[list[str]] = None
+        self,
+        version_results: dict[str, dict[str, float]],
+        version_order: Optional[list[str]] = None,
     ) -> list[ComparisonResult]:
         """Compare performance across different versions"""
         if len(version_results) < 2:
@@ -295,21 +318,34 @@ class BenchmarkComparator:
     ) -> dict[str, Any]:
         """Generate comprehensive comparison report"""
         if not comparison_results:
-            return {"status": "no_comparisons", "message": "No comparison results available"}
+            return {
+                "status": "no_comparisons",
+                "message": "No comparison results available",
+            }
 
         # Overall statistics
         total_comparisons = len(comparison_results)
         total_metrics = sum(r.total_metrics_compared for r in comparison_results)
 
         # Performance trends
-        improving_comparisons = sum(1 for r in comparison_results if r.overall_performance_change < -2)
-        degrading_comparisons = sum(1 for r in comparison_results if r.overall_performance_change > 2)
-        stable_comparisons = total_comparisons - improving_comparisons - degrading_comparisons
+        improving_comparisons = sum(
+            1 for r in comparison_results if r.overall_performance_change < -2
+        )
+        degrading_comparisons = sum(
+            1 for r in comparison_results if r.overall_performance_change > 2
+        )
+        stable_comparisons = (
+            total_comparisons - improving_comparisons - degrading_comparisons
+        )
 
         # Critical issues
         critical_issues = []
         for result in comparison_results:
-            critical_changes = [d for d in result.significant_changes if d.significance == ChangeSignificance.CRITICAL]
+            critical_changes = [
+                d
+                for d in result.significant_changes
+                if d.significance == ChangeSignificance.CRITICAL
+            ]
             for change in critical_changes:
                 critical_issues.append(
                     {
@@ -335,7 +371,9 @@ class BenchmarkComparator:
             "summary": summary_stats,
             "performance_trend": self._determine_overall_trend(comparison_results),
             "critical_issues": critical_issues,
-            "recommendations": self._generate_report_recommendations(comparison_results),
+            "recommendations": self._generate_report_recommendations(
+                comparison_results
+            ),
         }
 
         if include_details:
@@ -355,7 +393,9 @@ class BenchmarkComparator:
 
         return report
 
-    def _calculate_metric_diff(self, metric_name: str, old_value: float, new_value: float) -> BenchmarkDiff:
+    def _calculate_metric_diff(
+        self, metric_name: str, old_value: float, new_value: float
+    ) -> BenchmarkDiff:
         """Calculate difference between two metric values"""
         absolute_change = new_value - old_value
         percentage_change = (absolute_change / old_value) * 100 if old_value != 0 else 0
@@ -363,7 +403,11 @@ class BenchmarkComparator:
         # Determine significance
         abs_percentage = abs(percentage_change)
         if abs_percentage >= self.config.major_threshold:
-            significance = ChangeSignificance.CRITICAL if abs_percentage >= 50 else ChangeSignificance.MAJOR
+            significance = (
+                ChangeSignificance.CRITICAL
+                if abs_percentage >= 50
+                else ChangeSignificance.MAJOR
+            )
         elif abs_percentage >= self.config.moderate_threshold:
             significance = ChangeSignificance.MODERATE
         elif abs_percentage >= self.config.minor_threshold:
@@ -375,7 +419,11 @@ class BenchmarkComparator:
         is_improvement = absolute_change < 0
 
         # Calculate confidence (simplified)
-        confidence_level = min(1.0, abs_percentage / self.config.minor_threshold) if abs_percentage > 0 else 0.0
+        confidence_level = (
+            min(1.0, abs_percentage / self.config.minor_threshold)
+            if abs_percentage > 0
+            else 0.0
+        )
 
         return BenchmarkDiff(
             metric_name=metric_name,
@@ -390,18 +438,32 @@ class BenchmarkComparator:
 
     def _is_significant_change(self, diff: BenchmarkDiff) -> bool:
         """Determine if a change is significant based on configuration"""
-        if not self.config.include_insignificant_changes and diff.significance == ChangeSignificance.INSIGNIFICANT:
+        if (
+            not self.config.include_insignificant_changes
+            and diff.significance == ChangeSignificance.INSIGNIFICANT
+        ):
             return False
 
         return diff.confidence_level >= self.config.minimum_confidence
 
-    def _generate_comparison_summary(self, diffs: list[BenchmarkDiff], overall_change: float) -> str:
+    def _generate_comparison_summary(
+        self, diffs: list[BenchmarkDiff], overall_change: float
+    ) -> str:
         """Generate human-readable summary of comparison"""
         if not diffs:
             return "No metrics were compared."
 
-        improved = sum(1 for d in diffs if d.is_improvement and d.significance != ChangeSignificance.INSIGNIFICANT)
-        degraded = sum(1 for d in diffs if not d.is_improvement and d.significance != ChangeSignificance.INSIGNIFICANT)
+        improved = sum(
+            1
+            for d in diffs
+            if d.is_improvement and d.significance != ChangeSignificance.INSIGNIFICANT
+        )
+        degraded = sum(
+            1
+            for d in diffs
+            if not d.is_improvement
+            and d.significance != ChangeSignificance.INSIGNIFICANT
+        )
 
         if abs(overall_change) < 2:
             trend = "stable"
@@ -415,11 +477,15 @@ class BenchmarkComparator:
             f"{improved} improved and {degraded} degraded metrics out of {len(diffs)} compared."
         )
 
-    def _generate_comparison_recommendations(self, diffs: list[BenchmarkDiff], overall_change: float) -> list[str]:
+    def _generate_comparison_recommendations(
+        self, diffs: list[BenchmarkDiff], overall_change: float
+    ) -> list[str]:
         """Generate recommendations based on comparison results"""
         recommendations = []
 
-        critical_diffs = [d for d in diffs if d.significance == ChangeSignificance.CRITICAL]
+        critical_diffs = [
+            d for d in diffs if d.significance == ChangeSignificance.CRITICAL
+        ]
         major_diffs = [d for d in diffs if d.significance == ChangeSignificance.MAJOR]
 
         if critical_diffs:
@@ -428,7 +494,9 @@ class BenchmarkComparator:
                 recommendations.append(
                     f"🚨 CRITICAL: {len(critical_degraded)} metrics show severe performance degradation"
                 )
-                recommendations.append("Immediate investigation and potential rollback required")
+                recommendations.append(
+                    "Immediate investigation and potential rollback required"
+                )
 
         if major_diffs:
             major_degraded = [d for d in major_diffs if not d.is_improvement]
@@ -438,7 +506,9 @@ class BenchmarkComparator:
                 )
 
         if overall_change > 10:
-            recommendations.append("📈 Overall performance has degraded - review recent changes")
+            recommendations.append(
+                "📈 Overall performance has degraded - review recent changes"
+            )
         elif overall_change < -10:
             recommendations.append("✅ Overall performance has improved significantly")
 
@@ -448,32 +518,42 @@ class BenchmarkComparator:
             for d in diffs
             if "query" in d.metric_name.lower()
             and not d.is_improvement
-            and d.significance in [ChangeSignificance.MAJOR, ChangeSignificance.CRITICAL]
+            and d.significance
+            in [ChangeSignificance.MAJOR, ChangeSignificance.CRITICAL]
         ]
         if slow_queries:
-            recommendations.append("🔍 Database query performance has degraded - review query optimizations")
+            recommendations.append(
+                "🔍 Database query performance has degraded - review query optimizations"
+            )
 
         high_memory = [
             d
             for d in diffs
             if "memory" in d.metric_name.lower()
             and not d.is_improvement
-            and d.significance in [ChangeSignificance.MAJOR, ChangeSignificance.CRITICAL]
+            and d.significance
+            in [ChangeSignificance.MAJOR, ChangeSignificance.CRITICAL]
         ]
         if high_memory:
-            recommendations.append("💾 Memory usage has increased significantly - check for memory leaks")
+            recommendations.append(
+                "💾 Memory usage has increased significantly - check for memory leaks"
+            )
 
         if not recommendations:
             recommendations.append("✅ Performance comparison looks healthy")
 
         return recommendations
 
-    def _determine_overall_trend(self, comparison_results: list[ComparisonResult]) -> str:
+    def _determine_overall_trend(
+        self, comparison_results: list[ComparisonResult]
+    ) -> str:
         """Determine overall performance trend across all comparisons"""
         if not comparison_results:
             return "unknown"
 
-        avg_change = statistics.mean([r.overall_performance_change for r in comparison_results])
+        avg_change = statistics.mean(
+            [r.overall_performance_change for r in comparison_results]
+        )
 
         if avg_change > 10:
             return "significantly_degraded"
@@ -486,28 +566,48 @@ class BenchmarkComparator:
         else:
             return "stable"
 
-    def _generate_report_recommendations(self, comparison_results: list[ComparisonResult]) -> list[str]:
+    def _generate_report_recommendations(
+        self, comparison_results: list[ComparisonResult]
+    ) -> list[str]:
         """Generate high-level recommendations for the entire report"""
         recommendations = []
 
         critical_count = sum(
-            len([d for d in r.significant_changes if d.significance == ChangeSignificance.CRITICAL])
+            len(
+                [
+                    d
+                    for d in r.significant_changes
+                    if d.significance == ChangeSignificance.CRITICAL
+                ]
+            )
             for r in comparison_results
         )
         if critical_count > 0:
-            recommendations.append(f"🚨 {critical_count} critical performance issues detected across all comparisons")
+            recommendations.append(
+                f"🚨 {critical_count} critical performance issues detected across all comparisons"
+            )
 
-        degrading_comparisons = sum(1 for r in comparison_results if r.overall_performance_change > 5)
+        degrading_comparisons = sum(
+            1 for r in comparison_results if r.overall_performance_change > 5
+        )
         if degrading_comparisons > len(comparison_results) * 0.5:
-            recommendations.append("📉 Majority of comparisons show performance degradation - review recent changes")
+            recommendations.append(
+                "📉 Majority of comparisons show performance degradation - review recent changes"
+            )
 
         if not recommendations:
-            recommendations.append("✅ Performance comparisons show stable or improving trends")
+            recommendations.append(
+                "✅ Performance comparisons show stable or improving trends"
+            )
 
         return recommendations
 
     def _create_empty_comparison(
-        self, baseline_name: str, target_name: str, comparison_type: ComparisonType, reason: str
+        self,
+        baseline_name: str,
+        target_name: str,
+        comparison_type: ComparisonType,
+        reason: str,
     ) -> ComparisonResult:
         """Create empty comparison result for error cases"""
         return ComparisonResult(

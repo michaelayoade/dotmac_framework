@@ -62,7 +62,11 @@ class ContainerLifecycleManager:
                     content={
                         "status": "unhealthy",
                         "service": self.service_name,
-                        "reason": ("shutdown_initiated" if self.shutdown_initiated else "health_check_failed"),
+                        "reason": (
+                            "shutdown_initiated"
+                            if self.shutdown_initiated
+                            else "health_check_failed"
+                        ),
                         "timestamp": time.time(),
                     },
                 )
@@ -71,7 +75,11 @@ class ContainerLifecycleManager:
             failed_checks = []
             for check in self.health_dependencies:
                 try:
-                    if not await check() if asyncio.iscoroutinefunction(check) else not check():
+                    if (
+                        not await check()
+                        if asyncio.iscoroutinefunction(check)
+                        else not check()
+                    ):
                         failed_checks.append(getattr(check, "name", "unknown"))
                 except Exception as e:
                     failed_checks.append(f"{getattr(check, 'name', 'unknown')}: {e}")
@@ -110,7 +118,11 @@ class ContainerLifecycleManager:
                     content={
                         "status": "not_ready",
                         "service": self.service_name,
-                        "reason": ("startup_incomplete" if not self.startup_complete else "shutdown_initiated"),
+                        "reason": (
+                            "startup_incomplete"
+                            if not self.startup_complete
+                            else "shutdown_initiated"
+                        ),
                         "timestamp": time.time(),
                     },
                 )
@@ -119,7 +131,11 @@ class ContainerLifecycleManager:
             failed_checks = []
             for check in self.readiness_dependencies:
                 try:
-                    if not await check() if asyncio.iscoroutinefunction(check) else not check():
+                    if (
+                        not await check()
+                        if asyncio.iscoroutinefunction(check)
+                        else not check()
+                    ):
                         failed_checks.append(getattr(check, "name", "unknown"))
                 except Exception as e:
                     failed_checks.append(f"{getattr(check, 'name', 'unknown')}: {e}")
@@ -212,7 +228,9 @@ class ContainerLifecycleManager:
             shutdown_start = time.time()
             max_wait = self.shutdown_timeout
 
-            logger.info(f"⏳ Waiting up to {max_wait}s for existing connections to finish...")
+            logger.info(
+                f"⏳ Waiting up to {max_wait}s for existing connections to finish..."
+            )
 
             # In a real implementation, you would:
             # 1. Stop accepting new connections
@@ -276,7 +294,9 @@ class ContainerLifecycleManager:
                 "CONTAINER_NAME": os.getenv("CONTAINER_NAME", "unknown"),
             },
             "kubernetes": {
-                "in_cluster": os.path.exists("/var/run/secrets/kubernetes.io/serviceaccount"),
+                "in_cluster": os.path.exists(
+                    "/var/run/secrets/kubernetes.io/serviceaccount"
+                ),
                 "service_account": os.getenv("SERVICE_ACCOUNT", "unknown"),
             },
             "uptime": time.time() - self.startup_time,

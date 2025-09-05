@@ -8,11 +8,17 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 import httpx
+
 from dotmac.application import standard_exception_handler
 from dotmac_shared.core.logging import get_logger
 from dotmac_shared.exceptions import ExceptionContext
 
-from ..interfaces.deployment_provider import ApplicationConfig, DeploymentResult, IDeploymentProvider, ServiceConfig
+from ..interfaces.deployment_provider import (
+    ApplicationConfig,
+    DeploymentResult,
+    IDeploymentProvider,
+    ServiceConfig,
+)
 
 logger = get_logger(__name__)
 
@@ -62,13 +68,18 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
             # Test connection
             health_result = await self.health_check()
             if not health_result.get("healthy", False):
-                raise Exception(f"Coolify health check failed: {health_result.get('error')}")
+                raise Exception(
+                    f"Coolify health check failed: {health_result.get('error')}"
+                )
 
             self._initialized = True
             logger.info("✅ Coolify deployment adapter initialized successfully")
             return True
 
-        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (httpx.HTTPError, httpx.TimeoutException) as e:
+        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (
+            httpx.HTTPError,
+            httpx.TimeoutException,
+        ) as e:
             logger.error(f"Failed to initialize Coolify adapter: {e}")
             return False
 
@@ -85,18 +96,29 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
                 return {
                     "healthy": True,
                     "status": "connected",
-                    "coolify_version": response.headers.get("x-coolify-version", "unknown"),
+                    "coolify_version": response.headers.get(
+                        "x-coolify-version", "unknown"
+                    ),
                     "response_time_ms": response.elapsed.total_seconds() * 1000,
                 }
             else:
-                return {"healthy": False, "error": f"API returned {response.status_code}", "status": "error"}
+                return {
+                    "healthy": False,
+                    "error": f"API returned {response.status_code}",
+                    "status": "error",
+                }
 
-        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (httpx.HTTPError, httpx.TimeoutException) as e:
+        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (
+            httpx.HTTPError,
+            httpx.TimeoutException,
+        ) as e:
             return {"healthy": False, "error": str(e), "status": "error"}
 
     def _load_config(self) -> CoolifyConfig:
         """Load Coolify configuration from adapter config and environment"""
-        base_url = self.config.get("base_url") or os.getenv("COOLIFY_API_URL", "http://localhost:8000")
+        base_url = self.config.get("base_url") or os.getenv(
+            "COOLIFY_API_URL", "http://localhost:8000"
+        )
 
         api_token = self.config.get("api_token") or os.getenv("COOLIFY_API_TOKEN")
 
@@ -124,7 +146,10 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
                 "domains": config.domains,
                 "is_static": False,
                 "build_pack": "dockercompose",
-                "source": {"type": "docker-compose", "docker_compose_raw": config.docker_compose},
+                "source": {
+                    "type": "docker-compose",
+                    "docker_compose_raw": config.docker_compose,
+                },
             }
 
             response = await self.client.post("/api/v1/applications", json=payload)
@@ -140,10 +165,14 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
             app_id = result.get("uuid") or result.get("id")
 
             # Start deployment
-            deploy_response = await self.client.post(f"/api/v1/applications/{app_id}/deploy")
+            deploy_response = await self.client.post(
+                f"/api/v1/applications/{app_id}/deploy"
+            )
 
             if deploy_response.status_code not in [200, 201]:
-                logger.warning(f"Deployment start failed: {deploy_response.status_code}")
+                logger.warning(
+                    f"Deployment start failed: {deploy_response.status_code}"
+                )
 
             endpoint_url = None
             if config.domains:
@@ -163,7 +192,10 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
                 },
             )
 
-        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (httpx.HTTPError, httpx.TimeoutException) as e:
+        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (
+            httpx.HTTPError,
+            httpx.TimeoutException,
+        ) as e:
             logger.error(f"Failed to deploy application: {e}")
             return DeploymentResult(success=False, deployment_id="", error=str(e))
 
@@ -177,10 +209,15 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
                 return await self._deploy_redis(config)
             else:
                 return DeploymentResult(
-                    success=False, deployment_id="", error=f"Unsupported service type: {config.service_type}"
+                    success=False,
+                    deployment_id="",
+                    error=f"Unsupported service type: {config.service_type}",
                 )
 
-        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (httpx.HTTPError, httpx.TimeoutException) as e:
+        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (
+            httpx.HTTPError,
+            httpx.TimeoutException,
+        ) as e:
             logger.error(f"Failed to deploy service: {e}")
             return DeploymentResult(success=False, deployment_id="", error=str(e))
 
@@ -266,7 +303,10 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
             if response.status_code == 404:
                 return {"status": "not_found", "deployment_id": deployment_id}
             elif response.status_code != 200:
-                return {"status": "error", "error": f"API error: {response.status_code}"}
+                return {
+                    "status": "error",
+                    "error": f"API error: {response.status_code}",
+                }
 
             result = response.json()
 
@@ -279,14 +319,19 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
                 "updated_at": result.get("updated_at"),
             }
 
-        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (httpx.HTTPError, httpx.TimeoutException) as e:
+        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (
+            httpx.HTTPError,
+            httpx.TimeoutException,
+        ) as e:
             return {"status": "error", "error": str(e)}
 
     @standard_exception_handler
     async def get_deployment_logs(self, deployment_id: str) -> list[str]:
         """Get deployment logs"""
         try:
-            response = await self.client.get(f"/api/v1/applications/{deployment_id}/logs")
+            response = await self.client.get(
+                f"/api/v1/applications/{deployment_id}/logs"
+            )
 
             if response.status_code != 200:
                 logger.warning(f"Could not fetch logs: {response.status_code}")
@@ -295,7 +340,10 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
             result = response.json()
             return result.get("logs", [])
 
-        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (httpx.HTTPError, httpx.TimeoutException) as e:
+        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (
+            httpx.HTTPError,
+            httpx.TimeoutException,
+        ) as e:
             logger.error(f"Failed to get deployment logs: {e}")
             return []
 
@@ -311,10 +359,15 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
     async def stop_deployment(self, deployment_id: str) -> bool:
         """Stop deployment"""
         try:
-            response = await self.client.post(f"/api/v1/applications/{deployment_id}/stop")
+            response = await self.client.post(
+                f"/api/v1/applications/{deployment_id}/stop"
+            )
             return response.status_code in [200, 204]
 
-        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (httpx.HTTPError, httpx.TimeoutException) as e:
+        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (
+            httpx.HTTPError,
+            httpx.TimeoutException,
+        ) as e:
             logger.error(f"Failed to stop deployment: {e}")
             return False
 
@@ -325,7 +378,10 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
             response = await self.client.delete(f"/api/v1/applications/{deployment_id}")
             return response.status_code in [200, 204]
 
-        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (httpx.HTTPError, httpx.TimeoutException) as e:
+        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (
+            httpx.HTTPError,
+            httpx.TimeoutException,
+        ) as e:
             logger.error(f"Failed to remove deployment: {e}")
             return False
 
@@ -335,10 +391,15 @@ class CoolifyDeploymentAdapter(IDeploymentProvider):
         try:
             payload = {"domain": domain, "https": True, "redirect_to_https": True}
 
-            response = await self.client.post(f"/api/v1/applications/{deployment_id}/domains", json=payload)
+            response = await self.client.post(
+                f"/api/v1/applications/{deployment_id}/domains", json=payload
+            )
             return response.status_code in [200, 201]
 
-        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (httpx.HTTPError, httpx.TimeoutException) as e:
+        except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS + (
+            httpx.HTTPError,
+            httpx.TimeoutException,
+        ) as e:
             logger.error(f"Failed to set domain: {e}")
             return False
 

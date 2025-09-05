@@ -40,7 +40,9 @@ class ResourceLimits:
     max_concurrent_requests: int = 50
 
     @classmethod
-    def from_plan_type(cls, plan_type: str, custom_limits: Optional[dict[str, Any]] = None) -> "ResourceLimits":
+    def from_plan_type(
+        cls, plan_type: str, custom_limits: Optional[dict[str, Any]] = None
+    ) -> "ResourceLimits":
         """Create resource limits based on plan type with optional customization."""
         # Default plan configurations
         plan_defaults = {
@@ -114,8 +116,12 @@ class RouterConfig:
 class HealthCheckConfig:
     """Health check configuration."""
 
-    enabled_checks: list[str] = field(default_factory=lambda: ["database", "cache", "observability"])
-    additional_filesystem_paths: list[str] = field(default_factory=lambda: ["logs", "uploads", "static"])
+    enabled_checks: list[str] = field(
+        default_factory=lambda: ["database", "cache", "observability"]
+    )
+    additional_filesystem_paths: list[str] = field(
+        default_factory=lambda: ["logs", "uploads", "static"]
+    )
     custom_checks: dict[str, Callable] = field(default_factory=dict)
 
 
@@ -155,10 +161,14 @@ class FeatureConfig:
         }
     )
 
-    def get_features_for_plan(self, plan_type: str, tenant_id: Optional[str] = None) -> list[str]:
+    def get_features_for_plan(
+        self, plan_type: str, tenant_id: Optional[str] = None
+    ) -> list[str]:
         """Get enabled features for a specific plan type and tenant."""
         # Start with plan-based features
-        features = self.plan_based_features.get(plan_type.lower(), self.plan_based_features["standard"]).copy()
+        features = self.plan_based_features.get(
+            plan_type.lower(), self.plan_based_features["standard"]
+        ).copy()
 
         # Add any additional enabled features
         features.extend(self.enabled_features)
@@ -171,7 +181,9 @@ class FeatureConfig:
         # Remove duplicates while preserving order
         return list(dict.fromkeys(features))
 
-    def is_feature_enabled(self, feature: str, plan_type: str, tenant_id: Optional[str] = None) -> bool:
+    def is_feature_enabled(
+        self, feature: str, plan_type: str, tenant_id: Optional[str] = None
+    ) -> bool:
         """Check if a specific feature is enabled."""
         return feature in self.get_features_for_plan(plan_type, tenant_id)
 
@@ -243,7 +255,9 @@ class PlatformConfig:
 
     # Feature configurations
     health_config: HealthCheckConfig = field(default_factory=HealthCheckConfig)
-    observability_config: ObservabilityConfig = field(default_factory=ObservabilityConfig)
+    observability_config: ObservabilityConfig = field(
+        default_factory=ObservabilityConfig
+    )
     security_config: SecurityConfig = field(default_factory=SecurityConfig)
     feature_config: FeatureConfig = field(default_factory=FeatureConfig)
     kubernetes_config: KubernetesConfig = field(default_factory=KubernetesConfig)
@@ -435,7 +449,9 @@ def create_isp_platform_config() -> PlatformConfig:
             # Existing ISP-specific routers
             RouterConfig("dotmac_isp.modules", "/api/v1", auto_discover=True),
             RouterConfig("dotmac_isp.portals", "/api/v1", auto_discover=True),
-            RouterConfig("dotmac_isp.api.security_endpoints", "/api/v1/security", required=False),
+            RouterConfig(
+                "dotmac_isp.api.security_endpoints", "/api/v1/security", required=False
+            ),
             RouterConfig("dotmac_isp.api.websocket_router", "/api/ws", required=False),
             RouterConfig("dotmac_isp.api.file_router", "/api/files", required=False),
         ],
@@ -444,7 +460,9 @@ def create_isp_platform_config() -> PlatformConfig:
             "start_celery_monitoring",
             "configure_tenant_isolation",
         ],
-        health_config=HealthCheckConfig(enabled_checks=["database", "cache", "celery", "ssl_certificates"]),
+        health_config=HealthCheckConfig(
+            enabled_checks=["database", "cache", "celery", "ssl_certificates"]
+        ),
     )
 
 
@@ -476,16 +494,24 @@ def create_management_platform_config() -> PlatformConfig:
             ),
             # Existing Management Platform routers
             RouterConfig("dotmac_management.modules", "/api/v1", auto_discover=True),
-            RouterConfig("dotmac_management.api_new.websocket", "/api/ws", required=False),
-            RouterConfig("dotmac_management.api_new.files", "/api/files", required=False),
-            RouterConfig("dotmac_management.api_new.security", "/api/security", required=False),
+            RouterConfig(
+                "dotmac_management.api_new.websocket", "/api/ws", required=False
+            ),
+            RouterConfig(
+                "dotmac_management.api_new.files", "/api/files", required=False
+            ),
+            RouterConfig(
+                "dotmac_management.api_new.security", "/api/security", required=False
+            ),
             RouterConfig("dotmac_management.api.v1.bgops", "/", required=False),
             RouterConfig(
                 "dotmac_management.modules.partners",
                 "/api/v1/partners",
                 auto_discover=True,
             ),
-            RouterConfig("dotmac_management.modules.test_module", "/api/v1/test", required=False),
+            RouterConfig(
+                "dotmac_management.modules.test_module", "/api/v1/test", required=False
+            ),
             RouterConfig(
                 "dotmac_management.modules.simple_working",
                 "/api/v1/working",

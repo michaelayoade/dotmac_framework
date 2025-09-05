@@ -112,7 +112,9 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
         """Validate metrics collection input"""
         try:
             if input_data.time_range_start:
-                datetime.fromisoformat(input_data.time_range_start.replace("Z", "+00:00"))
+                datetime.fromisoformat(
+                    input_data.time_range_start.replace("Z", "+00:00")
+                )
             if input_data.time_range_end:
                 datetime.fromisoformat(input_data.time_range_end.replace("Z", "+00:00"))
         except ValueError:
@@ -143,10 +145,14 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
 
         try:
             if not await self.validate_input(input_data):
-                return self._create_error_result("Input validation failed", error_code="INVALID_INPUT")
+                return self._create_error_result(
+                    "Input validation failed", error_code="INVALID_INPUT"
+                )
 
             if not await self.can_execute(context):
-                return self._create_error_result("Metrics collection not allowed", error_code="EXECUTION_DENIED")
+                return self._create_error_result(
+                    "Metrics collection not allowed", error_code="EXECUTION_DENIED"
+                )
 
             self.logger.info(
                 "Collecting metrics",
@@ -161,7 +167,9 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
             # Collect data points from various sources
             data_points = []
             for metric_type in input_data.metric_types:
-                type_data_points = await self._collect_metrics_by_type(metric_type, input_data)
+                type_data_points = await self._collect_metrics_by_type(
+                    metric_type, input_data
+                )
                 data_points.extend(type_data_points)
 
             # Generate summaries
@@ -178,7 +186,10 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
 
             output_data = CollectMetricsOutput(
                 tenant_id=input_data.tenant_id,
-                time_range={"start": input_data.time_range_start, "end": input_data.time_range_end},
+                time_range={
+                    "start": input_data.time_range_start,
+                    "end": input_data.time_range_end,
+                },
                 aggregation_level=input_data.aggregation_level,
                 data_points=data_points,
                 summaries=summaries,
@@ -210,11 +221,15 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
 
         return await collector(input_data)
 
-    async def _collect_system_metrics(self, input_data: CollectMetricsInput) -> list[MetricDataPoint]:
+    async def _collect_system_metrics(
+        self, input_data: CollectMetricsInput
+    ) -> list[MetricDataPoint]:
         """Collect system-level metrics"""
 
         # Mock system metrics - would integrate with actual monitoring systems
-        base_time = datetime.fromisoformat(input_data.time_range_start.replace("Z", "+00:00"))
+        base_time = datetime.fromisoformat(
+            input_data.time_range_start.replace("Z", "+00:00")
+        )
         metrics = []
 
         for i in range(10):  # 10 data points
@@ -227,14 +242,20 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
                         metric_name="cpu_usage_percent",
                         value=45.2 + (i * 2.1),
                         unit="percent",
-                        tags={"host": "host-1", "tenant": input_data.tenant_id or "system"},
+                        tags={
+                            "host": "host-1",
+                            "tenant": input_data.tenant_id or "system",
+                        },
                     ),
                     MetricDataPoint(
                         timestamp=timestamp,
                         metric_name="memory_usage_bytes",
                         value=2_147_483_648 + (i * 104_857_600),  # ~2GB + growth
                         unit="bytes",
-                        tags={"host": "host-1", "tenant": input_data.tenant_id or "system"},
+                        tags={
+                            "host": "host-1",
+                            "tenant": input_data.tenant_id or "system",
+                        },
                     ),
                     MetricDataPoint(
                         timestamp=timestamp,
@@ -248,10 +269,14 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
 
         return metrics
 
-    async def _collect_application_metrics(self, input_data: CollectMetricsInput) -> list[MetricDataPoint]:
+    async def _collect_application_metrics(
+        self, input_data: CollectMetricsInput
+    ) -> list[MetricDataPoint]:
         """Collect application-level metrics"""
 
-        base_time = datetime.fromisoformat(input_data.time_range_start.replace("Z", "+00:00"))
+        base_time = datetime.fromisoformat(
+            input_data.time_range_start.replace("Z", "+00:00")
+        )
         metrics = []
 
         for i in range(10):
@@ -264,27 +289,38 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
                         metric_name="http_requests_total",
                         value=1250 + (i * 50),
                         unit="count",
-                        tags={"method": "GET", "status": "200", "tenant": input_data.tenant_id or "system"},
+                        tags={
+                            "method": "GET",
+                            "status": "200",
+                            "tenant": input_data.tenant_id or "system",
+                        },
                     ),
                     MetricDataPoint(
                         timestamp=timestamp,
                         metric_name="response_time_ms",
                         value=125.5 + (i * 5.2),
                         unit="milliseconds",
-                        tags={"endpoint": "/api/v1/health", "tenant": input_data.tenant_id or "system"},
+                        tags={
+                            "endpoint": "/api/v1/health",
+                            "tenant": input_data.tenant_id or "system",
+                        },
                     ),
                 ]
             )
 
         return metrics
 
-    async def _collect_business_metrics(self, input_data: CollectMetricsInput) -> list[MetricDataPoint]:
+    async def _collect_business_metrics(
+        self, input_data: CollectMetricsInput
+    ) -> list[MetricDataPoint]:
         """Collect business-level metrics"""
 
         if not input_data.tenant_id:
             return []  # Business metrics are tenant-specific
 
-        base_time = datetime.fromisoformat(input_data.time_range_start.replace("Z", "+00:00"))
+        base_time = datetime.fromisoformat(
+            input_data.time_range_start.replace("Z", "+00:00")
+        )
         metrics = []
 
         for i in range(10):
@@ -311,10 +347,14 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
 
         return metrics
 
-    async def _collect_security_metrics(self, input_data: CollectMetricsInput) -> list[MetricDataPoint]:
+    async def _collect_security_metrics(
+        self, input_data: CollectMetricsInput
+    ) -> list[MetricDataPoint]:
         """Collect security-related metrics"""
 
-        base_time = datetime.fromisoformat(input_data.time_range_start.replace("Z", "+00:00"))
+        base_time = datetime.fromisoformat(
+            input_data.time_range_start.replace("Z", "+00:00")
+        )
         metrics = []
 
         for i in range(10):
@@ -332,13 +372,17 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
 
         return metrics
 
-    async def _collect_billing_metrics(self, input_data: CollectMetricsInput) -> list[MetricDataPoint]:
+    async def _collect_billing_metrics(
+        self, input_data: CollectMetricsInput
+    ) -> list[MetricDataPoint]:
         """Collect billing-related metrics"""
 
         if not input_data.tenant_id:
             return []  # Billing metrics are tenant-specific
 
-        base_time = datetime.fromisoformat(input_data.time_range_start.replace("Z", "+00:00"))
+        base_time = datetime.fromisoformat(
+            input_data.time_range_start.replace("Z", "+00:00")
+        )
         metrics = []
 
         for i in range(10):
@@ -365,7 +409,9 @@ class CollectMetricsUseCase(UseCase[CollectMetricsInput, CollectMetricsOutput]):
 
         return metrics
 
-    async def _generate_summaries(self, data_points: list[MetricDataPoint]) -> list[MetricsSummary]:
+    async def _generate_summaries(
+        self, data_points: list[MetricDataPoint]
+    ) -> list[MetricsSummary]:
         """Generate summary statistics for collected metrics"""
 
         # Group data points by metric name

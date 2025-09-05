@@ -14,14 +14,18 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from dotmac.application import standard_exception_handler
-from dotmac.application.dependencies.dependencies import StandardDependencies, get_standard_deps
-from dotmac.core.schemas.base_schemas import BaseResponseSchema
-from dotmac.platform.observability.logging import get_logger
-from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
+
+from dotmac.application import standard_exception_handler
+from dotmac.application.dependencies.dependencies import (
+    StandardDependencies,
+    get_standard_deps,
+)
+from dotmac.core.schemas.base_schemas import BaseResponseSchema
+from dotmac.platform.observability.logging import get_logger
+from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 
 from ..core.file_handlers import (
     FileUploadManager,
@@ -117,7 +121,8 @@ async def upload_file(
 
     # Initialize upload manager
     upload_manager = FileUploadManager(
-        tenant_id=deps.tenant_id, user_id=deps.user.get("user_id") if deps.user else None
+        tenant_id=deps.tenant_id,
+        user_id=deps.user.get("user_id") if deps.user else None,
     )
 
     # Process upload
@@ -152,7 +157,8 @@ async def download_file(
     """Download a file by ID."""
 
     upload_manager = FileUploadManager(
-        tenant_id=deps.tenant_id, user_id=deps.user.get("user_id") if deps.user else None
+        tenant_id=deps.tenant_id,
+        user_id=deps.user.get("user_id") if deps.user else None,
     )
 
     file_info = await upload_manager.get_file_info(file_id)
@@ -182,7 +188,8 @@ async def delete_file(
     """Delete a file by ID."""
 
     upload_manager = FileUploadManager(
-        tenant_id=deps.tenant_id, user_id=deps.user.get("user_id") if deps.user else None
+        tenant_id=deps.tenant_id,
+        user_id=deps.user.get("user_id") if deps.user else None,
     )
 
     success = await upload_manager.delete_file(file_id)
@@ -242,7 +249,9 @@ async def generate_report_pdf(
 
     pdf_generator = PDFGenerator(tenant_id=deps.tenant_id, template=template)
 
-    pdf_path = await pdf_generator.generate_report_pdf(report_data=data, template=template)
+    pdf_path = await pdf_generator.generate_report_pdf(
+        report_data=data, template=template
+    )
 
     return FileResponse(
         path=pdf_path,
@@ -271,10 +280,15 @@ async def export_csv(
     """Export data to CSV format."""
 
     if request.format != "csv":
-        raise HTTPException(status_code=400, detail="Format must be 'csv' for this endpoint")
+        raise HTTPException(
+            status_code=400, detail="Format must be 'csv' for this endpoint"
+        )
 
     csv_path = await export_data_to_csv(
-        data=request.data, columns=request.columns, filename=request.filename, tenant_id=deps.tenant_id
+        data=request.data,
+        columns=request.columns,
+        filename=request.filename,
+        tenant_id=deps.tenant_id,
     )
 
     return FileResponse(
@@ -299,10 +313,15 @@ async def export_excel(
     """Export data to Excel format."""
 
     if request.format != "excel":
-        raise HTTPException(status_code=400, detail="Format must be 'excel' for this endpoint")
+        raise HTTPException(
+            status_code=400, detail="Format must be 'excel' for this endpoint"
+        )
 
     excel_path = await export_data_to_excel(
-        data=request.data, columns=request.columns, filename=request.filename, tenant_id=deps.tenant_id
+        data=request.data,
+        columns=request.columns,
+        filename=request.filename,
+        tenant_id=deps.tenant_id,
     )
 
     return FileResponse(
@@ -334,12 +353,17 @@ async def list_files(
     """List uploaded files with optional filtering."""
 
     upload_manager = FileUploadManager(
-        tenant_id=deps.tenant_id, user_id=deps.user.get("user_id") if deps.user else None
+        tenant_id=deps.tenant_id,
+        user_id=deps.user.get("user_id") if deps.user else None,
     )
 
-    files = await upload_manager.list_files(category=category, limit=limit, offset=offset)
+    files = await upload_manager.list_files(
+        category=category, limit=limit, offset=offset
+    )
 
-    return BaseResponseSchema(success=True, message=f"Retrieved {len(files)} files", data=files)
+    return BaseResponseSchema(
+        success=True, message=f"Retrieved {len(files)} files", data=files
+    )
 
 
 @router.get(
@@ -357,7 +381,8 @@ async def get_file_info(
     """Get detailed information about a file."""
 
     upload_manager = FileUploadManager(
-        tenant_id=deps.tenant_id, user_id=deps.user.get("user_id") if deps.user else None
+        tenant_id=deps.tenant_id,
+        user_id=deps.user.get("user_id") if deps.user else None,
     )
 
     file_info = await upload_manager.get_file_info(file_id)

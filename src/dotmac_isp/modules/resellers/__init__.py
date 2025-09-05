@@ -12,7 +12,11 @@ Extends dotmac_shared reseller models with ISP-specific functionality.
 """
 
 from .admin_interface import ResellerAdminActions, ResellerAdminCLI
-from .automation_coordinator import AutomationJobStatus, AutomationJobType, ResellerAutomationCoordinator
+from .automation_coordinator import (
+    AutomationJobStatus,
+    AutomationJobType,
+    ResellerAutomationCoordinator,
+)
 from .commission_automation import (
     CommissionAutomationEngine,
     CommissionReconciliationEngine,
@@ -21,7 +25,11 @@ from .commission_automation import (
     PaymentBatch,
     PaymentStatus,
 )
-from .commission_system import CommissionCalculator, CommissionReportGenerator, CommissionService
+from .commission_system import (
+    CommissionCalculator,
+    CommissionReportGenerator,
+    CommissionService,
+)
 from .complete_router import reseller_router
 from .customer_lifecycle import (
     CustomerHealthScore,

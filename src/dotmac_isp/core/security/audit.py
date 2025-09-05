@@ -34,7 +34,9 @@ class AuditLogger:
         # Configure audit logger
         if not self.logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(".format(asctime)s - AUDIT - .format(levelname)s - .format(message)s")
+            formatter = logging.Formatter(
+                ".format(asctime)s - AUDIT - .format(levelname)s - .format(message)s"
+            )
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
             self.logger.setLevel(logging.INFO)
@@ -62,7 +64,9 @@ class AuditLogger:
         }
 
         # Log to standard logger
-        log_message = f"AUDIT: {event_type.value} - User: {user_id} - Success: {success}"
+        log_message = (
+            f"AUDIT: {event_type.value} - User: {user_id} - Success: {success}"
+        )
         if details:
             log_message += f" - Details: {json.dumps(details)}"
 

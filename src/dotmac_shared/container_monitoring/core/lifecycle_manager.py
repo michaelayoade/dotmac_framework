@@ -93,7 +93,9 @@ class ContainerLifecycleManager:
         self.docker_client = docker.from_env()
         self.logger = logging.getLogger(__name__)
 
-    async def manage_container_lifecycle(self, container_id: str, action: LifecycleAction, **kwargs) -> LifecycleResult:
+    async def manage_container_lifecycle(
+        self, container_id: str, action: LifecycleAction, **kwargs
+    ) -> LifecycleResult:
         """
         Execute lifecycle action on container
 
@@ -106,7 +108,9 @@ class ContainerLifecycleManager:
             LifecycleResult with operation status and events
         """
         start_time = datetime.now(timezone.utc)
-        result = LifecycleResult(success=False, action=action, container_id=container_id)
+        result = LifecycleResult(
+            success=False, action=action, container_id=container_id
+        )
 
         # Emit action started event
         start_event = LifecycleEvent(
@@ -125,7 +129,9 @@ class ContainerLifecycleManager:
             success = await self._execute_action(container, action, result, **kwargs)
 
             # Calculate duration
-            result.duration_seconds = (datetime.now(timezone.utc) - start_time).total_seconds()
+            result.duration_seconds = (
+                datetime.now(timezone.utc) - start_time
+            ).total_seconds()
 
             if success:
                 result.success = True
@@ -214,7 +220,9 @@ class ContainerLifecycleManager:
             timeout = kwargs.get("timeout", self.default_timeout)
             await self._wait_for_status(container, "running", timeout)
 
-            await self._emit_state_change_event(container.id, "started", "Container started successfully")
+            await self._emit_state_change_event(
+                container.id, "started", "Container started successfully"
+            )
             return True
 
         except Exception as e:
@@ -239,7 +247,9 @@ class ContainerLifecycleManager:
 
             await self._wait_for_status(container, ["stopped", "exited"], timeout + 5)
 
-            await self._emit_state_change_event(container.id, "stopped", "Container stopped successfully")
+            await self._emit_state_change_event(
+                container.id, "stopped", "Container stopped successfully"
+            )
             return True
 
         except Exception as e:
@@ -259,7 +269,9 @@ class ContainerLifecycleManager:
 
             await self._wait_for_status(container, "running", timeout + 10)
 
-            await self._emit_state_change_event(container.id, "restarted", "Container restarted successfully")
+            await self._emit_state_change_event(
+                container.id, "restarted", "Container restarted successfully"
+            )
             return True
 
         except Exception as e:
@@ -282,7 +294,9 @@ class ContainerLifecycleManager:
             container.pause()
             await self._wait_for_status(container, "paused", 10)
 
-            await self._emit_state_change_event(container.id, "paused", "Container paused successfully")
+            await self._emit_state_change_event(
+                container.id, "paused", "Container paused successfully"
+            )
             return True
 
         except Exception as e:
@@ -305,7 +319,9 @@ class ContainerLifecycleManager:
             container.unpause()
             await self._wait_for_status(container, "running", 10)
 
-            await self._emit_state_change_event(container.id, "unpaused", "Container unpaused successfully")
+            await self._emit_state_change_event(
+                container.id, "unpaused", "Container unpaused successfully"
+            )
             return True
 
         except Exception as e:
@@ -388,7 +404,9 @@ class ContainerLifecycleManager:
 
             await self._wait_for_status(container, ["stopped", "exited"], 15)
 
-            await self._emit_state_change_event(container.id, "killed", f"Container killed with {signal}")
+            await self._emit_state_change_event(
+                container.id, "killed", f"Container killed with {signal}"
+            )
             return True
 
         except Exception as e:
@@ -413,7 +431,9 @@ class ContainerLifecycleManager:
                 "remove_volumes": remove_volumes,
             }
 
-            await self._emit_state_change_event(container.id, "removed", "Container removed successfully")
+            await self._emit_state_change_event(
+                container.id, "removed", "Container removed successfully"
+            )
             return True
 
         except Exception as e:
@@ -454,9 +474,14 @@ class ContainerLifecycleManager:
             except Exception as e:
                 self.logger.error(f"Event callback failed: {e}")
 
-        self.logger.info(f"Lifecycle event: {event.event_type.value} - " f"{event.container_id} - {event.message}")
+        self.logger.info(
+            f"Lifecycle event: {event.event_type.value} - "
+            f"{event.container_id} - {event.message}"
+        )
 
-    async def _emit_state_change_event(self, container_id: str, new_state: str, message: str) -> None:
+    async def _emit_state_change_event(
+        self, container_id: str, new_state: str, message: str
+    ) -> None:
         """Emit state change event"""
         event = LifecycleEvent(
             container_id=container_id,
@@ -487,7 +512,9 @@ class ContainerLifecycleManager:
 
 
 # Convenience function for direct usage
-async def manage_container_lifecycle(container_id: str, action: LifecycleAction, **kwargs) -> bool:
+async def manage_container_lifecycle(
+    container_id: str, action: LifecycleAction, **kwargs
+) -> bool:
     """
     Manage container lifecycle with default settings
 

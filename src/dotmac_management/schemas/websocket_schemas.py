@@ -4,13 +4,14 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import (
-    BaseModel,
-    Field,
-    field_validator,
-)
+from pydantic import BaseModel, Field, field_validator
 
-from ..models.websocket_event import DeliveryStatus, EventPriority, EventType, SubscriptionType
+from ..models.websocket_event import (
+    DeliveryStatus,
+    EventPriority,
+    EventType,
+    SubscriptionType,
+)
 
 
 class BaseSchema(BaseModel):
@@ -68,7 +69,9 @@ class WebSocketEventCreate(WebSocketEventBase):
         if v and values.get("target_user_id"):
             raise ValueError("Cannot specify both target_user_id and target_user_ids")
         if v and values.get("broadcast_to_tenant"):
-            raise ValueError("Cannot specify target_user_ids when broadcasting to tenant")
+            raise ValueError(
+                "Cannot specify target_user_ids when broadcasting to tenant"
+            )
         return v
 
 

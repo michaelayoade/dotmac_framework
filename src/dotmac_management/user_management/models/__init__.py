@@ -80,7 +80,12 @@ from .rbac_models import (
     user_id,
     user_roles,
 )
-from .user_models import UserContactInfoModel, UserModel, UserPreferencesModel, UserProfileModel
+from .user_models import (
+    UserContactInfoModel,
+    UserModel,
+    UserPreferencesModel,
+    UserProfileModel,
+)
 
 __all__ = [
     # Core user models

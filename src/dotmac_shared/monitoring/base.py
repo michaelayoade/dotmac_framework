@@ -137,7 +137,9 @@ class BaseMonitoringService(abc.ABC):
                 OTLPMetricExporter(endpoint=signoz_endpoint),
                 export_interval_millis=10000,  # 10 seconds
             )
-            metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[metric_reader]))
+            metrics.set_meter_provider(
+                MeterProvider(resource=resource, metric_readers=[metric_reader])
+            )
 
         self.meter = metrics.get_meter(self.service_name)
 
@@ -494,7 +496,9 @@ def create_monitoring_service(
     return SignOzMonitoringService(service_name, tenant_id, config)
 
 
-def get_monitoring(service_name: str, tenant_id: Optional[str] = None) -> BaseMonitoringService:
+def get_monitoring(
+    service_name: str, tenant_id: Optional[str] = None
+) -> BaseMonitoringService:
     """Get monitoring service instance."""
     return create_monitoring_service(service_name, tenant_id)
 

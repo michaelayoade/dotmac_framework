@@ -103,7 +103,9 @@ class ServiceAssuranceSDK:
             "expected_status": expected_status,
         }
 
-        probe_type = ProbeType.HTTPS if target.startswith("https://") else ProbeType.HTTP
+        probe_type = (
+            ProbeType.HTTPS if target.startswith("https://") else ProbeType.HTTP
+        )
 
         return await self.probe_service.create_probe(
             probe_name=probe_name,
@@ -157,14 +159,20 @@ class ServiceAssuranceSDK:
             "error": result.get("error_message"),
         }
 
-    async def get_probe_statistics(self, probe_id: str, hours: int = 24) -> dict[str, Any]:
+    async def get_probe_statistics(
+        self, probe_id: str, hours: int = 24
+    ) -> dict[str, Any]:
         """Get probe performance statistics."""
         return await self.probe_service.get_probe_statistics(probe_id, hours)
 
-    async def list_probes(self, probe_type: Optional[str] = None, enabled_only: bool = False) -> list[dict[str, Any]]:
+    async def list_probes(
+        self, probe_type: Optional[str] = None, enabled_only: bool = False
+    ) -> list[dict[str, Any]]:
         """List service probes."""
         probe_type_enum = ProbeType(probe_type) if probe_type else None
-        return await self.probe_service.list_probes(probe_type=probe_type_enum, enabled_only=enabled_only)
+        return await self.probe_service.list_probes(
+            probe_type=probe_type_enum, enabled_only=enabled_only
+        )
 
     # ============================================
     # SLA Policy Management
@@ -191,7 +199,9 @@ class ServiceAssuranceSDK:
         """Check SLA compliance for probe."""
         return await self.probe_service.check_sla_compliance(probe_id)
 
-    async def get_sla_violations(self, hours: int = 24, probe_id: Optional[str] = None) -> list[dict[str, Any]]:
+    async def get_sla_violations(
+        self, hours: int = 24, probe_id: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """Get recent SLA violations."""
         return await self.probe_service.get_sla_violations(hours, probe_id)
 
@@ -287,9 +297,13 @@ class ServiceAssuranceSDK:
         self, alarm_id: str, acknowledged_by: str, comments: Optional[str] = None
     ) -> dict[str, Any]:
         """Acknowledge alarm."""
-        return await self.alarm_service.acknowledge_alarm(alarm_id, acknowledged_by, comments)
+        return await self.alarm_service.acknowledge_alarm(
+            alarm_id, acknowledged_by, comments
+        )
 
-    async def clear_alarm(self, alarm_id: str, cleared_by: str, comments: Optional[str] = None) -> dict[str, Any]:
+    async def clear_alarm(
+        self, alarm_id: str, cleared_by: str, comments: Optional[str] = None
+    ) -> dict[str, Any]:
         """Clear alarm."""
         return await self.alarm_service.clear_alarm(alarm_id, cleared_by, comments)
 
@@ -302,7 +316,9 @@ class ServiceAssuranceSDK:
         suppressed_by: Optional[str] = None,
     ) -> dict[str, Any]:
         """Suppress alarms for device/type."""
-        return await self.alarm_service.suppress_alarms(device_id, alarm_type, duration_minutes, reason, suppressed_by)
+        return await self.alarm_service.suppress_alarms(
+            device_id, alarm_type, duration_minutes, reason, suppressed_by
+        )
 
     async def get_active_alarms(
         self,
@@ -322,7 +338,9 @@ class ServiceAssuranceSDK:
             limit=limit,
         )
 
-    async def get_alarm_statistics(self, device_id: Optional[str] = None, hours: int = 24) -> dict[str, Any]:
+    async def get_alarm_statistics(
+        self, device_id: Optional[str] = None, hours: int = 24
+    ) -> dict[str, Any]:
         """Get alarm statistics."""
         return await self.alarm_service.get_alarm_statistics(device_id, hours)
 
@@ -387,7 +405,9 @@ class ServiceAssuranceSDK:
             **kwargs,
         )
 
-    async def get_traffic_summary(self, hours: int = 1, collector_id: Optional[str] = None) -> dict[str, Any]:
+    async def get_traffic_summary(
+        self, hours: int = 1, collector_id: Optional[str] = None
+    ) -> dict[str, Any]:
         """Get traffic summary for time period."""
         return await self.flow_service.get_traffic_summary(hours, collector_id)
 
@@ -399,7 +419,9 @@ class ServiceAssuranceSDK:
         collector_id: Optional[str] = None,
     ) -> list[dict[str, Any]]:
         """Get top talkers by traffic volume."""
-        talkers = await self.flow_service.get_top_talkers(hours, limit, metric, collector_id)
+        talkers = await self.flow_service.get_top_talkers(
+            hours, limit, metric, collector_id
+        )
 
         # Add ranking
         return [{"rank": idx + 1, **talker} for idx, talker in enumerate(talkers)]
@@ -412,19 +434,27 @@ class ServiceAssuranceSDK:
         collector_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """Aggregate flow records by dimensions."""
-        return await self.flow_service.aggregate_flows(start_time, end_time, group_by, collector_id)
+        return await self.flow_service.aggregate_flows(
+            start_time, end_time, group_by, collector_id
+        )
 
     async def aggregate_traffic_by_subnet(
         self, subnet_mask: int = 24, hours: int = 1, collector_id: Optional[str] = None
     ) -> list[dict[str, Any]]:
         """Aggregate traffic by subnet."""
-        return await self.flow_service.aggregate_traffic_by_subnet(subnet_mask, hours, collector_id)
+        return await self.flow_service.aggregate_traffic_by_subnet(
+            subnet_mask, hours, collector_id
+        )
 
-    async def get_protocol_statistics(self, hours: int = 1, collector_id: Optional[str] = None) -> list[dict[str, Any]]:
+    async def get_protocol_statistics(
+        self, hours: int = 1, collector_id: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """Get protocol usage statistics."""
         return await self.flow_service.get_protocol_statistics(hours, collector_id)
 
-    async def list_collectors(self, status: Optional[str] = None) -> list[dict[str, Any]]:
+    async def list_collectors(
+        self, status: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """List flow collectors."""
         status_enum = CollectorStatus(status) if status else None
         return await self.flow_service.list_collectors(status_enum)
@@ -453,7 +483,9 @@ class ServiceAssuranceSDK:
                     "target": probe["target"],
                     "availability": stats["availability_percent"],
                     "avg_latency": stats["latency_stats"]["average_ms"],
-                    "status": ("healthy" if stats["availability_percent"] >= 95 else "degraded"),
+                    "status": (
+                        "healthy" if stats["availability_percent"] >= 95 else "degraded"
+                    ),
                 }
             )
 
@@ -472,7 +504,9 @@ class ServiceAssuranceSDK:
         # Calculate overall health score
         total_probes = len(probe_stats)
         healthy_probes = len([p for p in probe_stats if p["status"] == "healthy"])
-        health_score = (healthy_probes / total_probes * 100) if total_probes > 0 else 100
+        health_score = (
+            (healthy_probes / total_probes * 100) if total_probes > 0 else 100
+        )
 
         return {
             "tenant_id": self.tenant_id,
@@ -480,7 +514,13 @@ class ServiceAssuranceSDK:
             "time_period_hours": hours,
             "overall_health": {
                 "score": round(health_score, 1),
-                "status": ("healthy" if health_score >= 95 else "degraded" if health_score >= 80 else "critical"),
+                "status": (
+                    "healthy"
+                    if health_score >= 95
+                    else "degraded"
+                    if health_score >= 80
+                    else "critical"
+                ),
                 "total_probes": total_probes,
                 "healthy_probes": healthy_probes,
             },
@@ -488,13 +528,17 @@ class ServiceAssuranceSDK:
                 "total_probes": total_probes,
                 "probe_details": probe_stats[:10],  # Top 10 probes
                 "avg_availability": (
-                    sum(p["availability"] for p in probe_stats) / total_probes if total_probes > 0 else 100
+                    sum(p["availability"] for p in probe_stats) / total_probes
+                    if total_probes > 0
+                    else 100
                 ),
             },
             "alarms": {
                 "total_alarms": alarm_stats["total_alarms"],
                 "active_alarms": alarm_stats["active_alarms"],
-                "critical_alarms": alarm_stats["severity_distribution"].get("critical", 0),
+                "critical_alarms": alarm_stats["severity_distribution"].get(
+                    "critical", 0
+                ),
                 "major_alarms": alarm_stats["severity_distribution"].get("major", 0),
             },
             "sla_compliance": {
@@ -543,7 +587,8 @@ class ServiceAssuranceSDK:
             "connectivity_analysis": {
                 "probe_count": len(connectivity_stats),
                 "avg_availability": (
-                    sum(p["availability"] for p in connectivity_stats) / len(connectivity_stats)
+                    sum(p["availability"] for p in connectivity_stats)
+                    / len(connectivity_stats)
                     if connectivity_stats
                     else 0
                 ),
@@ -586,5 +631,7 @@ class ServiceAssuranceSDK:
         collectors = await self.list_collectors()
         health["statistics"]["total_collectors"] = len(collectors)
 
-        health["overall_status"] = "healthy" if all(health["services"].values()) else "degraded"
+        health["overall_status"] = (
+            "healthy" if all(health["services"].values()) else "degraded"
+        )
         return health

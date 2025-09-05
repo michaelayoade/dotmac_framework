@@ -37,11 +37,15 @@ class StandardExceptions:
             detail += f": {identifier}"
 
         return HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=detail, headers={"X-Error-Code": ErrorCode.NOT_FOUND.value}
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=detail,
+            headers={"X-Error-Code": ErrorCode.NOT_FOUND.value},
         )
 
     @staticmethod
-    def already_exists(resource: str, identifier: Optional[str] = None) -> HTTPException:
+    def already_exists(
+        resource: str, identifier: Optional[str] = None
+    ) -> HTTPException:
         """Standard 409 Conflict exception for existing resources"""
         detail = f"{resource} already exists"
         if identifier:
@@ -72,7 +76,10 @@ class StandardExceptions:
         return HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=message,
-            headers={"WWW-Authenticate": "Bearer", "X-Error-Code": ErrorCode.AUTHENTICATION_ERROR.value},
+            headers={
+                "WWW-Authenticate": "Bearer",
+                "X-Error-Code": ErrorCode.AUTHENTICATION_ERROR.value,
+            },
         )
 
     @staticmethod
@@ -103,7 +110,10 @@ class StandardExceptions:
         return HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=message,
-            headers={"X-Error-Code": ErrorCode.RATE_LIMIT_ERROR.value, "Retry-After": "60"},
+            headers={
+                "X-Error-Code": ErrorCode.RATE_LIMIT_ERROR.value,
+                "Retry-After": "60",
+            },
         )
 
     @staticmethod

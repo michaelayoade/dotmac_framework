@@ -21,10 +21,8 @@ Usage:
     from dotmac_shared.schemas import CommonValidators, EntityStatus
 """
 
-from .base_schemas import (
-    # Mixins
+from .base_schemas import (  # Mixins; Base schemas; Response schemas; Validators and utilities; Pagination and filtering
     AuditMixin,
-    # Base schemas
     BaseCreateSchema,
     BaseCreateWithAuditSchema,
     BaseResponseSchema,
@@ -35,14 +33,11 @@ from .base_schemas import (
     BaseTenantUpdateSchema,
     BaseUpdateSchema,
     BaseUpdateWithAuditSchema,
-    # Response schemas
     BulkOperationResponseSchema,
     BulkOperationSchema,
-    # Validators and utilities
     CommonValidators,
     EntityStatus,
     ErrorResponseSchema,
-    # Pagination and filtering
     FilterParams,
     OperationStatus,
     PaginatedResponseSchema,

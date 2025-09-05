@@ -22,4 +22,3 @@ def get_db_session(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN001
 
 
 __all__ = ["get_db_session"]
-

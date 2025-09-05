@@ -79,12 +79,16 @@ class IDNSProvider(ABC):
         pass
 
     @abstractmethod
-    async def resolve_domain(self, domain: str, record_type: str = "A") -> dict[str, Any]:
+    async def resolve_domain(
+        self, domain: str, record_type: str = "A"
+    ) -> dict[str, Any]:
         """Resolve DNS domain"""
         pass
 
     @abstractmethod
-    async def check_dns_propagation(self, domain: str, expected_value: Optional[str] = None) -> dict[str, Any]:
+    async def check_dns_propagation(
+        self, domain: str, expected_value: Optional[str] = None
+    ) -> dict[str, Any]:
         """Check DNS propagation status"""
         pass
 
@@ -105,7 +109,10 @@ class IDNSProvider(ABC):
 
     async def update_record(self, record_id: str, record: DNSRecord) -> dict[str, Any]:
         """Update DNS record (optional)"""
-        return {"success": False, "error": "DNS record update not supported by this provider"}
+        return {
+            "success": False,
+            "error": "DNS record update not supported by this provider",
+        }
 
     async def delete_record(self, record_id: str) -> bool:
         """Delete DNS record (optional)"""

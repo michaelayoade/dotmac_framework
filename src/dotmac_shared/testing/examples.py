@@ -35,7 +35,9 @@ class TestBasicFactoryUsage:
 
     def test_create_tenant_with_custom_attributes(self, tenant_factory):
         """Create tenant with specific attributes."""
-        tenant = tenant_factory.create(name="Acme ISP", subdomain="acme", plan="enterprise", region="us-west-2")
+        tenant = tenant_factory.create(
+            name="Acme ISP", subdomain="acme", plan="enterprise", region="us-west-2"
+        )
 
         assert tenant.name == "Acme ISP"
         assert tenant.subdomain == "acme"
@@ -63,7 +65,9 @@ class TestBasicFactoryUsage:
 class TestRelationshipManagement:
     """Examples of managing entity relationships."""
 
-    def test_customer_with_service_relationship(self, customer_factory, service_factory, basic_tenant_setup):
+    def test_customer_with_service_relationship(
+        self, customer_factory, service_factory, basic_tenant_setup
+    ):
         """Create customer with related service."""
         tenant_id = basic_tenant_setup["tenant_id"]
 
@@ -76,14 +80,18 @@ class TestRelationshipManagement:
 
         # Create related service
         service = service_factory.create(
-            customer_id=customer.id, service_type="internet", monthly_rate=Decimal("89.99")
+            customer_id=customer.id,
+            service_type="internet",
+            monthly_rate=Decimal("89.99"),
         )
 
         assert service.customer_id == customer.id
         assert service.tenant_id == tenant_id
         assert service.monthly_rate == Decimal("89.99")
 
-    def test_customer_with_multiple_services(self, customer_factory, service_factory, basic_tenant_setup):
+    def test_customer_with_multiple_services(
+        self, customer_factory, service_factory, basic_tenant_setup
+    ):
         """Create customer with multiple services."""
         tenant_id = basic_tenant_setup["tenant_id"]
         customer_factory.tenant_id = tenant_id
@@ -92,7 +100,9 @@ class TestRelationshipManagement:
         customer = customer_factory.create(name="Multi Service Customer")
 
         # Create multiple services
-        internet = service_factory.create(customer_id=customer.id, service_type="internet")
+        internet = service_factory.create(
+            customer_id=customer.id, service_type="internet"
+        )
 
         phone = service_factory.create(customer_id=customer.id, service_type="phone")
 
@@ -111,15 +121,24 @@ class TestRelationshipManagement:
 
         # Create billing account
         account = billing_factory.create(
-            entity_type="billing_account", customer_id=customer.id, credit_limit=Decimal("1000.00")
+            entity_type="billing_account",
+            customer_id=customer.id,
+            credit_limit=Decimal("1000.00"),
         )
 
         # Create invoice
-        invoice = billing_factory.create(entity_type="invoice", customer_id=customer.id, total_amount=Decimal("79.99"))
+        invoice = billing_factory.create(
+            entity_type="invoice",
+            customer_id=customer.id,
+            total_amount=Decimal("79.99"),
+        )
 
         # Create payment
         payment = billing_factory.create(
-            entity_type="payment", customer_id=customer.id, invoice_id=invoice.id, amount=invoice.total_amount
+            entity_type="payment",
+            customer_id=customer.id,
+            invoice_id=invoice.id,
+            amount=invoice.total_amount,
         )
 
         assert account.customer_id == customer.id
@@ -146,7 +165,9 @@ class TestTenantIsolation:
         # Verify tenant isolation
         assert customer_a.tenant_id != customer_b.tenant_id
 
-    def test_cross_tenant_data_access_prevention(self, multi_tenant_setup, service_factory):
+    def test_cross_tenant_data_access_prevention(
+        self, multi_tenant_setup, service_factory
+    ):
         """Test that cross-tenant relationships are prevented."""
         tenant_a = multi_tenant_setup["tenant_a"]
         customer_b = multi_tenant_setup["customer_b"]
@@ -217,7 +238,9 @@ class TestBuilderPatterns:
         context = (
             test_data_builder.scenario("customer_onboarding")
             .describe("Complete customer onboarding with service activation")
-            .customer_onboarding_scenario(tenant_id="test-tenant-123", service_type="internet")
+            .customer_onboarding_scenario(
+                tenant_id="test-tenant-123", service_type="internet"
+            )
             .build()
         )
 
@@ -327,8 +350,12 @@ class TestIntegrationPatterns:
         assert router.customer_id == customer.id
 
         # Mock external service interactions
-        payment_gateway = integration_test_environment["external_services"]["payment_gateway"]
-        email_service = integration_test_environment["external_services"]["email_service"]
+        payment_gateway = integration_test_environment["external_services"][
+            "payment_gateway"
+        ]
+        email_service = integration_test_environment["external_services"][
+            "email_service"
+        ]
 
         # These would be real service calls in integration tests
         payment_gateway.process_payment.return_value = {"status": "success"}

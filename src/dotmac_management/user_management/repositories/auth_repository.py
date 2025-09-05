@@ -8,9 +8,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac.core.exceptions import EntityNotFoundError, ValidationError
 from sqlalchemy import and_, desc, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac.core.exceptions import EntityNotFoundError, ValidationError
 
 from ..models.auth_models import (
     AuthAuditModel,
@@ -40,7 +41,9 @@ class AuthRepository(BaseRepository[AuthAuditModel]):
         """Store or update user password."""
         try:
             # Check for existing password
-            query = select(UserPasswordModel).where(UserPasswordModel.user_id == user_id)
+            query = select(UserPasswordModel).where(
+                UserPasswordModel.user_id == user_id
+            )
             result = await self.db.execute(query)
             password_record = result.scalar_one_or_none()
 
@@ -57,7 +60,9 @@ class AuthRepository(BaseRepository[AuthAuditModel]):
 
             else:
                 # Create new password record
-                password_record = UserPasswordModel(user_id=user_id, password_hash=password_hash, algorithm=algorithm)
+                password_record = UserPasswordModel(
+                    user_id=user_id, password_hash=password_hash, algorithm=algorithm
+                )
                 self.db.add(password_record)
 
             await self.db.commit()
@@ -77,7 +82,9 @@ class AuthRepository(BaseRepository[AuthAuditModel]):
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def verify_password_not_reused(self, user_id: UUID, password_hash: str, history_limit: int = 5) -> bool:
+    async def verify_password_not_reused(
+        self, user_id: UUID, password_hash: str, history_limit: int = 5
+    ) -> bool:
         """Verify password hasn't been used recently."""
         query = (
             select(PasswordHistoryModel.password_hash)
@@ -117,13 +124,17 @@ class AuthRepository(BaseRepository[AuthAuditModel]):
 
         if old_ids:
             delete_query = (
-                update(PasswordHistoryModel).where(PasswordHistoryModel.id.in_(old_ids)).values(is_active=False)
+                update(PasswordHistoryModel)
+                .where(PasswordHistoryModel.id.in_(old_ids))
+                .values(is_active=False)
             )
             await self.db.execute(delete_query)
 
     # === Reset Token Management ===
 
-    async def generate_password_reset_token(self, user_id: UUID, expires_in_hours: int = 24) -> str:
+    async def generate_password_reset_token(
+        self, user_id: UUID, expires_in_hours: int = 24
+    ) -> str:
         """Generate password reset token."""
         password_record = await self.get_user_password(user_id)
         if not password_record:
@@ -139,7 +150,9 @@ class AuthRepository(BaseRepository[AuthAuditModel]):
 
         token = secrets.token_urlsafe(32)
         password_record.reset_token = token
-        password_record.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
+        password_record.reset_token_expires = datetime.now(timezone.utc) + timedelta(
+            hours=expires_in_hours
+        )
 
         await self.db.commit()
 
@@ -212,7 +225,9 @@ class SessionRepository(BaseRepository[UserSessionModel]):
         logger.info(f"Session created for user: {user_id}, session: {session.id}")
         return session
 
-    async def get_active_session(self, session_token: str) -> Optional[UserSessionModel]:
+    async def get_active_session(
+        self, session_token: str
+    ) -> Optional[UserSessionModel]:
         """Get active session by token."""
         query = (
             select(UserSessionModel)
@@ -224,13 +239,17 @@ class SessionRepository(BaseRepository[UserSessionModel]):
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_user_sessions(self, user_id: UUID, active_only: bool = True) -> list[UserSessionModel]:
+    async def get_user_sessions(
+        self, user_id: UUID, active_only: bool = True
+    ) -> list[UserSessionModel]:
         """Get all sessions for a user."""
         query = select(UserSessionModel).where(UserSessionModel.user_id == user_id)
 
         if active_only:
             query = query.where(UserSessionModel.is_active is True)
-            query = query.where(UserSessionModel.expires_at > datetime.now(timezone.utc))
+            query = query.where(
+                UserSessionModel.expires_at > datetime.now(timezone.utc)
+            )
 
         query = query.order_by(desc(UserSessionModel.created_at))
 
@@ -251,12 +270,18 @@ class SessionRepository(BaseRepository[UserSessionModel]):
 
         return result.rowcount > 0
 
-    async def terminate_session(self, session_token: str, reason: str = "logout") -> bool:
+    async def terminate_session(
+        self, session_token: str, reason: str = "logout"
+    ) -> bool:
         """Terminate a specific session."""
         query = (
             update(UserSessionModel)
             .where(UserSessionModel.session_token == session_token)
-            .values(is_active=False, terminated_at=datetime.now(timezone.utc), termination_reason=reason)
+            .values(
+                is_active=False,
+                terminated_at=datetime.now(timezone.utc),
+                termination_reason=reason,
+            )
         )
 
         result = await self.db.execute(query)
@@ -265,7 +290,10 @@ class SessionRepository(BaseRepository[UserSessionModel]):
         return result.rowcount > 0
 
     async def terminate_user_sessions(
-        self, user_id: UUID, exclude_session_id: Optional[UUID] = None, reason: str = "admin_action"
+        self,
+        user_id: UUID,
+        exclude_session_id: Optional[UUID] = None,
+        reason: str = "admin_action",
     ) -> int:
         """Terminate all sessions for a user."""
         query = (
@@ -277,7 +305,11 @@ class SessionRepository(BaseRepository[UserSessionModel]):
         if exclude_session_id:
             query = query.where(UserSessionModel.id != exclude_session_id)
 
-        query = query.values(is_active=False, terminated_at=datetime.now(timezone.utc), termination_reason=reason)
+        query = query.values(
+            is_active=False,
+            terminated_at=datetime.now(timezone.utc),
+            termination_reason=reason,
+        )
 
         result = await self.db.execute(query)
         await self.db.commit()
@@ -293,7 +325,11 @@ class SessionRepository(BaseRepository[UserSessionModel]):
             update(UserSessionModel)
             .where(UserSessionModel.expires_at < datetime.now(timezone.utc))
             .where(UserSessionModel.is_active is True)
-            .values(is_active=False, terminated_at=datetime.now(timezone.utc), termination_reason="expired")
+            .values(
+                is_active=False,
+                terminated_at=datetime.now(timezone.utc),
+                termination_reason="expired",
+            )
         )
 
         result = await self.db.execute(query)
@@ -461,7 +497,10 @@ class ApiKeyRepository(BaseRepository[UserApiKeyModel]):
         return list(result.scalars().all())
 
     async def record_api_key_usage(
-        self, key_id: str, ip_address: Optional[str] = None, user_agent: Optional[str] = None
+        self,
+        key_id: str,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
     ) -> bool:
         """Record API key usage."""
         api_key = await self.get_by_key_id(key_id)
@@ -556,7 +595,12 @@ class AuthAuditRepository(BaseRepository[AuthAuditModel]):
 
         query = (
             select(AuthAuditModel)
-            .where(or_(AuthAuditModel.username == identifier, AuthAuditModel.email == identifier))
+            .where(
+                or_(
+                    AuthAuditModel.username == identifier,
+                    AuthAuditModel.email == identifier,
+                )
+            )
             .where(AuthAuditModel.event_type == "login")
             .where(AuthAuditModel.success is False)
             .where(AuthAuditModel.created_at >= since)
@@ -567,7 +611,9 @@ class AuthAuditRepository(BaseRepository[AuthAuditModel]):
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def get_suspicious_activity(self, since: Optional[datetime] = None, limit: int = 100) -> list[AuthAuditModel]:
+    async def get_suspicious_activity(
+        self, since: Optional[datetime] = None, limit: int = 100
+    ) -> list[AuthAuditModel]:
         """Get potentially suspicious authentication activity."""
         if not since:
             since = datetime.now(timezone.utc) - timedelta(hours=24)
@@ -579,11 +625,17 @@ class AuthAuditRepository(BaseRepository[AuthAuditModel]):
             .where(
                 or_(
                     # Multiple failed attempts
-                    and_(AuthAuditModel.event_type == "login", AuthAuditModel.success is False),
+                    and_(
+                        AuthAuditModel.event_type == "login",
+                        AuthAuditModel.success is False,
+                    ),
                     # Password reset attempts
                     AuthAuditModel.event_type == "password_reset",
                     # MFA failures
-                    and_(AuthAuditModel.event_type == "mfa_verify", AuthAuditModel.success is False),
+                    and_(
+                        AuthAuditModel.event_type == "mfa_verify",
+                        AuthAuditModel.success is False,
+                    ),
                 )
             )
             .order_by(desc(AuthAuditModel.created_at))

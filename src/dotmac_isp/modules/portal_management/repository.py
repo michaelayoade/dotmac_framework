@@ -4,11 +4,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac.core import BaseRepository
-from dotmac.core.exceptions import standard_exception_handler
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
+
+from dotmac.core import BaseRepository
+from dotmac.core.exceptions import standard_exception_handler
 
 from .models import (
     PortalAccount,
@@ -32,7 +33,12 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
         query = (
             select(PortalAccount)
             .options(joinedload(PortalAccount.customer), joinedload(PortalAccount.user))
-            .where(and_(PortalAccount.tenant_id == self.tenant_id, PortalAccount.portal_id == portal_id))
+            .where(
+                and_(
+                    PortalAccount.tenant_id == self.tenant_id,
+                    PortalAccount.portal_id == portal_id,
+                )
+            )
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
@@ -43,7 +49,12 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
         query = (
             select(PortalAccount)
             .options(joinedload(PortalAccount.sessions))
-            .where(and_(PortalAccount.tenant_id == self.tenant_id, PortalAccount.customer_id == customer_id))
+            .where(
+                and_(
+                    PortalAccount.tenant_id == self.tenant_id,
+                    PortalAccount.customer_id == customer_id,
+                )
+            )
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
@@ -52,17 +63,27 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
     async def find_by_user_id(self, user_id: UUID) -> Optional[PortalAccount]:
         """Find portal account by user ID."""
         query = select(PortalAccount).where(
-            and_(PortalAccount.tenant_id == self.tenant_id, PortalAccount.user_id == user_id)
+            and_(
+                PortalAccount.tenant_id == self.tenant_id,
+                PortalAccount.user_id == user_id,
+            )
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     @standard_exception_handler
-    async def find_by_account_type(self, account_type: PortalAccountType) -> list[PortalAccount]:
+    async def find_by_account_type(
+        self, account_type: PortalAccountType
+    ) -> list[PortalAccount]:
         """Find portal accounts by type."""
         query = (
             select(PortalAccount)
-            .where(and_(PortalAccount.tenant_id == self.tenant_id, PortalAccount.account_type == account_type.value))
+            .where(
+                and_(
+                    PortalAccount.tenant_id == self.tenant_id,
+                    PortalAccount.account_type == account_type.value,
+                )
+            )
             .order_by(PortalAccount.created_at.desc())
         )
 
@@ -74,7 +95,12 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
         """Find portal accounts by status."""
         query = (
             select(PortalAccount)
-            .where(and_(PortalAccount.tenant_id == self.tenant_id, PortalAccount.status == status.value))
+            .where(
+                and_(
+                    PortalAccount.tenant_id == self.tenant_id,
+                    PortalAccount.status == status.value,
+                )
+            )
             .order_by(PortalAccount.updated_at.desc())
         )
 
@@ -119,7 +145,9 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
         return result.scalars().all()
 
     @standard_exception_handler
-    async def find_accounts_with_expired_passwords(self, expiry_days: int = 90) -> list[PortalAccount]:
+    async def find_accounts_with_expired_passwords(
+        self, expiry_days: int = 90
+    ) -> list[PortalAccount]:
         """Find accounts with expired passwords."""
         expiry_threshold = datetime.now(timezone.utc) - timedelta(days=expiry_days)
 
@@ -146,7 +174,12 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
         """Find accounts with two-factor authentication enabled."""
         query = (
             select(PortalAccount)
-            .where(and_(PortalAccount.tenant_id == self.tenant_id, PortalAccount.two_factor_enabled is True))
+            .where(
+                and_(
+                    PortalAccount.tenant_id == self.tenant_id,
+                    PortalAccount.two_factor_enabled is True,
+                )
+            )
             .order_by(PortalAccount.portal_id)
         )
 
@@ -154,7 +187,9 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
         return result.scalars().all()
 
     @standard_exception_handler
-    async def find_accounts_by_last_login(self, days_inactive: int = 30) -> list[PortalAccount]:
+    async def find_accounts_by_last_login(
+        self, days_inactive: int = 30
+    ) -> list[PortalAccount]:
         """Find accounts by last login activity."""
         threshold_date = datetime.now(timezone.utc) - timedelta(days=days_inactive)
 
@@ -177,11 +212,18 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
         return result.scalars().all()
 
     @standard_exception_handler
-    async def find_accounts_with_failed_attempts(self, min_attempts: int = 3) -> list[PortalAccount]:
+    async def find_accounts_with_failed_attempts(
+        self, min_attempts: int = 3
+    ) -> list[PortalAccount]:
         """Find accounts with multiple failed login attempts."""
         query = (
             select(PortalAccount)
-            .where(and_(PortalAccount.tenant_id == self.tenant_id, PortalAccount.failed_login_attempts >= min_attempts))
+            .where(
+                and_(
+                    PortalAccount.tenant_id == self.tenant_id,
+                    PortalAccount.failed_login_attempts >= min_attempts,
+                )
+            )
             .order_by(PortalAccount.failed_login_attempts.desc())
         )
 
@@ -196,7 +238,12 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
         query = (
             select(PortalAccount)
             .options(joinedload(PortalAccount.customer))
-            .where(and_(PortalAccount.tenant_id == self.tenant_id, PortalAccount.portal_id.ilike(search_pattern)))
+            .where(
+                and_(
+                    PortalAccount.tenant_id == self.tenant_id,
+                    PortalAccount.portal_id.ilike(search_pattern),
+                )
+            )
             .order_by(PortalAccount.portal_id)
         )
 
@@ -207,13 +254,16 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
     async def get_account_statistics(self) -> dict[str, Any]:
         """Get portal account statistics."""
         total_accounts = await self.session.execute(
-            select(func.count(PortalAccount.id)).where(PortalAccount.tenant_id == self.tenant_id)
+            select(func.count(PortalAccount.id)).where(
+                PortalAccount.tenant_id == self.tenant_id
+            )
         )
 
         active_accounts = await self.session.execute(
             select(func.count(PortalAccount.id)).where(
                 and_(
-                    PortalAccount.tenant_id == self.tenant_id, PortalAccount.status == PortalAccountStatus.ACTIVE.value
+                    PortalAccount.tenant_id == self.tenant_id,
+                    PortalAccount.status == PortalAccountStatus.ACTIVE.value,
                 )
             )
         )
@@ -230,12 +280,17 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
 
         accounts_with_2fa = await self.session.execute(
             select(func.count(PortalAccount.id)).where(
-                and_(PortalAccount.tenant_id == self.tenant_id, PortalAccount.two_factor_enabled is True)
+                and_(
+                    PortalAccount.tenant_id == self.tenant_id,
+                    PortalAccount.two_factor_enabled is True,
+                )
             )
         )
 
         accounts_by_type = await self.session.execute(
-            select(PortalAccount.account_type, func.count(PortalAccount.id).label("count"))
+            select(
+                PortalAccount.account_type, func.count(PortalAccount.id).label("count")
+            )
             .where(PortalAccount.tenant_id == self.tenant_id)
             .group_by(PortalAccount.account_type)
         )
@@ -245,7 +300,9 @@ class PortalAccountRepository(BaseRepository[PortalAccount]):
             "active_accounts": active_accounts.scalar(),
             "locked_accounts": locked_accounts.scalar(),
             "accounts_with_2fa": accounts_with_2fa.scalar(),
-            "accounts_by_type": {row.account_type: row.count for row in accounts_by_type},
+            "accounts_by_type": {
+                row.account_type: row.count for row in accounts_by_type
+            },
         }
 
 
@@ -256,18 +313,27 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
         super().__init__(session, PortalSession, tenant_id)
 
     @standard_exception_handler
-    async def find_by_session_token(self, session_token: str) -> Optional[PortalSession]:
+    async def find_by_session_token(
+        self, session_token: str
+    ) -> Optional[PortalSession]:
         """Find session by session token."""
         query = (
             select(PortalSession)
             .options(joinedload(PortalSession.portal_account))
-            .where(and_(PortalSession.tenant_id == self.tenant_id, PortalSession.session_token == session_token))
+            .where(
+                and_(
+                    PortalSession.tenant_id == self.tenant_id,
+                    PortalSession.session_token == session_token,
+                )
+            )
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     @standard_exception_handler
-    async def find_active_sessions_by_account(self, portal_account_id: UUID) -> list[PortalSession]:
+    async def find_active_sessions_by_account(
+        self, portal_account_id: UUID
+    ) -> list[PortalSession]:
         """Find active sessions for a portal account."""
         now = datetime.now(timezone.utc)
         query = (
@@ -306,17 +372,26 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
         return result.scalars().all()
 
     @standard_exception_handler
-    async def find_sessions_by_ip(self, ip_address: str, active_only: bool = True) -> list[PortalSession]:
+    async def find_sessions_by_ip(
+        self, ip_address: str, active_only: bool = True
+    ) -> list[PortalSession]:
         """Find sessions by IP address."""
         query = (
             select(PortalSession)
             .options(joinedload(PortalSession.portal_account))
-            .where(and_(PortalSession.tenant_id == self.tenant_id, PortalSession.ip_address == ip_address))
+            .where(
+                and_(
+                    PortalSession.tenant_id == self.tenant_id,
+                    PortalSession.ip_address == ip_address,
+                )
+            )
         )
 
         if active_only:
             now = datetime.now(timezone.utc)
-            query = query.where(and_(PortalSession.is_active is True, PortalSession.expires_at > now))
+            query = query.where(
+                and_(PortalSession.is_active is True, PortalSession.expires_at > now)
+            )
 
         query = query.order_by(PortalSession.login_at.desc())
 
@@ -343,7 +418,9 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
         return result.scalars().all()
 
     @standard_exception_handler
-    async def find_long_running_sessions(self, hours_threshold: int = 24) -> list[PortalSession]:
+    async def find_long_running_sessions(
+        self, hours_threshold: int = 24
+    ) -> list[PortalSession]:
         """Find long-running active sessions."""
         threshold_time = datetime.now(timezone.utc) - timedelta(hours=hours_threshold)
 
@@ -379,7 +456,9 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
         return len(expired_sessions)
 
     @standard_exception_handler
-    async def terminate_all_sessions_for_account(self, portal_account_id: UUID, reason: str = "admin") -> int:
+    async def terminate_all_sessions_for_account(
+        self, portal_account_id: UUID, reason: str = "admin"
+    ) -> int:
         """Terminate all active sessions for an account."""
         active_sessions = await self.find_active_sessions_by_account(portal_account_id)
 
@@ -396,7 +475,10 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
 
         total_sessions = await self.session.execute(
             select(func.count(PortalSession.id)).where(
-                and_(PortalSession.tenant_id == self.tenant_id, PortalSession.login_at >= start_date)
+                and_(
+                    PortalSession.tenant_id == self.tenant_id,
+                    PortalSession.login_at >= start_date,
+                )
             )
         )
 
@@ -411,7 +493,14 @@ class PortalSessionRepository(BaseRepository[PortalSession]):
         )
 
         avg_duration = await self.session.execute(
-            select(func.avg(func.extract("epoch", PortalSession.logout_at - PortalSession.login_at) / 60)).where(
+            select(
+                func.avg(
+                    func.extract(
+                        "epoch", PortalSession.logout_at - PortalSession.login_at
+                    )
+                    / 60
+                )
+            ).where(
                 and_(
                     PortalSession.tenant_id == self.tenant_id,
                     PortalSession.logout_at.isnot(None),
@@ -445,13 +534,16 @@ class PortalLoginAttemptRepository(BaseRepository[PortalLoginAttempt]):
         super().__init__(session, PortalLoginAttempt, tenant_id)
 
     @standard_exception_handler
-    async def find_by_portal_id(self, portal_id: str, limit: int = 100) -> list[PortalLoginAttempt]:
+    async def find_by_portal_id(
+        self, portal_id: str, limit: int = 100
+    ) -> list[PortalLoginAttempt]:
         """Find login attempts for a portal ID."""
         query = (
             select(PortalLoginAttempt)
             .where(
                 and_(
-                    PortalLoginAttempt.tenant_id == self.tenant_id, PortalLoginAttempt.portal_id_attempted == portal_id
+                    PortalLoginAttempt.tenant_id == self.tenant_id,
+                    PortalLoginAttempt.portal_id_attempted == portal_id,
                 )
             )
             .order_by(PortalLoginAttempt.created_at.desc())
@@ -462,7 +554,9 @@ class PortalLoginAttemptRepository(BaseRepository[PortalLoginAttempt]):
         return result.scalars().all()
 
     @standard_exception_handler
-    async def find_by_ip_address(self, ip_address: str, hours_back: int = 24) -> list[PortalLoginAttempt]:
+    async def find_by_ip_address(
+        self, ip_address: str, hours_back: int = 24
+    ) -> list[PortalLoginAttempt]:
         """Find login attempts from an IP address."""
         start_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
 
@@ -482,7 +576,9 @@ class PortalLoginAttemptRepository(BaseRepository[PortalLoginAttempt]):
         return result.scalars().all()
 
     @standard_exception_handler
-    async def find_failed_attempts(self, hours_back: int = 24, min_attempts: int = 1) -> list[PortalLoginAttempt]:
+    async def find_failed_attempts(
+        self, hours_back: int = 24, min_attempts: int = 1
+    ) -> list[PortalLoginAttempt]:
         """Find failed login attempts."""
         start_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
 
@@ -507,13 +603,19 @@ class PortalLoginAttemptRepository(BaseRepository[PortalLoginAttempt]):
             for attempt in attempts:
                 ip_counts[attempt.ip_address] = ip_counts.get(attempt.ip_address, 0) + 1
 
-            filtered_attempts = [attempt for attempt in attempts if ip_counts[attempt.ip_address] >= min_attempts]
+            filtered_attempts = [
+                attempt
+                for attempt in attempts
+                if ip_counts[attempt.ip_address] >= min_attempts
+            ]
             return filtered_attempts
 
         return attempts
 
     @standard_exception_handler
-    async def find_high_risk_attempts(self, risk_threshold: int = 75) -> list[PortalLoginAttempt]:
+    async def find_high_risk_attempts(
+        self, risk_threshold: int = 75
+    ) -> list[PortalLoginAttempt]:
         """Find high-risk login attempts."""
         query = (
             select(PortalLoginAttempt)
@@ -540,7 +642,10 @@ class PortalLoginAttemptRepository(BaseRepository[PortalLoginAttempt]):
 
         total_attempts = await self.session.execute(
             select(func.count(PortalLoginAttempt.id)).where(
-                and_(PortalLoginAttempt.tenant_id == self.tenant_id, PortalLoginAttempt.created_at >= start_date)
+                and_(
+                    PortalLoginAttempt.tenant_id == self.tenant_id,
+                    PortalLoginAttempt.created_at >= start_date,
+                )
             )
         )
 
@@ -576,7 +681,10 @@ class PortalLoginAttemptRepository(BaseRepository[PortalLoginAttempt]):
 
         unique_ips = await self.session.execute(
             select(func.count(func.distinct(PortalLoginAttempt.ip_address))).where(
-                and_(PortalLoginAttempt.tenant_id == self.tenant_id, PortalLoginAttempt.created_at >= start_date)
+                and_(
+                    PortalLoginAttempt.tenant_id == self.tenant_id,
+                    PortalLoginAttempt.created_at >= start_date,
+                )
             )
         )
 
@@ -586,7 +694,10 @@ class PortalLoginAttemptRepository(BaseRepository[PortalLoginAttempt]):
             "failed_attempts": failed_attempts.scalar(),
             "high_risk_attempts": high_risk_attempts.scalar(),
             "unique_ips": unique_ips.scalar(),
-            "success_rate": (successful_attempts.scalar() / max(total_attempts.scalar(), 1)) * 100,
+            "success_rate": (
+                successful_attempts.scalar() / max(total_attempts.scalar(), 1)
+            )
+            * 100,
         }
 
 
@@ -600,7 +711,10 @@ class PortalPreferencesRepository(BaseRepository[PortalPreferences]):
     async def find_by_account_id(self, account_id: UUID) -> Optional[PortalPreferences]:
         """Find preferences by account ID."""
         query = select(PortalPreferences).where(
-            and_(PortalPreferences.tenant_id == self.tenant_id, PortalPreferences.account_id == str(account_id))
+            and_(
+                PortalPreferences.tenant_id == self.tenant_id,
+                PortalPreferences.account_id == str(account_id),
+            )
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
@@ -611,7 +725,12 @@ class PortalPreferencesRepository(BaseRepository[PortalPreferences]):
         query = (
             select(PortalPreferences)
             .options(joinedload(PortalPreferences.account))
-            .where(and_(PortalPreferences.tenant_id == self.tenant_id, PortalPreferences.theme == theme))
+            .where(
+                and_(
+                    PortalPreferences.tenant_id == self.tenant_id,
+                    PortalPreferences.theme == theme,
+                )
+            )
         )
         result = await self.session.execute(query)
         return result.scalars().all()
@@ -637,7 +756,9 @@ class PortalPreferencesRepository(BaseRepository[PortalPreferences]):
     async def get_preference_statistics(self) -> dict[str, Any]:
         """Get portal preference statistics."""
         theme_stats = await self.session.execute(
-            select(PortalPreferences.theme, func.count(PortalPreferences.id).label("count"))
+            select(
+                PortalPreferences.theme, func.count(PortalPreferences.id).label("count")
+            )
             .where(PortalPreferences.tenant_id == self.tenant_id)
             .group_by(PortalPreferences.theme)
         )
@@ -657,7 +778,10 @@ class PortalPreferencesRepository(BaseRepository[PortalPreferences]):
         )
 
         lang_stats = await self.session.execute(
-            select(PortalPreferences.language, func.count(PortalPreferences.id).label("count"))
+            select(
+                PortalPreferences.language,
+                func.count(PortalPreferences.id).label("count"),
+            )
             .where(PortalPreferences.tenant_id == self.tenant_id)
             .group_by(PortalPreferences.language)
         )
@@ -668,8 +792,12 @@ class PortalPreferencesRepository(BaseRepository[PortalPreferences]):
             "themes": {row.theme: row.count for row in theme_stats},
             "languages": {row.language: row.count for row in lang_stats},
             "notifications": {
-                "email_enabled": notification_row.email_enabled if notification_row else 0,
+                "email_enabled": notification_row.email_enabled
+                if notification_row
+                else 0,
                 "sms_enabled": notification_row.sms_enabled if notification_row else 0,
-                "marketing_subscribed": notification_row.marketing_subscribed if notification_row else 0,
+                "marketing_subscribed": notification_row.marketing_subscribed
+                if notification_row
+                else 0,
             },
         }

@@ -73,7 +73,9 @@ class TenantFactory(factory.Factory):
     tenant_id = factory.LazyFunction(lambda: f"tenant-{uuid.uuid4().hex[:8]}")
     name = factory.Faker("company")
     subdomain = factory.LazyAttribute(lambda obj: obj.tenant_id.replace("tenant-", ""))
-    subscription_plan = factory.Faker("random_element", elements=["basic", "premium", "enterprise"])
+    subscription_plan = factory.Faker(
+        "random_element", elements=["basic", "premium", "enterprise"]
+    )
     primary_domain = factory.LazyAttribute(lambda obj: f"{obj.subdomain}.isp.local")
     is_active = True
     created_at = factory.LazyFunction(datetime.now)
@@ -120,10 +122,18 @@ class LicenseContractFactory(factory.Factory):
     max_network_devices = 100
 
     enabled_features = factory.LazyFunction(
-        lambda: ["basic_analytics", "premium_api", "custom_branding", "email_support", "phone_support"]
+        lambda: [
+            "basic_analytics",
+            "premium_api",
+            "custom_branding",
+            "email_support",
+            "phone_support",
+        ]
     )
     disabled_features = factory.LazyFunction(lambda: [])
-    feature_limits = factory.LazyFunction(lambda: {"max_integrations": 10, "max_webhooks": 5})
+    feature_limits = factory.LazyFunction(
+        lambda: {"max_integrations": 10, "max_webhooks": 5}
+    )
     enforcement_mode = "strict"
 
     @classmethod
@@ -169,7 +179,11 @@ class LicenseContractFactory(factory.Factory):
     @classmethod
     def expired_license(cls, **kwargs):
         """Create an expired license contract."""
-        return cls(status=LicenseStatus.EXPIRED, valid_until=datetime.now() - timedelta(days=30), **kwargs)
+        return cls(
+            status=LicenseStatus.EXPIRED,
+            valid_until=datetime.now() - timedelta(days=30),
+            **kwargs,
+        )
 
     @classmethod
     def suspended_license(cls, **kwargs):
@@ -230,7 +244,9 @@ class FeatureFlagFactory(factory.Factory):
         return cls(rollout_percentage=percentage, **kwargs)
 
     @classmethod
-    def targeted_rollout(cls, user_ids: list[str] = None, groups: list[str] = None, **kwargs):
+    def targeted_rollout(
+        cls, user_ids: list[str] = None, groups: list[str] = None, **kwargs
+    ):
         """Create a feature flag with targeted rollout."""
         return cls(
             target_user_ids=user_ids or [],
@@ -240,7 +256,9 @@ class FeatureFlagFactory(factory.Factory):
         )
 
     @classmethod
-    def scheduled_feature(cls, start_date: datetime = None, end_date: datetime = None, **kwargs):
+    def scheduled_feature(
+        cls, start_date: datetime = None, end_date: datetime = None, **kwargs
+    ):
         """Create a scheduled feature flag."""
         return cls(
             start_date=start_date or datetime.now() + timedelta(hours=1),
@@ -266,7 +284,9 @@ class UserFactory(factory.Factory):
     @classmethod
     def admin_user(cls, **kwargs):
         """Create an admin user."""
-        return cls(role="admin", permissions=["read", "write", "admin", "billing"], **kwargs)
+        return cls(
+            role="admin", permissions=["read", "write", "admin", "billing"], **kwargs
+        )
 
     @classmethod
     def basic_user(cls, **kwargs):
@@ -336,8 +356,12 @@ class TestScenarioFactory:
         # Feature flags for different apps
         feature_flags = [
             FeatureFlagFactory(feature_name="crm_access", tenant_id=tenant.tenant_id),
-            FeatureFlagFactory(feature_name="field_ops_access", tenant_id=tenant.tenant_id),
-            FeatureFlagFactory(feature_name="reseller_portal", tenant_id=tenant.tenant_id),
+            FeatureFlagFactory(
+                feature_name="field_ops_access", tenant_id=tenant.tenant_id
+            ),
+            FeatureFlagFactory(
+                feature_name="reseller_portal", tenant_id=tenant.tenant_id
+            ),
         ]
 
         return tenant, license, feature_flags

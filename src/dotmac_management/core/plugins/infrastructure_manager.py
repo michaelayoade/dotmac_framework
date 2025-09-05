@@ -13,7 +13,11 @@ from dotmac_shared.exceptions import ExceptionContext
 
 from .base import PluginError
 from .health_monitor import PluginHealthMonitor
-from .interfaces import DeploymentProviderPlugin, DNSProviderPlugin, InfrastructureProviderPlugin
+from .interfaces import (
+    DeploymentProviderPlugin,
+    DNSProviderPlugin,
+    InfrastructureProviderPlugin,
+)
 from .registry import PluginRegistry
 
 logger = logging.getLogger(__name__)
@@ -42,7 +46,9 @@ class InfrastructurePluginManager:
             await self._load_default_plugins()
 
             # Start health monitoring
-            await self.health_monitor.start_monitoring(check_interval=120)  # Check every 2 minutes
+            await self.health_monitor.start_monitoring(
+                check_interval=120
+            )  # Check every 2 minutes
 
             logger.info("✅ Infrastructure plugin manager initialized successfully")
             return True
@@ -55,7 +61,10 @@ class InfrastructurePluginManager:
         """Load default infrastructure plugins."""
         try:
             # Import and register default plugins
-            from ...plugins.infrastructure import CoolifyDeploymentPlugin, StandardDNSProviderPlugin
+            from ...plugins.infrastructure import (
+                CoolifyDeploymentPlugin,
+                StandardDNSProviderPlugin,
+            )
 
             # Register Coolify deployment plugin
             coolify_config = {
@@ -77,17 +86,23 @@ class InfrastructurePluginManager:
             raise
 
     @standard_exception_handler
-    async def register_deployment_provider(self, provider_name: str, plugin: DeploymentProviderPlugin) -> bool:
+    async def register_deployment_provider(
+        self, provider_name: str, plugin: DeploymentProviderPlugin
+    ) -> bool:
         """Register a deployment provider plugin."""
         async with self._lock:
             try:
                 # Initialize the plugin
                 if not await plugin.initialize():
-                    raise PluginError(f"Failed to initialize deployment provider: {provider_name}")
+                    raise PluginError(
+                        f"Failed to initialize deployment provider: {provider_name}"
+                    )
 
                 # Register with main registry
                 if not await self.registry.register_plugin(plugin):
-                    raise PluginError(f"Failed to register plugin with main registry: {provider_name}")
+                    raise PluginError(
+                        f"Failed to register plugin with main registry: {provider_name}"
+                    )
 
                 # Store in local registry
                 self._deployment_providers[provider_name] = plugin
@@ -96,21 +111,29 @@ class InfrastructurePluginManager:
                 return True
 
             except (PluginError, AttributeError, TypeError, ValueError) as e:
-                logger.error(f"Failed to register deployment provider {provider_name}: {e}")
+                logger.error(
+                    f"Failed to register deployment provider {provider_name}: {e}"
+                )
                 return False
 
     @standard_exception_handler
-    async def register_dns_provider(self, provider_name: str, plugin: DNSProviderPlugin) -> bool:
+    async def register_dns_provider(
+        self, provider_name: str, plugin: DNSProviderPlugin
+    ) -> bool:
         """Register a DNS provider plugin."""
         async with self._lock:
             try:
                 # Initialize the plugin
                 if not await plugin.initialize():
-                    raise PluginError(f"Failed to initialize DNS provider: {provider_name}")
+                    raise PluginError(
+                        f"Failed to initialize DNS provider: {provider_name}"
+                    )
 
                 # Register with main registry
                 if not await self.registry.register_plugin(plugin):
-                    raise PluginError(f"Failed to register plugin with main registry: {provider_name}")
+                    raise PluginError(
+                        f"Failed to register plugin with main registry: {provider_name}"
+                    )
 
                 # Store in local registry
                 self._dns_providers[provider_name] = plugin
@@ -124,7 +147,9 @@ class InfrastructurePluginManager:
 
     # Service Discovery Methods
 
-    def get_deployment_provider(self, provider_name: Optional[str] = None) -> Optional[DeploymentProviderPlugin]:
+    def get_deployment_provider(
+        self, provider_name: Optional[str] = None
+    ) -> Optional[DeploymentProviderPlugin]:
         """Get deployment provider by name, or default if none specified."""
         if provider_name:
             return self._deployment_providers.get(provider_name)
@@ -135,7 +160,9 @@ class InfrastructurePluginManager:
 
         return None
 
-    def get_dns_provider(self, provider_name: Optional[str] = None) -> Optional[DNSProviderPlugin]:
+    def get_dns_provider(
+        self, provider_name: Optional[str] = None
+    ) -> Optional[DNSProviderPlugin]:
         """Get DNS provider by name, or default if none specified."""
         if provider_name:
             return self._dns_providers.get(provider_name)
@@ -171,17 +198,25 @@ class InfrastructurePluginManager:
             for name in self.list_deployment_providers():
                 report = self.health_monitor.get_plugin_health(name)
                 deployment_status[name] = {
-                    "healthy": report.overall_status.value == "healthy" if report else False,
+                    "healthy": report.overall_status.value == "healthy"
+                    if report
+                    else False,
                     "status": report.overall_status.value if report else "unknown",
-                    "last_check": report.last_check.isoformat() if report and report.last_check else None,
+                    "last_check": report.last_check.isoformat()
+                    if report and report.last_check
+                    else None,
                 }
 
             for name in self.list_dns_providers():
                 report = self.health_monitor.get_plugin_health(name)
                 dns_status[name] = {
-                    "healthy": report.overall_status.value == "healthy" if report else False,
+                    "healthy": report.overall_status.value == "healthy"
+                    if report
+                    else False,
                     "status": report.overall_status.value if report else "unknown",
-                    "last_check": report.last_check.isoformat() if report and report.last_check else None,
+                    "last_check": report.last_check.isoformat()
+                    if report and report.last_check
+                    else None,
                 }
 
             return {
@@ -203,7 +238,8 @@ class InfrastructurePluginManager:
         if not provider:
             available = ", ".join(self.list_deployment_providers())
             raise PluginError(
-                f"No deployment provider available. " f"Requested: {provider_name}, Available: [{available}]"
+                f"No deployment provider available. "
+                f"Requested: {provider_name}, Available: [{available}]"
             )
 
         logger.info(f"Deploying application using provider: {provider.meta.name}")
@@ -211,7 +247,9 @@ class InfrastructurePluginManager:
         # Use the deployment provider's infrastructure ID or generate one
         infrastructure_config = {"provider": provider.meta.name, "config": app_config}
 
-        infrastructure_result = await provider.provision_infrastructure(infrastructure_config)
+        infrastructure_result = await provider.provision_infrastructure(
+            infrastructure_config
+        )
         infrastructure_id = infrastructure_result.get("infrastructure_id", "default")
 
         # Deploy the application
@@ -219,32 +257,45 @@ class InfrastructurePluginManager:
 
     @standard_exception_handler
     async def validate_subdomain(
-        self, subdomain: str, base_domain: Optional[str] = None, provider_name: Optional[str] = None
+        self,
+        subdomain: str,
+        base_domain: Optional[str] = None,
+        provider_name: Optional[str] = None,
     ) -> dict[str, Any]:
         """Validate subdomain availability using specified or default DNS provider."""
         provider = self.get_dns_provider(provider_name)
 
         if not provider:
             available = ", ".join(self.list_dns_providers())
-            raise PluginError(f"No DNS provider available. " f"Requested: {provider_name}, Available: [{available}]")
+            raise PluginError(
+                f"No DNS provider available. "
+                f"Requested: {provider_name}, Available: [{available}]"
+            )
 
         logger.info(f"Validating subdomain using provider: {provider.meta.name}")
         return await provider.validate_subdomain_available(subdomain, base_domain)
 
     @standard_exception_handler
-    async def validate_ssl_certificate(self, domain: str, provider_name: Optional[str] = None) -> dict[str, Any]:
+    async def validate_ssl_certificate(
+        self, domain: str, provider_name: Optional[str] = None
+    ) -> dict[str, Any]:
         """Validate SSL certificate using specified or default DNS provider."""
         provider = self.get_dns_provider(provider_name)
 
         if not provider:
             available = ", ".join(self.list_dns_providers())
-            raise PluginError(f"No DNS provider available. " f"Requested: {provider_name}, Available: [{available}]")
+            raise PluginError(
+                f"No DNS provider available. "
+                f"Requested: {provider_name}, Available: [{available}]"
+            )
 
         logger.info(f"Validating SSL certificate using provider: {provider.meta.name}")
         return await provider.validate_ssl_certificate(domain)
 
     @standard_exception_handler
-    async def get_deployment_status(self, deployment_id: str, provider_name: Optional[str] = None) -> dict[str, Any]:
+    async def get_deployment_status(
+        self, deployment_id: str, provider_name: Optional[str] = None
+    ) -> dict[str, Any]:
         """Get deployment status using specified or default provider."""
         provider = self.get_deployment_provider(provider_name)
 
@@ -254,7 +305,9 @@ class InfrastructurePluginManager:
         return await provider.get_deployment_status(deployment_id)
 
     @asynccontextmanager
-    async def get_provider_context(self, provider_type: str, provider_name: Optional[str] = None):
+    async def get_provider_context(
+        self, provider_type: str, provider_name: Optional[str] = None
+    ):
         """
         Context manager for working with infrastructure providers.
         Ensures proper cleanup and error handling.
@@ -270,7 +323,9 @@ class InfrastructurePluginManager:
                 raise PluginError(f"Unsupported provider type: {provider_type}")
 
             if not provider:
-                raise PluginError(f"Provider not found: {provider_name} ({provider_type})")
+                raise PluginError(
+                    f"Provider not found: {provider_name} ({provider_type})"
+                )
 
             # Check provider health before use
             health = await provider.health_check()

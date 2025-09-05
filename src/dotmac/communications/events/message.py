@@ -16,4 +16,3 @@ class Event:
 
 
 __all__ = ["Event"]
-

@@ -37,11 +37,7 @@ except ImportError:
     create_repository = create_async_repository = create_sync_repository = None
 
 try:
-    from .services import (
-        BaseService,
-        ServiceFactory,
-        create_service,
-    )
+    from .services import BaseService, ServiceFactory, create_service
 
     _services_available = True
 except ImportError:
@@ -95,9 +91,7 @@ except ImportError:
     get_standard_deps = get_paginated_deps = get_admin_deps = None
 
 try:
-    from .validation import (
-        BusinessValidators,
-    )
+    from .validation import BusinessValidators
 
     _validation_available = True
 except ImportError:
@@ -236,10 +230,7 @@ except ImportError:
 
 # Re-export services framework for convenience
 try:
-    from .services_framework import (
-        # NotificationService,  # Consolidated to dotmac_shared.notifications.core
-        # NotificationServiceConfig,  # Consolidated to dotmac_shared.notifications.core
-        # create_notification_service,  # Consolidated to dotmac_shared.notifications.core
+    from .services_framework import (  # NotificationService,  # Consolidated to dotmac_shared.notifications.core; NotificationServiceConfig,  # Consolidated to dotmac_shared.notifications.core; create_notification_service,  # Consolidated to dotmac_shared.notifications.core
         AnalyticsService,
         AnalyticsServiceConfig,
         AuthService,

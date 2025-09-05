@@ -52,7 +52,9 @@ class TenantAwareConnectionPool:
         )
 
         # Create session factory
-        self.SessionLocal = sessionmaker(bind=self.engine, autocommit=False, autoflush=False, expire_on_commit=False)
+        self.SessionLocal = sessionmaker(
+            bind=self.engine, autocommit=False, autoflush=False, expire_on_commit=False
+        )
 
         # Setup connection event listeners
         self._setup_connection_listeners()
@@ -91,9 +93,15 @@ class TenantAwareConnectionPool:
             if connection_id in self.active_connections:
                 # Clear any tenant context when connection is returned
                 try:
-                    dbapi_connection.execute("SELECT set_config('app.current_tenant_id', '', false);")
-                    dbapi_connection.execute("SELECT set_config('app.current_user_id', '', false);")
-                    dbapi_connection.execute("SELECT set_config('app.client_ip', '', false);")
+                    dbapi_connection.execute(
+                        "SELECT set_config('app.current_tenant_id', '', false);"
+                    )
+                    dbapi_connection.execute(
+                        "SELECT set_config('app.current_user_id', '', false);"
+                    )
+                    dbapi_connection.execute(
+                        "SELECT set_config('app.client_ip', '', false);"
+                    )
                 except Exception:
                     pass  # Ignore errors during cleanup
 
@@ -115,16 +123,28 @@ class TenantAwareConnectionPool:
 
         try:
             # Set tenant context
-            session.execute(text(f"SELECT set_config('app.current_tenant_id', '{tenant_id}', false);"))
+            session.execute(
+                text(
+                    f"SELECT set_config('app.current_tenant_id', '{tenant_id}', false);"
+                )
+            )
 
             if user_id:
-                session.execute(text(f"SELECT set_config('app.current_user_id', '{user_id}', false);"))
+                session.execute(
+                    text(
+                        f"SELECT set_config('app.current_user_id', '{user_id}', false);"
+                    )
+                )
 
             if client_ip:
-                session.execute(text(f"SELECT set_config('app.client_ip', '{client_ip}', false);"))
+                session.execute(
+                    text(f"SELECT set_config('app.client_ip', '{client_ip}', false);")
+                )
 
             if request_id:
-                session.execute(text(f"SELECT set_config('app.request_id', '{request_id}', false);"))
+                session.execute(
+                    text(f"SELECT set_config('app.request_id', '{request_id}', false);")
+                )
 
             # Update connection tracking
             if connection_id in self.active_connections:
@@ -166,8 +186,12 @@ class TenantAwareConnectionPool:
         finally:
             try:
                 # Clear tenant context
-                session.execute(text("SELECT set_config('app.current_tenant_id', '', false);"))
-                session.execute(text("SELECT set_config('app.current_user_id', '', false);"))
+                session.execute(
+                    text("SELECT set_config('app.current_tenant_id', '', false);")
+                )
+                session.execute(
+                    text("SELECT set_config('app.current_user_id', '', false);")
+                )
                 session.execute(text("SELECT set_config('app.client_ip', '', false);"))
 
                 if self.enable_audit_logging and self.audit_logger:
@@ -199,14 +223,24 @@ class TenantAwareConnectionPool:
         try:
             # Set admin context (no tenant_id)
             if admin_user_id:
-                session.execute(text(f"SELECT set_config('app.current_user_id', '{admin_user_id}', false);"))
-                session.execute(text("SELECT set_config('app.admin_context', 'true', false);"))
+                session.execute(
+                    text(
+                        f"SELECT set_config('app.current_user_id', '{admin_user_id}', false);"
+                    )
+                )
+                session.execute(
+                    text("SELECT set_config('app.admin_context', 'true', false);")
+                )
 
             if client_ip:
-                session.execute(text(f"SELECT set_config('app.client_ip', '{client_ip}', false);"))
+                session.execute(
+                    text(f"SELECT set_config('app.client_ip', '{client_ip}', false);")
+                )
 
             if request_id:
-                session.execute(text(f"SELECT set_config('app.request_id', '{request_id}', false);"))
+                session.execute(
+                    text(f"SELECT set_config('app.request_id', '{request_id}', false);")
+                )
 
             # Log admin session creation
             if self.enable_audit_logging and self.audit_logger:
@@ -232,8 +266,12 @@ class TenantAwareConnectionPool:
         finally:
             try:
                 # Clear admin context
-                session.execute(text("SELECT set_config('app.current_user_id', '', false);"))
-                session.execute(text("SELECT set_config('app.admin_context', 'false', false);"))
+                session.execute(
+                    text("SELECT set_config('app.current_user_id', '', false);")
+                )
+                session.execute(
+                    text("SELECT set_config('app.admin_context', 'false', false);")
+                )
                 session.execute(text("SELECT set_config('app.client_ip', '', false);"))
             except Exception:
                 pass
@@ -255,13 +293,16 @@ class TenantAwareConnectionPool:
                     "connection_id": conn_id,
                     "tenant_id": info.get("tenant_id"),
                     "user_id": info.get("user_id"),
-                    "duration_seconds": asyncio.get_event_loop().time() - info.get("checked_out_at", 0),
+                    "duration_seconds": asyncio.get_event_loop().time()
+                    - info.get("checked_out_at", 0),
                 }
                 for conn_id, info in self.active_connections.items()
             ],
         }
 
-    async def validate_tenant_isolation(self, tenant_1: str, tenant_2: str) -> dict[str, Any]:
+    async def validate_tenant_isolation(
+        self, tenant_1: str, tenant_2: str
+    ) -> dict[str, Any]:
         """
         Validate that tenant isolation is working at the connection pool level
         """
@@ -340,4 +381,6 @@ def create_tenant_aware_pool(
     """
     Factory function to create a tenant-aware connection pool
     """
-    return TenantAwareConnectionPool(database_url=database_url, audit_logger=audit_logger, **kwargs)
+    return TenantAwareConnectionPool(
+        database_url=database_url, audit_logger=audit_logger, **kwargs
+    )

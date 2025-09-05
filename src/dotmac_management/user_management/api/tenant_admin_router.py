@@ -7,13 +7,11 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from dotmac.application import RouterFactory, standard_exception_handler
-from dotmac_shared.api.dependencies import (
-    StandardDependencies,
-    get_standard_deps,
-)
 from fastapi import Depends, Query
 from pydantic import BaseModel, Field
+
+from dotmac.application import RouterFactory, standard_exception_handler
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 from ..schemas.tenant_admin_schemas import (
     ApplicationType,
@@ -31,8 +29,12 @@ class CrossAppSearchRequest(BaseModel):
     """Cross-application search request."""
 
     query: str = Field(..., description="Search query")
-    applications: list[ApplicationType] = Field(..., description="Applications to search")
-    filters: dict[str, Any] = Field(default_factory=dict, description="Additional filters")
+    applications: list[ApplicationType] = Field(
+        ..., description="Applications to search"
+    )
+    filters: dict[str, Any] = Field(
+        default_factory=dict, description="Additional filters"
+    )
     limit: int = Field(20, ge=1, le=100, description="Result limit")
 
 
@@ -119,7 +121,8 @@ async def search_across_apps(
         "total_count": total_count,
         "page": 1,
         "page_size": search_request.limit,
-        "total_pages": (total_count // search_request.limit) + (1 if total_count % search_request.limit else 0),
+        "total_pages": (total_count // search_request.limit)
+        + (1 if total_count % search_request.limit else 0),
     }
 
 
@@ -140,7 +143,9 @@ async def bulk_user_operation(
 # === Cross-App Permissions ===
 
 
-@tenant_admin_router.get("/users/{user_id}/permissions", response_model=dict[str, list[str]])
+@tenant_admin_router.get(
+    "/users/{user_id}/permissions", response_model=dict[str, list[str]]
+)
 @standard_exception_handler
 async def get_user_cross_app_permissions(
     user_id: UUID,
@@ -157,8 +162,10 @@ async def get_user_cross_app_permissions(
 @tenant_admin_router.get("/analytics", response_model=dict[str, Any])
 @standard_exception_handler
 async def get_tenant_analytics(
-    period_start: datetime | None = Query(None, description="Start date for analytics period"),
-    period_end: datetime | None = Query(None, description="End date for analytics period"),
+    period_start: datetime
+    | None = Query(None, description="Start date for analytics period"),
+    period_end: datetime
+    | None = Query(None, description="End date for analytics period"),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> dict[str, Any]:
     """Get tenant analytics across all applications."""
@@ -190,7 +197,9 @@ async def update_security_policy(
 # === Application Users ===
 
 
-@tenant_admin_router.get("/apps/{app_name}/users", response_model=list[CrossAppUserResponseSchema])
+@tenant_admin_router.get(
+    "/apps/{app_name}/users", response_model=list[CrossAppUserResponseSchema]
+)
 @standard_exception_handler
 async def get_app_users(
     app_name: ApplicationType,
@@ -245,9 +254,12 @@ async def get_role_templates(
 async def get_cross_app_access_audit(
     user_id: UUID | None = Query(None, description="Filter by user ID"),
     app: ApplicationType | None = Query(None, description="Filter by application"),
-    start_date: datetime | None = Query(None, description="Start date for audit period"),
+    start_date: datetime
+    | None = Query(None, description="Start date for audit period"),
     end_date: datetime | None = Query(None, description="End date for audit period"),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of audit entries"),
+    limit: int = Query(
+        100, ge=1, le=1000, description="Maximum number of audit entries"
+    ),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> list[dict[str, Any]]:
     """Get audit trail of cross-app access activities."""
@@ -283,7 +295,11 @@ async def get_cross_app_access_audit(
     if user_id:
         audit_entries = [e for e in audit_entries if e["user_id"] == str(user_id)]
     if app:
-        audit_entries = [e for e in audit_entries if e["source_app"] == app.value or e["target_app"] == app.value]
+        audit_entries = [
+            e
+            for e in audit_entries
+            if e["source_app"] == app.value or e["target_app"] == app.value
+        ]
 
     return audit_entries[:limit]
 

@@ -113,29 +113,41 @@ class DatabaseConstraintValidator:
         # Test each constraint type
         for constraint_type, constraint_info in constraints.items():
             if constraint_type == ConstraintType.PRIMARY_KEY:
-                pk_results = await self._test_primary_key_constraints(model_class, constraint_info, test_data_sets)
+                pk_results = await self._test_primary_key_constraints(
+                    model_class, constraint_info, test_data_sets
+                )
                 results.extend(pk_results)
 
             elif constraint_type == ConstraintType.FOREIGN_KEY:
-                fk_results = await self._test_foreign_key_constraints(model_class, constraint_info, test_data_sets)
+                fk_results = await self._test_foreign_key_constraints(
+                    model_class, constraint_info, test_data_sets
+                )
                 results.extend(fk_results)
 
             elif constraint_type == ConstraintType.UNIQUE:
-                unique_results = await self._test_unique_constraints(model_class, constraint_info, test_data_sets)
+                unique_results = await self._test_unique_constraints(
+                    model_class, constraint_info, test_data_sets
+                )
                 results.extend(unique_results)
 
             elif constraint_type == ConstraintType.NOT_NULL:
-                nn_results = await self._test_not_null_constraints(model_class, constraint_info, test_data_sets)
+                nn_results = await self._test_not_null_constraints(
+                    model_class, constraint_info, test_data_sets
+                )
                 results.extend(nn_results)
 
             elif constraint_type == ConstraintType.CHECK:
-                check_results = await self._test_check_constraints(model_class, constraint_info, test_data_sets)
+                check_results = await self._test_check_constraints(
+                    model_class, constraint_info, test_data_sets
+                )
                 results.extend(check_results)
 
         self.test_results.extend(results)
         return results
 
-    def _discover_model_constraints(self, model_class: type) -> dict[ConstraintType, list[dict]]:
+    def _discover_model_constraints(
+        self, model_class: type
+    ) -> dict[ConstraintType, list[dict]]:
         """Discover all constraints from SQLAlchemy model"""
 
         inspector = sqlalchemy_inspect(model_class)
@@ -145,7 +157,11 @@ class DatabaseConstraintValidator:
         if hasattr(inspector, "primary_key"):
             for column in inspector.primary_key:
                 constraints[ConstraintType.PRIMARY_KEY].append(
-                    {"column": column.name, "type": column.type, "nullable": column.nullable}
+                    {
+                        "column": column.name,
+                        "type": column.type,
+                        "nullable": column.nullable,
+                    }
                 )
 
         # Discover constraints from table
@@ -166,7 +182,10 @@ class DatabaseConstraintValidator:
             for constraint in table.constraints:
                 if isinstance(constraint, UniqueConstraint):
                     constraints[ConstraintType.UNIQUE].append(
-                        {"columns": [col.name for col in constraint.columns], "name": constraint.name}
+                        {
+                            "columns": [col.name for col in constraint.columns],
+                            "name": constraint.name,
+                        }
                     )
                 elif isinstance(constraint, CheckConstraint):
                     constraints[ConstraintType.CHECK].append(
@@ -176,7 +195,9 @@ class DatabaseConstraintValidator:
             # Not null constraints (from column definitions)
             for column in table.columns:
                 if not column.nullable and not column.primary_key:
-                    constraints[ConstraintType.NOT_NULL].append({"column": column.name, "type": str(column.type)})
+                    constraints[ConstraintType.NOT_NULL].append(
+                        {"column": column.name, "type": str(column.type)}
+                    )
 
         return constraints
 
@@ -215,7 +236,9 @@ class DatabaseConstraintValidator:
                     error_message_contains="not null",
                 )
 
-                null_result = await self._run_constraint_test(model_class, null_test_case)
+                null_result = await self._run_constraint_test(
+                    model_class, null_test_case
+                )
                 results.append(null_result)
 
         return results
@@ -257,13 +280,18 @@ class DatabaseConstraintValidator:
                     should_fail=False,  # Should succeed if nullable
                 )
 
-                null_result = await self._run_constraint_test(model_class, null_test_case)
+                null_result = await self._run_constraint_test(
+                    model_class, null_test_case
+                )
                 results.append(null_result)
 
         return results
 
     async def _test_unique_constraints(
-        self, model_class: type, unique_constraints: list[dict], test_data_sets: list[dict]
+        self,
+        model_class: type,
+        unique_constraints: list[dict],
+        test_data_sets: list[dict],
     ) -> list[ConstraintValidationResult]:
         """Test unique constraints"""
 
@@ -282,7 +310,9 @@ class DatabaseConstraintValidator:
                 error_message_contains="unique",
             )
 
-            result = await self._run_constraint_test(model_class, test_case, duplicate_unique=True)
+            result = await self._run_constraint_test(
+                model_class, test_case, duplicate_unique=True
+            )
             results.append(result)
 
         return results
@@ -315,7 +345,10 @@ class DatabaseConstraintValidator:
         return results
 
     async def _test_check_constraints(
-        self, model_class: type, check_constraints: list[dict], test_data_sets: list[dict]
+        self,
+        model_class: type,
+        check_constraints: list[dict],
+        test_data_sets: list[dict],
     ) -> list[ConstraintValidationResult]:
         """Test check constraints"""
 
@@ -340,7 +373,10 @@ class DatabaseConstraintValidator:
         return results
 
     async def _run_constraint_test(
-        self, model_class: type, test_case: ConstraintTestCase, duplicate_unique: bool = False
+        self,
+        model_class: type,
+        test_case: ConstraintTestCase,
+        duplicate_unique: bool = False,
     ) -> ConstraintValidationResult:
         """Run a single constraint test"""
 
@@ -387,7 +423,9 @@ class DatabaseConstraintValidator:
                 # Expected failure occurred
                 message_match = True
                 if test_case.error_message_contains:
-                    message_match = test_case.error_message_contains.lower() in str(e).lower()
+                    message_match = (
+                        test_case.error_message_contains.lower() in str(e).lower()
+                    )
 
                 if message_match:
                     result = ConstraintValidationResult(
@@ -433,7 +471,10 @@ class DatabaseConstraintValidator:
 
     @standard_exception_handler
     async def validate_custom_constraints(
-        self, model_class: type, custom_validators: list[Callable[[Any], bool]], test_data_sets: list[dict]
+        self,
+        model_class: type,
+        custom_validators: list[Callable[[Any], bool]],
+        test_data_sets: list[dict],
     ) -> list[ConstraintValidationResult]:
         """
         Validate custom business logic constraints.
@@ -457,7 +498,9 @@ class DatabaseConstraintValidator:
                     result = ConstraintValidationResult(
                         test_name=f"custom_validator_{i}_dataset_{j}",
                         constraint_type=ConstraintType.CUSTOM,
-                        result=ConstraintTestResult.PASS if is_valid else ConstraintTestResult.FAIL,
+                        result=ConstraintTestResult.PASS
+                        if is_valid
+                        else ConstraintTestResult.FAIL,
                         expected_failure=False,
                     )
 
@@ -482,16 +525,27 @@ class DatabaseConstraintValidator:
             return {"total": 0, "summary": "No constraint tests run"}
 
         total = len(self.test_results)
-        passed = sum(1 for r in self.test_results if r.result == ConstraintTestResult.PASS)
-        failed = sum(1 for r in self.test_results if r.result == ConstraintTestResult.FAIL)
-        errors = sum(1 for r in self.test_results if r.result == ConstraintTestResult.ERROR)
+        passed = sum(
+            1 for r in self.test_results if r.result == ConstraintTestResult.PASS
+        )
+        failed = sum(
+            1 for r in self.test_results if r.result == ConstraintTestResult.FAIL
+        )
+        errors = sum(
+            1 for r in self.test_results if r.result == ConstraintTestResult.ERROR
+        )
 
         # Break down by constraint type
         constraint_breakdown = {}
         for result in self.test_results:
             constraint_type = result.constraint_type.value
             if constraint_type not in constraint_breakdown:
-                constraint_breakdown[constraint_type] = {"total": 0, "passed": 0, "failed": 0, "errors": 0}
+                constraint_breakdown[constraint_type] = {
+                    "total": 0,
+                    "passed": 0,
+                    "failed": 0,
+                    "errors": 0,
+                }
 
             constraint_breakdown[constraint_type]["total"] += 1
             if result.result == ConstraintTestResult.PASS:
@@ -508,7 +562,10 @@ class DatabaseConstraintValidator:
             "errors": errors,
             "pass_rate": (passed / total * 100) if total > 0 else 0,
             "constraint_breakdown": constraint_breakdown,
-            "average_execution_time": sum(r.execution_time for r in self.test_results) / total if total > 0 else 0,
+            "average_execution_time": sum(r.execution_time for r in self.test_results)
+            / total
+            if total > 0
+            else 0,
         }
 
 
@@ -538,12 +595,16 @@ async def validate_model_constraints(
     validator = DatabaseConstraintValidator(session)
 
     # Standard constraint validation
-    constraint_results = await validator.validate_model_constraints(model_class, test_data_sets)
+    constraint_results = await validator.validate_model_constraints(
+        model_class, test_data_sets
+    )
 
     # Custom constraint validation
     custom_results = []
     if include_custom and custom_validators:
-        custom_results = await validator.validate_custom_constraints(model_class, custom_validators, test_data_sets)
+        custom_results = await validator.validate_custom_constraints(
+            model_class, custom_validators, test_data_sets
+        )
 
     return {
         "model": model_class.__name__,
@@ -554,7 +615,9 @@ async def validate_model_constraints(
     }
 
 
-def create_constraint_test_data(model_class: type, variations: int = 5) -> list[dict[str, Any]]:
+def create_constraint_test_data(
+    model_class: type, variations: int = 5
+) -> list[dict[str, Any]]:
     """
     Generate test data variations for constraint testing.
 

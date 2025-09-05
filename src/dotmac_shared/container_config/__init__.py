@@ -24,7 +24,9 @@ __version__ = "0.1.0"
 __author__ = "DotMac Framework Team"
 __email__ = "support@dotmac-framework.com"
 __license__ = "MIT"
-__description__ = "Container configuration management service for multi-tenant ISP deployments"
+__description__ = (
+    "Container configuration management service for multi-tenant ISP deployments"
+)
 
 # Main exports for easy importing
 __all__ = [

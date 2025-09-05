@@ -37,9 +37,23 @@ class ExceptionContext:
         ModuleNotFoundError,
     )
 
-    API_EXCEPTIONS = (ConnectionError, TimeoutError, ValueError, KeyError, AttributeError, TypeError)
+    API_EXCEPTIONS = (
+        ConnectionError,
+        TimeoutError,
+        ValueError,
+        KeyError,
+        AttributeError,
+        TypeError,
+    )
 
-    DATABASE_EXCEPTIONS = (ConnectionError, TimeoutError, ValueError, AttributeError, TypeError, KeyError)
+    DATABASE_EXCEPTIONS = (
+        ConnectionError,
+        TimeoutError,
+        ValueError,
+        AttributeError,
+        TypeError,
+        KeyError,
+    )
 
     FILE_EXCEPTIONS = (
         FileNotFoundError,
@@ -51,9 +65,22 @@ class ExceptionContext:
         IsADirectoryError,
     )
 
-    EXTERNAL_SERVICE_EXCEPTIONS = (ConnectionError, TimeoutError, ValueError, KeyError, AttributeError, OSError)
+    EXTERNAL_SERVICE_EXCEPTIONS = (
+        ConnectionError,
+        TimeoutError,
+        ValueError,
+        KeyError,
+        AttributeError,
+        OSError,
+    )
 
-    PARSING_EXCEPTIONS = (ValueError, TypeError, KeyError, AttributeError, UnicodeDecodeError)
+    PARSING_EXCEPTIONS = (
+        ValueError,
+        TypeError,
+        KeyError,
+        AttributeError,
+        UnicodeDecodeError,
+    )
 
 
 def handle_exceptions(
@@ -91,7 +118,9 @@ def handle_exceptions(
             try:
                 return await func(*args, **kwargs)
             except exceptions as e:
-                return _handle_exception(e, func.__name__, strategy, context, default_return, exc_logger)
+                return _handle_exception(
+                    e, func.__name__, strategy, context, default_return, exc_logger
+                )
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
@@ -99,7 +128,9 @@ def handle_exceptions(
             try:
                 return func(*args, **kwargs)
             except exceptions as e:
-                return _handle_exception(e, func.__name__, strategy, context, default_return, exc_logger)
+                return _handle_exception(
+                    e, func.__name__, strategy, context, default_return, exc_logger
+                )
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
@@ -107,7 +138,12 @@ def handle_exceptions(
 
 
 def _handle_exception(
-    e: Exception, func_name: str, strategy: ExceptionStrategy, context: str, default_return: Any, logger: logging.Logger
+    e: Exception,
+    func_name: str,
+    strategy: ExceptionStrategy,
+    context: str,
+    default_return: Any,
+    logger: logging.Logger,
 ) -> Any:
     """Internal exception handling logic"""
 
@@ -152,31 +188,47 @@ def exception_context(
 
 
 def handle_lifecycle_exceptions(
-    strategy: ExceptionStrategy = ExceptionStrategy.LOG_AND_CONTINUE, context: str = "Lifecycle operation"
+    strategy: ExceptionStrategy = ExceptionStrategy.LOG_AND_CONTINUE,
+    context: str = "Lifecycle operation",
 ):
     """Handle lifecycle/startup/shutdown exceptions"""
-    return handle_exceptions(strategy=strategy, exceptions=ExceptionContext.LIFECYCLE_EXCEPTIONS, context=context)
+    return handle_exceptions(
+        strategy=strategy,
+        exceptions=ExceptionContext.LIFECYCLE_EXCEPTIONS,
+        context=context,
+    )
 
 
 def handle_api_exceptions(
-    strategy: ExceptionStrategy = ExceptionStrategy.LOG_AND_RERAISE, context: str = "API operation"
+    strategy: ExceptionStrategy = ExceptionStrategy.LOG_AND_RERAISE,
+    context: str = "API operation",
 ):
     """Handle API-related exceptions"""
-    return handle_exceptions(strategy=strategy, exceptions=ExceptionContext.API_EXCEPTIONS, context=context)
+    return handle_exceptions(
+        strategy=strategy, exceptions=ExceptionContext.API_EXCEPTIONS, context=context
+    )
 
 
 def handle_database_exceptions(
-    strategy: ExceptionStrategy = ExceptionStrategy.LOG_AND_RERAISE, context: str = "Database operation"
+    strategy: ExceptionStrategy = ExceptionStrategy.LOG_AND_RERAISE,
+    context: str = "Database operation",
 ):
     """Handle database-related exceptions"""
-    return handle_exceptions(strategy=strategy, exceptions=ExceptionContext.DATABASE_EXCEPTIONS, context=context)
+    return handle_exceptions(
+        strategy=strategy,
+        exceptions=ExceptionContext.DATABASE_EXCEPTIONS,
+        context=context,
+    )
 
 
 def handle_file_exceptions(
-    strategy: ExceptionStrategy = ExceptionStrategy.LOG_AND_RETURN_NONE, context: str = "File operation"
+    strategy: ExceptionStrategy = ExceptionStrategy.LOG_AND_RETURN_NONE,
+    context: str = "File operation",
 ):
     """Handle file operation exceptions"""
-    return handle_exceptions(strategy=strategy, exceptions=ExceptionContext.FILE_EXCEPTIONS, context=context)
+    return handle_exceptions(
+        strategy=strategy, exceptions=ExceptionContext.FILE_EXCEPTIONS, context=context
+    )
 
 
 def handle_external_service_exceptions(

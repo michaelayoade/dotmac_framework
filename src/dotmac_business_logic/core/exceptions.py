@@ -51,7 +51,9 @@ class BusinessLogicError(Exception):
         self.severity = severity
         self.context = context or {}
         self.retry_able = retry_able
-        self.user_message = user_message or "An error occurred while processing your request."
+        self.user_message = (
+            user_message or "An error occurred while processing your request."
+        )
         self.timestamp = datetime.now(timezone.utc)
 
     def to_dict(self) -> dict[str, Any]:
@@ -102,7 +104,10 @@ class InsufficientFundsError(BillingError):
             message,
             error_code="INSUFFICIENT_FUNDS",
             severity=ErrorSeverity.HIGH,
-            context={"required_amount": str(required_amount), "available_amount": str(available_amount)},
+            context={
+                "required_amount": str(required_amount),
+                "available_amount": str(available_amount),
+            },
             user_message="Insufficient funds for this transaction.",
             **kwargs,
         )
@@ -150,7 +155,9 @@ class TaskError(BusinessLogicError):
 class TaskExecutionError(TaskError):
     """Raised when task execution fails."""
 
-    def __init__(self, task_id: str, original_error: Optional[Exception] = None, **kwargs):
+    def __init__(
+        self, task_id: str, original_error: Optional[Exception] = None, **kwargs
+    ):
         message = f"Task execution failed: {task_id}"
         if original_error:
             message += f" - {str(original_error)}"
@@ -160,7 +167,10 @@ class TaskExecutionError(TaskError):
             error_code="TASK_EXECUTION_ERROR",
             severity=ErrorSeverity.HIGH,
             retry_able=True,
-            context={"task_id": task_id, "original_error": str(original_error) if original_error else None},
+            context={
+                "task_id": task_id,
+                "original_error": str(original_error) if original_error else None,
+            },
             **kwargs,
         )
 
@@ -210,7 +220,9 @@ class InvalidFileTypeError(FileProcessingError):
     """Raised when an invalid file type is provided."""
 
     def __init__(self, filename: str, allowed_types: list[str], **kwargs):
-        message = f"Invalid file type: {filename}. Allowed types: {', '.join(allowed_types)}"
+        message = (
+            f"Invalid file type: {filename}. Allowed types: {', '.join(allowed_types)}"
+        )
         super().__init__(
             message,
             error_code="INVALID_FILE_TYPE",
@@ -230,7 +242,11 @@ class FileSizeLimitExceededError(FileProcessingError):
             message,
             error_code="FILE_SIZE_LIMIT_EXCEEDED",
             severity=ErrorSeverity.MEDIUM,
-            context={"filename": filename, "file_size": file_size, "max_size": max_size},
+            context={
+                "filename": filename,
+                "file_size": file_size,
+                "max_size": max_size,
+            },
             user_message=f"File is too large. Maximum size allowed is {max_size // 1024 // 1024}MB.",
             **kwargs,
         )
@@ -239,7 +255,9 @@ class FileSizeLimitExceededError(FileProcessingError):
 class TemplateRenderingError(FileProcessingError):
     """Raised when template rendering fails."""
 
-    def __init__(self, template_name: str, original_error: Optional[Exception] = None, **kwargs):
+    def __init__(
+        self, template_name: str, original_error: Optional[Exception] = None, **kwargs
+    ):
         message = f"Template rendering failed: {template_name}"
         if original_error:
             message += f" - {str(original_error)}"
@@ -248,7 +266,10 @@ class TemplateRenderingError(FileProcessingError):
             message,
             error_code="TEMPLATE_RENDERING_ERROR",
             severity=ErrorSeverity.HIGH,
-            context={"template_name": template_name, "original_error": str(original_error) if original_error else None},
+            context={
+                "template_name": template_name,
+                "original_error": str(original_error) if original_error else None,
+            },
             user_message="Document generation failed. Please try again.",
             **kwargs,
         )
@@ -304,7 +325,12 @@ class DatabaseConnectionError(IntegrationError):
 class ValidationError(BusinessLogicError):
     """Base exception for validation errors."""
 
-    def __init__(self, message: str, field_errors: Optional[dict[str, list[str]]] = None, **kwargs):
+    def __init__(
+        self,
+        message: str,
+        field_errors: Optional[dict[str, list[str]]] = None,
+        **kwargs,
+    ):
         super().__init__(message, category=ErrorCategory.VALIDATION, **kwargs)
         self.field_errors = field_errors or {}
 
@@ -339,7 +365,10 @@ class ErrorHandler:
         self.logger = logger or logging.getLogger(__name__)
 
     def handle_error(
-        self, error: Exception, context: Optional[dict[str, Any]] = None, notify_user: bool = True
+        self,
+        error: Exception,
+        context: Optional[dict[str, Any]] = None,
+        notify_user: bool = True,
     ) -> dict[str, Any]:
         """Handle an error with appropriate logging and user notification."""
 
@@ -377,7 +406,9 @@ class ErrorHandler:
                 original_error=str(error),
             )
 
-            self.logger.error("Unexpected error occurred", extra=wrapped_error.to_dict())
+            self.logger.error(
+                "Unexpected error occurred", extra=wrapped_error.to_dict()
+            )
 
             return {
                 "error_id": wrapped_error.error_id,

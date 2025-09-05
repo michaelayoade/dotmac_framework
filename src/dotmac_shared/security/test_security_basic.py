@@ -109,7 +109,9 @@ def test_hardened_factory_structure():
     logger.info("=== Hardened Factory Structure Test ===")
 
     try:
-        file_path = os.path.join(os.path.dirname(__file__), "hardened_secret_factory.py")
+        file_path = os.path.join(
+            os.path.dirname(__file__), "hardened_secret_factory.py"
+        )
         with open(file_path) as f:
             content = f.read()
 
@@ -143,7 +145,9 @@ def test_environment_validator_structure():
     logger.info("=== Environment Validator Structure Test ===")
 
     try:
-        file_path = os.path.join(os.path.dirname(__file__), "environment_security_validator.py")
+        file_path = os.path.join(
+            os.path.dirname(__file__), "environment_security_validator.py"
+        )
         with open(file_path) as f:
             content = f.read()
 
@@ -221,7 +225,9 @@ def test_integration_tests_structure():
     logger.info("=== Integration Tests Structure Test ===")
 
     try:
-        file_path = os.path.join(os.path.dirname(__file__), "tests", "test_security_integration.py")
+        file_path = os.path.join(
+            os.path.dirname(__file__), "tests", "test_security_integration.py"
+        )
         with open(file_path) as f:
             content = f.read()
 
@@ -295,7 +301,9 @@ def test_configuration_consistency():
     try:
         # Check that secret types are consistent
         secrets_file = os.path.join(os.path.dirname(__file__), "secrets_policy.py")
-        factory_file = os.path.join(os.path.dirname(__file__), "hardened_secret_factory.py")
+        factory_file = os.path.join(
+            os.path.dirname(__file__), "hardened_secret_factory.py"
+        )
 
         with open(secrets_file) as f:
             secrets_content = f.read()
@@ -304,7 +312,12 @@ def test_configuration_consistency():
             factory_content = f.read()
 
         # Check that both files reference the same secret types
-        secret_types = ["JWT_SECRET", "DATABASE_CREDENTIAL", "API_KEY", "ENCRYPTION_KEY"]
+        secret_types = [
+            "JWT_SECRET",
+            "DATABASE_CREDENTIAL",
+            "API_KEY",
+            "ENCRYPTION_KEY",
+        ]
 
         for secret_type in secret_types:
             if secret_type in secrets_content and secret_type in factory_content:

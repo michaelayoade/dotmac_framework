@@ -10,6 +10,8 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
+from pydantic import Field
+
 from dotmac.application import standard_exception_handler
 from dotmac.communications.events import EventBus
 from dotmac.core import create_cache_service
@@ -22,8 +24,11 @@ from dotmac.security.audit import (
     create_audit_logger,
 )
 from dotmac_shared.application.config import DeploymentContext
-from dotmac_shared.services_framework.core.base import ServiceHealth, ServiceStatus, StatefulService
-from pydantic import Field
+from dotmac_shared.services_framework.core.base import (
+    ServiceHealth,
+    ServiceStatus,
+    StatefulService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +101,9 @@ class SecurityEvent(BaseSchema, TenantMixin):
     # Network information
     source_ip: str = Field(..., description="Source IP address")
     user_agent: Optional[str] = Field(None, description="User agent string")
-    geo_location: Optional[dict[str, str]] = Field(None, description="Geographic location")
+    geo_location: Optional[dict[str, str]] = Field(
+        None, description="Geographic location"
+    )
 
     # Resource information
     resource_id: Optional[str] = Field(None, description="Affected resource ID")
@@ -109,18 +116,28 @@ class SecurityEvent(BaseSchema, TenantMixin):
     description: str = Field(..., description="Event description")
 
     # Security context
-    authentication_method: Optional[str] = Field(None, description="Authentication method used")
-    authorization_context: dict[str, Any] = Field(default_factory=dict, description="Authorization context")
-    security_context: dict[str, Any] = Field(default_factory=dict, description="Security context")
+    authentication_method: Optional[str] = Field(
+        None, description="Authentication method used"
+    )
+    authorization_context: dict[str, Any] = Field(
+        default_factory=dict, description="Authorization context"
+    )
+    security_context: dict[str, Any] = Field(
+        default_factory=dict, description="Security context"
+    )
 
     # Metadata
     platform: str = Field(..., description="Platform (isp, management, etc.)")
     service: str = Field(..., description="Service generating event")
     correlation_id: Optional[str] = Field(None, description="Correlation ID")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
     # Timestamps
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Event timestamp")
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow, description="Event timestamp"
+    )
 
 
 class SecurityAlert(BaseSchema, TenantMixin):
@@ -133,13 +150,21 @@ class SecurityAlert(BaseSchema, TenantMixin):
     description: str = Field(..., description="Alert description")
 
     # Related events
-    triggering_events: list[UUID] = Field(default_factory=list, description="Event IDs that triggered alert")
+    triggering_events: list[UUID] = Field(
+        default_factory=list, description="Event IDs that triggered alert"
+    )
     event_count: int = Field(default=1, description="Number of related events")
 
     # Context
-    affected_resources: list[str] = Field(default_factory=list, description="Affected resources")
-    source_ips: list[str] = Field(default_factory=list, description="Source IP addresses")
-    users_affected: list[str] = Field(default_factory=list, description="Affected users")
+    affected_resources: list[str] = Field(
+        default_factory=list, description="Affected resources"
+    )
+    source_ips: list[str] = Field(
+        default_factory=list, description="Source IP addresses"
+    )
+    users_affected: list[str] = Field(
+        default_factory=list, description="Affected users"
+    )
 
     # Alert lifecycle
     status: str = Field(default="open", description="Alert status")
@@ -148,13 +173,19 @@ class SecurityAlert(BaseSchema, TenantMixin):
     resolved_by: Optional[UUID] = Field(None, description="User who resolved")
 
     # Timestamps
-    triggered_at: datetime = Field(default_factory=datetime.utcnow, description="Alert trigger time")
+    triggered_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Alert trigger time"
+    )
     acknowledged_at: Optional[datetime] = Field(None, description="Acknowledgment time")
     resolved_at: Optional[datetime] = Field(None, description="Resolution time")
 
     # Response
-    recommended_actions: list[str] = Field(default_factory=list, description="Recommended actions")
-    mitigation_steps: list[str] = Field(default_factory=list, description="Mitigation steps taken")
+    recommended_actions: list[str] = Field(
+        default_factory=list, description="Recommended actions"
+    )
+    mitigation_steps: list[str] = Field(
+        default_factory=list, description="Mitigation steps taken"
+    )
 
 
 @dataclass
@@ -187,7 +218,9 @@ class UnifiedAuditConfig:
     # Integration settings
     compliance_integration: bool = True
     analytics_integration: bool = True
-    notification_channels: list[str] = field(default_factory=lambda: ["email", "webhook"])
+    notification_channels: list[str] = field(
+        default_factory=lambda: ["email", "webhook"]
+    )
 
 
 class UnifiedAuditMonitor(StatefulService):
@@ -198,7 +231,11 @@ class UnifiedAuditMonitor(StatefulService):
 
     def __init__(self, config: UnifiedAuditConfig):
         """Initialize unified audit monitor."""
-        super().__init__(name="unified_audit_monitor", config=config.__dict__, required_config=["audit_enabled"])
+        super().__init__(
+            name="unified_audit_monitor",
+            config=config.__dict__,
+            required_config=["audit_enabled"],
+        )
 
         self.audit_config = config
         self.priority = 99  # Highest priority for security
@@ -232,10 +269,14 @@ class UnifiedAuditMonitor(StatefulService):
             # Initialize audit logger
             service_name = "unified_audit_monitor"
             tenant_id = None
-            if self.audit_config.deployment_context and hasattr(self.audit_config.deployment_context, "tenant_id"):
+            if self.audit_config.deployment_context and hasattr(
+                self.audit_config.deployment_context, "tenant_id"
+            ):
                 tenant_id = self.audit_config.deployment_context.tenant_id
 
-            self.audit_logger = create_audit_logger(service_name=service_name, tenant_id=tenant_id)
+            self.audit_logger = create_audit_logger(
+                service_name=service_name, tenant_id=tenant_id
+            )
 
             # Initialize state
             self.set_state("events_processed", 0)
@@ -262,7 +303,9 @@ class UnifiedAuditMonitor(StatefulService):
 
     async def shutdown(self) -> bool:
         """Shutdown unified audit monitor."""
-        await self._set_status(ServiceStatus.SHUTTING_DOWN, "Shutting down audit monitor")
+        await self._set_status(
+            ServiceStatus.SHUTTING_DOWN, "Shutting down audit monitor"
+        )
 
         # Flush remaining events
         if self._security_events:
@@ -271,7 +314,9 @@ class UnifiedAuditMonitor(StatefulService):
         # Clear state
         self.clear_state()
 
-        await self._set_status(ServiceStatus.SHUTDOWN, "Audit monitor shutdown complete")
+        await self._set_status(
+            ServiceStatus.SHUTDOWN, "Audit monitor shutdown complete"
+        )
         return True
 
     async def _health_check_stateful_service(self) -> ServiceHealth:
@@ -279,7 +324,9 @@ class UnifiedAuditMonitor(StatefulService):
         try:
             details = {
                 "events_in_buffer": len(self._security_events),
-                "active_alerts": len([a for a in self._security_alerts if a.status == "open"]),
+                "active_alerts": len(
+                    [a for a in self._security_alerts if a.status == "open"]
+                ),
                 "events_processed": self.get_state("events_processed", 0),
                 "alerts_generated": self.get_state("alerts_generated", 0),
                 "threats_blocked": self.get_state("threats_blocked", 0),
@@ -289,18 +336,27 @@ class UnifiedAuditMonitor(StatefulService):
             }
 
             # Check buffer size
-            if len(self._security_events) > self.audit_config.max_events_in_memory * 0.9:
+            if (
+                len(self._security_events)
+                > self.audit_config.max_events_in_memory * 0.9
+            ):
                 return ServiceHealth(
                     status=ServiceStatus.READY,
                     message=f"High event buffer: {len(self._security_events)} events",
                     details=details,
                 )
 
-            return ServiceHealth(status=ServiceStatus.READY, message="Unified audit monitor healthy", details=details)
+            return ServiceHealth(
+                status=ServiceStatus.READY,
+                message="Unified audit monitor healthy",
+                details=details,
+            )
 
         except Exception as e:
             return ServiceHealth(
-                status=ServiceStatus.ERROR, message=f"Health check failed: {e}", details={"error": str(e)}
+                status=ServiceStatus.ERROR,
+                message=f"Health check failed: {e}",
+                details={"error": str(e)},
             )
 
     @standard_exception_handler
@@ -329,7 +385,9 @@ class UnifiedAuditMonitor(StatefulService):
 
         # Get tenant context
         tenant_id = None
-        if self.audit_config.deployment_context and hasattr(self.audit_config.deployment_context, "tenant_id"):
+        if self.audit_config.deployment_context and hasattr(
+            self.audit_config.deployment_context, "tenant_id"
+        ):
             tenant_id = self.audit_config.deployment_context.tenant_id
 
         # Create security event
@@ -420,7 +478,10 @@ class UnifiedAuditMonitor(StatefulService):
         filtered_events = [
             event
             for event in self._security_events
-            if (event.timestamp >= period_start and (not tenant_id or event.tenant_id == tenant_id))
+            if (
+                event.timestamp >= period_start
+                and (not tenant_id or event.tenant_id == tenant_id)
+            )
         ]
 
         # Calculate dashboard metrics
@@ -432,13 +493,37 @@ class UnifiedAuditMonitor(StatefulService):
             },
             "summary": {
                 "total_events": len(filtered_events),
-                "critical_events": len([e for e in filtered_events if e.threat_level == SecurityThreatLevel.CRITICAL]),
-                "high_risk_events": len([e for e in filtered_events if e.threat_level == SecurityThreatLevel.HIGH]),
-                "failed_logins": len([e for e in filtered_events if e.event_type == SecurityEventType.LOGIN_FAILURE]),
-                "unauthorized_access": len(
-                    [e for e in filtered_events if e.event_type == SecurityEventType.ACCESS_DENIED]
+                "critical_events": len(
+                    [
+                        e
+                        for e in filtered_events
+                        if e.threat_level == SecurityThreatLevel.CRITICAL
+                    ]
                 ),
-                "active_alerts": len([a for a in self._security_alerts if a.status == "open"]),
+                "high_risk_events": len(
+                    [
+                        e
+                        for e in filtered_events
+                        if e.threat_level == SecurityThreatLevel.HIGH
+                    ]
+                ),
+                "failed_logins": len(
+                    [
+                        e
+                        for e in filtered_events
+                        if e.event_type == SecurityEventType.LOGIN_FAILURE
+                    ]
+                ),
+                "unauthorized_access": len(
+                    [
+                        e
+                        for e in filtered_events
+                        if e.event_type == SecurityEventType.ACCESS_DENIED
+                    ]
+                ),
+                "active_alerts": len(
+                    [a for a in self._security_alerts if a.status == "open"]
+                ),
             },
             "by_threat_level": {},
             "by_event_type": {},
@@ -465,10 +550,16 @@ class UnifiedAuditMonitor(StatefulService):
             ip_counts[ip] = ip_counts.get(ip, 0) + 1
 
         top_ips = sorted(ip_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-        dashboard["top_source_ips"] = [{"ip": ip, "count": count} for ip, count in top_ips]
+        dashboard["top_source_ips"] = [
+            {"ip": ip, "count": count} for ip, count in top_ips
+        ]
 
         # Recent alerts
-        recent_alerts = [alert for alert in self._security_alerts if alert.triggered_at >= period_start]
+        recent_alerts = [
+            alert
+            for alert in self._security_alerts
+            if alert.triggered_at >= period_start
+        ]
         recent_alerts.sort(key=lambda a: a.triggered_at, reverse=True)
 
         dashboard["recent_alerts"] = [
@@ -506,7 +597,10 @@ class UnifiedAuditMonitor(StatefulService):
 
         # Sort by threat level and timestamp
         threat_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
-        alerts.sort(key=lambda a: (threat_order.get(a.threat_level.value, 5), a.triggered_at), reverse=True)
+        alerts.sort(
+            key=lambda a: (threat_order.get(a.threat_level.value, 5), a.triggered_at),
+            reverse=True,
+        )
 
         return alerts
 
@@ -539,7 +633,11 @@ class UnifiedAuditMonitor(StatefulService):
         }
 
         severity = severity_map.get(security_event.threat_level, AuditSeverity.MEDIUM)
-        outcome = AuditOutcome.SUCCESS if security_event.outcome == "success" else AuditOutcome.FAILURE
+        outcome = (
+            AuditOutcome.SUCCESS
+            if security_event.outcome == "success"
+            else AuditOutcome.FAILURE
+        )
 
         # Create audit event
         self.audit_logger.log_event(
@@ -584,7 +682,9 @@ class UnifiedAuditMonitor(StatefulService):
         """Check for failed login patterns and generate alerts."""
 
         # Count failed logins from this IP in the time window
-        window_start = datetime.now(timezone.utc) - timedelta(minutes=self.audit_config.failed_login_window_minutes)
+        window_start = datetime.now(timezone.utc) - timedelta(
+            minutes=self.audit_config.failed_login_window_minutes
+        )
 
         failed_logins = [
             e
@@ -613,7 +713,10 @@ class UnifiedAuditMonitor(StatefulService):
         if len(ip_events) >= self.audit_config.suspicious_ip_threshold:
             # Check if IP has high-risk activities
             high_risk_events = [
-                e for e in ip_events if e.threat_level in [SecurityThreatLevel.HIGH, SecurityThreatLevel.CRITICAL]
+                e
+                for e in ip_events
+                if e.threat_level
+                in [SecurityThreatLevel.HIGH, SecurityThreatLevel.CRITICAL]
             ]
 
             if len(high_risk_events) > 0:
@@ -651,7 +754,9 @@ class UnifiedAuditMonitor(StatefulService):
 
         # Get tenant context
         tenant_id = None
-        if self.audit_config.deployment_context and hasattr(self.audit_config.deployment_context, "tenant_id"):
+        if self.audit_config.deployment_context and hasattr(
+            self.audit_config.deployment_context, "tenant_id"
+        ):
             tenant_id = self.audit_config.deployment_context.tenant_id
 
         # Create security alert
@@ -670,7 +775,9 @@ class UnifiedAuditMonitor(StatefulService):
 
         alert.source_ips = list({e.source_ip for e in events})
         alert.users_affected = list({e.username for e in events if e.username})
-        alert.affected_resources = list({e.resource_id for e in events if e.resource_id})
+        alert.affected_resources = list(
+            {e.resource_id for e in events if e.resource_id}
+        )
 
         # Add recommended actions based on alert type
         if alert_type == "brute_force_attack":
@@ -714,7 +821,9 @@ class UnifiedAuditMonitor(StatefulService):
                 },
             )
 
-        logger.warning(f"Security alert generated: {title} (Level: {threat_level.value})")
+        logger.warning(
+            f"Security alert generated: {title} (Level: {threat_level.value})"
+        )
 
     def _track_ip_activity(self, ip_address: str):
         """Track IP address activity for pattern detection."""
@@ -729,7 +838,9 @@ class UnifiedAuditMonitor(StatefulService):
 
         # Clean old entries (keep last 24 hours)
         cutoff = now - timedelta(hours=24)
-        self._ip_tracking[ip_address] = [ts for ts in self._ip_tracking[ip_address] if ts >= cutoff]
+        self._ip_tracking[ip_address] = [
+            ts for ts in self._ip_tracking[ip_address] if ts >= cutoff
+        ]
 
     def _track_user_activity(self, user_id: str):
         """Track user activity for pattern detection."""
@@ -744,7 +855,9 @@ class UnifiedAuditMonitor(StatefulService):
 
         # Clean old entries (keep last 24 hours)
         cutoff = now - timedelta(hours=24)
-        self._user_tracking[user_id] = [ts for ts in self._user_tracking[user_id] if ts >= cutoff]
+        self._user_tracking[user_id] = [
+            ts for ts in self._user_tracking[user_id] if ts >= cutoff
+        ]
 
     async def _flush_security_events(self):
         """Flush security events to storage."""
@@ -765,7 +878,9 @@ class UnifiedAuditMonitor(StatefulService):
 
 
 # Factory function
-async def create_unified_audit_monitor(config: UnifiedAuditConfig) -> UnifiedAuditMonitor:
+async def create_unified_audit_monitor(
+    config: UnifiedAuditConfig,
+) -> UnifiedAuditMonitor:
     """Create and initialize unified audit monitor."""
     service = UnifiedAuditMonitor(config)
 

@@ -51,7 +51,11 @@ class ServiceRegistry:
 
     def get_by_type(self, service_type: str) -> list[Any]:
         """Get all services of a specific type."""
-        return [info.instance for info in self._services.values() if info.service_type == service_type]
+        return [
+            info.instance
+            for info in self._services.values()
+            if info.service_type == service_type
+        ]
 
     def list_all(self) -> dict[str, ServiceInfo]:
         """List all registered services."""

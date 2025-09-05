@@ -364,7 +364,9 @@ else:
     # Create stub classes when Pydantic is not available
     LeadBase = LeadCreate = LeadUpdate = LeadResponse = None
     OpportunityBase = OpportunityCreate = OpportunityUpdate = OpportunityResponse = None
-    SalesActivityBase = SalesActivityCreate = SalesActivityUpdate = SalesActivityResponse = None
+    SalesActivityBase = (
+        SalesActivityCreate
+    ) = SalesActivityUpdate = SalesActivityResponse = None
     SalesDashboard = SalesMetrics = PipelineSummary = None
     LeadListResponse = OpportunityListResponse = SalesActivityListResponse = None
     LeadFilters = OpportunityFilters = ActivityFilters = None

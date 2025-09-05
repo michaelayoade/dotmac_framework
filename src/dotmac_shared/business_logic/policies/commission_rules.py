@@ -376,11 +376,21 @@ class CommissionRulesEngine:
 
     def _register_default_policies(self):
         """Register default commission policies"""
-        self.registry.register_policy(CommissionRulesPolicies.create_partner_eligibility_policy())
-        self.registry.register_policy(CommissionRulesPolicies.create_commission_calculation_policy())
-        self.registry.register_policy(CommissionRulesPolicies.create_tier_advancement_policy())
-        self.registry.register_policy(CommissionRulesPolicies.create_commission_clawback_policy())
-        self.registry.register_policy(CommissionRulesPolicies.create_bonus_commission_policy())
+        self.registry.register_policy(
+            CommissionRulesPolicies.create_partner_eligibility_policy()
+        )
+        self.registry.register_policy(
+            CommissionRulesPolicies.create_commission_calculation_policy()
+        )
+        self.registry.register_policy(
+            CommissionRulesPolicies.create_tier_advancement_policy()
+        )
+        self.registry.register_policy(
+            CommissionRulesPolicies.create_commission_clawback_policy()
+        )
+        self.registry.register_policy(
+            CommissionRulesPolicies.create_bonus_commission_policy()
+        )
 
     def validate_partner_commission_eligibility(
         self, partner_data: dict[str, Any], context: PolicyContext
@@ -389,7 +399,9 @@ class CommissionRulesEngine:
 
         try:
             result = self.engine.evaluate_policy(
-                policy_name="partner_commission_eligibility", context=context, evaluation_data={"partner": partner_data}
+                policy_name="partner_commission_eligibility",
+                context=context,
+                evaluation_data={"partner": partner_data},
             )
 
             return {
@@ -424,11 +436,17 @@ class CommissionRulesEngine:
     ) -> dict[str, Any]:
         """Validate commission calculation against business rules"""
 
-        evaluation_data = {"commission": commission_data, "customer": customer_data, "service": service_data}
+        evaluation_data = {
+            "commission": commission_data,
+            "customer": customer_data,
+            "service": service_data,
+        }
 
         try:
             result = self.engine.evaluate_policy(
-                policy_name="commission_calculation_validation", context=context, evaluation_data=evaluation_data
+                policy_name="commission_calculation_validation",
+                context=context,
+                evaluation_data=evaluation_data,
             )
 
             return {
@@ -455,7 +473,10 @@ class CommissionRulesEngine:
             ) from e
 
     def check_tier_advancement_eligibility(
-        self, partner_data: dict[str, Any], target_tier_data: dict[str, Any], context: PolicyContext
+        self,
+        partner_data: dict[str, Any],
+        target_tier_data: dict[str, Any],
+        context: PolicyContext,
     ) -> dict[str, Any]:
         """Check if partner is eligible for tier advancement"""
 
@@ -463,11 +484,14 @@ class CommissionRulesEngine:
 
         try:
             result = self.engine.evaluate_policy(
-                policy_name="partner_tier_advancement", context=context, evaluation_data=evaluation_data
+                policy_name="partner_tier_advancement",
+                context=context,
+                evaluation_data=evaluation_data,
             )
 
             return {
-                "eligible": result.result in [PolicyResult.ALLOW, PolicyResult.REQUIRE_APPROVAL],
+                "eligible": result.result
+                in [PolicyResult.ALLOW, PolicyResult.REQUIRE_APPROVAL],
                 "requires_approval": result.result == PolicyResult.REQUIRE_APPROVAL,
                 "success_rate": result.success_rate,
                 "failed_requirements": result.violated_rules,
@@ -510,19 +534,25 @@ class CommissionRulesEngine:
 
         try:
             result = self.engine.evaluate_policy(
-                policy_name="commission_clawback_rules", context=context, evaluation_data=evaluation_data
+                policy_name="commission_clawback_rules",
+                context=context,
+                evaluation_data=evaluation_data,
             )
 
             # For clawback, we interpret results differently
             # ALLOW = no clawback needed, DENY = clawback required
-            clawback_required = result.result != PolicyResult.ALLOW or len(result.violated_rules) > 0
+            clawback_required = (
+                result.result != PolicyResult.ALLOW or len(result.violated_rules) > 0
+            )
 
             return {
                 "clawback_required": clawback_required,
                 "clawback_triggers": result.violated_rules if clawback_required else [],
                 "policy_result": result.to_dict(),
                 "commission_amount": commission_data.get("amount", 0.0),
-                "clawback_amount": commission_data.get("amount", 0.0) if clawback_required else 0.0,
+                "clawback_amount": commission_data.get("amount", 0.0)
+                if clawback_required
+                else 0.0,
             }
 
         except Exception as e:
@@ -542,13 +572,18 @@ class CommissionRulesEngine:
             ) from e
 
     def calculate_bonus_commission(
-        self, partner_data: dict[str, Any], base_commission: Decimal, context: PolicyContext
+        self,
+        partner_data: dict[str, Any],
+        base_commission: Decimal,
+        context: PolicyContext,
     ) -> dict[str, Any]:
         """Calculate bonus commission based on performance metrics"""
 
         try:
             result = self.engine.evaluate_policy(
-                policy_name="bonus_commission_eligibility", context=context, evaluation_data={"partner": partner_data}
+                policy_name="bonus_commission_eligibility",
+                context=context,
+                evaluation_data={"partner": partner_data},
             )
 
             # Calculate bonus based on success rate and performance

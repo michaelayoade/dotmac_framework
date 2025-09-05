@@ -85,7 +85,9 @@ class FeatureFlagRepository(AsyncBaseRepository[FeatureFlag]):
 
     async def count_by_status(self) -> dict[str, int]:
         """Get count of flags by status."""
-        query = select(FeatureFlag.status, func.count(FeatureFlag.id)).group_by(FeatureFlag.status)
+        query = select(FeatureFlag.status, func.count(FeatureFlag.id)).group_by(
+            FeatureFlag.status
+        )
 
         # Add tenant isolation if available
         if self.tenant_id and hasattr(FeatureFlag, "tenant_id"):
@@ -108,7 +110,9 @@ class FeatureFlagRepository(AsyncBaseRepository[FeatureFlag]):
 
         return True
 
-    async def bulk_update_status(self, flag_keys: list[str], status: FeatureFlagStatus) -> int:
+    async def bulk_update_status(
+        self, flag_keys: list[str], status: FeatureFlagStatus
+    ) -> int:
         """Bulk update status for multiple flags."""
         from datetime import datetime, timezone
 

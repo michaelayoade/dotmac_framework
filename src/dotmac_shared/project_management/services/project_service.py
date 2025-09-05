@@ -24,9 +24,9 @@ from ..core.models import (
     ProjectResponse,
     ProjectStatus,
     ProjectType,
-    UpdateCreate,
 )
 from ..core.models import ProjectUpdate as ProjectUpdateSchema
+from ..core.models import UpdateCreate
 from ..core.project_manager import ProjectManager
 
 logger = logging.getLogger(__name__)
@@ -92,7 +92,9 @@ class ProjectService:
         """Assign project manager with notification."""
 
         update_data = ProjectUpdateSchema(project_manager=manager_name)
-        project = await self.project_manager.update_project(db, tenant_id, project_id, update_data)
+        project = await self.project_manager.update_project(
+            db, tenant_id, project_id, update_data
+        )
 
         if project:
             # Add assignment update
@@ -119,15 +121,21 @@ class ProjectService:
         """Start a project and trigger first phase."""
 
         # Update project status
-        update_data = ProjectUpdateSchema(project_status=ProjectStatus.IN_PROGRESS, actual_start_date=date.today())
+        update_data = ProjectUpdateSchema(
+            project_status=ProjectStatus.IN_PROGRESS, actual_start_date=date.today()
+        )
 
-        project = await self.project_manager.update_project(db, tenant_id, project_id, update_data, started_by)
+        project = await self.project_manager.update_project(
+            db, tenant_id, project_id, update_data, started_by
+        )
 
         if project:
             # Start first phase if exists
             if project.phases:
                 first_phase = min(project.phases, key=lambda p: p.phase_order)
-                await self.start_project_phase(db, tenant_id, project_id, str(first_phase.id), started_by)
+                await self.start_project_phase(
+                    db, tenant_id, project_id, str(first_phase.id), started_by
+                )
 
             # Add start notification
             await self.project_manager.add_project_update(
@@ -167,7 +175,9 @@ class ProjectService:
             client_satisfaction_score=client_satisfaction,
         )
 
-        project = await self.project_manager.update_project(db, tenant_id, project_id, update_data, completed_by)
+        project = await self.project_manager.update_project(
+            db, tenant_id, project_id, update_data, completed_by
+        )
 
         if project:
             # Complete all remaining phases
@@ -214,9 +224,13 @@ class ProjectService:
     ) -> Optional[PhaseResponse]:
         """Start a project phase."""
 
-        update_data = PhaseUpdate(phase_status=PhaseStatus.IN_PROGRESS, actual_start_date=date.today())
+        update_data = PhaseUpdate(
+            phase_status=PhaseStatus.IN_PROGRESS, actual_start_date=date.today()
+        )
 
-        phase = await self.project_manager.update_project_phase(db, tenant_id, project_id, phase_id, update_data)
+        phase = await self.project_manager.update_project_phase(
+            db, tenant_id, project_id, phase_id, update_data
+        )
 
         if phase:
             # Add phase start update
@@ -255,7 +269,9 @@ class ProjectService:
             completion_notes=completion_notes,
         )
 
-        phase = await self.project_manager.update_project_phase(db, tenant_id, project_id, phase_id, update_data)
+        phase = await self.project_manager.update_project_phase(
+            db, tenant_id, project_id, phase_id, update_data
+        )
 
         if phase:
             # Add phase completion update
@@ -274,7 +290,9 @@ class ProjectService:
             )
 
             # Check if we should start next phase
-            await self._check_next_phase_start(db, tenant_id, project_id, phase.phase_order)
+            await self._check_next_phase_start(
+                db, tenant_id, project_id, phase.phase_order
+            )
 
             return PhaseResponse.model_validate(phase)
         return None
@@ -304,7 +322,9 @@ class ProjectService:
                 ProjectPriority.URGENT: ProjectPriority.CRITICAL,
                 ProjectPriority.CRITICAL: ProjectPriority.CRITICAL,
             }
-            new_priority = priority_escalation.get(project.priority, ProjectPriority.HIGH)
+            new_priority = priority_escalation.get(
+                project.priority, ProjectPriority.HIGH
+            )
 
         # Update project
         update_data = ProjectUpdateSchema(priority=new_priority)
@@ -346,9 +366,13 @@ class ProjectService:
         if status_filter:
             filters["project_status"] = status_filter
 
-        projects, total = await self.project_manager.list_projects(db, tenant_id, filters, page, page_size)
+        projects, total = await self.project_manager.list_projects(
+            db, tenant_id, filters, page, page_size
+        )
 
-        project_responses = [ProjectResponse.model_validate(project) for project in projects]
+        project_responses = [
+            ProjectResponse.model_validate(project) for project in projects
+        ]
         return project_responses, total
 
     async def get_team_projects(
@@ -366,12 +390,18 @@ class ProjectService:
         if status_filter:
             filters["project_status"] = status_filter
 
-        projects, total = await self.project_manager.list_projects(db, tenant_id, filters, page, page_size)
+        projects, total = await self.project_manager.list_projects(
+            db, tenant_id, filters, page, page_size
+        )
 
-        project_responses = [ProjectResponse.model_validate(project) for project in projects]
+        project_responses = [
+            ProjectResponse.model_validate(project) for project in projects
+        ]
         return project_responses, total
 
-    async def get_overdue_projects(self, db: AsyncSession, tenant_id: str) -> list[ProjectResponse]:
+    async def get_overdue_projects(
+        self, db: AsyncSession, tenant_id: str
+    ) -> list[ProjectResponse]:
         """Get all overdue projects."""
 
         filters = {"overdue_only": True}
@@ -400,15 +430,21 @@ class ProjectService:
         if date_range:
             filters["date_range"] = date_range
 
-        analytics = await self.project_manager.get_project_analytics(db, tenant_id, filters)
+        analytics = await self.project_manager.get_project_analytics(
+            db, tenant_id, filters
+        )
 
         # Add additional dashboard metrics
         overdue_projects = await self.get_overdue_projects(db, tenant_id)
         analytics["overdue_projects"] = len(overdue_projects)
 
         # Get active projects
-        active_filters = {"project_status": [ProjectStatus.IN_PROGRESS, ProjectStatus.SCHEDULED]}
-        active_projects, _ = await self.project_manager.list_projects(db, tenant_id, active_filters)
+        active_filters = {
+            "project_status": [ProjectStatus.IN_PROGRESS, ProjectStatus.SCHEDULED]
+        }
+        active_projects, _ = await self.project_manager.list_projects(
+            db, tenant_id, active_filters
+        )
         analytics["active_projects"] = len(active_projects)
 
         return analytics
@@ -447,7 +483,9 @@ class ProjectService:
         ]
 
         for milestone_data in milestones:
-            planned_date = (project.planned_start_date or date.today()) + timedelta(days=milestone_data["days_offset"])
+            planned_date = (project.planned_start_date or date.today()) + timedelta(
+                days=milestone_data["days_offset"]
+            )
 
             milestone_create = MilestoneCreate(
                 milestone_name=milestone_data["name"],
@@ -485,7 +523,9 @@ class ProjectService:
         ]
 
         for milestone_data in milestones:
-            planned_date = (project.planned_start_date or date.today()) + timedelta(days=milestone_data["days_offset"])
+            planned_date = (project.planned_start_date or date.today()) + timedelta(
+                days=milestone_data["days_offset"]
+            )
 
             milestone_create = MilestoneCreate(
                 milestone_name=milestone_data["name"],
@@ -514,7 +554,10 @@ class ProjectService:
         # Find next phase in sequence
         next_phase = None
         for phase in project.phases:
-            if phase.phase_order == completed_phase_order + 1 and phase.phase_status == PhaseStatus.PENDING:
+            if (
+                phase.phase_order == completed_phase_order + 1
+                and phase.phase_status == PhaseStatus.PENDING
+            ):
                 next_phase = phase
                 break
 
@@ -523,10 +566,14 @@ class ProjectService:
             can_start = True
             if next_phase.depends_on_phases:
                 for dep_id in next_phase.depends_on_phases:
-                    dep_phase = next((p for p in project.phases if str(p.id) == dep_id), None)
+                    dep_phase = next(
+                        (p for p in project.phases if str(p.id) == dep_id), None
+                    )
                     if dep_phase and dep_phase.phase_status != PhaseStatus.COMPLETED:
                         can_start = False
                         break
 
             if can_start:
-                await self.start_project_phase(db, tenant_id, project_id, str(next_phase.id), "System Auto-Start")
+                await self.start_project_phase(
+                    db, tenant_id, project_id, str(next_phase.id), "System Auto-Start"
+                )

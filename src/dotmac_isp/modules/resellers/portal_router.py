@@ -5,18 +5,14 @@ Provides HTML pages for reseller portal functionality using RouterFactory patter
 
 from uuid import UUID
 
-from dotmac.application import RouterFactory, standard_exception_handler
-from dotmac_shared.api.dependencies import (
-    StandardDependencies,
-    get_standard_deps,
-)
 from fastapi import Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from .schemas import (
-    ResellerResponseSchema,
-)
+from dotmac.application import RouterFactory, standard_exception_handler
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
+
+from .schemas import ResellerResponseSchema
 from .services_complete import ResellerService
 
 templates = Jinja2Templates(directory="templates/reseller")
@@ -53,7 +49,9 @@ async def portal_dashboard(
     # Get reseller data for current user
     reseller_data = await service.get_reseller_for_user(deps.user_id)
     if not reseller_data:
-        raise HTTPException(status_code=403, detail="No reseller account associated with user")
+        raise HTTPException(
+            status_code=403, detail="No reseller account associated with user"
+        )
 
     # Get dashboard metrics
     metrics = await service.get_dashboard_metrics(reseller_data.id)
@@ -85,7 +83,9 @@ async def portal_customers(
         raise HTTPException(status_code=403, detail="Access denied")
 
     # Get paginated customer list
-    customers, total = await service.get_reseller_customers(reseller_data.id, page=page, search=search)
+    customers, total = await service.get_reseller_customers(
+        reseller_data.id, page=page, search=search
+    )
 
     return templates.TemplateResponse(
         "customers.html",
@@ -116,7 +116,9 @@ async def portal_commissions(
         raise HTTPException(status_code=403, detail="Access denied")
 
     # Get commission data
-    commissions = await service.get_commission_history(reseller_data.id, month=month, year=year)
+    commissions = await service.get_commission_history(
+        reseller_data.id, month=month, year=year
+    )
 
     return templates.TemplateResponse(
         "commissions.html",

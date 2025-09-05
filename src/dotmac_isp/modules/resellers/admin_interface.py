@@ -20,7 +20,12 @@ class ResellerAdminCLI:
     """Command-line interface for reseller administration"""
 
     # TODO: Fix parameter ordering - parameters without defaults must come before those with defaults
-    def __init__(self, db: AsyncSession, tenant_id: Optional[str] = None, timezone: Optional[str] = None):
+    def __init__(
+        self,
+        db: AsyncSession,
+        tenant_id: Optional[str] = None,
+        timezone: Optional[str] = None,
+    ):
         self.db = db
         self.tenant_id = tenant_id
         self.app_service = ResellerApplicationService(db, tenant_id)
@@ -49,7 +54,15 @@ class ResellerAdminCLI:
                 ]
             )
 
-        headers = ["Application ID", "Company", "Contact", "Email", "Status", "Submitted", "Est. Volume"]
+        headers = [
+            "Application ID",
+            "Company",
+            "Contact",
+            "Email",
+            "Status",
+            "Submitted",
+            "Est. Volume",
+        ]
         logger.info("\n📋 Pending Reseller Applications:")
         logger.info(tabulate(table_data, headers=headers, tablefmt="grid"))
 
@@ -66,21 +79,43 @@ class ResellerAdminCLI:
             logger.info(f"\n📄 Application Details: {application_id}")
             logger.info("=" * 60)
             logger.info(f"Company: {application.company_name}")
-            logger.info(f"Contact: {application.contact_name} ({application.contact_email})")
+            logger.info(
+                f"Contact: {application.contact_name} ({application.contact_email})"
+            )
             logger.info(f"Phone: {application.contact_phone or 'Not provided'}")
-            logger.info(f"Business Type: {application.business_type or 'Not specified'}")
-            logger.info(f"Years in Business: {application.years_in_business or 'Not specified'}")
-            logger.info(f"Employee Count: {application.employee_count or 'Not specified'}")
-            logger.info(f"Telecom Experience: {application.telecom_experience_years or 0} years")
-            logger.info(f"Estimated Monthly Customers: {application.estimated_monthly_customers or 'Not specified'}")
-            logger.info(f"Target Segments: {application.target_customer_segments or 'Not specified'}")
-            logger.info(f"Desired Territories: {application.desired_territories or 'Not specified'}")
-            logger.info(f"Technical Capabilities: {application.technical_capabilities or 'Not specified'}")
-            logger.info(f"Business Description: {application.business_description or 'Not provided'}")
+            logger.info(
+                f"Business Type: {application.business_type or 'Not specified'}"
+            )
+            logger.info(
+                f"Years in Business: {application.years_in_business or 'Not specified'}"
+            )
+            logger.info(
+                f"Employee Count: {application.employee_count or 'Not specified'}"
+            )
+            logger.info(
+                f"Telecom Experience: {application.telecom_experience_years or 0} years"
+            )
+            logger.info(
+                f"Estimated Monthly Customers: {application.estimated_monthly_customers or 'Not specified'}"
+            )
+            logger.info(
+                f"Target Segments: {application.target_customer_segments or 'Not specified'}"
+            )
+            logger.info(
+                f"Desired Territories: {application.desired_territories or 'Not specified'}"
+            )
+            logger.info(
+                f"Technical Capabilities: {application.technical_capabilities or 'Not specified'}"
+            )
+            logger.info(
+                f"Business Description: {application.business_description or 'Not provided'}"
+            )
             logger.info(f"Submitted: {application.submitted_at}")
 
             # Mark as under review
-            await self.app_service.review_application(application_id, reviewer_id, f"Under review by {reviewer_id}")
+            await self.app_service.review_application(
+                application_id, reviewer_id, f"Under review by {reviewer_id}"
+            )
 
             logger.info(f"\n✅ Application {application_id} marked as under review.")
 
@@ -102,21 +137,29 @@ class ResellerAdminCLI:
             if notes:
                 approval_data["notes"] = notes
 
-            result = await self.app_service.approve_application(application_id, reviewer_id, approval_data)
+            result = await self.app_service.approve_application(
+                application_id, reviewer_id, approval_data
+            )
 
             logger.info(f"\n✅ Application {application_id} approved successfully!")
             logger.info(f"   Reseller ID: {result['reseller'].reseller_id}")
             logger.info(f"   Company: {result['reseller'].company_name}")
             logger.info(f"   Status: {result['reseller'].status.value}")
-            logger.info(f"   Commission Rate: {result['reseller'].commission_rate_display}")
+            logger.info(
+                f"   Commission Rate: {result['reseller'].commission_rate_display}"
+            )
 
         except Exception as e:
             logger.info(f"❌ Error approving application: {e}")
 
-    async def reject_application(self, application_id: str, reviewer_id: str, reason: str) -> None:
+    async def reject_application(
+        self, application_id: str, reviewer_id: str, reason: str
+    ) -> None:
         """Reject an application"""
         try:
-            application = await self.app_service.reject_application(application_id, reviewer_id, reason)
+            application = await self.app_service.reject_application(
+                application_id, reviewer_id, reason
+            )
 
             logger.info(f"\n❌ Application {application_id} rejected.")
             logger.info(f"   Reason: {reason}")
@@ -149,7 +192,16 @@ class ResellerAdminCLI:
                 ]
             )
 
-        headers = ["Reseller ID", "Company", "Status", "Total", "Active", "Monthly Sales", "Commission", "Created"]
+        headers = [
+            "Reseller ID",
+            "Company",
+            "Status",
+            "Total",
+            "Active",
+            "Monthly Sales",
+            "Commission",
+            "Created",
+        ]
         logger.info("\n📋 Active Resellers:")
         logger.info(tabulate(table_data, headers=headers, tablefmt="grid"))
 
@@ -174,7 +226,9 @@ class ResellerAdminCLI:
             logger.info(f"Recent Customers: {dashboard['recent_customers']}")
             logger.info(f"Active Opportunities: {dashboard['active_opportunities']}")
             logger.info(f"Pending Commissions: {dashboard['pending_commissions']}")
-            logger.info(f"Commission Total: ${dashboard['commission_total_pending']:,.2f}")
+            logger.info(
+                f"Commission Total: ${dashboard['commission_total_pending']:,.2f}"
+            )
 
         except Exception as e:
             logger.info(f"❌ Error retrieving dashboard: {e}")
@@ -185,7 +239,10 @@ class ResellerAdminActions:
 
     @staticmethod
     async def bulk_approve_applications(
-        db: AsyncSession, application_ids: list[str], reviewer_id: str, default_commission_rate: float = 10.0
+        db: AsyncSession,
+        application_ids: list[str],
+        reviewer_id: str,
+        default_commission_rate: float = 10.0,
     ) -> dict[str, str]:
         """Bulk approve multiple applications"""
         service = ResellerApplicationService(db)
@@ -194,7 +251,9 @@ class ResellerAdminActions:
         for app_id in application_ids:
             try:
                 await service.approve_application(
-                    app_id, reviewer_id, {"base_commission_rate": default_commission_rate}
+                    app_id,
+                    reviewer_id,
+                    {"base_commission_rate": default_commission_rate},
                 )
                 results[app_id] = "approved"
             except Exception as e:
@@ -203,7 +262,9 @@ class ResellerAdminActions:
         return results
 
     @staticmethod
-    async def generate_monthly_report(db: AsyncSession, tenant_id: Optional[str] = None) -> dict[str, any]:
+    async def generate_monthly_report(
+        db: AsyncSession, tenant_id: Optional[str] = None
+    ) -> dict[str, any]:
         """Generate monthly reseller performance report"""
         app_service = ResellerApplicationService(db, tenant_id)
         reseller_service = ResellerService(db, tenant_id)
@@ -216,7 +277,9 @@ class ResellerAdminActions:
 
         # Calculate metrics
         total_applications = len(applications)
-        pending_applications = len([a for a in applications if a.status == ApplicationStatus.SUBMITTED])
+        pending_applications = len(
+            [a for a in applications if a.status == ApplicationStatus.SUBMITTED]
+        )
 
         total_resellers = len(resellers)
         total_customers = sum(r.total_customers for r in resellers)
@@ -227,20 +290,26 @@ class ResellerAdminActions:
             "applications": {
                 "total": total_applications,
                 "pending": pending_applications,
-                "approved_this_month": len([a for a in applications if a.status == ApplicationStatus.APPROVED]),
+                "approved_this_month": len(
+                    [a for a in applications if a.status == ApplicationStatus.APPROVED]
+                ),
             },
             "resellers": {
                 "total_active": total_resellers,
                 "total_customers": total_customers,
                 "total_monthly_sales": total_monthly_sales,
-                "average_customers_per_reseller": total_customers / total_resellers if total_resellers > 0 else 0,
+                "average_customers_per_reseller": total_customers / total_resellers
+                if total_resellers > 0
+                else 0,
             },
         }
 
         return report
 
     @staticmethod
-    async def export_reseller_data(db: AsyncSession, tenant_id: Optional[str] = None, format: str = "csv") -> str:
+    async def export_reseller_data(
+        db: AsyncSession, tenant_id: Optional[str] = None, format: str = "csv"
+    ) -> str:
         """Export reseller data for analysis"""
         reseller_service = ResellerService(db, tenant_id)
         resellers = await reseller_service.list_active_resellers(limit=10000)

@@ -47,7 +47,9 @@ class CustomerIntelligenceService:
 
             health_scores[str(customer.id)] = {
                 "score": score,
-                "risk_level": ("high" if score < 40 else "medium" if score < 70 else "low"),
+                "risk_level": (
+                    "high" if score < 40 else "medium" if score < 70 else "low"
+                ),
                 "churn_risk": score < 50,
             }
 
@@ -55,8 +57,12 @@ class CustomerIntelligenceService:
             "customer_health": health_scores,
             "summary": {
                 "total_customers": len(customers),
-                "high_risk": len([s for s in health_scores.values() if s["risk_level"] == "high"]),
-                "at_risk_count": len([s for s in health_scores.values() if s["churn_risk"]]),
+                "high_risk": len(
+                    [s for s in health_scores.values() if s["risk_level"] == "high"]
+                ),
+                "at_risk_count": len(
+                    [s for s in health_scores.values() if s["churn_risk"]]
+                ),
             },
         }
 
@@ -74,11 +80,19 @@ class CustomerIntelligenceService:
                     churn_alerts.append(
                         {
                             "customer_id": customer_id,
-                            "customer_name": (customer.name if hasattr(customer, "name") else "Unknown"),
+                            "customer_name": (
+                                customer.name
+                                if hasattr(customer, "name")
+                                else "Unknown"
+                            ),
                             "health_score": health_info["score"],
                             "risk_level": health_info["risk_level"],
-                            "recommended_action": self._get_recommended_action(health_info["score"]),
-                            "priority": ("urgent" if health_info["score"] < 30 else "high"),
+                            "recommended_action": self._get_recommended_action(
+                                health_info["score"]
+                            ),
+                            "priority": (
+                                "urgent" if health_info["score"] < 30 else "high"
+                            ),
                         }
                     )
 

@@ -46,7 +46,9 @@ class IdempotencyKey(BaseModel):
     tenant_id: str = Field(..., min_length=1, max_length=100)
     user_id: Optional[str] = Field(None, max_length=100)
     correlation_id: str = Field(default_factory=lambda: str(uuid4()))
-    ttl_seconds: int = Field(default=3600, gt=0, le=86400)  # 1 hour default, max 24 hours
+    ttl_seconds: int = Field(
+        default=3600, gt=0, le=86400
+    )  # 1 hour default, max 24 hours
 
     @classmethod
     def generate(
@@ -96,7 +98,9 @@ class IdempotentOperationRecord(Base):
     correlation_id = Column(String(100), nullable=False, index=True)
 
     # Operation tracking
-    status = Column(String(20), nullable=False, default=OperationStatus.PENDING.value, index=True)
+    status = Column(
+        String(20), nullable=False, default=OperationStatus.PENDING.value, index=True
+    )
     attempt_count = Column(Integer, default=0, nullable=False)
     max_attempts = Column(Integer, default=3, nullable=False)
 
@@ -107,7 +111,9 @@ class IdempotentOperationRecord(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=False, index=True)
@@ -146,14 +152,22 @@ class OperationResult(Generic[T]):
 class IdempotentOperation(ABC, Generic[T]):
     """Abstract base class for idempotent operations"""
 
-    def __init__(self, operation_type: str, max_attempts: int = 3, timeout_seconds: int = 300, ttl_seconds: int = 3600):
+    def __init__(
+        self,
+        operation_type: str,
+        max_attempts: int = 3,
+        timeout_seconds: int = 300,
+        ttl_seconds: int = 3600,
+    ):
         self.operation_type = operation_type
         self.max_attempts = max_attempts
         self.timeout_seconds = timeout_seconds
         self.ttl_seconds = ttl_seconds
 
     @abstractmethod
-    async def execute(self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None) -> T:
+    async def execute(
+        self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None
+    ) -> T:
         """Execute the actual operation logic"""
         pass
 
@@ -196,7 +210,10 @@ class IdempotencyManager:
         self._operation_registry[operation_type] = operation_class
 
     async def execute_idempotent(
-        self, idempotency_key: IdempotencyKey, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None
+        self,
+        idempotency_key: IdempotencyKey,
+        operation_data: dict[str, Any],
+        context: Optional[dict[str, Any]] = None,
     ) -> OperationResult:
         """Execute operation idempotently"""
 
@@ -206,7 +223,9 @@ class IdempotencyManager:
         # Get operation class
         operation_class = self._operation_registry.get(idempotency_key.operation_type)
         if not operation_class:
-            raise ValueError(f"Unknown operation type: {idempotency_key.operation_type}")
+            raise ValueError(
+                f"Unknown operation type: {idempotency_key.operation_type}"
+            )
 
         with self.db_session_factory() as db:
             try:
@@ -214,14 +233,23 @@ class IdempotencyManager:
                 existing_op = self._get_operation_record(db, idempotency_key.key)
 
                 if existing_op:
-                    return await self._handle_existing_operation(db, existing_op, operation_data, context, start_time)
+                    return await self._handle_existing_operation(
+                        db, existing_op, operation_data, context, start_time
+                    )
 
                 # Create new operation record
-                operation_record = self._create_operation_record(db, idempotency_key, operation_data, context)
+                operation_record = self._create_operation_record(
+                    db, idempotency_key, operation_data, context
+                )
 
                 # Execute operation
                 return await self._execute_new_operation(
-                    db, operation_record, operation_class, operation_data, context, start_time
+                    db,
+                    operation_record,
+                    operation_class,
+                    operation_data,
+                    context,
+                    start_time,
                 )
 
             except Exception as e:
@@ -246,7 +274,9 @@ class IdempotencyManager:
                     context=error_context,
                 ) from e
 
-    def _get_operation_record(self, db: Session, idempotency_key: str) -> Optional[IdempotentOperationRecord]:
+    def _get_operation_record(
+        self, db: Session, idempotency_key: str
+    ) -> Optional[IdempotentOperationRecord]:
         """Get existing operation record"""
         return (
             db.query(IdempotentOperationRecord)
@@ -255,7 +285,11 @@ class IdempotencyManager:
         )
 
     def _create_operation_record(
-        self, db: Session, idempotency_key: IdempotencyKey, operation_data: dict[str, Any], context: dict[str, Any]
+        self,
+        db: Session,
+        idempotency_key: IdempotencyKey,
+        operation_data: dict[str, Any],
+        context: dict[str, Any],
     ) -> IdempotentOperationRecord:
         """Create new operation record"""
 
@@ -305,7 +339,9 @@ class IdempotencyManager:
             result = await operation.execute(operation_data, context)
 
             # Mark as completed
-            execution_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            execution_time = int(
+                (datetime.utcnow() - start_time).total_seconds() * 1000
+            )
 
             operation_record.status = OperationStatus.COMPLETED.value
             operation_record.completed_at = datetime.utcnow()
@@ -332,7 +368,9 @@ class IdempotencyManager:
                 error=str(e),
                 status=OperationStatus.FAILED,
                 attempt_count=operation_record.attempt_count,
-                execution_time_ms=int((datetime.utcnow() - start_time).total_seconds() * 1000),
+                execution_time_ms=int(
+                    (datetime.utcnow() - start_time).total_seconds() * 1000
+                ),
                 from_cache=False,
             )
 
@@ -371,7 +409,9 @@ class IdempotencyManager:
             # Return cached result
             return OperationResult(
                 success=True,
-                data=existing_op.result_data.get("result") if existing_op.result_data else None,
+                data=existing_op.result_data.get("result")
+                if existing_op.result_data
+                else None,
                 status=OperationStatus.COMPLETED,
                 attempt_count=existing_op.attempt_count,
                 execution_time_ms=execution_time,
@@ -384,7 +424,12 @@ class IdempotencyManager:
                 # Retry the operation
                 operation_class = self._operation_registry[existing_op.operation_type]
                 return await self._retry_operation(
-                    db, existing_op, operation_class, operation_data, context, start_time
+                    db,
+                    existing_op,
+                    operation_class,
+                    operation_data,
+                    context,
+                    start_time,
                 )
             else:
                 # Max attempts reached, return failure
@@ -468,7 +513,9 @@ class IdempotencyManager:
             result = await operation.execute(operation_data, context)
 
             # Mark as completed
-            execution_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            execution_time = int(
+                (datetime.utcnow() - start_time).total_seconds() * 1000
+            )
 
             operation_record.status = OperationStatus.COMPLETED.value
             operation_record.completed_at = datetime.utcnow()
@@ -495,12 +542,17 @@ class IdempotencyManager:
                 error=str(e),
                 status=OperationStatus.FAILED,
                 attempt_count=operation_record.attempt_count,
-                execution_time_ms=int((datetime.utcnow() - start_time).total_seconds() * 1000),
+                execution_time_ms=int(
+                    (datetime.utcnow() - start_time).total_seconds() * 1000
+                ),
                 from_cache=False,
             )
 
     def _update_operation_failure(
-        self, db: Session, operation_record: IdempotentOperationRecord, error_message: str
+        self,
+        db: Session,
+        operation_record: IdempotentOperationRecord,
+        error_message: str,
     ) -> None:
         """Update operation record with failure"""
         try:
@@ -515,7 +567,9 @@ class IdempotencyManager:
         """Clean up expired operation records"""
         now = datetime.utcnow()
 
-        expired_ops = db.query(IdempotentOperationRecord).filter(IdempotentOperationRecord.expires_at < now)
+        expired_ops = db.query(IdempotentOperationRecord).filter(
+            IdempotentOperationRecord.expires_at < now
+        )
 
         count = expired_ops.count()
         expired_ops.delete(synchronize_session=False)
@@ -523,7 +577,9 @@ class IdempotencyManager:
 
         return count
 
-    def get_operation_status(self, db: Session, idempotency_key: str) -> Optional[dict[str, Any]]:
+    def get_operation_status(
+        self, db: Session, idempotency_key: str
+    ) -> Optional[dict[str, Any]]:
         """Get operation status by idempotency key"""
 
         operation = self._get_operation_record(db, idempotency_key)
@@ -538,8 +594,12 @@ class IdempotencyManager:
             "max_attempts": operation.max_attempts,
             "created_at": operation.created_at.isoformat(),
             "updated_at": operation.updated_at.isoformat(),
-            "started_at": operation.started_at.isoformat() if operation.started_at else None,
-            "completed_at": operation.completed_at.isoformat() if operation.completed_at else None,
+            "started_at": operation.started_at.isoformat()
+            if operation.started_at
+            else None,
+            "completed_at": operation.completed_at.isoformat()
+            if operation.completed_at
+            else None,
             "expires_at": operation.expires_at.isoformat(),
             "error_message": operation.error_message,
             "has_result": bool(operation.result_data),

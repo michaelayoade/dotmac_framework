@@ -4,10 +4,20 @@ VPS Customer models for customer-managed server deployments
 
 from enum import Enum
 
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.orm import relationship
+
 from dotmac.database.base import Base
 from dotmac.database.mixins import TimestampMixin, UUIDMixin
-from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import relationship
 
 
 class VPSStatus(str, Enum):
@@ -46,7 +56,13 @@ class VPSCustomer(Base, TimestampMixin, UUIDMixin):
     __tablename__ = "vps_customers"
 
     # Link to the main tenant record
-    tenant_id = Column(Integer, ForeignKey("customer_tenants.id"), nullable=False, unique=True, index=True)
+    tenant_id = Column(
+        Integer,
+        ForeignKey("customer_tenants.id"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
     tenant = relationship("CustomerTenant", backref="vps_config")
 
     # VPS-specific operational data
@@ -136,7 +152,9 @@ class VPSDeploymentEvent(Base, TimestampMixin, UUIDMixin):
     tenant = relationship("CustomerTenant", backref="vps_deployment_events")
 
     # Event details
-    event_type = Column(String(100), nullable=False)  # e.g., "ssh_test", "docker_install"
+    event_type = Column(
+        String(100), nullable=False
+    )  # e.g., "ssh_test", "docker_install"
     status = Column(String(20), nullable=False)  # in_progress, success, failed, warning
     message = Column(String(500))
 

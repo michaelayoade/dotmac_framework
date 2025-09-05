@@ -8,20 +8,17 @@ extending the shared framework settings.
 import os
 from functools import lru_cache
 
-from pydantic import (
-    ConfigDict,
-    Field,
-    field_validator,
-)
-
 from config.shared_settings import SharedSettings
+from pydantic import ConfigDict, Field, field_validator
 
 
 class ManagementPlatformSettings(SharedSettings):
     """Management Platform specific settings that extend shared configuration."""
 
     # Override defaults for Management Platform
-    app_name: str = Field(default="DotMac Management Platform", description="Management Platform name")
+    app_name: str = Field(
+        default="DotMac Management Platform", description="Management Platform name"
+    )
     app_version: str = Field(default="1.0.0", description="Management Platform version")
     port: int = Field(
         default_factory=lambda: int(os.getenv("PORT", "8002")),
@@ -29,45 +26,83 @@ class ManagementPlatformSettings(SharedSettings):
     )
 
     # Management Platform specific settings
-    tenant_id: str = Field(default="management", description="Management platform tenant ID")
+    tenant_id: str = Field(
+        default="management", description="Management platform tenant ID"
+    )
 
     # Multi-tenant management settings
-    max_tenants: int = Field(default=1000, description="Maximum tenants that can be managed")
-    tenant_isolation_level: str = Field(default="strict", description="Tenant isolation level")
-    auto_tenant_provisioning: bool = Field(default=False, description="Enable automatic tenant provisioning")
+    max_tenants: int = Field(
+        default=1000, description="Maximum tenants that can be managed"
+    )
+    tenant_isolation_level: str = Field(
+        default="strict", description="Tenant isolation level"
+    )
+    auto_tenant_provisioning: bool = Field(
+        default=False, description="Enable automatic tenant provisioning"
+    )
 
     # Billing and subscription management
     enable_billing: bool = Field(default=True, description="Enable billing management")
     billing_cycle: str = Field(default="monthly", description="Default billing cycle")
-    trial_period_days: int = Field(default=30, description="Default trial period in days")
+    trial_period_days: int = Field(
+        default=30, description="Default trial period in days"
+    )
 
     # Partner and reseller settings
-    enable_reseller_network: bool = Field(default=True, description="Enable reseller network")
-    max_reseller_depth: int = Field(default=3, description="Maximum reseller hierarchy depth")
-    reseller_commission_rate: float = Field(default=0.10, description="Default reseller commission rate")
+    enable_reseller_network: bool = Field(
+        default=True, description="Enable reseller network"
+    )
+    max_reseller_depth: int = Field(
+        default=3, description="Maximum reseller hierarchy depth"
+    )
+    reseller_commission_rate: float = Field(
+        default=0.10, description="Default reseller commission rate"
+    )
 
     # Deployment and orchestration settings
-    enable_kubernetes_orchestration: bool = Field(default=True, description="Enable Kubernetes orchestration")
-    default_deployment_strategy: str = Field(default="rolling", description="Default deployment strategy")
-    max_concurrent_deployments: int = Field(default=10, description="Maximum concurrent deployments")
+    enable_kubernetes_orchestration: bool = Field(
+        default=True, description="Enable Kubernetes orchestration"
+    )
+    default_deployment_strategy: str = Field(
+        default="rolling", description="Default deployment strategy"
+    )
+    max_concurrent_deployments: int = Field(
+        default=10, description="Maximum concurrent deployments"
+    )
 
     # Monitoring and analytics
-    enable_cost_management: bool = Field(default=True, description="Enable cost management features")
-    enable_saas_monitoring: bool = Field(default=True, description="Enable SaaS monitoring")
-    analytics_retention_days: int = Field(default=365, description="Analytics data retention period")
+    enable_cost_management: bool = Field(
+        default=True, description="Enable cost management features"
+    )
+    enable_saas_monitoring: bool = Field(
+        default=True, description="Enable SaaS monitoring"
+    )
+    analytics_retention_days: int = Field(
+        default=365, description="Analytics data retention period"
+    )
 
     # Plugin licensing and management
-    enable_plugin_licensing: bool = Field(default=True, description="Enable plugin licensing")
-    plugin_marketplace_url: str = Field(default="https://marketplace.dotmac.io", description="Plugin marketplace URL")
+    enable_plugin_licensing: bool = Field(
+        default=True, description="Enable plugin licensing"
+    )
+    plugin_marketplace_url: str = Field(
+        default="https://marketplace.dotmac.io", description="Plugin marketplace URL"
+    )
 
     # Security and compliance
     enforce_ssl: bool = Field(default=True, description="Enforce SSL connections")
-    audit_log_retention_days: int = Field(default=2555, description="Audit log retention (7 years)")
+    audit_log_retention_days: int = Field(
+        default=2555, description="Audit log retention (7 years)"
+    )
     compliance_level: str = Field(default="enterprise", description="Compliance level")
 
     # API rate limiting (Management Platform specific)
-    management_api_rate_limit: int = Field(default=1000, description="Management API rate limit per hour")
-    tenant_api_rate_limit: int = Field(default=10000, description="Per-tenant API rate limit per hour")
+    management_api_rate_limit: int = Field(
+        default=1000, description="Management API rate limit per hour"
+    )
+    tenant_api_rate_limit: int = Field(
+        default=10000, description="Per-tenant API rate limit per hour"
+    )
 
     # Database settings (Management Platform specific)
     management_database_url: str = Field(
@@ -80,11 +115,15 @@ class ManagementPlatformSettings(SharedSettings):
 
     # Message queue settings for tenant operations
     celery_broker_url: str = Field(
-        default_factory=lambda: os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/1"),
+        default_factory=lambda: os.getenv(
+            "CELERY_BROKER_URL", "redis://localhost:6379/1"
+        ),
         description="Celery broker URL for background tasks",
     )
     celery_result_backend: str = Field(
-        default_factory=lambda: os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/2"),
+        default_factory=lambda: os.getenv(
+            "CELERY_RESULT_BACKEND", "redis://localhost:6379/2"
+        ),
         description="Celery result backend URL",
     )
 

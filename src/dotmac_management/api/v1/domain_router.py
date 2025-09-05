@@ -2,8 +2,14 @@
 
 from typing import Optional
 
-from dotmac.application import RouterFactory, rate_limit, rate_limit_strict, standard_exception_handler
 from fastapi import Depends, Query
+
+from dotmac.application import (
+    RouterFactory,
+    rate_limit,
+    rate_limit_strict,
+    standard_exception_handler,
+)
 
 from ...dependencies import get_current_user, get_domain_service
 from ...models.domain_management import DomainStatus
@@ -72,6 +78,8 @@ async def get_domain(
 ):
     """Get domain details."""
     result = await domain_service.get_domain(
-        domain_id=domain_id, tenant_id=current_user["tenant_id"], user_id=current_user["user_id"]
+        domain_id=domain_id,
+        tenant_id=current_user["tenant_id"],
+        user_id=current_user["user_id"],
     )
     return DomainResponse(**result["domain"].__dict__)

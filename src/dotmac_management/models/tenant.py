@@ -4,8 +4,9 @@ Tenant management models for the Management platform
 
 from enum import Enum
 
-from dotmac.database.base import BaseModel
 from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, Text
+
+from dotmac.database.base import BaseModel
 
 
 class TenantStatus(str, Enum):
@@ -55,9 +56,13 @@ class CustomerTenant(BaseModel):
     description = Column(Text)
 
     # Status and lifecycle
-    status = Column(String(50), default=TenantStatus.REQUESTED, nullable=False, index=True)
+    status = Column(
+        String(50), default=TenantStatus.REQUESTED, nullable=False, index=True
+    )
     plan = Column(String(50), default=TenantPlan.STARTER, nullable=False)
-    deployment_type = Column(String(50), default=DeploymentType.MANAGED, nullable=False, index=True)
+    deployment_type = Column(
+        String(50), default=DeploymentType.MANAGED, nullable=False, index=True
+    )
     region = Column(String(50), nullable=False)
 
     # Ownership

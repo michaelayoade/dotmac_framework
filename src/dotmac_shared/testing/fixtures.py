@@ -53,7 +53,9 @@ def data_generator(generation_config: GenerationConfig) -> DataGenerator:
 
 
 @pytest.fixture(scope="function")
-def factory_registry(data_generator: DataGenerator) -> Generator[FactoryRegistry, None, None]:
+def factory_registry(
+    data_generator: DataGenerator,
+) -> Generator[FactoryRegistry, None, None]:
     """
     Factory registry with all standard factories pre-registered.
 
@@ -78,7 +80,9 @@ def factory_registry(data_generator: DataGenerator) -> Generator[FactoryRegistry
 
 
 @pytest.fixture(scope="function")
-def test_data_builder(factory_registry: FactoryRegistry, data_generator: DataGenerator) -> TestDataBuilder:
+def test_data_builder(
+    factory_registry: FactoryRegistry, data_generator: DataGenerator
+) -> TestDataBuilder:
     """Test data builder with full factory support."""
     return TestDataBuilder(factory_registry, data_generator)
 
@@ -130,7 +134,9 @@ def ticket_factory(factory_registry: FactoryRegistry) -> TicketFactory:
 @pytest.fixture(scope="function")
 def basic_tenant_setup(tenant_factory: TenantFactory) -> dict[str, Any]:
     """Basic tenant with admin user setup."""
-    tenant = tenant_factory.create(name="Test ISP", subdomain="testisp", plan="professional")
+    tenant = tenant_factory.create(
+        name="Test ISP", subdomain="testisp", plan="professional"
+    )
 
     return {
         "tenant": tenant,
@@ -141,7 +147,9 @@ def basic_tenant_setup(tenant_factory: TenantFactory) -> dict[str, Any]:
 
 @pytest.fixture(scope="function")
 def customer_with_service(
-    basic_tenant_setup: dict[str, Any], customer_factory: CustomerFactory, service_factory: ServiceFactory
+    basic_tenant_setup: dict[str, Any],
+    customer_factory: CustomerFactory,
+    service_factory: ServiceFactory,
 ) -> dict[str, Any]:
     """Customer with active internet service."""
     tenant_id = basic_tenant_setup["tenant_id"]
@@ -150,16 +158,22 @@ def customer_with_service(
     customer_factory.tenant_id = tenant_id
     service_factory.tenant_id = tenant_id
 
-    customer = customer_factory.create(name="John Doe", email="john@example.com", type="residential")
+    customer = customer_factory.create(
+        name="John Doe", email="john@example.com", type="residential"
+    )
 
-    service = service_factory.create(customer_id=customer.id, service_type="internet", status="active")
+    service = service_factory.create(
+        customer_id=customer.id, service_type="internet", status="active"
+    )
 
     return {**basic_tenant_setup, "customer": customer, "service": service}
 
 
 @pytest.fixture(scope="function")
 def complete_customer_scenario(
-    customer_with_service: dict[str, Any], billing_factory: BillingFactory, device_factory: DeviceFactory
+    customer_with_service: dict[str, Any],
+    billing_factory: BillingFactory,
+    device_factory: DeviceFactory,
 ) -> dict[str, Any]:
     """Complete customer scenario with billing and devices."""
     tenant_id = customer_with_service["tenant_id"]
@@ -171,13 +185,19 @@ def complete_customer_scenario(
     device_factory.tenant_id = tenant_id
 
     # Create billing account
-    billing_account = billing_factory.create(entity_type="billing_account", customer_id=customer.id)
+    billing_account = billing_factory.create(
+        entity_type="billing_account", customer_id=customer.id
+    )
 
     # Create invoice
-    invoice = billing_factory.create(entity_type="invoice", customer_id=customer.id, status="paid")
+    invoice = billing_factory.create(
+        entity_type="invoice", customer_id=customer.id, status="paid"
+    )
 
     # Create customer equipment
-    router = device_factory.create(customer_id=customer.id, device_type="router", status="active")
+    router = device_factory.create(
+        customer_id=customer.id, device_type="router", status="active"
+    )
 
     return {
         **customer_with_service,
@@ -189,7 +209,9 @@ def complete_customer_scenario(
 
 
 @pytest.fixture(scope="function")
-def multi_tenant_setup(tenant_factory: TenantFactory, customer_factory: CustomerFactory) -> dict[str, Any]:
+def multi_tenant_setup(
+    tenant_factory: TenantFactory, customer_factory: CustomerFactory
+) -> dict[str, Any]:
     """Multi-tenant test setup for isolation testing."""
     # Create two separate tenants
     tenant_a = tenant_factory.create(name="ISP Alpha", subdomain="alpha")
@@ -203,11 +225,18 @@ def multi_tenant_setup(tenant_factory: TenantFactory, customer_factory: Customer
     customer_factory.tenant_id = tenant_b.id
     customer_b = customer_factory.create(name="Bob Beta")
 
-    return {"tenant_a": tenant_a, "tenant_b": tenant_b, "customer_a": customer_a, "customer_b": customer_b}
+    return {
+        "tenant_a": tenant_a,
+        "tenant_b": tenant_b,
+        "customer_a": customer_a,
+        "customer_b": customer_b,
+    }
 
 
 @pytest.fixture(scope="function")
-def support_ticket_scenario(customer_with_service: dict[str, Any], ticket_factory: TicketFactory) -> dict[str, Any]:
+def support_ticket_scenario(
+    customer_with_service: dict[str, Any], ticket_factory: TicketFactory
+) -> dict[str, Any]:
     """Support ticket scenario with customer context."""
     tenant_id = customer_with_service["tenant_id"]
     customer = customer_with_service["customer"]
@@ -274,13 +303,19 @@ def bulk_test_data(factory_registry: FactoryRegistry) -> dict[str, list[Any]]:
 
 # Integration testing fixtures
 @pytest.fixture(scope="function")
-def integration_test_environment(complete_customer_scenario: dict[str, Any]) -> dict[str, Any]:
+def integration_test_environment(
+    complete_customer_scenario: dict[str, Any]
+) -> dict[str, Any]:
     """Complete integration test environment."""
     # This would set up external service mocks, database connections, etc.
     # For now, just return the complete scenario
     return {
         **complete_customer_scenario,
-        "external_services": {"payment_gateway": MagicMock(), "email_service": MagicMock(), "sms_service": MagicMock()},
+        "external_services": {
+            "payment_gateway": MagicMock(),
+            "email_service": MagicMock(),
+            "sms_service": MagicMock(),
+        },
     }
 
 
@@ -308,5 +343,9 @@ def test_config() -> dict[str, Any]:
         "redis_url": "redis://localhost:6379/15",
         "test_mode": True,
         "debug": False,
-        "factories": {"cleanup_on_exit": True, "validate_relationships": True, "enable_sequence_tracking": True},
+        "factories": {
+            "cleanup_on_exit": True,
+            "validate_relationships": True,
+            "enable_sequence_tracking": True,
+        },
     }

@@ -156,7 +156,9 @@ class CircuitBreakerState:
 
         if self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
-            logger.warning(f"Circuit breaker opened after {self.failure_count} failures")
+            logger.warning(
+                f"Circuit breaker opened after {self.failure_count} failures"
+            )
 
     def can_execute(self) -> bool:
         """Check if call can be executed."""
@@ -200,7 +202,9 @@ class ServiceRegistry:
         """Unregister a service endpoint."""
         if service_name in self.endpoints:
             self.endpoints[service_name] = [
-                ep for ep in self.endpoints[service_name] if not (ep.host == host and ep.port == port)
+                ep
+                for ep in self.endpoints[service_name]
+                if not (ep.host == host and ep.port == port)
             ]
             logger.info(f"Unregistered endpoint: {service_name} at {host}:{port}")
 
@@ -214,7 +218,9 @@ class ServiceRegistry:
         self.traffic_rules[rule_key] = rule
         logger.info(f"Added traffic rule: {rule.name}")
 
-    def get_traffic_rule(self, source_service: str, destination_service: str) -> TrafficRule | None:
+    def get_traffic_rule(
+        self, source_service: str, destination_service: str
+    ) -> TrafficRule | None:
         """Get traffic rule for service pair."""
         rule_key = f"{source_service}->{destination_service}"
         return self.traffic_rules.get(rule_key)
@@ -234,7 +240,10 @@ class LoadBalancer:
         self.round_robin_counters: dict[str, int] = {}
 
     def select_endpoint(
-        self, service_name: str, policy: TrafficPolicy, source_context: dict[str, Any] | None = None
+        self,
+        service_name: str,
+        policy: TrafficPolicy,
+        source_context: dict[str, Any] | None = None,
     ) -> ServiceEndpoint | None:
         """Select an endpoint based on traffic policy."""
         endpoints = self.registry.get_endpoints(service_name)
@@ -258,7 +267,9 @@ class LoadBalancer:
         else:
             return healthy_endpoints[0]  # Default to first
 
-    def _select_round_robin(self, service_name: str, endpoints: list[ServiceEndpoint]) -> ServiceEndpoint:
+    def _select_round_robin(
+        self, service_name: str, endpoints: list[ServiceEndpoint]
+    ) -> ServiceEndpoint:
         """Select endpoint using round robin."""
         if service_name not in self.round_robin_counters:
             self.round_robin_counters[service_name] = 0
@@ -286,7 +297,9 @@ class LoadBalancer:
 
         return endpoints[-1]
 
-    def _select_least_connections(self, endpoints: list[ServiceEndpoint]) -> ServiceEndpoint:
+    def _select_least_connections(
+        self, endpoints: list[ServiceEndpoint]
+    ) -> ServiceEndpoint:
         """Select endpoint with least connections."""
         min_connections = float("inf")
         selected = endpoints[0]
@@ -353,7 +366,8 @@ class ServiceMesh:
     async def initialize(self):
         """Initialize the service mesh."""
         self.http_session = aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=30), connector=aiohttp.TCPConnector(limit=100)
+            timeout=aiohttp.ClientTimeout(total=30),
+            connector=aiohttp.TCPConnector(limit=100),
         )
 
         # Discover and register services from marketplace
@@ -407,7 +421,9 @@ class ServiceMesh:
         span_id = str(uuid4())
 
         # Get traffic rule
-        traffic_rule = self.registry.get_traffic_rule(source_service, destination_service)
+        traffic_rule = self.registry.get_traffic_rule(
+            source_service, destination_service
+        )
         if not traffic_rule:
             # Create default rule
             traffic_rule = TrafficRule(
@@ -420,7 +436,8 @@ class ServiceMesh:
         circuit_breaker = self.registry.get_circuit_breaker(destination_service)
         if not circuit_breaker.can_execute():
             raise HTTPException(
-                status_code=503, detail=f"Service {destination_service} is currently unavailable (circuit breaker open)"
+                status_code=503,
+                detail=f"Service {destination_service} is currently unavailable (circuit breaker open)",
             )
 
         # Select endpoint
@@ -429,7 +446,9 @@ class ServiceMesh:
         )
 
         if not endpoint:
-            raise EntityNotFoundError(f"No endpoints available for service: {destination_service}")
+            raise EntityNotFoundError(
+                f"No endpoints available for service: {destination_service}"
+            )
 
         # Create service call record
         service_call = ServiceCall(
@@ -448,11 +467,18 @@ class ServiceMesh:
         try:
             # Update connection count
             endpoint_key = f"{endpoint.host}:{endpoint.port}"
-            self.registry.connection_counts[endpoint_key] = self.registry.connection_counts.get(endpoint_key, 0) + 1
+            self.registry.connection_counts[endpoint_key] = (
+                self.registry.connection_counts.get(endpoint_key, 0) + 1
+            )
 
             # Make the actual HTTP call
             response = await self._make_http_call(
-                endpoint, method, path, headers, body, timeout or traffic_rule.timeout_seconds
+                endpoint,
+                method,
+                path,
+                headers,
+                body,
+                timeout or traffic_rule.timeout_seconds,
             )
 
             # Record success
@@ -474,18 +500,25 @@ class ServiceMesh:
             self._record_call_failure(service_call, time.time() - start_time, str(e))
 
             # Retry logic could be implemented here
-            if traffic_rule.retry_policy != RetryPolicy.NONE and traffic_rule.max_retries > 0:
+            if (
+                traffic_rule.retry_policy != RetryPolicy.NONE
+                and traffic_rule.max_retries > 0
+            ):
                 # For now, just re-raise
                 pass
 
-            raise HTTPException(status_code=500, detail=f"Service call failed: {e}") from e
+            raise HTTPException(
+                status_code=500, detail=f"Service call failed: {e}"
+            ) from e
 
         finally:
             # Update connection count
             if endpoint:
                 endpoint_key = f"{endpoint.host}:{endpoint.port}"
                 current_count = self.registry.connection_counts.get(endpoint_key, 1)
-                self.registry.connection_counts[endpoint_key] = max(0, current_count - 1)
+                self.registry.connection_counts[endpoint_key] = max(
+                    0, current_count - 1
+                )
 
     async def _make_http_call(
         self,
@@ -506,18 +539,30 @@ class ServiceMesh:
 
         # Add mesh headers
         call_headers.update(
-            {"X-Mesh-Source": "dotmac-service-mesh", "X-Mesh-Version": "1.0.0", "X-Mesh-Tenant": self.tenant_id}
+            {
+                "X-Mesh-Source": "dotmac-service-mesh",
+                "X-Mesh-Version": "1.0.0",
+                "X-Mesh-Tenant": self.tenant_id,
+            }
         )
 
         if not self.http_session:
             raise RuntimeError("HTTP session not initialized")
 
         async with self.http_session.request(
-            method=method.upper(), url=url, headers=call_headers, data=body, timeout=timeout
+            method=method.upper(),
+            url=url,
+            headers=call_headers,
+            data=body,
+            timeout=timeout,
         ) as response:
             response_body = await response.read()
 
-            return {"status_code": response.status, "headers": dict(response.headers), "body": response_body}
+            return {
+                "status_code": response.status,
+                "headers": dict(response.headers),
+                "body": response_body,
+            }
 
     def _record_call_success(self, call: ServiceCall, duration: float):
         """Record a successful service call."""
@@ -527,12 +572,18 @@ class ServiceMesh:
         # Update average latency
         current_avg = self.call_metrics["average_latency_ms"]
         total_calls = self.call_metrics["total_calls"]
-        self.call_metrics["average_latency_ms"] = (current_avg * (total_calls - 1) + duration * 1000) / total_calls
+        self.call_metrics["average_latency_ms"] = (
+            current_avg * (total_calls - 1) + duration * 1000
+        ) / total_calls
 
         # Update service-specific metrics
         service_key = f"{call.source_service}->{call.destination_service}"
         if service_key not in self.call_metrics["calls_by_service"]:
-            self.call_metrics["calls_by_service"][service_key] = {"total": 0, "successful": 0, "failed": 0}
+            self.call_metrics["calls_by_service"][service_key] = {
+                "total": 0,
+                "successful": 0,
+                "failed": 0,
+            }
 
         self.call_metrics["calls_by_service"][service_key]["total"] += 1
         self.call_metrics["calls_by_service"][service_key]["successful"] += 1
@@ -545,7 +596,11 @@ class ServiceMesh:
         # Update service-specific metrics
         service_key = f"{call.source_service}->{call.destination_service}"
         if service_key not in self.call_metrics["calls_by_service"]:
-            self.call_metrics["calls_by_service"][service_key] = {"total": 0, "successful": 0, "failed": 0}
+            self.call_metrics["calls_by_service"][service_key] = {
+                "total": 0,
+                "successful": 0,
+                "failed": 0,
+            }
 
         self.call_metrics["calls_by_service"][service_key]["total"] += 1
         self.call_metrics["calls_by_service"][service_key]["failed"] += 1
@@ -564,7 +619,9 @@ class ServiceMesh:
         """Get service mesh metrics."""
         success_rate = 0.0
         if self.call_metrics["total_calls"] > 0:
-            success_rate = (self.call_metrics["successful_calls"] / self.call_metrics["total_calls"]) * 100
+            success_rate = (
+                self.call_metrics["successful_calls"] / self.call_metrics["total_calls"]
+            ) * 100
 
         return {
             "tenant_id": self.tenant_id,
@@ -575,9 +632,13 @@ class ServiceMesh:
             "average_latency_ms": round(self.call_metrics["average_latency_ms"], 2),
             "active_connections": self.call_metrics["active_connections"],
             "registered_services": len(self.registry.endpoints),
-            "total_endpoints": sum(len(eps) for eps in self.registry.endpoints.values()),
+            "total_endpoints": sum(
+                len(eps) for eps in self.registry.endpoints.values()
+            ),
             "traffic_rules": len(self.registry.traffic_rules),
-            "circuit_breakers": {name: cb.state for name, cb in self.registry.circuit_breakers.items()},
+            "circuit_breakers": {
+                name: cb.state for name, cb in self.registry.circuit_breakers.items()
+            },
             "calls_by_service": self.call_metrics["calls_by_service"],
         }
 
@@ -589,7 +650,13 @@ class ServiceMesh:
         for service_name, endpoints in self.registry.endpoints.items():
             topology["services"][service_name] = {
                 "endpoints": [
-                    {"host": ep.host, "port": ep.port, "path": ep.path, "weight": ep.weight, "metadata": ep.metadata}
+                    {
+                        "host": ep.host,
+                        "port": ep.port,
+                        "path": ep.path,
+                        "weight": ep.weight,
+                        "metadata": ep.metadata,
+                    }
                     for ep in endpoints
                 ],
                 "total_endpoints": len(endpoints),
@@ -622,19 +689,33 @@ class ServiceMeshFactory:
     ) -> ServiceMesh:
         """Create a service mesh instance."""
         mesh = ServiceMesh(
-            db_session=db_session, tenant_id=tenant_id, marketplace=marketplace, performance_service=performance_service
+            db_session=db_session,
+            tenant_id=tenant_id,
+            marketplace=marketplace,
+            performance_service=performance_service,
         )
         return mesh
 
     @staticmethod
-    def create_traffic_rule(name: str, source_service: str, destination_service: str, **kwargs) -> TrafficRule:
+    def create_traffic_rule(
+        name: str, source_service: str, destination_service: str, **kwargs
+    ) -> TrafficRule:
         """Create a traffic rule with default settings."""
-        return TrafficRule(name=name, source_service=source_service, destination_service=destination_service, **kwargs)
+        return TrafficRule(
+            name=name,
+            source_service=source_service,
+            destination_service=destination_service,
+            **kwargs,
+        )
 
     @staticmethod
-    def create_service_endpoint(service_name: str, host: str, port: int, **kwargs) -> ServiceEndpoint:
+    def create_service_endpoint(
+        service_name: str, host: str, port: int, **kwargs
+    ) -> ServiceEndpoint:
         """Create a service endpoint configuration."""
-        return ServiceEndpoint(service_name=service_name, host=host, port=port, **kwargs)
+        return ServiceEndpoint(
+            service_name=service_name, host=host, port=port, **kwargs
+        )
 
 
 async def setup_service_mesh_for_consolidated_services(
@@ -644,12 +725,18 @@ async def setup_service_mesh_for_consolidated_services(
     performance_service: PerformanceOptimizationService | None = None,
 ) -> ServiceMesh:
     """Setup service mesh with consolidated services from Phase 2."""
-    mesh = ServiceMeshFactory.create_service_mesh(db_session, tenant_id, marketplace, performance_service)
+    mesh = ServiceMeshFactory.create_service_mesh(
+        db_session, tenant_id, marketplace, performance_service
+    )
 
     await mesh.initialize()
 
     # Add default traffic rules for consolidated services
-    consolidated_services = ["unified-billing-service", "unified-analytics-service", "unified-identity-service"]
+    consolidated_services = [
+        "unified-billing-service",
+        "unified-analytics-service",
+        "unified-identity-service",
+    ]
 
     for source in consolidated_services:
         for dest in consolidated_services:

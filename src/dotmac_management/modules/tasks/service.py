@@ -10,14 +10,16 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from dotmac.tasks import TaskEngine, TaskMonitor, TaskPriority, TaskStatus, WorkflowOrchestrator
+from dotmac.tasks import (
+    TaskEngine,
+    TaskMonitor,
+    TaskPriority,
+    TaskStatus,
+    WorkflowOrchestrator,
+)
 from dotmac.tasks.decorators import standard_exception_handler
 
-from .schemas import (
-    SystemHealthResponse,
-    TaskQueryRequest,
-    TaskStatusResponse,
-)
+from .schemas import SystemHealthResponse, TaskQueryRequest, TaskStatusResponse
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,12 @@ class TaskManagementService:
     different task system components.
     """
 
-    def __init__(self, task_engine: TaskEngine, task_monitor: TaskMonitor, workflow_orchestrator: WorkflowOrchestrator):
+    def __init__(
+        self,
+        task_engine: TaskEngine,
+        task_monitor: TaskMonitor,
+        workflow_orchestrator: WorkflowOrchestrator,
+    ):
         self.task_engine = task_engine
         self.task_monitor = task_monitor
         self.workflow_orchestrator = workflow_orchestrator
@@ -75,7 +82,9 @@ class TaskManagementService:
         return TaskStatusResponse(**task_data)
 
     @standard_exception_handler
-    async def query_tasks_advanced(self, query: TaskQueryRequest, tenant_id: str) -> dict[str, Any]:
+    async def query_tasks_advanced(
+        self, query: TaskQueryRequest, tenant_id: str
+    ) -> dict[str, Any]:
         """
         Advanced task querying with business logic validation.
 
@@ -126,7 +135,11 @@ class TaskManagementService:
 
     @standard_exception_handler
     async def cancel_task_with_validation(
-        self, task_id: str, tenant_id: str, reason: Optional[str] = None, force: bool = False
+        self,
+        task_id: str,
+        tenant_id: str,
+        reason: Optional[str] = None,
+        force: bool = False,
     ) -> dict[str, Any]:
         """
         Cancel a task with business rule validation.
@@ -153,17 +166,24 @@ class TaskManagementService:
         # Check for dependent tasks
         dependents = await self.task_engine.get_dependent_tasks(task_id)
         if dependents and not force:
-            raise ValueError(f"Task has {len(dependents)} dependent tasks. Use force=True to cancel anyway.")
+            raise ValueError(
+                f"Task has {len(dependents)} dependent tasks. Use force=True to cancel anyway."
+            )
 
         # Perform cancellation
-        success = await self.task_engine.cancel_task(task_id=task_id, tenant_id=tenant_id, reason=reason, force=force)
+        success = await self.task_engine.cancel_task(
+            task_id=task_id, tenant_id=tenant_id, reason=reason, force=force
+        )
 
         if not success:
             raise RuntimeError("Failed to cancel task")
 
         # Log cancellation for audit
         await self._log_task_operation(
-            task_id=task_id, tenant_id=tenant_id, operation="cancel", metadata={"reason": reason, "force": force}
+            task_id=task_id,
+            tenant_id=tenant_id,
+            operation="cancel",
+            metadata={"reason": reason, "force": force},
         )
 
         return {
@@ -209,7 +229,9 @@ class TaskManagementService:
         failure_analysis = await self._analyze_task_failure(task_id)
 
         # Apply intelligent retry parameters
-        retry_params = self._calculate_retry_parameters(failure_analysis, delay_seconds, priority)
+        retry_params = self._calculate_retry_parameters(
+            failure_analysis, delay_seconds, priority
+        )
 
         # Execute retry
         new_task_id = await self.task_engine.retry_task(
@@ -228,7 +250,11 @@ class TaskManagementService:
             task_id=task_id,
             tenant_id=tenant_id,
             operation="retry",
-            metadata={"new_task_id": new_task_id, "failure_analysis": failure_analysis, "retry_params": retry_params},
+            metadata={
+                "new_task_id": new_task_id,
+                "failure_analysis": failure_analysis,
+                "retry_params": retry_params,
+            },
         )
 
         return {
@@ -256,7 +282,9 @@ class TaskManagementService:
 
         # Analyze trends and generate recommendations
         health_trends = await self._analyze_health_trends()
-        recommendations = await self._generate_health_recommendations(health_data, extended_checks, health_trends)
+        recommendations = await self._generate_health_recommendations(
+            health_data, extended_checks, health_trends
+        )
 
         # Combine all health information
         comprehensive_health = {
@@ -277,7 +305,9 @@ class TaskManagementService:
         # For now, return a default
         return 1000
 
-    def _build_query_filters(self, query: TaskQueryRequest, tenant_id: str) -> dict[str, Any]:
+    def _build_query_filters(
+        self, query: TaskQueryRequest, tenant_id: str
+    ) -> dict[str, Any]:
         """Build query filters with tenant context."""
         filters = {}
 
@@ -304,7 +334,12 @@ class TaskManagementService:
         # Add performance metrics if available
         metrics = await self.task_monitor.get_task_metrics(task["task_id"])
         if metrics:
-            task.update({"performance_metrics": metrics, "cost_estimate": self._calculate_task_cost(metrics)})
+            task.update(
+                {
+                    "performance_metrics": metrics,
+                    "cost_estimate": self._calculate_task_cost(metrics),
+                }
+            )
 
     def _can_cancel_task(self, task_data: dict[str, Any], force: bool) -> bool:
         """Check if task can be cancelled."""
@@ -372,17 +407,27 @@ class TaskManagementService:
         return analysis
 
     def _calculate_retry_parameters(
-        self, failure_analysis: dict[str, Any], delay_seconds: Optional[int], priority: Optional[TaskPriority]
+        self,
+        failure_analysis: dict[str, Any],
+        delay_seconds: Optional[int],
+        priority: Optional[TaskPriority],
     ) -> dict[str, Any]:
         """Calculate optimal retry parameters based on failure analysis."""
-        params = {"delay": delay_seconds or failure_analysis.get("recommended_delay", 60), "priority": priority}
+        params = {
+            "delay": delay_seconds or failure_analysis.get("recommended_delay", 60),
+            "priority": priority,
+        }
 
         # Adjust priority based on failure analysis
         if not priority:
             if failure_analysis.get("is_transient"):
-                params["priority"] = TaskPriority.HIGH  # Retry transient failures quickly
+                params[
+                    "priority"
+                ] = TaskPriority.HIGH  # Retry transient failures quickly
             else:
-                params["priority"] = TaskPriority.LOW  # Lower priority for non-transient failures
+                params[
+                    "priority"
+                ] = TaskPriority.LOW  # Lower priority for non-transient failures
 
         return params
 
@@ -426,7 +471,10 @@ class TaskManagementService:
         }
 
     async def _generate_health_recommendations(
-        self, health_data: dict[str, Any], extended_checks: dict[str, Any], trends: dict[str, Any]
+        self,
+        health_data: dict[str, Any],
+        extended_checks: dict[str, Any],
+        trends: dict[str, Any],
     ) -> list[str]:
         """Generate actionable health recommendations."""
         recommendations = []
@@ -435,14 +483,16 @@ class TaskManagementService:
         error_rate = health_data.get("error_rate", 0)
         if error_rate > 0.1:  # 10% error rate
             recommendations.append(
-                f"High error rate detected ({error_rate:.1%}). " "Consider reviewing failed tasks and system resources."
+                f"High error rate detected ({error_rate:.1%}). "
+                "Consider reviewing failed tasks and system resources."
             )
 
         # Check queue depth
         queue_health = health_data.get("queue_health", {})
         if queue_health.get("depth", 0) > 1000:
             recommendations.append(
-                "Large queue depth detected. Consider scaling up workers or " "reviewing task processing efficiency."
+                "Large queue depth detected. Consider scaling up workers or "
+                "reviewing task processing efficiency."
             )
 
         # Check worker utilization
@@ -450,20 +500,26 @@ class TaskManagementService:
         utilization = worker_health.get("utilization", 0)
         if utilization > 0.9:  # 90% utilization
             recommendations.append(
-                "High worker utilization detected. Consider adding more workers " "to handle increased load."
+                "High worker utilization detected. Consider adding more workers "
+                "to handle increased load."
             )
         elif utilization < 0.3:  # 30% utilization
             recommendations.append(
-                "Low worker utilization detected. Consider reducing worker count " "to optimize resource usage."
+                "Low worker utilization detected. Consider reducing worker count "
+                "to optimize resource usage."
             )
 
         # Check trends
         if trends.get("error_rate_trend") == "increasing":
-            recommendations.append("Error rate is trending upward. Investigate recent changes " "and system stability.")
+            recommendations.append(
+                "Error rate is trending upward. Investigate recent changes "
+                "and system stability."
+            )
 
         if trends.get("latency_trend") == "increasing":
             recommendations.append(
-                "Response latency is increasing. Check system resources and " "consider performance optimization."
+                "Response latency is increasing. Check system resources and "
+                "consider performance optimization."
             )
 
         return recommendations
@@ -479,11 +535,15 @@ class TaskManagementService:
         memory_cost_per_gb_second = 0.0001  # $0.0001 per GB-second
 
         compute_cost = execution_time * compute_cost_per_second
-        memory_cost = (memory_usage / (1024**3)) * execution_time * memory_cost_per_gb_second
+        memory_cost = (
+            (memory_usage / (1024**3)) * execution_time * memory_cost_per_gb_second
+        )
 
         return compute_cost + memory_cost
 
-    async def _log_task_operation(self, task_id: str, tenant_id: str, operation: str, metadata: dict[str, Any]) -> None:
+    async def _log_task_operation(
+        self, task_id: str, tenant_id: str, operation: str, metadata: dict[str, Any]
+    ) -> None:
         """Log task operations for audit purposes."""
         log_entry = {
             "task_id": task_id,

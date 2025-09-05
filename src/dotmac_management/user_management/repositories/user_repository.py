@@ -8,12 +8,18 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac.core import ValidationError
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..models.user_models import UserContactInfoModel, UserModel, UserPreferencesModel, UserProfileModel
+from dotmac.core import ValidationError
+
+from ..models.user_models import (
+    UserContactInfoModel,
+    UserModel,
+    UserPreferencesModel,
+    UserProfileModel,
+)
 from ..schemas.user_schemas import UserCreateSchema, UserSearchSchema, UserStatus
 from .base_repository import BaseRepository
 
@@ -54,8 +60,12 @@ class UserRepository(BaseRepository[UserModel]):
                 terms_accepted=user_data.terms_accepted,
                 privacy_accepted=user_data.privacy_accepted,
                 marketing_consent=user_data.marketing_consent,
-                terms_accepted_at=datetime.now(timezone.utc) if user_data.terms_accepted else None,
-                privacy_accepted_at=datetime.now(timezone.utc) if user_data.privacy_accepted else None,
+                terms_accepted_at=datetime.now(timezone.utc)
+                if user_data.terms_accepted
+                else None,
+                privacy_accepted_at=datetime.now(timezone.utc)
+                if user_data.privacy_accepted
+                else None,
                 status=UserStatus.PENDING,
                 is_active=False,  # Will be activated after verification
                 email_verified=False,
@@ -106,7 +116,9 @@ class UserRepository(BaseRepository[UserModel]):
     async def get_by_username_or_email(self, identifier: str) -> Optional[UserModel]:
         """Get user by username or email."""
         identifier = identifier.lower()
-        query = select(UserModel).where(or_(UserModel.username == identifier, UserModel.email == identifier))
+        query = select(UserModel).where(
+            or_(UserModel.username == identifier, UserModel.email == identifier)
+        )
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
@@ -116,8 +128,12 @@ class UserRepository(BaseRepository[UserModel]):
             select(UserModel)
             .where(UserModel.id == user_id)
             .options(
-                selectinload(UserModel.profile).selectinload(UserProfileModel.contact_info),
-                selectinload(UserModel.profile).selectinload(UserProfileModel.preferences),
+                selectinload(UserModel.profile).selectinload(
+                    UserProfileModel.contact_info
+                ),
+                selectinload(UserModel.profile).selectinload(
+                    UserProfileModel.preferences
+                ),
                 selectinload(UserModel.roles),
                 selectinload(UserModel.mfa_settings),
             )
@@ -143,7 +159,9 @@ class UserRepository(BaseRepository[UserModel]):
         logger.info(f"Activated user: {user.username} ({user_id})")
         return user
 
-    async def deactivate_user(self, user_id: UUID, reason: Optional[str] = None) -> UserModel:
+    async def deactivate_user(
+        self, user_id: UUID, reason: Optional[str] = None
+    ) -> UserModel:
         """Deactivate user account."""
         user = await self.get_by_id_or_raise(user_id)
 
@@ -156,7 +174,9 @@ class UserRepository(BaseRepository[UserModel]):
             if not user.platform_metadata:
                 user.platform_metadata = {}
             user.platform_metadata["deactivation_reason"] = reason
-            user.platform_metadata["deactivated_at"] = datetime.now(timezone.utc).isoformat()
+            user.platform_metadata["deactivated_at"] = datetime.now(
+                timezone.utc
+            ).isoformat()
 
         await self.db.commit()
         await self.db.refresh(user)
@@ -164,7 +184,9 @@ class UserRepository(BaseRepository[UserModel]):
         logger.info(f"Deactivated user: {user.username} ({user_id})")
         return user
 
-    async def suspend_user(self, user_id: UUID, reason: str, suspended_by: Optional[UUID] = None) -> UserModel:
+    async def suspend_user(
+        self, user_id: UUID, reason: str, suspended_by: Optional[UUID] = None
+    ) -> UserModel:
         """Suspend user account."""
         user = await self.get_by_id_or_raise(user_id)
 
@@ -186,7 +208,9 @@ class UserRepository(BaseRepository[UserModel]):
         await self.db.commit()
         await self.db.refresh(user)
 
-        logger.warning(f"Suspended user: {user.username} ({user_id}) - Reason: {reason}")
+        logger.warning(
+            f"Suspended user: {user.username} ({user_id}) - Reason: {reason}"
+        )
         return user
 
     async def lock_user(self, user_id: UUID, duration_minutes: int = 30) -> UserModel:
@@ -194,14 +218,18 @@ class UserRepository(BaseRepository[UserModel]):
         user = await self.get_by_id_or_raise(user_id)
 
         user.status = UserStatus.LOCKED
-        user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)
+        user.locked_until = datetime.now(timezone.utc) + timedelta(
+            minutes=duration_minutes
+        )
         user.failed_login_count += 1
         user.updated_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(user)
 
-        logger.warning(f"Locked user: {user.username} ({user_id}) for {duration_minutes} minutes")
+        logger.warning(
+            f"Locked user: {user.username} ({user_id}) for {duration_minutes} minutes"
+        )
         return user
 
     async def unlock_user(self, user_id: UUID) -> UserModel:
@@ -209,7 +237,9 @@ class UserRepository(BaseRepository[UserModel]):
         user = await self.get_by_id_or_raise(user_id)
 
         if user.status == UserStatus.LOCKED:
-            user.status = UserStatus.ACTIVE if user.email_verified else UserStatus.PENDING
+            user.status = (
+                UserStatus.ACTIVE if user.email_verified else UserStatus.PENDING
+            )
 
         user.locked_until = None
         user.failed_login_count = 0
@@ -223,7 +253,9 @@ class UserRepository(BaseRepository[UserModel]):
 
     # === Authentication Support ===
 
-    async def record_login(self, user_id: UUID, client_ip: Optional[str] = None) -> UserModel:
+    async def record_login(
+        self, user_id: UUID, client_ip: Optional[str] = None
+    ) -> UserModel:
         """Record successful login."""
         user = await self.get_by_id_or_raise(user_id)
 
@@ -304,7 +336,9 @@ class UserRepository(BaseRepository[UserModel]):
 
     # === Search and Filtering ===
 
-    async def search_users(self, search_params: UserSearchSchema) -> tuple[list[UserModel], int]:
+    async def search_users(
+        self, search_params: UserSearchSchema
+    ) -> tuple[list[UserModel], int]:
         """Search users with comprehensive filtering."""
         try:
             # Build base query
@@ -322,7 +356,9 @@ class UserRepository(BaseRepository[UserModel]):
                         UserModel.email.ilike(search_term),
                         UserModel.first_name.ilike(search_term),
                         UserModel.last_name.ilike(search_term),
-                        func.concat(UserModel.first_name, " ", UserModel.last_name).ilike(search_term),
+                        func.concat(
+                            UserModel.first_name, " ", UserModel.last_name
+                        ).ilike(search_term),
                         UserModel.company.ilike(search_term),
                     )
                 )
@@ -338,7 +374,9 @@ class UserRepository(BaseRepository[UserModel]):
                 conditions.append(UserModel.is_active == search_params.is_active)
 
             if search_params.email_verified is not None:
-                conditions.append(UserModel.email_verified == search_params.email_verified)
+                conditions.append(
+                    UserModel.email_verified == search_params.email_verified
+                )
 
             # Tenant filter
             if search_params.tenant_id:
@@ -352,17 +390,23 @@ class UserRepository(BaseRepository[UserModel]):
                 conditions.append(UserModel.created_at <= search_params.created_before)
 
             if search_params.last_login_after:
-                conditions.append(UserModel.last_login >= search_params.last_login_after)
+                conditions.append(
+                    UserModel.last_login >= search_params.last_login_after
+                )
 
             if search_params.last_login_before:
-                conditions.append(UserModel.last_login <= search_params.last_login_before)
+                conditions.append(
+                    UserModel.last_login <= search_params.last_login_before
+                )
 
             # Additional filters
             if search_params.company:
                 conditions.append(UserModel.company.ilike(f"%{search_params.company}%"))
 
             if search_params.department:
-                conditions.append(UserModel.department.ilike(f"%{search_params.department}%"))
+                conditions.append(
+                    UserModel.department.ilike(f"%{search_params.department}%")
+                )
 
             if search_params.mfa_enabled is not None:
                 conditions.append(UserModel.mfa_enabled == search_params.mfa_enabled)
@@ -380,7 +424,9 @@ class UserRepository(BaseRepository[UserModel]):
             total_count = count_result.scalar()
 
             # Apply sorting
-            sort_column = getattr(UserModel, search_params.sort_by, UserModel.created_at)
+            sort_column = getattr(
+                UserModel, search_params.sort_by, UserModel.created_at
+            )
             if search_params.sort_order == "desc":
                 query = query.order_by(sort_column.desc())
             else:
@@ -394,7 +440,9 @@ class UserRepository(BaseRepository[UserModel]):
             result = await self.db.execute(query)
             users = result.scalars().all()
 
-            logger.debug(f"User search returned {len(users)} results (total: {total_count})")
+            logger.debug(
+                f"User search returned {len(users)} results (total: {total_count})"
+            )
             return list(users), total_count
 
         except Exception as e:
@@ -425,7 +473,9 @@ class UserRepository(BaseRepository[UserModel]):
             locked_query = total_query.where(UserModel.status == UserStatus.LOCKED)
 
             # Suspended users
-            suspended_query = total_query.where(UserModel.status == UserStatus.SUSPENDED)
+            suspended_query = total_query.where(
+                UserModel.status == UserStatus.SUSPENDED
+            )
 
             # Execute all queries
             results = await self.db.execute(
@@ -451,7 +501,9 @@ class UserRepository(BaseRepository[UserModel]):
             logger.error(f"Failed to get user stats: {e}")
             raise
 
-    async def get_recent_users(self, limit: int = 10, tenant_id: Optional[UUID] = None) -> list[UserModel]:
+    async def get_recent_users(
+        self, limit: int = 10, tenant_id: Optional[UUID] = None
+    ) -> list[UserModel]:
         """Get recently created users."""
         query = select(UserModel).order_by(UserModel.created_at.desc()).limit(limit)
 
@@ -487,7 +539,9 @@ class UserRepository(BaseRepository[UserModel]):
 
         return await self.bulk_update({user_id: update_data for user_id in user_ids})
 
-    async def bulk_deactivate_users(self, user_ids: list[UUID], reason: Optional[str] = None) -> int:
+    async def bulk_deactivate_users(
+        self, user_ids: list[UUID], reason: Optional[str] = None
+    ) -> int:
         """Deactivate multiple users in bulk."""
         update_data = {
             "status": UserStatus.INACTIVE,
@@ -505,7 +559,9 @@ class UserRepository(BaseRepository[UserModel]):
 
     # === Utility Methods ===
 
-    async def check_username_available(self, username: str, exclude_user_id: Optional[UUID] = None) -> bool:
+    async def check_username_available(
+        self, username: str, exclude_user_id: Optional[UUID] = None
+    ) -> bool:
         """Check if username is available."""
         query = select(UserModel.id).where(UserModel.username == username.lower())
 
@@ -517,7 +573,9 @@ class UserRepository(BaseRepository[UserModel]):
 
         return existing_id is None
 
-    async def check_email_available(self, email: str, exclude_user_id: Optional[UUID] = None) -> bool:
+    async def check_email_available(
+        self, email: str, exclude_user_id: Optional[UUID] = None
+    ) -> bool:
         """Check if email is available."""
         query = select(UserModel.id).where(UserModel.email == email.lower())
 
@@ -541,12 +599,17 @@ class UserProfileRepository(BaseRepository[UserProfileModel]):
         query = (
             select(UserProfileModel)
             .where(UserProfileModel.user_id == user_id)
-            .options(selectinload(UserProfileModel.contact_info), selectinload(UserProfileModel.preferences))
+            .options(
+                selectinload(UserProfileModel.contact_info),
+                selectinload(UserProfileModel.preferences),
+            )
         )
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def update_profile(self, user_id: UUID, profile_data: dict[str, Any]) -> UserProfileModel:
+    async def update_profile(
+        self, user_id: UUID, profile_data: dict[str, Any]
+    ) -> UserProfileModel:
         """Update user profile."""
         profile = await self.get_by_user_id(user_id)
 

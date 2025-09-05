@@ -7,12 +7,13 @@ It wraps the actual identity module repositories to maintain proper architectura
 from typing import Any, Optional
 from uuid import UUID
 
+from sqlalchemy.orm import Session
+
 from dotmac_isp.modules.identity.models import User
 from dotmac_isp.modules.identity.repository import (
     UserRepository as IdentityUserRepository,
 )
 from dotmac_isp.sdks.core.exceptions import SDKError
-from sqlalchemy.orm import Session
 
 
 class UserRepository:
@@ -22,7 +23,9 @@ class UserRepository:
         """Initialize user repository with database session."""
         self.db = db_session
         self.tenant_id = tenant_id
-        self._identity_repo = IdentityUserRepository(db_session, tenant_id) if tenant_id else None
+        self._identity_repo = (
+            IdentityUserRepository(db_session, tenant_id) if tenant_id else None
+        )
 
     async def find_by_id(self, user_id: UUID) -> Optional[User]:
         """Find user by ID."""
@@ -109,7 +112,9 @@ class UserSessionRepository:
         """Find session by ID."""
         return self._sessions.get(session_id)
 
-    async def update_session(self, session_id: str, session_data: dict[str, Any]) -> bool:
+    async def update_session(
+        self, session_id: str, session_data: dict[str, Any]
+    ) -> bool:
         """Update existing session."""
         try:
             if session_id in self._sessions:
@@ -133,7 +138,9 @@ class UserSessionRepository:
         """Find all sessions for a user."""
         try:
             return [
-                {"session_id": sid, **sdata} for sid, sdata in self._sessions.items() if sdata.get("user_id") == user_id
+                {"session_id": sid, **sdata}
+                for sid, sdata in self._sessions.items()
+                if sdata.get("user_id") == user_id
             ]
         except Exception as e:
             raise SDKError(f"Failed to find user sessions: {str(e)}") from e

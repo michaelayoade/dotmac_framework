@@ -47,7 +47,9 @@ DANGEROUS_PATTERNS = [
     r"<!doctype.*?\[",
 ]
 
-COMPILED_DANGEROUS_PATTERNS = [re.compile(pattern, re.IGNORECASE | re.DOTALL) for pattern in DANGEROUS_PATTERNS]
+COMPILED_DANGEROUS_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE | re.DOTALL) for pattern in DANGEROUS_PATTERNS
+]
 
 
 class InputSanitizer:
@@ -128,7 +130,9 @@ class InputSanitizer:
         # Check for dangerous SQL patterns
         for pattern in COMPILED_DANGEROUS_PATTERNS[1:5]:  # SQL-related patterns
             if pattern.search(text):
-                logger.warning(f"Dangerous SQL pattern detected in input: {text[:100]}...")
+                logger.warning(
+                    f"Dangerous SQL pattern detected in input: {text[:100]}..."
+                )
                 raise SecurityValidationError(
                     field="sql_input",
                     reason="Potentially malicious SQL pattern detected",
@@ -160,7 +164,9 @@ class InputSanitizer:
         for i, pattern in enumerate(COMPILED_DANGEROUS_PATTERNS):
             match = pattern.search(text)
             if match:
-                logger.warning(f"Dangerous pattern {i} detected in {field_name}: {match.group()[:50]}...")
+                logger.warning(
+                    f"Dangerous pattern {i} detected in {field_name}: {match.group()[:50]}..."
+                )
                 raise SecurityValidationError(
                     field=field_name,
                     reason=f"Potentially malicious content detected: {match.group()[:50]}...",
@@ -234,7 +240,9 @@ class InputSanitizer:
         # Check for dangerous patterns in email
         for pattern in COMPILED_DANGEROUS_PATTERNS:
             if pattern.search(email):
-                raise SecurityValidationError(field="email", reason="Potentially malicious email content")
+                raise SecurityValidationError(
+                    field="email", reason="Potentially malicious email content"
+                )
         return email.lower().strip()
 
     @staticmethod
@@ -267,7 +275,11 @@ class InputSanitizer:
                     (
                         InputSanitizer.sanitize_html(item)
                         if isinstance(item, str)
-                        else (InputSanitizer.sanitize_json_input(item) if isinstance(item, dict) else item)
+                        else (
+                            InputSanitizer.sanitize_json_input(item)
+                            if isinstance(item, dict)
+                            else item
+                        )
                     )
                     for item in value
                 ]

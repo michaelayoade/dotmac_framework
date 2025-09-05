@@ -14,22 +14,9 @@ from typing import Any, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    Date,
-    DateTime,
-    Float,
-    ForeignKey,
-    Index,
-    Integer,
-    Numeric,
-    String,
-    Text,
-    Time,
-)
+from sqlalchemy import JSON, Boolean, Column, Date, DateTime
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Float, ForeignKey, Index, Integer, Numeric, String, Text, Time
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -155,13 +142,21 @@ class Technician(Base):
     employment_status = Column(String(50), default="active", nullable=False)
     job_title = Column(String(100), nullable=True)
     department = Column(String(100), nullable=True)
-    supervisor_id = Column(PGUUID(as_uuid=True), ForeignKey("field_technicians.id"), nullable=True)
+    supervisor_id = Column(
+        PGUUID(as_uuid=True), ForeignKey("field_technicians.id"), nullable=True
+    )
 
     # Skills and certifications
     skill_level = Column(SQLEnum(SkillLevel), default=SkillLevel.JUNIOR, nullable=False)
-    skills = Column(ARRAY(String), nullable=True)  # ["fiber_splicing", "copper_installation"]
-    certifications = Column(JSON, nullable=True)  # Certification details with expiry dates
-    specializations = Column(ARRAY(String), nullable=True)  # ["commercial", "residential"]
+    skills = Column(
+        ARRAY(String), nullable=True
+    )  # ["fiber_splicing", "copper_installation"]
+    certifications = Column(
+        JSON, nullable=True
+    )  # Certification details with expiry dates
+    specializations = Column(
+        ARRAY(String), nullable=True
+    )  # ["commercial", "residential"]
 
     # Work capacity and scheduling
     max_jobs_per_day = Column(Integer, default=8, nullable=False)
@@ -171,7 +166,9 @@ class Technician(Base):
     weekend_availability = Column(Boolean, default=False, nullable=False)
 
     # Current status and location
-    current_status = Column(SQLEnum(TechnicianStatus), default=TechnicianStatus.OFF_DUTY, nullable=False)
+    current_status = Column(
+        SQLEnum(TechnicianStatus), default=TechnicianStatus.OFF_DUTY, nullable=False
+    )
     current_location = Column(JSON, nullable=True)  # Latest GPS coordinates
     last_location_update = Column(DateTime, nullable=True)
 
@@ -194,13 +191,17 @@ class Technician(Base):
 
     # Audit fields
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     last_active = Column(DateTime, nullable=True)
 
     # Relationships
     work_orders = relationship("WorkOrder", back_populates="technician")
     time_entries = relationship("TechnicianTimeEntry", back_populates="technician")
-    performance_reviews = relationship("TechnicianPerformance", back_populates="technician")
+    performance_reviews = relationship(
+        "TechnicianPerformance", back_populates="technician"
+    )
 
     @hybrid_property
     def full_name(self) -> str:
@@ -210,7 +211,10 @@ class Technician(Base):
     @hybrid_property
     def is_available(self) -> bool:
         """Check if technician is available for work."""
-        return self.current_status in [TechnicianStatus.AVAILABLE, TechnicianStatus.TRAVELING]
+        return self.current_status in [
+            TechnicianStatus.AVAILABLE,
+            TechnicianStatus.TRAVELING,
+        ]
 
     @hybrid_property
     def current_workload(self) -> int:
@@ -238,7 +242,12 @@ class WorkOrder(Base):
     title = Column(String(300), nullable=False)
     description = Column(Text, nullable=False)
     work_order_type = Column(SQLEnum(WorkOrderType), nullable=False, index=True)
-    priority = Column(SQLEnum(WorkOrderPriority), default=WorkOrderPriority.NORMAL, nullable=False, index=True)
+    priority = Column(
+        SQLEnum(WorkOrderPriority),
+        default=WorkOrderPriority.NORMAL,
+        nullable=False,
+        index=True,
+    )
 
     # Customer and location
     customer_id = Column(String(255), nullable=True, index=True)
@@ -261,13 +270,25 @@ class WorkOrder(Base):
     estimated_duration = Column(Integer, nullable=True)  # minutes
 
     # Assignment
-    technician_id = Column(PGUUID(as_uuid=True), ForeignKey("field_technicians.id"), nullable=True, index=True)
+    technician_id = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("field_technicians.id"),
+        nullable=True,
+        index=True,
+    )
     assigned_at = Column(DateTime, nullable=True)
     assigned_by = Column(String(200), nullable=True)
-    backup_technician_id = Column(PGUUID(as_uuid=True), ForeignKey("field_technicians.id"), nullable=True)
+    backup_technician_id = Column(
+        PGUUID(as_uuid=True), ForeignKey("field_technicians.id"), nullable=True
+    )
 
     # Status and progress
-    status = Column(SQLEnum(WorkOrderStatus), default=WorkOrderStatus.DRAFT, nullable=False, index=True)
+    status = Column(
+        SQLEnum(WorkOrderStatus),
+        default=WorkOrderStatus.DRAFT,
+        nullable=False,
+        index=True,
+    )
     progress_percentage = Column(Integer, default=0, nullable=False)
 
     # Work tracking
@@ -277,14 +298,18 @@ class WorkOrder(Base):
     customer_signature_time = Column(DateTime, nullable=True)
 
     # Equipment and materials
-    required_equipment = Column(JSON, nullable=True)  # List of required equipment with quantities
+    required_equipment = Column(
+        JSON, nullable=True
+    )  # List of required equipment with quantities
     required_materials = Column(JSON, nullable=True)  # Materials needed
     equipment_used = Column(JSON, nullable=True)  # Equipment actually used
     materials_used = Column(JSON, nullable=True)  # Materials consumed
 
     # Work details
     work_performed = Column(Text, nullable=True)
-    checklist_items = Column(JSON, nullable=True)  # Dynamic checklist based on work type
+    checklist_items = Column(
+        JSON, nullable=True
+    )  # Dynamic checklist based on work type
     photos = Column(JSON, nullable=True)  # Photo metadata and URLs
     documents = Column(JSON, nullable=True)  # Document attachments
     customer_signature = Column(Text, nullable=True)  # Base64 signature data
@@ -305,7 +330,9 @@ class WorkOrder(Base):
     # Notifications and communication
     customer_notified = Column(Boolean, default=False, nullable=False)
     last_customer_contact = Column(DateTime, nullable=True)
-    automated_updates_sent = Column(JSON, nullable=True)  # Track automated notifications
+    automated_updates_sent = Column(
+        JSON, nullable=True
+    )  # Track automated notifications
 
     # SLA and performance
     sla_target_completion = Column(DateTime, nullable=True)
@@ -319,21 +346,36 @@ class WorkOrder(Base):
 
     # Audit
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     created_by = Column(String(200), nullable=True)
     updated_by = Column(String(200), nullable=True)
 
     # Relationships
-    technician = relationship("Technician", back_populates="work_orders", foreign_keys=[technician_id])
+    technician = relationship(
+        "Technician", back_populates="work_orders", foreign_keys=[technician_id]
+    )
     backup_technician = relationship("Technician", foreign_keys=[backup_technician_id])
-    status_history = relationship("WorkOrderStatusHistory", back_populates="work_order", cascade="all, delete-orphan")
-    equipment_tracking = relationship("WorkOrderEquipment", back_populates="work_order", cascade="all, delete-orphan")
-    time_entries = relationship("WorkOrderTimeEntry", back_populates="work_order", cascade="all, delete-orphan")
+    status_history = relationship(
+        "WorkOrderStatusHistory",
+        back_populates="work_order",
+        cascade="all, delete-orphan",
+    )
+    equipment_tracking = relationship(
+        "WorkOrderEquipment", back_populates="work_order", cascade="all, delete-orphan"
+    )
+    time_entries = relationship(
+        "WorkOrderTimeEntry", back_populates="work_order", cascade="all, delete-orphan"
+    )
 
     @hybrid_property
     def is_overdue(self) -> bool:
         """Check if work order is overdue."""
-        if self.scheduled_date and self.status not in [WorkOrderStatus.COMPLETED, WorkOrderStatus.CANCELLED]:
+        if self.scheduled_date and self.status not in [
+            WorkOrderStatus.COMPLETED,
+            WorkOrderStatus.CANCELLED,
+        ]:
             return date.today() > self.scheduled_date
         return False
 
@@ -353,7 +395,12 @@ class WorkOrderStatusHistory(Base):
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id = Column(String(255), nullable=False, index=True)
-    work_order_id = Column(PGUUID(as_uuid=True), ForeignKey("field_work_orders.id"), nullable=False, index=True)
+    work_order_id = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("field_work_orders.id"),
+        nullable=False,
+        index=True,
+    )
 
     # Status change details
     from_status = Column(SQLEnum(WorkOrderStatus), nullable=True)
@@ -377,7 +424,12 @@ class WorkOrderEquipment(Base):
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id = Column(String(255), nullable=False, index=True)
-    work_order_id = Column(PGUUID(as_uuid=True), ForeignKey("field_work_orders.id"), nullable=False, index=True)
+    work_order_id = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("field_work_orders.id"),
+        nullable=False,
+        index=True,
+    )
 
     # Equipment details
     equipment_type = Column(String(100), nullable=False)
@@ -386,7 +438,9 @@ class WorkOrderEquipment(Base):
     barcode = Column(String(100), nullable=True, index=True)
 
     # Status tracking
-    status = Column(SQLEnum(EquipmentStatus), default=EquipmentStatus.REQUIRED, nullable=False)
+    status = Column(
+        SQLEnum(EquipmentStatus), default=EquipmentStatus.REQUIRED, nullable=False
+    )
     quantity_required = Column(Integer, default=1, nullable=False)
     quantity_used = Column(Integer, default=0, nullable=False)
 
@@ -403,7 +457,9 @@ class WorkOrderEquipment(Base):
 
     # Audit
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationship
     work_order = relationship("WorkOrder", back_populates="equipment_tracking")
@@ -416,8 +472,18 @@ class TechnicianTimeEntry(Base):
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id = Column(String(255), nullable=False, index=True)
-    technician_id = Column(PGUUID(as_uuid=True), ForeignKey("field_technicians.id"), nullable=False, index=True)
-    work_order_id = Column(PGUUID(as_uuid=True), ForeignKey("field_work_orders.id"), nullable=True, index=True)
+    technician_id = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("field_technicians.id"),
+        nullable=False,
+        index=True,
+    )
+    work_order_id = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("field_work_orders.id"),
+        nullable=True,
+        index=True,
+    )
 
     # Time tracking
     start_time = Column(DateTime, nullable=False)
@@ -425,7 +491,9 @@ class TechnicianTimeEntry(Base):
     duration_minutes = Column(Integer, nullable=True)
 
     # Activity details
-    activity_type = Column(String(100), nullable=False)  # "travel", "work", "break", "admin"
+    activity_type = Column(
+        String(100), nullable=False
+    )  # "travel", "work", "break", "admin"
     description = Column(Text, nullable=True)
     location_start = Column(JSON, nullable=True)
     location_end = Column(JSON, nullable=True)
@@ -437,7 +505,9 @@ class TechnicianTimeEntry(Base):
 
     # Audit
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationships
     technician = relationship("Technician", back_populates="time_entries")
@@ -451,8 +521,18 @@ class WorkOrderTimeEntry(Base):
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id = Column(String(255), nullable=False, index=True)
-    work_order_id = Column(PGUUID(as_uuid=True), ForeignKey("field_work_orders.id"), nullable=False, index=True)
-    technician_id = Column(PGUUID(as_uuid=True), ForeignKey("field_technicians.id"), nullable=False, index=True)
+    work_order_id = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("field_work_orders.id"),
+        nullable=False,
+        index=True,
+    )
+    technician_id = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("field_technicians.id"),
+        nullable=False,
+        index=True,
+    )
 
     # Time details
     start_time = Column(DateTime, nullable=False)
@@ -460,7 +540,9 @@ class WorkOrderTimeEntry(Base):
     duration_minutes = Column(Integer, nullable=True)
 
     # Work details
-    activity_type = Column(String(100), nullable=False)  # "setup", "installation", "testing", "cleanup"
+    activity_type = Column(
+        String(100), nullable=False
+    )  # "setup", "installation", "testing", "cleanup"
     description = Column(Text, nullable=True)
 
     # Audit
@@ -477,12 +559,19 @@ class TechnicianPerformance(Base):
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id = Column(String(255), nullable=False, index=True)
-    technician_id = Column(PGUUID(as_uuid=True), ForeignKey("field_technicians.id"), nullable=False, index=True)
+    technician_id = Column(
+        PGUUID(as_uuid=True),
+        ForeignKey("field_technicians.id"),
+        nullable=False,
+        index=True,
+    )
 
     # Performance period
     period_start = Column(Date, nullable=False)
     period_end = Column(Date, nullable=False)
-    period_type = Column(String(20), nullable=False)  # "daily", "weekly", "monthly", "quarterly"
+    period_type = Column(
+        String(20), nullable=False
+    )  # "daily", "weekly", "monthly", "quarterly"
 
     # Job metrics
     jobs_assigned = Column(Integer, default=0, nullable=False)
@@ -526,7 +615,9 @@ class TechnicianPerformance(Base):
 
     # Audit
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationship
     technician = relationship("Technician", back_populates="performance_reviews")
@@ -574,17 +665,29 @@ class DispatchZone(Base):
 
     # Audit
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
 
 # Database indexes for performance
-Index("idx_technicians_status_location", Technician.current_status, Technician.tenant_id)
+Index(
+    "idx_technicians_status_location", Technician.current_status, Technician.tenant_id
+)
 Index("idx_technicians_skills", Technician.tenant_id, Technician.skill_level)
 Index("idx_workorders_status_date", WorkOrder.status, WorkOrder.scheduled_date)
 Index("idx_workorders_technician_status", WorkOrder.technician_id, WorkOrder.status)
 Index("idx_workorders_customer_priority", WorkOrder.customer_id, WorkOrder.priority)
-Index("idx_performance_technician_period", TechnicianPerformance.technician_id, TechnicianPerformance.period_start)
-Index("idx_time_entries_technician_date", TechnicianTimeEntry.technician_id, TechnicianTimeEntry.start_time)
+Index(
+    "idx_performance_technician_period",
+    TechnicianPerformance.technician_id,
+    TechnicianPerformance.period_start,
+)
+Index(
+    "idx_time_entries_technician_date",
+    TechnicianTimeEntry.technician_id,
+    TechnicianTimeEntry.start_time,
+)
 
 
 # Pydantic v2 Schemas

@@ -7,10 +7,11 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from fastapi import APIRouter, Body, Depends, Path, Query
+
 from dotmac_shared.api import StandardDependencies, standard_exception_handler
 from dotmac_shared.api.dependencies import get_standard_deps
 from dotmac_shared.schemas import BaseResponseSchema
-from fastapi import APIRouter, Body, Depends, Path, Query
 
 from ..schemas import CaptivePortalSessionResponse, PortalConfigResponse
 from ..services import CaptivePortalService, get_captive_portal_service
@@ -46,14 +47,18 @@ def create_captive_portal_router_dry() -> APIRouter:
     @standard_exception_handler
     async def get_portal_config(
         location: str | None = Query(None, description="Filter by location"),
-        include_branding: bool = Query(True, description="Include branding configuration"),
+        include_branding: bool = Query(
+            True, description="Include branding configuration"
+        ),
         deps: StandardDependencies = Depends(get_standard_deps),
         service: CaptivePortalService = Depends(get_portal_service),
     ) -> PortalConfigResponse:
         """Get captive portal configuration settings."""
 
         config = await service.get_portal_config(
-            tenant_id=deps.tenant_id, location=location, include_branding=include_branding
+            tenant_id=deps.tenant_id,
+            location=location,
+            include_branding=include_branding,
         )
 
         return PortalConfigResponse.model_validate(config)
@@ -65,7 +70,8 @@ def create_captive_portal_router_dry() -> APIRouter:
         status: str | None = Query(None, description="Filter by session status"),
         location: str | None = Query(None, description="Filter by location"),
         device_type: str | None = Query(None, description="Filter by device type"),
-        auth_method: str | None = Query(None, description="Filter by authentication method"),
+        auth_method: str
+        | None = Query(None, description="Filter by authentication method"),
         limit: int = Query(100, ge=1, le=500, description="Maximum sessions to return"),
         offset: int = Query(0, ge=0, description="Number of sessions to skip"),
         deps: StandardDependencies = Depends(get_standard_deps),
@@ -74,14 +80,22 @@ def create_captive_portal_router_dry() -> APIRouter:
         """List active captive portal sessions."""
 
         filters = PortalFilters(
-            session_status=status, location=location, device_type=device_type, authentication_method=auth_method
+            session_status=status,
+            location=location,
+            device_type=device_type,
+            authentication_method=auth_method,
         )
 
         sessions = await service.list_portal_sessions(
-            tenant_id=deps.tenant_id, filters=filters.model_dump(exclude_unset=True), limit=limit, offset=offset
+            tenant_id=deps.tenant_id,
+            filters=filters.model_dump(exclude_unset=True),
+            limit=limit,
+            offset=offset,
         )
 
-        return [CaptivePortalSessionResponse.model_validate(session) for session in sessions]
+        return [
+            CaptivePortalSessionResponse.model_validate(session) for session in sessions
+        ]
 
     # Session details endpoint
     @router.get("/sessions/{session_id}", response_model=CaptivePortalSessionResponse)
@@ -137,9 +151,14 @@ def create_captive_portal_router_dry() -> APIRouter:
     async def grant_guest_access(
         mac_address: str = Body(..., description="Device MAC address"),
         location: str = Body(..., description="Portal location"),
-        duration_hours: int = Body(24, ge=1, le=72, description="Access duration in hours"),
-        terms_accepted: bool = Body(True, description="Terms and conditions acceptance"),
-        contact_info: dict | None = Body(None, description="Optional contact information"),
+        duration_hours: int = Body(
+            24, ge=1, le=72, description="Access duration in hours"
+        ),
+        terms_accepted: bool = Body(
+            True, description="Terms and conditions acceptance"
+        ),
+        contact_info: dict
+        | None = Body(None, description="Optional contact information"),
         deps: StandardDependencies = Depends(get_standard_deps),
         service: CaptivePortalService = Depends(get_portal_service),
     ) -> dict[str, any]:
@@ -174,7 +193,10 @@ def create_captive_portal_router_dry() -> APIRouter:
         """Terminate an active portal session."""
 
         await service.terminate_portal_session(
-            session_id=session_id, tenant_id=deps.tenant_id, terminator_id=deps.user_id, reason=reason
+            session_id=session_id,
+            tenant_id=deps.tenant_id,
+            terminator_id=deps.user_id,
+            reason=reason,
         )
 
         return {
@@ -189,14 +211,20 @@ def create_captive_portal_router_dry() -> APIRouter:
     async def get_portal_statistics(
         time_range: str = Query("24h", description="Time range for statistics"),
         location: str | None = Query(None, description="Filter by location"),
-        group_by: str = Query("location", description="Group statistics by (location, auth_method, device_type)"),
+        group_by: str = Query(
+            "location",
+            description="Group statistics by (location, auth_method, device_type)",
+        ),
         deps: StandardDependencies = Depends(get_standard_deps),
         service: CaptivePortalService = Depends(get_portal_service),
     ) -> dict[str, any]:
         """Get captive portal usage statistics."""
 
         stats = await service.get_portal_statistics(
-            tenant_id=deps.tenant_id, time_range=time_range, location=location, group_by=group_by
+            tenant_id=deps.tenant_id,
+            time_range=time_range,
+            location=location,
+            group_by=group_by,
         )
 
         return {
@@ -219,7 +247,10 @@ def create_captive_portal_router_dry() -> APIRouter:
         """Update captive portal branding and appearance."""
 
         await service.update_portal_branding(
-            tenant_id=deps.tenant_id, branding_config=branding_config, location=location, updated_by=deps.user_id
+            tenant_id=deps.tenant_id,
+            branding_config=branding_config,
+            location=location,
+            updated_by=deps.user_id,
         )
 
         return {
@@ -235,7 +266,11 @@ def create_captive_portal_router_dry() -> APIRouter:
         deps: StandardDependencies = Depends(get_standard_deps),
     ) -> dict[str, str]:
         """Health check for captive portal service."""
-        return {"service": "captive-portal", "status": "healthy", "tenant_id": deps.tenant_id}
+        return {
+            "service": "captive-portal",
+            "status": "healthy",
+            "tenant_id": deps.tenant_id,
+        }
 
     return router
 
@@ -244,7 +279,10 @@ def create_captive_portal_router_dry() -> APIRouter:
 def get_captive_portal_migration_stats() -> dict[str, any]:
     """Show captive portal router migration improvements."""
     return {
-        "original_issues": ["Unexpected token Indent syntax error", "Malformed indentation patterns"],
+        "original_issues": [
+            "Unexpected token Indent syntax error",
+            "Malformed indentation patterns",
+        ],
         "dry_pattern_lines": 250,
         "portal_features": [
             "✅ Portal configuration management",

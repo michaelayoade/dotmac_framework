@@ -16,22 +16,33 @@ from ..services_framework.core.base import BaseService
 try:
     from ..core.decorators import async_retry, standard_exception_handler
 except Exception:  # pragma: no cover - fallback if decorators not present
+
     def standard_exception_handler(func=None, *dargs, **dkwargs):  # type: ignore
         def _decorate(f):
             return f
+
         return _decorate if func is None else func
 
     def async_retry(*dargs, **dkwargs):  # type: ignore
         def _decorate(f):
             return f
+
         return _decorate
+
+
 try:
     from ..monitoring.performance import performance_monitor
-except Exception:  # pragma: no cover - fallback for environments without performance module
+except (
+    Exception
+):  # pragma: no cover - fallback for environments without performance module
+
     def performance_monitor(_name: str):  # type: ignore
         def _decorator(func):
             return func
+
         return _decorator
+
+
 import asyncio
 
 from .base import BaseWorkflow, WorkflowResult
@@ -146,7 +157,9 @@ class UnifiedWorkflowRule:
 
         return True
 
-    def _evaluate_condition(self, condition: dict[str, Any], context: WorkflowContext) -> bool:
+    def _evaluate_condition(
+        self, condition: dict[str, Any], context: WorkflowContext
+    ) -> bool:
         """Evaluate a single condition."""
         field = condition.get("field")
         operator = condition.get("operator", "equals")
@@ -210,14 +223,19 @@ class UnifiedWorkflowService(BaseService):
     @performance_monitor("workflow_service_init")
     async def initialize(self) -> bool:
         """Initialize the workflow service."""
-        await super()._set_status(self.get_status(), "Initializing Unified Workflow Service")
+        await super()._set_status(
+            self.get_status(), "Initializing Unified Workflow Service"
+        )
         logger.info("Unified Workflow Service initialized")
         return True
 
     @standard_exception_handler
     @async_retry(max_attempts=3, delay=1.0)
     async def execute_workflow(
-        self, workflow_type: WorkflowType, context: WorkflowContext, rules: Optional[list[UnifiedWorkflowRule]] = None
+        self,
+        workflow_type: WorkflowType,
+        context: WorkflowContext,
+        rules: Optional[list[UnifiedWorkflowRule]] = None,
     ) -> list[WorkflowResult]:
         """Execute workflows based on type and context."""
 
@@ -253,7 +271,12 @@ class UnifiedWorkflowService(BaseService):
                         code="validation_error",
                     )
                 )
-            except (WorkflowTransientError, TimeoutError, ConnectionError, asyncio.TimeoutError) as e:
+            except (
+                WorkflowTransientError,
+                TimeoutError,
+                ConnectionError,
+                asyncio.TimeoutError,
+            ) as e:
                 logger.error(f"Rule transient failure {rule.name}: {e}")
                 results.append(
                     WorkflowResult(
@@ -277,7 +300,9 @@ class UnifiedWorkflowService(BaseService):
                 )
             except asyncio.CancelledError:
                 raise
-            except Exception as e:  # noqa: BLE001 - resilience boundary; logs and continues
+            except (
+                Exception
+            ) as e:  # noqa: BLE001 - resilience boundary; logs and continues
                 logger.error(f"Error executing rule {rule.name}: {e}")
                 results.append(
                     WorkflowResult(
@@ -293,7 +318,9 @@ class UnifiedWorkflowService(BaseService):
 
     @standard_exception_handler
     async def shutdown(self) -> bool:
-        await super()._set_status(self.get_status(), "Shutting down Unified Workflow Service")
+        await super()._set_status(
+            self.get_status(), "Shutting down Unified Workflow Service"
+        )
         return True
 
     @standard_exception_handler
@@ -303,12 +330,19 @@ class UnifiedWorkflowService(BaseService):
 
     @standard_exception_handler
     async def create_workflow_instance(
-        self, workflow_type: WorkflowType, workflow_id: str, steps: list[str], context: WorkflowContext
+        self,
+        workflow_type: WorkflowType,
+        workflow_id: str,
+        steps: list[str],
+        context: WorkflowContext,
     ) -> str:
         """Create a new workflow instance."""
 
         instance = UnifiedWorkflowInstance(
-            workflow_id=workflow_id, workflow_type=workflow_type, steps=steps, context=context
+            workflow_id=workflow_id,
+            workflow_type=workflow_type,
+            steps=steps,
+            context=context,
         )
 
         instance_id = str(uuid4())
@@ -340,16 +374,26 @@ class UnifiedWorkflowService(BaseService):
         logger.info(f"Removed workflow rule: {rule_id}")
 
     @standard_exception_handler
-    def register_action_handler(self, action_type: ActionType, handler: Callable) -> None:
+    def register_action_handler(
+        self, action_type: ActionType, handler: Callable
+    ) -> None:
         """Register an action handler."""
         self.action_handlers[action_type] = handler
         logger.info(f"Registered action handler for: {action_type}")
 
-    def _find_matching_rules(self, workflow_type: WorkflowType, context: WorkflowContext) -> list[UnifiedWorkflowRule]:
+    def _find_matching_rules(
+        self, workflow_type: WorkflowType, context: WorkflowContext
+    ) -> list[UnifiedWorkflowRule]:
         """Find rules matching the workflow type."""
-        return [rule for rule in self.rules if rule.workflow_type == workflow_type and rule.enabled]
+        return [
+            rule
+            for rule in self.rules
+            if rule.workflow_type == workflow_type and rule.enabled
+        ]
 
-    async def _execute_rule(self, rule: UnifiedWorkflowRule, context: WorkflowContext) -> WorkflowResult:
+    async def _execute_rule(
+        self, rule: UnifiedWorkflowRule, context: WorkflowContext
+    ) -> WorkflowResult:
         """Execute a single rule."""
 
         executed_actions = []
@@ -365,26 +409,43 @@ class UnifiedWorkflowService(BaseService):
                     continue
 
                 action_result = await handler(action, context)
-                executed_actions.append({"type": action_type, "result": action_result, "success": True})
+                executed_actions.append(
+                    {"type": action_type, "result": action_result, "success": True}
+                )
 
             except (WorkflowValidationError, ValueError, KeyError, TypeError) as e:
                 error_msg = f"Action {action.get('type')} validation failed: {str(e)}"
                 errors.append(error_msg)
-                executed_actions.append({"type": action.get("type"), "error": str(e), "success": False})
-            except (WorkflowTransientError, TimeoutError, ConnectionError, asyncio.TimeoutError) as e:
+                executed_actions.append(
+                    {"type": action.get("type"), "error": str(e), "success": False}
+                )
+            except (
+                WorkflowTransientError,
+                TimeoutError,
+                ConnectionError,
+                asyncio.TimeoutError,
+            ) as e:
                 error_msg = f"Action {action.get('type')} transient failure: {str(e)}"
                 errors.append(error_msg)
-                executed_actions.append({"type": action.get("type"), "error": str(e), "success": False})
+                executed_actions.append(
+                    {"type": action.get("type"), "error": str(e), "success": False}
+                )
             except WorkflowError as e:
                 error_msg = f"Action {action.get('type')} workflow error: {str(e)}"
                 errors.append(error_msg)
-                executed_actions.append({"type": action.get("type"), "error": str(e), "success": False})
+                executed_actions.append(
+                    {"type": action.get("type"), "error": str(e), "success": False}
+                )
             except asyncio.CancelledError:
                 raise
-            except Exception as e:  # noqa: BLE001 - resilience boundary for action execution
+            except (
+                Exception
+            ) as e:  # noqa: BLE001 - resilience boundary for action execution
                 error_msg = f"Action {action.get('type')} failed: {str(e)}"
                 errors.append(error_msg)
-                executed_actions.append({"type": action.get("type"), "error": str(e), "success": False})
+                executed_actions.append(
+                    {"type": action.get("type"), "error": str(e), "success": False}
+                )
 
         success = len(errors) == 0
         return WorkflowResult(
@@ -404,19 +465,25 @@ class UnifiedWorkflowService(BaseService):
     def _register_default_handlers(self):
         """Register default action handlers."""
 
-        async def notification_handler(action: dict[str, Any], context: WorkflowContext) -> str:
+        async def notification_handler(
+            action: dict[str, Any], context: WorkflowContext
+        ) -> str:
             recipient = action.get("recipient", "system")
             message = action.get("message", "Workflow notification")
             logger.info(f"NOTIFICATION to {recipient}: {message}")
             return f"Notification sent to {recipient}"
 
-        async def api_call_handler(action: dict[str, Any], context: WorkflowContext) -> dict[str, Any]:
+        async def api_call_handler(
+            action: dict[str, Any], context: WorkflowContext
+        ) -> dict[str, Any]:
             url = action.get("url", "")
             method = action.get("method", "GET")
             logger.info(f"API CALL {method} to {url}")
             return {"status": "called", "url": url, "method": method}
 
-        async def database_update_handler(action: dict[str, Any], context: WorkflowContext) -> dict[str, Any]:
+        async def database_update_handler(
+            action: dict[str, Any], context: WorkflowContext
+        ) -> dict[str, Any]:
             table = action.get("table", "")
             operation = action.get("operation", "update")
             logger.info(f"DATABASE {operation} on {table}")
@@ -425,13 +492,21 @@ class UnifiedWorkflowService(BaseService):
         # Register handlers
         self.register_action_handler(ActionType.NOTIFICATION, notification_handler)
         self.register_action_handler(ActionType.API_CALL, api_call_handler)
-        self.register_action_handler(ActionType.DATABASE_UPDATE, database_update_handler)
+        self.register_action_handler(
+            ActionType.DATABASE_UPDATE, database_update_handler
+        )
 
 
 class UnifiedWorkflowInstance(BaseWorkflow):
     """Unified workflow instance that works with all workflow types."""
 
-    def __init__(self, workflow_id: str, workflow_type: WorkflowType, steps: list[str], context: WorkflowContext):
+    def __init__(
+        self,
+        workflow_id: str,
+        workflow_type: WorkflowType,
+        steps: list[str],
+        context: WorkflowContext,
+    ):
         super().__init__(workflow_id, workflow_type.value, steps)
         self.workflow_type = workflow_type
         self.context = context
@@ -452,27 +527,47 @@ class UnifiedWorkflowInstance(BaseWorkflow):
     async def _execute_automation_step(self, step_name: str) -> WorkflowResult:
         """Execute automation-specific step."""
         logger.info(f"Executing automation step: {step_name}")
-        return WorkflowResult(success=True, step_name=step_name, message=f"Automation step completed: {step_name}")
+        return WorkflowResult(
+            success=True,
+            step_name=step_name,
+            message=f"Automation step completed: {step_name}",
+        )
 
     async def _execute_project_step(self, step_name: str) -> WorkflowResult:
         """Execute project-specific step."""
         logger.info(f"Executing project step: {step_name}")
-        return WorkflowResult(success=True, step_name=step_name, message=f"Project step completed: {step_name}")
+        return WorkflowResult(
+            success=True,
+            step_name=step_name,
+            message=f"Project step completed: {step_name}",
+        )
 
     async def _execute_task_step(self, step_name: str) -> WorkflowResult:
         """Execute task-specific step."""
         logger.info(f"Executing task step: {step_name}")
-        return WorkflowResult(success=True, step_name=step_name, message=f"Task step completed: {step_name}")
+        return WorkflowResult(
+            success=True,
+            step_name=step_name,
+            message=f"Task step completed: {step_name}",
+        )
 
     async def _execute_generic_step(self, step_name: str) -> WorkflowResult:
         """Execute generic step."""
         logger.info(f"Executing generic step: {step_name}")
-        return WorkflowResult(success=True, step_name=step_name, message=f"Generic step completed: {step_name}")
+        return WorkflowResult(
+            success=True,
+            step_name=step_name,
+            message=f"Generic step completed: {step_name}",
+        )
 
 
 # Factory functions using DRY patterns
 def create_automation_rule(
-    rule_id: str, name: str, conditions: list[dict[str, Any]], actions: list[dict[str, Any]], **kwargs
+    rule_id: str,
+    name: str,
+    conditions: list[dict[str, Any]],
+    actions: list[dict[str, Any]],
+    **kwargs,
 ) -> UnifiedWorkflowRule:
     """Create an automation rule."""
     return UnifiedWorkflowRule(
@@ -487,7 +582,11 @@ def create_automation_rule(
 
 
 def create_project_rule(
-    rule_id: str, name: str, conditions: list[dict[str, Any]], actions: list[dict[str, Any]], **kwargs
+    rule_id: str,
+    name: str,
+    conditions: list[dict[str, Any]],
+    actions: list[dict[str, Any]],
+    **kwargs,
 ) -> UnifiedWorkflowRule:
     """Create a project rule."""
     return UnifiedWorkflowRule(
@@ -502,7 +601,11 @@ def create_project_rule(
 
 
 def create_business_rule(
-    rule_id: str, name: str, conditions: list[dict[str, Any]], actions: list[dict[str, Any]], **kwargs
+    rule_id: str,
+    name: str,
+    conditions: list[dict[str, Any]],
+    actions: list[dict[str, Any]],
+    **kwargs,
 ) -> UnifiedWorkflowRule:
     """Create a business rule."""
     return UnifiedWorkflowRule(

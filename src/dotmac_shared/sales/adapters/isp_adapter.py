@@ -43,7 +43,9 @@ class ISPSalesAdapter:
         else:
             self.lead_service = None
 
-    async def create_customer_prospect(self, customer_data: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    async def create_customer_prospect(
+        self, customer_data: dict[str, Any], tenant_id: str
+    ) -> dict[str, Any]:
         """Create a sales prospect from ISP customer inquiry."""
         if not self.lead_service:
             raise RuntimeError("Lead service not available")
@@ -57,7 +59,9 @@ class ISPSalesAdapter:
             company=customer_data.get("company_name"),
             job_title=customer_data.get("job_title"),
             lead_source=self._map_isp_lead_source(customer_data.get("inquiry_source")),
-            customer_type=self._map_isp_customer_type(customer_data.get("customer_type")),
+            customer_type=self._map_isp_customer_type(
+                customer_data.get("customer_type")
+            ),
             budget=customer_data.get("monthly_budget"),
             need=customer_data.get("service_requirements"),
             timeline=customer_data.get("service_timeline"),
@@ -113,7 +117,9 @@ class ISPSalesAdapter:
             "follow_up_required": interaction_data.get("follow_up_required", False),
         }
 
-    async def get_territory_prospects(self, territory_code: str, tenant_id: str) -> list[dict[str, Any]]:
+    async def get_territory_prospects(
+        self, territory_code: str, tenant_id: str
+    ) -> list[dict[str, Any]]:
         """Get prospects for a specific ISP territory."""
         if not self.lead_service:
             raise RuntimeError("Lead service not available")
@@ -124,7 +130,9 @@ class ISPSalesAdapter:
             "lead_status": ["new", "contacted", "qualified"],
         }
 
-        leads_result = await self.lead_service.list_leads(tenant_id=tenant_id, filters=territory_filters)
+        leads_result = await self.lead_service.list_leads(
+            tenant_id=tenant_id, filters=territory_filters
+        )
 
         # Format for ISP consumption
         prospects = []
@@ -140,7 +148,9 @@ class ISPSalesAdapter:
                         "state": lead.state_province,
                         "zip": lead.postal_code,
                     },
-                    "interested_services": self._extract_interested_services(lead.notes),
+                    "interested_services": self._extract_interested_services(
+                        lead.notes
+                    ),
                     "lead_score": lead.lead_score,
                     "status": lead.lead_status,
                     "assigned_technician": lead.assigned_to,
@@ -170,9 +180,19 @@ class ISPSalesAdapter:
         return {
             "total_prospects": total_prospects,
             "high_value_prospects": high_value_prospects,
-            "conversion_opportunities": len([lead for lead in leads_result.get("leads", []) if lead.lead_score >= 70]),
-            "service_territories": self._get_territory_breakdown(leads_result.get("leads", [])),
-            "pipeline_value": self._calculate_pipeline_value(leads_result.get("leads", [])),
+            "conversion_opportunities": len(
+                [
+                    lead
+                    for lead in leads_result.get("leads", [])
+                    if lead.lead_score >= 70
+                ]
+            ),
+            "service_territories": self._get_territory_breakdown(
+                leads_result.get("leads", [])
+            ),
+            "pipeline_value": self._calculate_pipeline_value(
+                leads_result.get("leads", [])
+            ),
         }
 
     def _map_isp_lead_source(self, inquiry_source: str) -> str:

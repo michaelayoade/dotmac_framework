@@ -13,7 +13,10 @@ class DotMacFormatter(logging.Formatter):
     """Custom formatter for DotMac Framework logs"""
 
     def __init__(self):
-        super().__init__(fmt="%(asctime)s [%(levelname)8s] %(name)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+        super().__init__(
+            fmt="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
 
     def format(self, record):
         # Add service context if available
@@ -55,7 +58,10 @@ def get_logger(name: str, service_name: Optional[str] = None) -> logging.Logger:
 
 
 def setup_logging(
-    level: str = "INFO", service_name: Optional[str] = None, enable_json: bool = False, log_file: Optional[str] = None
+    level: str = "INFO",
+    service_name: Optional[str] = None,
+    enable_json: bool = False,
+    log_file: Optional[str] = None,
 ) -> None:
     """
     Setup centralized logging configuration
@@ -135,7 +141,9 @@ def setup_logging(
 
     # Log the setup completion
     logger = get_logger(__name__, service_name)
-    logger.info(f"Logging configured: level={level}, service={service_name}, json={enable_json}")
+    logger.info(
+        f"Logging configured: level={level}, service={service_name}, json={enable_json}"
+    )
 
 
 # Convenience function for adding correlation ID to logs
@@ -170,4 +178,9 @@ def setup_environment_logging():
     enable_json = os.getenv("LOG_FORMAT", "").lower() == "json"
     log_file = os.getenv("LOG_FILE")
 
-    setup_logging(level=level, service_name=service_name, enable_json=enable_json, log_file=log_file)
+    setup_logging(
+        level=level,
+        service_name=service_name,
+        enable_json=enable_json,
+        log_file=log_file,
+    )

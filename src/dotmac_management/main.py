@@ -21,6 +21,8 @@ import logging
 import os
 from typing import Optional
 
+from fastapi import FastAPI, Request
+
 from dotmac.platform.auth.edge_validation import EdgeAuthMiddleware, EdgeJWTValidator
 from dotmac.platform.auth.service_tokens import (
     ServiceAuthMiddleware,
@@ -38,7 +40,6 @@ from dotmac_shared.application import create_management_platform_app
 
 # Import new observability and auth systems
 from dotmac_shared.middleware.dotmac_middleware.tenant import TenantMiddleware
-from fastapi import FastAPI, Request
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,9 @@ async def create_app() -> FastAPI:
     - Multi-tenant orchestration
     - Kubernetes integration
     """
-    logger.info("Creating Management Platform application with full observability integration...")
+    logger.info(
+        "Creating Management Platform application with full observability integration..."
+    )
 
     # Production baseline guard (opt-in strict mode)
     if (
@@ -94,8 +97,12 @@ async def create_app() -> FastAPI:
         environment=environment,
         service_version=service_version,
         # Environment-specific exporter configuration
-        tracing_exporters=["otlp", "prometheus"] if environment == "production" else ["console"],
-        metrics_exporters=["otlp", "prometheus"] if environment == "production" else ["console"],
+        tracing_exporters=["otlp", "prometheus"]
+        if environment == "production"
+        else ["console"],
+        metrics_exporters=["otlp", "prometheus"]
+        if environment == "production"
+        else ["console"],
     )
     otel_bootstrap = initialize_otel(otel_config)
 
@@ -112,12 +119,16 @@ async def create_app() -> FastAPI:
             meter = get_meter_provider().get_meter("dotmac-management", "1.0.0")
             metrics_registry.set_otel_meter(meter)
         except ImportError:
-            logger.warning("OpenTelemetry metrics API not available; skipping OTEL meter setup")
+            logger.warning(
+                "OpenTelemetry metrics API not available; skipping OTEL meter setup"
+            )
             if hasattr(otel_bootstrap, "get_meter"):
                 try:
                     metrics_registry.set_otel_meter(otel_bootstrap.get_meter())
                 except AttributeError:
-                    logger.warning("OTEL bootstrap missing get_meter; continuing without OTEL meter")
+                    logger.warning(
+                        "OTEL bootstrap missing get_meter; continuing without OTEL meter"
+                    )
 
     # 3. Initialize tenant metrics system
     logger.info("Initializing tenant metrics...")
@@ -130,7 +141,9 @@ async def create_app() -> FastAPI:
 
     # 4. Configure service-to-service authentication
     logger.info("Configuring service authentication...")
-    service_signing_secret = os.getenv("SERVICE_SIGNING_SECRET", "dev-secret-key-change-in-production")
+    service_signing_secret = os.getenv(
+        "SERVICE_SIGNING_SECRET", "dev-secret-key-change-in-production"
+    )
     service_token_manager = create_service_token_manager(
         algorithm="HS256",
         signing_secret=service_signing_secret,
@@ -156,7 +169,9 @@ async def create_app() -> FastAPI:
 
     # 5. Initialize tenant identity resolver
     logger.info("Initializing tenant identity resolver...")
-    from dotmac_shared.middleware.dotmac_middleware.tenant import TenantConfig as DotmacTenantConfig
+    from dotmac_shared.middleware.dotmac_middleware.tenant import (
+        TenantConfig as DotmacTenantConfig,
+    )
 
     # Create tenant configuration for management platform
     tenant_resolver_config = DotmacTenantConfig(
@@ -191,7 +206,9 @@ async def create_app() -> FastAPI:
 
     jwt_service = JWTService(algorithm="HS256", secret=jwt_secret)
 
-    edge_validator = EdgeJWTValidator(jwt_service=jwt_service, tenant_resolver=tenant_resolver_func)
+    edge_validator = EdgeJWTValidator(
+        jwt_service=jwt_service, tenant_resolver=tenant_resolver_func
+    )
 
     # Configure route sensitivity patterns for management platform
     edge_validator.configure_sensitivity_patterns(
@@ -230,7 +247,9 @@ async def create_app() -> FastAPI:
     )
 
     # Edge JWT validation middleware
-    app.add_middleware(EdgeAuthMiddleware, validator=edge_validator, service_name=service_name)
+    app.add_middleware(
+        EdgeAuthMiddleware, validator=edge_validator, service_name=service_name
+    )
 
     # Tenant middleware (outermost - applied first)
     app.add_middleware(TenantMiddleware, config=tenant_resolver_config)
@@ -243,7 +262,9 @@ async def create_app() -> FastAPI:
     app.state.tenant_resolver_config = tenant_resolver_config
     app.state.edge_validator = edge_validator
 
-    logger.info("✅ Management Platform application created with full observability integration")
+    logger.info(
+        "✅ Management Platform application created with full observability integration"
+    )
 
     return app
 
@@ -286,7 +307,9 @@ async def unified_metrics_endpoint():
         metrics_registry = getattr(app.state, "metrics_registry", None)
         if not metrics_registry:
             # Fallback to basic metrics if registry not available
-            return PlainTextResponse("# Metrics registry not initialized\n", media_type="text/plain")
+            return PlainTextResponse(
+                "# Metrics registry not initialized\n", media_type="text/plain"
+            )
 
         # Get Prometheus registry and generate metrics
         prometheus_registry = metrics_registry.get_prometheus_registry()
@@ -309,12 +332,16 @@ async def unified_metrics_endpoint():
         # Combine unified metrics with platform-specific metrics
         combined_metrics = metrics_output + platform_metrics
 
-        return PlainTextResponse(content=combined_metrics, media_type="text/plain; charset=utf-8")
+        return PlainTextResponse(
+            content=combined_metrics, media_type="text/plain; charset=utf-8"
+        )
 
     except (ValueError, OSError, AttributeError) as e:
         logger.exception("Failed to render unified metrics endpoint")
         error_response = f"# Error rendering metrics: {type(e).__name__}\n"
-        return PlainTextResponse(content=error_response, media_type="text/plain; charset=utf-8")
+        return PlainTextResponse(
+            content=error_response, media_type="text/plain; charset=utf-8"
+        )
 
 
 # Example routes demonstrating tenant-aware functionality
@@ -348,7 +375,11 @@ async def get_tenant_dashboard(request):
         # Generate tenant-specific dashboard configuration
         dashboard_config = None
         if hasattr(app.state, "tenant_metrics"):
-            dashboard_config = app.state.tenant_metrics.generate_tenant_dashboard_config(tenant_context)
+            dashboard_config = (
+                app.state.tenant_metrics.generate_tenant_dashboard_config(
+                    tenant_context
+                )
+            )
 
         return {
             "tenant_id": tenant_context.tenant_id,
@@ -468,7 +499,9 @@ if __name__ == "__main__":
 
         host = settings.host
         port = settings.port
-        reload = getattr(settings, "reload", False) and getattr(settings, "is_development", False)
+        reload = getattr(settings, "reload", False) and getattr(
+            settings, "is_development", False
+        )
         log_level = getattr(settings, "log_level", "INFO").lower()
     except ImportError:
         # Use environment variables as fallback
@@ -477,7 +510,8 @@ if __name__ == "__main__":
         host = os.getenv("HOST", "0.0.0.0")
         port = int(os.getenv("PORT", "8001"))
         reload = (
-            os.getenv("RELOAD", "false").lower() == "true" and os.getenv("ENVIRONMENT", "production") == "development"
+            os.getenv("RELOAD", "false").lower() == "true"
+            and os.getenv("ENVIRONMENT", "production") == "development"
         )
         log_level = os.getenv("LOG_LEVEL", "info").lower()
 

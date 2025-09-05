@@ -32,7 +32,9 @@ class DotMacSettings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
     # Database settings
-    database_url: str = Field(default="sqlite+aiosqlite:///./dotmac.db", alias="DATABASE_URL")
+    database_url: str = Field(
+        default="sqlite+aiosqlite:///./dotmac.db", alias="DATABASE_URL"
+    )
     database_echo: bool = Field(default=False, alias="DATABASE_ECHO")
     database_pool_size: int = Field(default=10, alias="DATABASE_POOL_SIZE")
 
@@ -41,12 +43,18 @@ class DotMacSettings(BaseSettings):
     redis_password: Optional[str] = Field(default=None, alias="REDIS_PASSWORD")
 
     # Security settings
-    secret_key: str = Field(default="your-secret-key-change-in-production", alias="SECRET_KEY")
-    access_token_expire_minutes: int = Field(default=30, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
+    secret_key: str = Field(
+        default="your-secret-key-change-in-production", alias="SECRET_KEY"
+    )
+    access_token_expire_minutes: int = Field(
+        default=30, alias="ACCESS_TOKEN_EXPIRE_MINUTES"
+    )
     refresh_token_expire_days: int = Field(default=7, alias="REFRESH_TOKEN_EXPIRE_DAYS")
 
     # CORS settings
-    cors_origins: list[str] = Field(default=["http://localhost:3000", "http://localhost:8000"], alias="CORS_ORIGINS")
+    cors_origins: list[str] = Field(
+        default=["http://localhost:3000", "http://localhost:8000"], alias="CORS_ORIGINS"
+    )
     cors_allow_credentials: bool = Field(default=True, alias="CORS_ALLOW_CREDENTIALS")
 
     # Monitoring settings
@@ -56,18 +64,24 @@ class DotMacSettings(BaseSettings):
 
     # SignOz settings
     signoz_endpoint: Optional[str] = Field(default=None, alias="SIGNOZ_ENDPOINT")
-    signoz_access_token: Optional[str] = Field(default=None, alias="SIGNOZ_ACCESS_TOKEN")
+    signoz_access_token: Optional[str] = Field(
+        default=None, alias="SIGNOZ_ACCESS_TOKEN"
+    )
 
     # File upload settings
     upload_directory: str = Field(default="./uploads", alias="UPLOAD_DIRECTORY")
-    max_upload_size: int = Field(default=10 * 1024 * 1024, alias="MAX_UPLOAD_SIZE")  # 10MB
+    max_upload_size: int = Field(
+        default=10 * 1024 * 1024, alias="MAX_UPLOAD_SIZE"
+    )  # 10MB
 
     # Cache settings
     cache_ttl: int = Field(default=300, alias="CACHE_TTL")  # 5 minutes
     cache_enabled: bool = Field(default=True, alias="CACHE_ENABLED")
 
     # Multi-tenant settings
-    tenant_isolation_enabled: bool = Field(default=True, alias="TENANT_ISOLATION_ENABLED")
+    tenant_isolation_enabled: bool = Field(
+        default=True, alias="TENANT_ISOLATION_ENABLED"
+    )
     default_tenant_id: str = Field(default="default", alias="DEFAULT_TENANT_ID")
 
     # Plugin settings
@@ -81,7 +95,9 @@ class DotMacSettings(BaseSettings):
     # Network monitoring settings
     snmp_community: str = Field(default="public", alias="SNMP_COMMUNITY")
     snmp_port: int = Field(default=161, alias="SNMP_PORT")
-    monitoring_interval: int = Field(default=300, alias="MONITORING_INTERVAL")  # 5 minutes
+    monitoring_interval: int = Field(
+        default=300, alias="MONITORING_INTERVAL"
+    )  # 5 minutes
 
     model_config = SettingsConfigDict(
         env_file=".env",

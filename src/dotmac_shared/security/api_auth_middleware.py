@@ -71,7 +71,9 @@ class APIAuthMiddleware:
             logger.error(f"Authentication error: {e}")
             return {"authenticated": False, "error": f"Authentication failed: {str(e)}"}
 
-    def _check_permissions(self, payload: dict[str, Any], required_scope: Optional[str] = None) -> bool:
+    def _check_permissions(
+        self, payload: dict[str, Any], required_scope: Optional[str] = None
+    ) -> bool:
         """Check if user has required permissions."""
         if not required_scope:
             return True
@@ -79,7 +81,9 @@ class APIAuthMiddleware:
         user_scopes = payload.get("scope", [])
         return required_scope in user_scopes
 
-    def generate_token(self, user_id: str, scopes: Optional[list] = None, expires_in: int = 3600) -> str:
+    def generate_token(
+        self, user_id: str, scopes: Optional[list] = None, expires_in: int = 3600
+    ) -> str:
         """Generate JWT token for user."""
         now = int(time.time())
         payload = {
@@ -190,7 +194,9 @@ class InputSanitizer:
         """__init__ operation."""
         pass
 
-    def sanitize_html(self, html_content: str, allowed_tags: Optional[list] = None) -> str:
+    def sanitize_html(
+        self, html_content: str, allowed_tags: Optional[list] = None
+    ) -> str:
         """Sanitize HTML content."""
         try:
             import bleach

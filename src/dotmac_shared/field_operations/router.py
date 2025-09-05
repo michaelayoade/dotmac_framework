@@ -48,14 +48,21 @@ def handle_service_exceptions(func):
         try:
             return await func(*args, **kwargs)
         except NotFoundError as e:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+            ) from e
         except ValidationError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            ) from e
         except BusinessLogicError as e:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+            ) from e
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error",
             ) from e
 
     return wrapper
@@ -69,7 +76,11 @@ async def health() -> dict[str, str]:
 
 
 # Technician Management Endpoints
-@router.post("/technicians", response_model=TechnicianResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/technicians",
+    response_model=TechnicianResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @handle_service_exceptions
 async def create_technician(
     technician_data: TechnicianCreate,
@@ -85,10 +96,18 @@ async def create_technician(
 async def get_available_technicians(
     tenant_id: str = Query(..., description="Tenant ID"),
     service: FieldOperationsService = Depends(get_field_service),
-    work_order_type: Optional[WorkOrderType] = Query(None, description="Filter by work order type"),
-    latitude: Optional[float] = Query(None, description="Location latitude for radius search"),
-    longitude: Optional[float] = Query(None, description="Location longitude for radius search"),
-    radius_km: float = Query(50.0, ge=1.0, le=500.0, description="Search radius in kilometers"),
+    work_order_type: Optional[WorkOrderType] = Query(
+        None, description="Filter by work order type"
+    ),
+    latitude: Optional[float] = Query(
+        None, description="Location latitude for radius search"
+    ),
+    longitude: Optional[float] = Query(
+        None, description="Location longitude for radius search"
+    ),
+    radius_km: float = Query(
+        50.0, ge=1.0, le=500.0, description="Search radius in kilometers"
+    ),
 ) -> list[TechnicianResponse]:
     """Get available technicians with optional filtering."""
     from ..location.models import Coordinates
@@ -129,7 +148,11 @@ async def update_technician(
 
 
 # Work Order Management Endpoints
-@router.post("/work-orders", response_model=WorkOrderResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/work-orders",
+    response_model=WorkOrderResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @handle_service_exceptions
 async def create_work_order(
     work_order_data: WorkOrderCreate,
@@ -146,7 +169,9 @@ async def get_technician_work_orders(
     technician_id: UUID = Query(..., description="Technician ID"),
     tenant_id: str = Query(..., description="Tenant ID"),
     service: FieldOperationsService = Depends(get_field_service),
-    status_filter: Optional[list[WorkOrderStatus]] = Query(None, description="Filter by status"),
+    status_filter: Optional[list[WorkOrderStatus]] = Query(
+        None, description="Filter by status"
+    ),
     date_from: Optional[date] = Query(None, description="Start date filter"),
     date_to: Optional[date] = Query(None, description="End date filter"),
 ) -> list[WorkOrderResponse]:
@@ -182,7 +207,9 @@ async def assign_technician_to_work_order(
     service: FieldOperationsService = Depends(get_field_service),
 ) -> WorkOrderResponse:
     """Assign a technician to a work order."""
-    return service.assign_technician(tenant_id, work_order_id, technician_id, assigned_by)
+    return service.assign_technician(
+        tenant_id, work_order_id, technician_id, assigned_by
+    )
 
 
 @router.post("/work-orders/{work_order_id}/dispatch", response_model=TechnicianResponse)
@@ -196,7 +223,9 @@ async def intelligent_dispatch(
     return service.intelligent_dispatch(tenant_id, work_order_id)
 
 
-@router.post("/work-orders/{work_order_id}/emergency-dispatch", response_model=TechnicianResponse)
+@router.post(
+    "/work-orders/{work_order_id}/emergency-dispatch", response_model=TechnicianResponse
+)
 @handle_service_exceptions
 async def emergency_dispatch(
     work_order_id: UUID,
@@ -242,7 +271,9 @@ async def complete_work_order(
     tenant_id: str = Query(..., description="Tenant ID"),
     service: FieldOperationsService = Depends(get_field_service),
     completion_notes: Optional[str] = Query(None, description="Completion notes"),
-    customer_rating: Optional[int] = Query(None, ge=1, le=5, description="Customer satisfaction rating"),
+    customer_rating: Optional[int] = Query(
+        None, ge=1, le=5, description="Customer satisfaction rating"
+    ),
     updated_by: Optional[str] = Query(None, description="User completing work order"),
 ) -> WorkOrderResponse:
     """Mark work order as completed with optional customer feedback."""
@@ -270,7 +301,9 @@ async def update_technician_location(
     service: FieldOperationsService = Depends(get_field_service),
 ) -> dict[str, str]:
     """Update technician's current location."""
-    location_data = TechnicianUpdate(current_location={"latitude": latitude, "longitude": longitude})
+    location_data = TechnicianUpdate(
+        current_location={"latitude": latitude, "longitude": longitude}
+    )
 
     service.update_technician(tenant_id, technician_id, location_data)
     return {"message": "Location updated successfully"}
@@ -292,7 +325,9 @@ async def get_work_order_tracking(
         "technician": {
             "id": str(work_order.technician_id) if work_order.technician_id else None,
             "name": work_order.technician.full_name if work_order.technician else None,
-            "location": work_order.technician.current_location if work_order.technician else None,
+            "location": work_order.technician.current_location
+            if work_order.technician
+            else None,
         },
         "service_location": {
             "address": work_order.service_address,
@@ -311,7 +346,9 @@ async def get_work_order_tracking(
 
 
 # Performance and Analytics Endpoints
-@router.get("/technicians/{technician_id}/performance", response_model=PerformanceMetrics)
+@router.get(
+    "/technicians/{technician_id}/performance", response_model=PerformanceMetrics
+)
 @handle_service_exceptions
 async def get_technician_performance(
     technician_id: UUID,
@@ -321,10 +358,15 @@ async def get_technician_performance(
     service: FieldOperationsService = Depends(get_field_service),
 ) -> PerformanceMetrics:
     """Calculate comprehensive performance metrics for a technician."""
-    return service.calculate_technician_performance(tenant_id, technician_id, period_start, period_end)
+    return service.calculate_technician_performance(
+        tenant_id, technician_id, period_start, period_end
+    )
 
 
-@router.get("/technicians/{technician_id}/route-optimization", response_model=list[WorkOrderResponse])
+@router.get(
+    "/technicians/{technician_id}/route-optimization",
+    response_model=list[WorkOrderResponse],
+)
 @handle_service_exceptions
 async def optimize_technician_route(
     technician_id: UUID,
@@ -356,18 +398,27 @@ async def get_mobile_dashboard(
     )
 
     # Get optimized route for today
-    optimized_route = service.optimize_technician_route(tenant_id, technician_id, date.today())
+    optimized_route = service.optimize_technician_route(
+        tenant_id, technician_id, date.today()
+    )
 
     return {
         "technician": technician,
         "today_summary": {
             "total_jobs": len(today_orders),
-            "completed_jobs": len([wo for wo in today_orders if wo.status == WorkOrderStatus.COMPLETED]),
+            "completed_jobs": len(
+                [wo for wo in today_orders if wo.status == WorkOrderStatus.COMPLETED]
+            ),
             "pending_jobs": len(
                 [
                     wo
                     for wo in today_orders
-                    if wo.status in [WorkOrderStatus.SCHEDULED, WorkOrderStatus.DISPATCHED, WorkOrderStatus.IN_PROGRESS]
+                    if wo.status
+                    in [
+                        WorkOrderStatus.SCHEDULED,
+                        WorkOrderStatus.DISPATCHED,
+                        WorkOrderStatus.IN_PROGRESS,
+                    ]
                 ]
             ),
         },
@@ -394,7 +445,9 @@ async def mobile_checkin(
 ) -> dict[str, str]:
     """Mobile app check-in at work order location."""
     # Update technician location
-    location_update = TechnicianUpdate(current_location={"latitude": latitude, "longitude": longitude})
+    location_update = TechnicianUpdate(
+        current_location={"latitude": latitude, "longitude": longitude}
+    )
     service.update_technician(tenant_id, technician_id, location_update)
 
     # Update work order status to on-site
@@ -418,8 +471,12 @@ async def mobile_checkout(
     tenant_id: str = Query(..., description="Tenant ID"),
     service: FieldOperationsService = Depends(get_field_service),
     completion_notes: Optional[str] = Query(None, description="Job completion notes"),
-    customer_signature: Optional[str] = Query(None, description="Customer signature data"),
-    customer_rating: Optional[int] = Query(None, ge=1, le=5, description="Customer satisfaction rating"),
+    customer_signature: Optional[str] = Query(
+        None, description="Customer signature data"
+    ),
+    customer_rating: Optional[int] = Query(
+        None, ge=1, le=5, description="Customer satisfaction rating"
+    ),
 ) -> dict[str, str]:
     """Mobile app checkout after work order completion."""
     # Build completion notes with customer feedback

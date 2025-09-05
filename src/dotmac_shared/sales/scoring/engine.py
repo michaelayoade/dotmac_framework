@@ -109,7 +109,9 @@ class LeadScoringEngine:
     def remove_scoring_strategy(self, strategy_name: str) -> bool:
         """Remove a scoring strategy by name."""
         original_count = len(self.strategies)
-        self.strategies = [s for s in self.strategies if s.get_strategy_name() != strategy_name]
+        self.strategies = [
+            s for s in self.strategies if s.get_strategy_name() != strategy_name
+        ]
         removed = len(self.strategies) < original_count
 
         if removed:

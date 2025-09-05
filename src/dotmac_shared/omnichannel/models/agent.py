@@ -7,12 +7,7 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AgentStatus(str, Enum):
@@ -39,7 +34,9 @@ class AgentAvailability(BaseModel):
 
     agent_id: UUID
     day_of_week: int = Field(..., ge=0, le=6)  # 0=Monday, 6=Sunday
-    start_time: str = Field(..., pattern=r"^([01][0-9]|2[0-3]):[0-5][0-9]$")  # HH:MM format
+    start_time: str = Field(
+        ..., pattern=r"^([01][0-9]|2[0-3]):[0-5][0-9]$"
+    )  # HH:MM format
     end_time: str = Field(..., pattern=r"^([01][0-9]|2[0-3]):[0-5][0-9]$")
     timezone: str = "UTC"
     is_available: bool = True
@@ -127,7 +124,9 @@ class AgentModel(BaseModel):
         """Ensure current count doesn't exceed maximum."""
         max_concurrent = values.get("max_concurrent_interactions", 5)
         if v > max_concurrent:
-            raise ValueError(f"Current interaction count ({v}) cannot exceed maximum ({max_concurrent})")
+            raise ValueError(
+                f"Current interaction count ({v}) cannot exceed maximum ({max_concurrent})"
+            )
         return v
 
 

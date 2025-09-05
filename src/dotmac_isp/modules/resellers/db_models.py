@@ -8,8 +8,9 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import JSON, Boolean, Column, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text
+from sqlalchemy import JSON, Boolean, Column, Date, DateTime
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -58,7 +59,12 @@ class ResellerApplication(Base):
 
     # Application tracking
     application_id = Column(String(100), nullable=False, unique=True, index=True)
-    status = Column(SQLEnum(ApplicationStatus), default=ApplicationStatus.SUBMITTED, nullable=False, index=True)
+    status = Column(
+        SQLEnum(ApplicationStatus),
+        default=ApplicationStatus.SUBMITTED,
+        nullable=False,
+        index=True,
+    )
 
     # Company information
     company_name = Column(String(300), nullable=False, index=True)
@@ -117,10 +123,14 @@ class ResellerApplication(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Relationship to approved reseller
-    approved_reseller_id = Column(UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=True)
+    approved_reseller_id = Column(
+        UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=True
+    )
     approved_reseller = relationship("Reseller", back_populates="applications")
 
     # Indexes for performance
@@ -131,9 +141,7 @@ class ResellerApplication(Base):
     )
 
     def __repr__(self):
-        return (
-            f"<ResellerApplication(id='{self.application_id}', company='{self.company_name}', status='{self.status}')>"
-        )
+        return f"<ResellerApplication(id='{self.application_id}', company='{self.company_name}', status='{self.status}')>"
 
 
 class Reseller(Base):
@@ -152,7 +160,12 @@ class Reseller(Base):
 
     # Classification
     reseller_type = Column(SQLEnum(ResellerType), nullable=False, index=True)
-    status = Column(SQLEnum(ResellerStatus), default=ResellerStatus.ACTIVE, nullable=False, index=True)
+    status = Column(
+        SQLEnum(ResellerStatus),
+        default=ResellerStatus.ACTIVE,
+        nullable=False,
+        index=True,
+    )
 
     # Contact information
     primary_contact_name = Column(String(200), nullable=False)
@@ -225,14 +238,24 @@ class Reseller(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
     created_by = Column(String(200), nullable=True)
 
     # Relationships
-    applications = relationship("ResellerApplication", back_populates="approved_reseller")
-    customers = relationship("ResellerCustomer", back_populates="reseller", cascade="all, delete-orphan")
-    commissions = relationship("ResellerCommission", back_populates="reseller", cascade="all, delete-orphan")
-    opportunities = relationship("ResellerOpportunity", back_populates="reseller", cascade="all, delete-orphan")
+    applications = relationship(
+        "ResellerApplication", back_populates="approved_reseller"
+    )
+    customers = relationship(
+        "ResellerCustomer", back_populates="reseller", cascade="all, delete-orphan"
+    )
+    commissions = relationship(
+        "ResellerCommission", back_populates="reseller", cascade="all, delete-orphan"
+    )
+    opportunities = relationship(
+        "ResellerOpportunity", back_populates="reseller", cascade="all, delete-orphan"
+    )
 
     # Indexes for performance
     __table_args__ = (
@@ -264,12 +287,16 @@ class ResellerCustomer(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # Relationships
-    reseller_id = Column(UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False, index=True)
+    reseller_id = Column(
+        UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False, index=True
+    )
     customer_id = Column(UUID(as_uuid=True), nullable=False, index=True)
 
     # Relationship details
     relationship_start_date = Column(Date, nullable=False, default=date.today)
-    relationship_status = Column(String(50), default="active", nullable=False, index=True)
+    relationship_status = Column(
+        String(50), default="active", nullable=False, index=True
+    )
     assignment_type = Column(String(50), nullable=True)  # direct, referral, inherited
 
     # Service details
@@ -302,7 +329,9 @@ class ResellerCustomer(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Relationships
     reseller = relationship("Reseller", back_populates="customers")
@@ -326,7 +355,9 @@ class ResellerOpportunity(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # Relationships
-    reseller_id = Column(UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False, index=True)
+    reseller_id = Column(
+        UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False, index=True
+    )
 
     # Opportunity identification
     opportunity_id = Column(String(100), nullable=False, unique=True, index=True)
@@ -340,7 +371,9 @@ class ResellerOpportunity(Base):
     prospect_company = Column(String(200), nullable=True)
 
     # Opportunity details
-    opportunity_type = Column(String(50), nullable=False)  # new_customer, upsell, renewal
+    opportunity_type = Column(
+        String(50), nullable=False
+    )  # new_customer, upsell, renewal
     estimated_value = Column(Numeric(10, 2), nullable=True)
     probability = Column(Integer, default=50, nullable=False)
 
@@ -380,7 +413,9 @@ class ResellerOpportunity(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Relationships
     reseller = relationship("Reseller", back_populates="opportunities")
@@ -398,12 +433,14 @@ class ResellerOpportunity(Base):
 
     @property
     def is_overdue(self) -> bool:
-        return self.expected_close_date and date.today() > self.expected_close_date and self.is_active
+        return (
+            self.expected_close_date
+            and date.today() > self.expected_close_date
+            and self.is_active
+        )
 
     def __repr__(self):
-        return (
-            f"<ResellerOpportunity(id='{self.opportunity_id}', name='{self.opportunity_name}', stage='{self.stage}')>"
-        )
+        return f"<ResellerOpportunity(id='{self.opportunity_id}', name='{self.opportunity_name}', stage='{self.stage}')>"
 
 
 class ResellerCommission(Base):
@@ -415,7 +452,9 @@ class ResellerCommission(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # Relationships
-    reseller_id = Column(UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False, index=True)
+    reseller_id = Column(
+        UUID(as_uuid=True), ForeignKey("resellers.id"), nullable=False, index=True
+    )
     customer_id = Column(UUID(as_uuid=True), nullable=True, index=True)
     service_id = Column(UUID(as_uuid=True), nullable=True, index=True)
 
@@ -457,7 +496,9 @@ class ResellerCommission(Base):
 
     # Audit fields
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Relationships
     reseller = relationship("Reseller", back_populates="commissions")
@@ -471,7 +512,11 @@ class ResellerCommission(Base):
 
     @property
     def is_overdue(self) -> bool:
-        return self.payment_status == "pending" and self.payment_due_date and date.today() > self.payment_due_date
+        return (
+            self.payment_status == "pending"
+            and self.payment_due_date
+            and date.today() > self.payment_due_date
+        )
 
     @property
     def days_until_due(self) -> Optional[int]:

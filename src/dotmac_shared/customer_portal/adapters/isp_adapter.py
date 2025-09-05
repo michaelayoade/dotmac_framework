@@ -97,7 +97,9 @@ class ISPPortalAdapter(CustomerPortalAdapter):
             service_provisioning = ServiceProvisioningService(db, str(self.tenant_id))
 
             # Get services from ISP framework
-            services = await service_provisioning.get_customer_services(str(customer_id))
+            services = await service_provisioning.get_customer_services(
+                str(customer_id)
+            )
 
             # Convert to standardized format
             service_summaries = []
@@ -110,7 +112,11 @@ class ISPPortalAdapter(CustomerPortalAdapter):
                     monthly_cost=Decimal(str(service.monthly_rate)),
                     installation_date=service.installation_date,
                     next_renewal=service.next_billing_date,
-                    usage_allowance=(f"{service.data_allowance_gb}GB" if service.data_allowance_gb else None),
+                    usage_allowance=(
+                        f"{service.data_allowance_gb}GB"
+                        if service.data_allowance_gb
+                        else None
+                    ),
                     current_usage=None,  # Will be populated by usage query
                 )
 
@@ -121,7 +127,9 @@ class ISPPortalAdapter(CustomerPortalAdapter):
                         if usage:
                             summary.current_usage = f"{usage:.2f}GB"
                     except Exception as usage_e:
-                        logger.warning(f"Failed to get usage for service {service.id}: {usage_e}")
+                        logger.warning(
+                            f"Failed to get usage for service {service.id}: {usage_e}"
+                        )
 
                 service_summaries.append(summary)
 
@@ -220,7 +228,9 @@ class ISPPortalAdapter(CustomerPortalAdapter):
             logger.error(f"Failed to get ISP platform data for {customer_id}: {e}")
             return {"platform_type": "isp_framework"}
 
-    async def update_customer_custom_fields(self, customer_id: UUID, custom_fields: dict[str, Any]) -> bool:
+    async def update_customer_custom_fields(
+        self, customer_id: UUID, custom_fields: dict[str, Any]
+    ) -> bool:
         """Update ISP customer custom fields."""
         try:
             # Get database session
@@ -230,7 +240,9 @@ class ISPPortalAdapter(CustomerPortalAdapter):
             customer_service = CustomerService(db, str(self.tenant_id))
 
             # Update custom fields (this would be ISP-specific fields)
-            await customer_service.update_customer_metadata(customer_id=str(customer_id), metadata=custom_fields)
+            await customer_service.update_customer_metadata(
+                customer_id=str(customer_id), metadata=custom_fields
+            )
 
             return True
 
@@ -336,7 +348,9 @@ class ISPPortalAdapter(CustomerPortalAdapter):
 
             # Get current month usage
             now = datetime.now()
-            start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            start_of_month = now.replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
 
             usage_data = await analytics_service.get_service_usage(
                 service_id=str(service_id), start_date=start_of_month, end_date=now

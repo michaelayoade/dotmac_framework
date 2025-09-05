@@ -61,7 +61,8 @@ class TenantFactory(BaseFactory):
             "id": str(uuid4()),
             "name": kwargs.get("name") or generator.generate(DataType.COMPANY),
             "subdomain": kwargs.get("subdomain") or f"isp{secrets.token_hex(4)}",
-            "domain": kwargs.get("domain") or f"{kwargs.get('subdomain', 'test')}.example.com",
+            "domain": kwargs.get("domain")
+            or f"{kwargs.get('subdomain', 'test')}.example.com",
             "status": "active",
             "plan": kwargs.get("plan", "professional"),
             "region": kwargs.get("region", "us-east-1"),
@@ -171,10 +172,18 @@ class CustomerFactory(TenantIsolatedFactory):
             "email": generator.generate(DataType.EMAIL),
             "phone": generator.generate(DataType.PHONE),
             "address": generator.generate(DataType.ADDRESS),
-            "billing_address": kwargs.get("billing_address"),  # Will default to same as address
-            "company_name": generator.generate(DataType.COMPANY) if customer_type == "business" else None,
-            "tax_id": f"TAX{secrets.token_hex(6).upper()}" if customer_type == "business" else None,
-            "credit_limit": Decimal("1000.00") if customer_type == "business" else Decimal("500.00"),
+            "billing_address": kwargs.get(
+                "billing_address"
+            ),  # Will default to same as address
+            "company_name": generator.generate(DataType.COMPANY)
+            if customer_type == "business"
+            else None,
+            "tax_id": f"TAX{secrets.token_hex(6).upper()}"
+            if customer_type == "business"
+            else None,
+            "credit_limit": Decimal("1000.00")
+            if customer_type == "business"
+            else Decimal("500.00"),
             "payment_terms": kwargs.get("payment_terms", 30),
             "notes": "",
             **self._create_tenant_context(),
@@ -451,20 +460,40 @@ class DeviceFactory(TenantIsolatedFactory):
 
     def _get_model_for_type(self, device_type: str) -> str:
         """Get realistic model for device type."""
-        models = {"router": "ISR-4331", "switch": "SG300-28", "modem": "DPC3008", "access_point": "WAP571"}
+        models = {
+            "router": "ISR-4331",
+            "switch": "SG300-28",
+            "modem": "DPC3008",
+            "access_point": "WAP571",
+        }
         return models.get(device_type, "GENERIC-001")
 
     def _get_manufacturer_for_type(self, device_type: str) -> str:
         """Get manufacturer for device type."""
-        manufacturers = {"router": "Cisco", "switch": "Cisco", "modem": "Arris", "access_point": "Cisco"}
+        manufacturers = {
+            "router": "Cisco",
+            "switch": "Cisco",
+            "modem": "Arris",
+            "access_point": "Cisco",
+        }
         return manufacturers.get(device_type, "Generic")
 
     def _get_default_config(self, device_type: str) -> dict[str, Any]:
         """Get default configuration for device type."""
         if device_type == "router":
-            return {"dhcp_enabled": True, "nat_enabled": True, "firewall_enabled": True, "wireless_enabled": False}
+            return {
+                "dhcp_enabled": True,
+                "nat_enabled": True,
+                "firewall_enabled": True,
+                "wireless_enabled": False,
+            }
         elif device_type == "access_point":
-            return {"ssid": f"WiFi-{secrets.token_hex(4)}", "security": "WPA2", "channel": 6, "power": "100%"}
+            return {
+                "ssid": f"WiFi-{secrets.token_hex(4)}",
+                "security": "WPA2",
+                "channel": 6,
+                "power": "100%",
+            }
         return {}
 
 
@@ -495,7 +524,9 @@ class TicketFactory(TenantIsolatedFactory):
             "customer_id": kwargs.get("customer_id"),
             "ticket_number": f"TKT-{sequence:06d}",
             "subject": kwargs.get("subject", f"Support request #{sequence}"),
-            "description": kwargs.get("description", "Customer needs assistance with service"),
+            "description": kwargs.get(
+                "description", "Customer needs assistance with service"
+            ),
             "category": kwargs.get("category", secrets.choice(categories)),
             "priority": kwargs.get("priority", secrets.choice(priorities)),
             "status": kwargs.get("status", "open"),

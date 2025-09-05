@@ -135,7 +135,9 @@ class DatabasePerformanceTester:
             Performance metrics from load test
         """
         logger.info(f"Starting load test for {model_class.__name__}")
-        logger.info(f"Config: {config.concurrent_users} users, {config.duration_seconds}s duration")
+        logger.info(
+            f"Config: {config.concurrent_users} users, {config.duration_seconds}s duration"
+        )
 
         # Start resource monitoring
         self._start_resource_monitoring()
@@ -190,7 +192,10 @@ class DatabasePerformanceTester:
             return session_successful, session_failed, session_response_times
 
         # Calculate ramp-up delays
-        ramp_up_delays = [(i * config.ramp_up_time / config.concurrent_users) for i in range(config.concurrent_users)]
+        ramp_up_delays = [
+            (i * config.ramp_up_time / config.concurrent_users)
+            for i in range(config.concurrent_users)
+        ]
 
         # Start user sessions
         tasks = [user_session(i, delay) for i, delay in enumerate(ramp_up_delays)]
@@ -199,7 +204,10 @@ class DatabasePerformanceTester:
         try:
             results = await asyncio.wait_for(
                 asyncio.gather(*tasks, return_exceptions=True),
-                timeout=config.duration_seconds + config.ramp_up_time + config.ramp_down_time + 30,
+                timeout=config.duration_seconds
+                + config.ramp_up_time
+                + config.ramp_down_time
+                + 30,
             )
 
             # Aggregate results
@@ -231,8 +239,12 @@ class DatabasePerformanceTester:
             total_operations=total_operations,
             successful_operations=successful_ops,
             failed_operations=failed_ops,
-            operations_per_second=total_operations / execution_time if execution_time > 0 else 0,
-            average_response_time=statistics.mean(response_times) if response_times else 0,
+            operations_per_second=total_operations / execution_time
+            if execution_time > 0
+            else 0,
+            average_response_time=statistics.mean(response_times)
+            if response_times
+            else 0,
             min_response_time=min(response_times) if response_times else 0,
             max_response_time=max(response_times) if response_times else 0,
             percentile_95_response_time=self._calculate_percentile(response_times, 95),
@@ -245,7 +257,9 @@ class DatabasePerformanceTester:
         )
 
         self.test_results.append(metrics)
-        logger.info(f"Load test completed: {successful_ops}/{total_operations} successful ops")
+        logger.info(
+            f"Load test completed: {successful_ops}/{total_operations} successful ops"
+        )
         return metrics
 
     @standard_exception_handler
@@ -286,10 +300,14 @@ class DatabasePerformanceTester:
 
                 # Check for failure conditions
                 failure_rate = (
-                    metrics.failed_operations / metrics.total_operations if metrics.total_operations > 0 else 0
+                    metrics.failed_operations / metrics.total_operations
+                    if metrics.total_operations > 0
+                    else 0
                 )
                 if failure_rate > 0.1:  # 10% failure rate
-                    logger.warning(f"High failure rate ({failure_rate:.2%}) at {current_users} users")
+                    logger.warning(
+                        f"High failure rate ({failure_rate:.2%}) at {current_users} users"
+                    )
                     break
 
                 if metrics.percentile_95_response_time > 5.0:  # 5 second response time
@@ -304,7 +322,9 @@ class DatabasePerformanceTester:
 
             current_users += increment
 
-        logger.info(f"Stress test completed. Maximum sustainable load: {current_users - increment} users")
+        logger.info(
+            f"Stress test completed. Maximum sustainable load: {current_users - increment} users"
+        )
         return stress_results
 
     @standard_exception_handler
@@ -323,7 +343,9 @@ class DatabasePerformanceTester:
         Returns:
             Dictionary of query performance metrics
         """
-        logger.info(f"Benchmarking {len(queries)} queries with {iterations} iterations each")
+        logger.info(
+            f"Benchmarking {len(queries)} queries with {iterations} iterations each"
+        )
 
         benchmark_results = {}
 
@@ -353,7 +375,9 @@ class DatabasePerformanceTester:
                     failed_ops += 1
                     errors.append(f"Iteration {i}: {str(e)}")
                     if len(errors) < 10:  # Log first few errors
-                        logger.warning(f"Query {query_name} failed on iteration {i}: {e}")
+                        logger.warning(
+                            f"Query {query_name} failed on iteration {i}: {e}"
+                        )
 
             execution_time = time.time() - start_time
             total_operations = successful_ops + failed_ops
@@ -365,12 +389,20 @@ class DatabasePerformanceTester:
                 total_operations=total_operations,
                 successful_operations=successful_ops,
                 failed_operations=failed_ops,
-                operations_per_second=total_operations / execution_time if execution_time > 0 else 0,
-                average_response_time=statistics.mean(response_times) if response_times else 0,
+                operations_per_second=total_operations / execution_time
+                if execution_time > 0
+                else 0,
+                average_response_time=statistics.mean(response_times)
+                if response_times
+                else 0,
                 min_response_time=min(response_times) if response_times else 0,
                 max_response_time=max(response_times) if response_times else 0,
-                percentile_95_response_time=self._calculate_percentile(response_times, 95),
-                percentile_99_response_time=self._calculate_percentile(response_times, 99),
+                percentile_95_response_time=self._calculate_percentile(
+                    response_times, 95
+                ),
+                percentile_99_response_time=self._calculate_percentile(
+                    response_times, 99
+                ),
                 memory_usage_mb=0,  # Not tracked for query benchmarks
                 cpu_usage_percent=0,
                 active_connections=1,
@@ -469,12 +501,20 @@ class DatabasePerformanceTester:
                 total_operations=total_operations,
                 successful_operations=total_successful,
                 failed_operations=total_failed,
-                operations_per_second=total_operations / execution_time if execution_time > 0 else 0,
-                average_response_time=statistics.mean(all_response_times) if all_response_times else 0,
+                operations_per_second=total_operations / execution_time
+                if execution_time > 0
+                else 0,
+                average_response_time=statistics.mean(all_response_times)
+                if all_response_times
+                else 0,
                 min_response_time=min(all_response_times) if all_response_times else 0,
                 max_response_time=max(all_response_times) if all_response_times else 0,
-                percentile_95_response_time=self._calculate_percentile(all_response_times, 95),
-                percentile_99_response_time=self._calculate_percentile(all_response_times, 99),
+                percentile_95_response_time=self._calculate_percentile(
+                    all_response_times, 95
+                ),
+                percentile_99_response_time=self._calculate_percentile(
+                    all_response_times, 99
+                ),
                 memory_usage_mb=resource_metrics.get("max_memory_mb", 0),
                 cpu_usage_percent=resource_metrics.get("avg_cpu_percent", 0),
                 active_connections=concurrent_connections,
@@ -587,7 +627,12 @@ class DatabasePerformanceTester:
                 "max_memory_mb": max(memory_values),
             }
 
-        return {"avg_cpu_percent": 0, "max_cpu_percent": 0, "avg_memory_mb": 0, "max_memory_mb": 0}
+        return {
+            "avg_cpu_percent": 0,
+            "max_cpu_percent": 0,
+            "avg_memory_mb": 0,
+            "max_memory_mb": 0,
+        }
 
     def _get_active_connections(self) -> int:
         """Get number of active database connections"""
@@ -620,30 +665,52 @@ class DatabasePerformanceTester:
         total_successful = sum(r.successful_operations for r in self.test_results)
 
         # Performance metrics
-        avg_ops_per_second = statistics.mean([r.operations_per_second for r in self.test_results])
-        avg_response_time = statistics.mean([r.average_response_time for r in self.test_results])
+        avg_ops_per_second = statistics.mean(
+            [r.operations_per_second for r in self.test_results]
+        )
+        avg_response_time = statistics.mean(
+            [r.average_response_time for r in self.test_results]
+        )
 
         # Break down by test type
         type_breakdown = {}
         for result in self.test_results:
             test_type = result.test_type.value
             if test_type not in type_breakdown:
-                type_breakdown[test_type] = {"count": 0, "avg_ops_per_sec": [], "avg_response_time": []}
+                type_breakdown[test_type] = {
+                    "count": 0,
+                    "avg_ops_per_sec": [],
+                    "avg_response_time": [],
+                }
 
             type_breakdown[test_type]["count"] += 1
-            type_breakdown[test_type]["avg_ops_per_sec"].append(result.operations_per_second)
-            type_breakdown[test_type]["avg_response_time"].append(result.average_response_time)
+            type_breakdown[test_type]["avg_ops_per_sec"].append(
+                result.operations_per_second
+            )
+            type_breakdown[test_type]["avg_response_time"].append(
+                result.average_response_time
+            )
 
         # Calculate averages for each type
         for _, data in type_breakdown.items():
-            data["avg_ops_per_sec"] = statistics.mean(data["avg_ops_per_sec"]) if data["avg_ops_per_sec"] else 0
-            data["avg_response_time"] = statistics.mean(data["avg_response_time"]) if data["avg_response_time"] else 0
+            data["avg_ops_per_sec"] = (
+                statistics.mean(data["avg_ops_per_sec"])
+                if data["avg_ops_per_sec"]
+                else 0
+            )
+            data["avg_response_time"] = (
+                statistics.mean(data["avg_response_time"])
+                if data["avg_response_time"]
+                else 0
+            )
 
         return {
             "total_tests": total_tests,
             "total_operations": total_operations,
             "total_successful": total_successful,
-            "success_rate": (total_successful / total_operations * 100) if total_operations > 0 else 0,
+            "success_rate": (total_successful / total_operations * 100)
+            if total_operations > 0
+            else 0,
             "average_ops_per_second": avg_ops_per_second,
             "average_response_time": avg_response_time,
             "test_type_breakdown": type_breakdown,
@@ -654,7 +721,11 @@ class DatabasePerformanceTester:
 
 
 async def quick_performance_test(
-    database_url: str, model_class: type, test_data: list[dict], concurrent_users: int = 10, duration_seconds: int = 30
+    database_url: str,
+    model_class: type,
+    test_data: list[dict],
+    concurrent_users: int = 10,
+    duration_seconds: int = 30,
 ) -> dict[str, Any]:
     """
     Quick performance test for a model class.
@@ -664,7 +735,9 @@ async def quick_performance_test(
     tester = DatabasePerformanceTester(database_url)
 
     config = LoadTestConfig(
-        concurrent_users=concurrent_users, duration_seconds=duration_seconds, operations_per_user=20
+        concurrent_users=concurrent_users,
+        duration_seconds=duration_seconds,
+        operations_per_user=20,
     )
 
     metrics = await tester.run_load_test(model_class, test_data, config)
@@ -681,4 +754,8 @@ async def quick_performance_test(
     if metrics.failed_operations > 0:
         recommendations.append("Investigate connection pool configuration")
 
-    return {"metrics": metrics, "recommendations": recommendations, "summary": tester.get_performance_summary()}
+    return {
+        "metrics": metrics,
+        "recommendations": recommendations,
+        "summary": tester.get_performance_summary(),
+    }

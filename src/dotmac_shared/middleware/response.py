@@ -204,7 +204,9 @@ class ResponseDecorator:
 
         return self.decorate_response(response, request, context)
 
-    def _add_standard_headers(self, response: Response, request: Request, context: ResponseContext):
+    def _add_standard_headers(
+        self, response: Response, request: Request, context: ResponseContext
+    ):
         """Add standard headers to response."""
 
         # Request ID
@@ -218,7 +220,9 @@ class ResponseDecorator:
 
         # Processing time
         if context.processing_time_ms is not None:
-            response.headers["X-Processing-Time"] = f"{context.processing_time_ms:.4f}ms"
+            response.headers[
+                "X-Processing-Time"
+            ] = f"{context.processing_time_ms:.4f}ms"
 
         # Middleware chain
         if context.middleware_chain:
@@ -230,7 +234,9 @@ class ResponseDecorator:
 
         # Tenant context
         if state.tenant_context:
-            response.headers["X-Tenant-Context"] = f"{state.tenant_context.tenant_id}:{state.tenant_context.source}"
+            response.headers[
+                "X-Tenant-Context"
+            ] = f"{state.tenant_context.tenant_id}:{state.tenant_context.source}"
             if state.tenant_context.gateway_validated:
                 response.headers["X-Gateway-Validated"] = "true"
 
@@ -242,13 +248,19 @@ class ResponseDecorator:
         # Operation context
         if state.operation_context:
             if state.operation_context.idempotency_key:
-                response.headers["X-Idempotency-Key"] = state.operation_context.idempotency_key
+                response.headers[
+                    "X-Idempotency-Key"
+                ] = state.operation_context.idempotency_key
             if state.operation_context.correlation_id:
-                response.headers["X-Correlation-ID"] = state.operation_context.correlation_id
+                response.headers[
+                    "X-Correlation-ID"
+                ] = state.operation_context.correlation_id
 
         # Processing stages
         if state.metadata.processing_stages:
-            response.headers["X-Processing-Stages"] = ", ".join(state.metadata.processing_stages)
+            response.headers["X-Processing-Stages"] = ", ".join(
+                state.metadata.processing_stages
+            )
 
     def _add_security_headers(self, response: Response, request: Request):
         """Add security headers to response."""
@@ -264,7 +276,9 @@ class ResponseDecorator:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
 
-    def _add_deprecation_headers(self, response: Response, request: Request, context: ResponseContext):
+    def _add_deprecation_headers(
+        self, response: Response, request: Request, context: ResponseContext
+    ):
         """Add deprecation warning headers."""
 
         if context.deprecation_warnings:
@@ -282,7 +296,9 @@ class ResponseDecorator:
         state = RequestStateManager.get_from_request(request)
         if state.api_version_context:
             # This would be populated by the API versioning middleware
-            supported_versions = getattr(state.api_version_context, "supported_versions", None)
+            supported_versions = getattr(
+                state.api_version_context, "supported_versions", None
+            )
             if supported_versions:
                 response.headers["X-Supported-Versions"] = ", ".join(supported_versions)
 
@@ -290,7 +306,9 @@ class ResponseDecorator:
         """Add rate limiting headers."""
 
         if context.rate_limit_remaining is not None:
-            response.headers["X-Rate-Limit-Remaining"] = str(context.rate_limit_remaining)
+            response.headers["X-Rate-Limit-Remaining"] = str(
+                context.rate_limit_remaining
+            )
 
         if context.rate_limit_limit is not None:
             response.headers["X-Rate-Limit-Limit"] = str(context.rate_limit_limit)
@@ -345,7 +363,9 @@ class StandardResponseDecorator(ResponseDecorator):
 
         super().__init__(config)
 
-    def add_tenant_headers(self, response: Response, tenant_id: str, tenant_source: str = "unknown"):
+    def add_tenant_headers(
+        self, response: Response, tenant_id: str, tenant_source: str = "unknown"
+    ):
         """Add tenant-specific headers.
 
         Args:
@@ -379,7 +399,9 @@ class StandardResponseDecorator(ResponseDecorator):
         if cache_hits is not None:
             response.headers["X-Cache-Hits"] = str(cache_hits)
 
-    def add_pagination_headers(self, response: Response, page: int, per_page: int, total: int, total_pages: int):
+    def add_pagination_headers(
+        self, response: Response, page: int, per_page: int, total: int, total_pages: int
+    ):
         """Add pagination headers.
 
         Args:
@@ -403,7 +425,9 @@ def decorate_response(response: Response, request: Request, **kwargs) -> Respons
     return decorator.decorate_response(response, request, context)
 
 
-def create_error_response(status_code: int, detail: str, request: Request, **kwargs) -> JSONResponse:
+def create_error_response(
+    status_code: int, detail: str, request: Request, **kwargs
+) -> JSONResponse:
     """Convenience function to create standardized error response."""
     decorator = StandardResponseDecorator()
     return decorator.create_error_response(status_code, detail, request, **kwargs)

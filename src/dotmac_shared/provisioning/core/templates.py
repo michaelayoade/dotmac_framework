@@ -11,11 +11,7 @@ import yaml
 from pydantic import BaseModel, Field
 
 from .exceptions import TemplateError
-from .models import (
-    InfrastructureType,
-    ISPConfig,
-    ResourceRequirements,
-)
+from .models import InfrastructureType, ISPConfig, ResourceRequirements
 
 
 class ContainerTemplate(BaseModel):
@@ -23,7 +19,9 @@ class ContainerTemplate(BaseModel):
 
     name: str = Field(..., description="Template name")
     version: str = Field(default="1.0.0", description="Template version")
-    infrastructure_type: InfrastructureType = Field(..., description="Target infrastructure")
+    infrastructure_type: InfrastructureType = Field(
+        ..., description="Target infrastructure"
+    )
     description: Optional[str] = Field(default=None)
 
     # Template content
@@ -59,7 +57,10 @@ class ContainerTemplate(BaseModel):
     def _render_recursive(self, obj: Any, variables: dict[str, Any]) -> Any:
         """Recursively render template variables."""
         if isinstance(obj, dict):
-            return {key: self._render_recursive(value, variables) for key, value in obj.items()}
+            return {
+                key: self._render_recursive(value, variables)
+                for key, value in obj.items()
+            }
         elif isinstance(obj, list):
             return [self._render_recursive(item, variables) for item in obj]
         elif isinstance(obj, str):
@@ -102,7 +103,9 @@ class TemplateManager:
             try:
                 await self._load_template_file(template_file)
             except Exception as e:
-                raise TemplateError(f"Failed to load template {template_file}: {e}") from e
+                raise TemplateError(
+                    f"Failed to load template {template_file}: {e}"
+                ) from e
 
         # Create default templates if none exist
         if not self.templates:
@@ -119,7 +122,9 @@ class TemplateManager:
         template_key = f"{template.name}:{template.infrastructure_type.value}"
         self.templates[template_key] = template
 
-    async def get_template(self, name: str, infrastructure_type: InfrastructureType) -> ContainerTemplate:
+    async def get_template(
+        self, name: str, infrastructure_type: InfrastructureType
+    ) -> ContainerTemplate:
         """Get template by name and infrastructure type."""
         if not self.loaded:
             await self.load_templates()
@@ -142,7 +147,9 @@ class TemplateManager:
         template = await self.get_template(template_name, infrastructure_type)
 
         # Prepare template variables
-        variables = self._prepare_template_variables(isp_id, config, resources, infrastructure_type)
+        variables = self._prepare_template_variables(
+            isp_id, config, resources, infrastructure_type
+        )
 
         # Render template
         return template.render(variables)
@@ -171,7 +178,9 @@ class TemplateManager:
                 {
                     "cpu_limit": resources.to_kubernetes_limits()["cpu"],
                     "memory_limit": resources.to_kubernetes_limits()["memory"],
-                    "storage_limit": resources.to_kubernetes_limits()["ephemeral-storage"],
+                    "storage_limit": resources.to_kubernetes_limits()[
+                        "ephemeral-storage"
+                    ],
                     "namespace": f"tenant-{config.tenant_name}",
                     "container_name": f"isp-framework-{config.tenant_name}",
                     "service_name": f"{config.tenant_name}-service",
@@ -195,7 +204,11 @@ class TemplateManager:
                 "domain": network.domain or f"{network.subdomain}.dotmac.app",
                 "subdomain": network.subdomain,
                 "ssl_enabled": network.ssl_enabled,
-                "external_port": (list(network.port_mapping.values())[0] if network.port_mapping else 80),
+                "external_port": (
+                    list(network.port_mapping.values())[0]
+                    if network.port_mapping
+                    else 80
+                ),
             }
         )
 
@@ -275,9 +288,19 @@ class TemplateManager:
                 },
                 "spec": {
                     "replicas": 1,
-                    "selector": {"matchLabels": {"app": "isp-framework", "tenant": "{{tenant_name}}"}},
+                    "selector": {
+                        "matchLabels": {
+                            "app": "isp-framework",
+                            "tenant": "{{tenant_name}}",
+                        }
+                    },
                     "template": {
-                        "metadata": {"labels": {"app": "isp-framework", "tenant": "{{tenant_name}}"}},
+                        "metadata": {
+                            "labels": {
+                                "app": "isp-framework",
+                                "tenant": "{{tenant_name}}",
+                            }
+                        },
                         "spec": {
                             "containers": [
                                 {
@@ -296,7 +319,10 @@ class TemplateManager:
                                         },
                                     },
                                     "env": [
-                                        {"name": "TENANT_ID", "value": "{{tenant_name}}"},
+                                        {
+                                            "name": "TENANT_ID",
+                                            "value": "{{tenant_name}}",
+                                        },
                                         {"name": "ISP_ID", "value": "{{isp_id}}"},
                                         {"name": "PLAN_TYPE", "value": "{{plan_type}}"},
                                         {
@@ -309,12 +335,18 @@ class TemplateManager:
                                         },
                                     ],
                                     "livenessProbe": {
-                                        "httpGet": {"path": "/health/live", "port": 8000},
+                                        "httpGet": {
+                                            "path": "/health/live",
+                                            "port": 8000,
+                                        },
                                         "initialDelaySeconds": 30,
                                         "periodSeconds": 10,
                                     },
                                     "readinessProbe": {
-                                        "httpGet": {"path": "/health/ready", "port": 8000},
+                                        "httpGet": {
+                                            "path": "/health/ready",
+                                            "port": 8000,
+                                        },
                                         "initialDelaySeconds": 5,
                                         "periodSeconds": 5,
                                     },

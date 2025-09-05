@@ -20,31 +20,26 @@ warnings.warn(
 
 # Re-export the public API from the new package for backward compatibility
 try:
-    from dotmac.application import (
+    from dotmac.application import (  # Configuration types; Provider protocols; Components; Middleware; Factory functions
         DeploymentAwareApplicationFactory,
         DeploymentContext,
         DeploymentMode,
         DotMacApplicationFactory,
         IsolationLevel,
         ObservabilityProvider,
-        # Configuration types
         PlatformConfig,
         Providers,
         ResourceLimits,
         RouterConfig,
         RouterRegistry,
         SafeRouterLoader,
-        # Provider protocols
         SecurityProvider,
         StandardEndpoints,
-        # Components
         StandardLifecycleManager,
         StandardMiddlewareStack,
         TenantBoundaryProvider,
         TenantConfig,
-        # Middleware
         apply_standard_middleware,
-        # Factory functions
         create_app,
         create_isp_framework_app,
         create_management_platform_app,
@@ -54,18 +49,25 @@ try:
     def create_management_platform_app_legacy(config=None):
         """Legacy wrapper for create_management_platform_app."""
         warnings.warn(
-            "Use dotmac.application.create_management_platform_app directly", DeprecationWarning, stacklevel=2
+            "Use dotmac.application.create_management_platform_app directly",
+            DeprecationWarning,
+            stacklevel=2,
         )
         return create_management_platform_app(config)
 
     def create_isp_framework_app_legacy(tenant_config=None, base_config=None):
         """Legacy wrapper for create_isp_framework_app."""
-        warnings.warn("Use dotmac.application.create_isp_framework_app directly", DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "Use dotmac.application.create_isp_framework_app directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return create_isp_framework_app(tenant_config, base_config)
 
 except ImportError as e:
     warnings.warn(
-        f"Could not import from dotmac.application: {e}. " "Please install the dotmac-application package.",
+        f"Could not import from dotmac.application: {e}. "
+        "Please install the dotmac-application package.",
         ImportWarning,
         stacklevel=2,
     )

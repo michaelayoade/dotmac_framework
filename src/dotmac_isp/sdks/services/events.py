@@ -36,7 +36,9 @@ class Event:
         self.data = data
         self.metadata = metadata or {}
         self.timestamp = datetime.now(timezone.utc)
-        self.event_id = f"{event_type.value}_{tenant_id}_{int(self.timestamp.timestamp())}"
+        self.event_id = (
+            f"{event_type.value}_{tenant_id}_{int(self.timestamp.timestamp())}"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary."""
@@ -74,7 +76,9 @@ class EventBus:
             handlers = self._handlers[event.event_type]
             await asyncio.gather(*[handler(event) for handler in handlers])
 
-    async def publish_service_created(self, tenant_id: str, service_id: str, service_data: dict[str, Any]):
+    async def publish_service_created(
+        self, tenant_id: str, service_id: str, service_data: dict[str, Any]
+    ):
         """Publish service created event."""
         event = Event(
             EventType.SERVICE_CREATED,
@@ -83,7 +87,9 @@ class EventBus:
         )
         await self.publish(event)
 
-    async def publish_service_provisioned(self, tenant_id: str, service_id: str, provisioning_data: dict[str, Any]):
+    async def publish_service_provisioned(
+        self, tenant_id: str, service_id: str, provisioning_data: dict[str, Any]
+    ):
         """Publish service provisioned event."""
         event = Event(
             EventType.SERVICE_PROVISIONED,

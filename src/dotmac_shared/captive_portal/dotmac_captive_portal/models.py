@@ -10,19 +10,9 @@ from datetime import UTC, datetime
 from enum import Enum
 
 import structlog
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-    func,
-)
+from sqlalchemy import JSON, Boolean, Column, DateTime
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -127,9 +117,15 @@ class Portal(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
-    sessions = relationship("Session", back_populates="portal", cascade="all, delete-orphan")
-    vouchers = relationship("Voucher", back_populates="portal", cascade="all, delete-orphan")
-    guest_users = relationship("GuestUser", back_populates="portal", cascade="all, delete-orphan")
+    sessions = relationship(
+        "Session", back_populates="portal", cascade="all, delete-orphan"
+    )
+    vouchers = relationship(
+        "Voucher", back_populates="portal", cascade="all, delete-orphan"
+    )
+    guest_users = relationship(
+        "GuestUser", back_populates="portal", cascade="all, delete-orphan"
+    )
     default_billing_plan = relationship("BillingPlan")
 
     def __repr__(self) -> str:
@@ -142,7 +138,9 @@ class GuestUser(Base):
     __tablename__ = "captive_portal_users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    portal_id = Column(UUID(as_uuid=True), ForeignKey("captive_portals.id"), nullable=False)
+    portal_id = Column(
+        UUID(as_uuid=True), ForeignKey("captive_portals.id"), nullable=False
+    )
     tenant_id = Column(UUID(as_uuid=True), nullable=False, index=True)
 
     # User identification
@@ -187,7 +185,9 @@ class GuestUser(Base):
 
     # Relationships
     portal = relationship("Portal", back_populates="guest_users")
-    sessions = relationship("Session", back_populates="guest_user", cascade="all, delete-orphan")
+    sessions = relationship(
+        "Session", back_populates="guest_user", cascade="all, delete-orphan"
+    )
     billing_plan = relationship("BillingPlan")
 
     def __repr__(self) -> str:
@@ -201,8 +201,12 @@ class Session(Base):
     __tablename__ = "captive_portal_sessions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    portal_id = Column(UUID(as_uuid=True), ForeignKey("captive_portals.id"), nullable=False)
-    guest_user_id = Column(UUID(as_uuid=True), ForeignKey("captive_portal_users.id"), nullable=False)
+    portal_id = Column(
+        UUID(as_uuid=True), ForeignKey("captive_portals.id"), nullable=False
+    )
+    guest_user_id = Column(
+        UUID(as_uuid=True), ForeignKey("captive_portal_users.id"), nullable=False
+    )
     tenant_id = Column(UUID(as_uuid=True), nullable=False, index=True)
 
     # Session identification
@@ -276,7 +280,9 @@ class Voucher(Base):
     __tablename__ = "captive_portal_vouchers"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    portal_id = Column(UUID(as_uuid=True), ForeignKey("captive_portals.id"), nullable=False)
+    portal_id = Column(
+        UUID(as_uuid=True), ForeignKey("captive_portals.id"), nullable=False
+    )
     tenant_id = Column(UUID(as_uuid=True), nullable=False, index=True)
 
     # Voucher identification
@@ -297,7 +303,9 @@ class Voucher(Base):
     # Redemption tracking
     is_redeemed = Column(Boolean, default=False)
     redeemed_at = Column(DateTime(timezone=True))
-    redeemed_by_user_id = Column(UUID(as_uuid=True), ForeignKey("captive_portal_users.id"))
+    redeemed_by_user_id = Column(
+        UUID(as_uuid=True), ForeignKey("captive_portal_users.id")
+    )
     redemption_count = Column(Integer, default=0)
 
     # Billing information
@@ -339,7 +347,9 @@ class Voucher(Base):
         )
 
     def __repr__(self) -> str:
-        return f"<Voucher(id={self.id}, code='{self.code}', redeemed={self.is_redeemed})>"
+        return (
+            f"<Voucher(id={self.id}, code='{self.code}', redeemed={self.is_redeemed})>"
+        )
 
 
 class BillingPlan(Base):
@@ -391,7 +401,9 @@ class AuthMethod(Base):
     __tablename__ = "captive_portal_auth_methods"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    portal_id = Column(UUID(as_uuid=True), ForeignKey("captive_portals.id"), nullable=False)
+    portal_id = Column(
+        UUID(as_uuid=True), ForeignKey("captive_portals.id"), nullable=False
+    )
     tenant_id = Column(UUID(as_uuid=True), nullable=False, index=True)
 
     # Method identification
@@ -431,7 +443,9 @@ class UsageLog(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_id = Column(UUID(as_uuid=True), ForeignKey("captive_portal_sessions.id"))
-    portal_id = Column(UUID(as_uuid=True), ForeignKey("captive_portals.id"), nullable=False)
+    portal_id = Column(
+        UUID(as_uuid=True), ForeignKey("captive_portals.id"), nullable=False
+    )
     tenant_id = Column(UUID(as_uuid=True), nullable=False, index=True)
 
     # Usage metrics

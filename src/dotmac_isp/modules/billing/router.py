@@ -7,7 +7,20 @@ import io
 from typing import Any
 from uuid import UUID
 
-from dotmac.application import standard_exception_handler
+from fastapi import Depends, UploadFile
+from fastapi.responses import StreamingResponse
+
+try:
+    from dotmac.application import standard_exception_handler
+except Exception:  # pragma: no cover
+
+    def standard_exception_handler(func=None, *d, **k):  # type: ignore
+        def _wrap(f):
+            return f
+
+        return _wrap if func is None else func
+
+
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
     SearchParams,
@@ -16,8 +29,6 @@ from dotmac_shared.api.dependencies import (
     get_standard_deps,
 )
 from dotmac_shared.api.router_factory import BillingRouterFactory, RouterFactory
-from fastapi import Depends, UploadFile
-from fastapi.responses import StreamingResponse
 
 from .schemas import (
     BillingReport,
@@ -69,7 +80,9 @@ router.include_router(payment_router)
 
 @router.get("/dashboard")
 @standard_exception_handler
-async def get_billing_dashboard(deps: StandardDependencies = Depends(get_standard_deps)) -> dict[str, Any]:
+async def get_billing_dashboard(
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict[str, Any]:
     """Get billing dashboard with summary statistics."""
     service = BillingService(deps.db, deps.tenant_id)
     return await service.get_dashboard_data(deps.user_id)
@@ -100,7 +113,9 @@ async def generate_invoice_pdf(
     return StreamingResponse(
         io.BytesIO(pdf_content),
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename = invoice-{invoice_id}.pdf"},
+        headers={
+            "Content-Disposition": f"attachment; filename = invoice-{invoice_id}.pdf"
+        },
     )
 
 

@@ -52,7 +52,9 @@ class SecurityValidationResult:
     passed_checks: list[str]
     security_score: float  # 0-100 score based on violations
 
-    def get_violations_by_severity(self, severity: SecuritySeverity) -> list[SecurityViolation]:
+    def get_violations_by_severity(
+        self, severity: SecuritySeverity
+    ) -> list[SecurityViolation]:
         """Get violations filtered by severity."""
         return [v for v in self.violations if v.severity == severity]
 
@@ -74,7 +76,9 @@ class SecurityValidationResult:
             SecuritySeverity.INFO: 1,
         }
 
-        total_penalty = sum(severity_weights.get(v.severity, 0) for v in self.violations)
+        total_penalty = sum(
+            severity_weights.get(v.severity, 0) for v in self.violations
+        )
 
         # Cap at 100 point deduction
         penalty = min(total_penalty, 100)
@@ -112,9 +116,17 @@ class EnvironmentSecurityValidator:
                     "env_fallback_allowed": False,
                     "rotation_enforced": True,
                 },
-                "csrf_protection": {"required": True, "strict_mode": True, "referer_check": True},
+                "csrf_protection": {
+                    "required": True,
+                    "strict_mode": True,
+                    "referer_check": True,
+                },
                 "rate_limiting": {"required": True, "strict_limits": True},
-                "security_headers": {"required": True, "hsts_required": True, "csp_required": True},
+                "security_headers": {
+                    "required": True,
+                    "hsts_required": True,
+                    "csp_required": True,
+                },
                 "tls": {"required": True, "min_version": "1.2"},
                 "logging": {"security_events": True, "audit_required": True},
             }
@@ -126,9 +138,17 @@ class EnvironmentSecurityValidator:
                     "env_fallback_allowed": True,  # With warnings
                     "rotation_enforced": False,
                 },
-                "csrf_protection": {"required": True, "strict_mode": True, "referer_check": True},
+                "csrf_protection": {
+                    "required": True,
+                    "strict_mode": True,
+                    "referer_check": True,
+                },
                 "rate_limiting": {"required": True, "strict_limits": False},
-                "security_headers": {"required": True, "hsts_required": False, "csp_required": True},
+                "security_headers": {
+                    "required": True,
+                    "hsts_required": False,
+                    "csp_required": True,
+                },
                 "tls": {"required": True, "min_version": "1.2"},
                 "logging": {"security_events": True, "audit_required": False},
             }
@@ -146,7 +166,11 @@ class EnvironmentSecurityValidator:
                     "referer_check": False,
                 },
                 "rate_limiting": {"required": False, "strict_limits": False},
-                "security_headers": {"required": False, "hsts_required": False, "csp_required": False},
+                "security_headers": {
+                    "required": False,
+                    "hsts_required": False,
+                    "csp_required": False,
+                },
                 "tls": {"required": False, "min_version": "1.0"},
                 "logging": {"security_events": False, "audit_required": False},
             }
@@ -206,7 +230,9 @@ class EnvironmentSecurityValidator:
             # Create validation result
             result = SecurityValidationResult(
                 environment=self.environment,
-                compliant=not any(v.severity == SecuritySeverity.CRITICAL for v in violations),
+                compliant=not any(
+                    v.severity == SecuritySeverity.CRITICAL for v in violations
+                ),
                 violations=violations,
                 passed_checks=passed_checks,
                 security_score=0.0,  # Will be calculated below
@@ -221,7 +247,9 @@ class EnvironmentSecurityValidator:
                 compliant=result.compliant,
                 security_score=result.security_score,
                 violations_count=len(violations),
-                critical_violations=len(result.get_violations_by_severity(SecuritySeverity.CRITICAL)),
+                critical_violations=len(
+                    result.get_violations_by_severity(SecuritySeverity.CRITICAL)
+                ),
             )
 
             return result
@@ -247,7 +275,9 @@ class EnvironmentSecurityValidator:
                 security_score=0.0,
             )
 
-    async def _validate_secrets_management(self, secrets_manager: Optional[HardenedSecretsManager]) -> dict[str, list]:
+    async def _validate_secrets_management(
+        self, secrets_manager: Optional[HardenedSecretsManager]
+    ) -> dict[str, list]:
         """Validate secrets management configuration."""
         violations = []
         passed = []
@@ -276,7 +306,9 @@ class EnvironmentSecurityValidator:
                 if not compliance["compliant"]:
                     for violation_msg in compliance["violations"]:
                         severity = (
-                            SecuritySeverity.CRITICAL if requirements["vault_required"] else SecuritySeverity.HIGH
+                            SecuritySeverity.CRITICAL
+                            if requirements["vault_required"]
+                            else SecuritySeverity.HIGH
                         )
                         violations.append(
                             SecurityViolation(
@@ -342,7 +374,9 @@ class EnvironmentSecurityValidator:
 
         return {"violations": violations, "passed": passed}
 
-    def _validate_csrf_protection(self, csrf_config: Optional[CSRFConfig]) -> dict[str, list]:
+    def _validate_csrf_protection(
+        self, csrf_config: Optional[CSRFConfig]
+    ) -> dict[str, list]:
         """Validate CSRF protection configuration."""
         violations = []
         passed = []
@@ -377,7 +411,10 @@ class EnvironmentSecurityValidator:
                 passed.append("csrf_protection_enabled")
 
                 # Check strict mode requirement
-                if requirements["strict_mode"] and not csrf_config.require_referer_check:
+                if (
+                    requirements["strict_mode"]
+                    and not csrf_config.require_referer_check
+                ):
                     violations.append(
                         SecurityViolation(
                             severity=SecuritySeverity.MEDIUM,
@@ -467,9 +504,16 @@ class EnvironmentSecurityValidator:
             # being set by the security middleware
             passed.append("security_headers_assumed_configured")
 
-            if requirements.get("hsts_required") and self.environment == Environment.PRODUCTION:
+            if (
+                requirements.get("hsts_required")
+                and self.environment == Environment.PRODUCTION
+            ):
                 # Check if HTTPS is enforced
-                https_only = os.getenv("HTTPS_ONLY", "false").lower() in ["true", "1", "yes"]
+                https_only = os.getenv("HTTPS_ONLY", "false").lower() in [
+                    "true",
+                    "1",
+                    "yes",
+                ]
                 if not https_only:
                     violations.append(
                         SecurityViolation(
@@ -500,7 +544,10 @@ class EnvironmentSecurityValidator:
             # configuration from the middleware
             passed.append("rate_limiting_assumed_configured")
 
-            if requirements.get("strict_limits") and self.environment == Environment.PRODUCTION:
+            if (
+                requirements.get("strict_limits")
+                and self.environment == Environment.PRODUCTION
+            ):
                 # Could check specific rate limit values if available
                 passed.append("strict_rate_limits_assumed")
         else:
@@ -508,7 +555,9 @@ class EnvironmentSecurityValidator:
 
         return {"violations": violations, "passed": passed}
 
-    def _validate_additional_checks(self, additional_checks: dict[str, Any]) -> dict[str, list]:
+    def _validate_additional_checks(
+        self, additional_checks: dict[str, Any]
+    ) -> dict[str, list]:
         """Validate additional portal-specific checks."""
         violations = []
         passed = []
@@ -524,7 +573,9 @@ class EnvironmentSecurityValidator:
                                 message=f"Additional security check '{check_name}' required but not configured",
                                 environment=self.environment,
                                 portal_name=self.portal_name,
-                                remediation=check_config.get("remediation", f"Configure {check_name}"),
+                                remediation=check_config.get(
+                                    "remediation", f"Configure {check_name}"
+                                ),
                             )
                         )
                     else:
@@ -554,7 +605,9 @@ def create_admin_portal_validator(
 ) -> EnvironmentSecurityValidator:
     """Create security validator for Admin Portal."""
     return EnvironmentSecurityValidator(
-        environment=environment, portal_name="admin", deployment_context=deployment_context
+        environment=environment,
+        portal_name="admin",
+        deployment_context=deployment_context,
     )
 
 
@@ -563,7 +616,9 @@ def create_customer_portal_validator(
 ) -> EnvironmentSecurityValidator:
     """Create security validator for Customer Portal."""
     return EnvironmentSecurityValidator(
-        environment=environment, portal_name="customer", deployment_context=deployment_context
+        environment=environment,
+        portal_name="customer",
+        deployment_context=deployment_context,
     )
 
 
@@ -572,7 +627,9 @@ def create_management_portal_validator(
 ) -> EnvironmentSecurityValidator:
     """Create security validator for Management Portal."""
     return EnvironmentSecurityValidator(
-        environment=environment, portal_name="management", deployment_context=deployment_context
+        environment=environment,
+        portal_name="management",
+        deployment_context=deployment_context,
     )
 
 
@@ -581,7 +638,9 @@ def create_reseller_portal_validator(
 ) -> EnvironmentSecurityValidator:
     """Create security validator for Reseller Portal."""
     return EnvironmentSecurityValidator(
-        environment=environment, portal_name="reseller", deployment_context=deployment_context
+        environment=environment,
+        portal_name="reseller",
+        deployment_context=deployment_context,
     )
 
 
@@ -590,7 +649,9 @@ def create_technician_portal_validator(
 ) -> EnvironmentSecurityValidator:
     """Create security validator for Technician Portal."""
     return EnvironmentSecurityValidator(
-        environment=environment, portal_name="technician", deployment_context=deployment_context
+        environment=environment,
+        portal_name="technician",
+        deployment_context=deployment_context,
     )
 
 
@@ -634,7 +695,9 @@ async def validate_portal_security(
     validator = validator_creator(environment, deployment_context)
 
     return await validator.validate_comprehensive_security(
-        secrets_manager=secrets_manager, csrf_config=csrf_config, additional_checks=additional_checks
+        secrets_manager=secrets_manager,
+        csrf_config=csrf_config,
+        additional_checks=additional_checks,
     )
 
 
@@ -657,7 +720,9 @@ async def validate_all_portals_security(
     for portal_type in portal_types:
         try:
             result = await validate_portal_security(
-                portal_type=portal_type, environment=environment, deployment_context=deployment_context
+                portal_type=portal_type,
+                environment=environment,
+                deployment_context=deployment_context,
             )
             results[portal_type] = result
         except Exception as e:

@@ -14,7 +14,12 @@ import requests
 from pydantic import BaseModel, Field
 
 from ..utils.decorators import standard_exception_handler
-from .pipeline_runner import PerformancePipelineRunner, PipelineConfig, PipelineResult, PipelineStatus
+from .pipeline_runner import (
+    PerformancePipelineRunner,
+    PipelineConfig,
+    PipelineResult,
+    PipelineStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +75,9 @@ class GitHubPerformanceCI:
 
         # Set initial status check
         if self.config.update_status_checks and self._can_update_status():
-            await self._update_status_check("pending", "Running performance benchmarks...")
+            await self._update_status_check(
+                "pending", "Running performance benchmarks..."
+            )
 
         try:
             # Run the performance pipeline
@@ -103,12 +110,16 @@ class GitHubPerformanceCI:
 
             # Update status check on error
             if self.config.update_status_checks and self._can_update_status():
-                await self._update_status_check("error", f"Performance check failed: {str(e)}")
+                await self._update_status_check(
+                    "error", f"Performance check failed: {str(e)}"
+                )
 
             return error_result
 
     @standard_exception_handler
-    async def compare_with_baseline(self, current_results: dict[str, float]) -> dict[str, Any]:
+    async def compare_with_baseline(
+        self, current_results: dict[str, float]
+    ) -> dict[str, Any]:
         """Compare current results with baseline from main branch"""
         if not self.config.compare_with_main:
             return {"status": "skipped", "reason": "Baseline comparison disabled"}
@@ -117,7 +128,10 @@ class GitHubPerformanceCI:
         baseline_results = await self._get_baseline_results()
 
         if not baseline_results:
-            return {"status": "no_baseline", "message": "No baseline results found for comparison"}
+            return {
+                "status": "no_baseline",
+                "message": "No baseline results found for comparison",
+            }
 
         # Use comparator to analyze differences
         if self.pipeline_runner.comparator:
@@ -132,13 +146,16 @@ class GitHubPerformanceCI:
                 "status": "completed",
                 "comparison_result": comparison.__dict__,
                 "performance_change": comparison.overall_performance_change,
-                "regression_detected": comparison.overall_performance_change > 10,  # 10% threshold
+                "regression_detected": comparison.overall_performance_change
+                > 10,  # 10% threshold
                 "significant_changes": len(comparison.significant_changes),
             }
 
         return {"status": "error", "message": "Comparator not available"}
 
-    async def _process_pipeline_result(self, pipeline_result: PipelineResult) -> dict[str, Any]:
+    async def _process_pipeline_result(
+        self, pipeline_result: PipelineResult
+    ) -> dict[str, Any]:
         """Process pipeline result for GitHub integration"""
 
         # Determine if we should fail the check
@@ -155,7 +172,9 @@ class GitHubPerformanceCI:
 
         if self.config.fail_on_critical_issues and pipeline_result.critical_issues:
             should_fail = True
-            failure_reasons.append(f"{len(pipeline_result.critical_issues)} critical issues found")
+            failure_reasons.append(
+                f"{len(pipeline_result.critical_issues)} critical issues found"
+            )
 
         return {
             "pipeline_id": pipeline_result.pipeline_id,
@@ -171,12 +190,16 @@ class GitHubPerformanceCI:
             "artifacts": pipeline_result.artifacts,
         }
 
-    async def _update_status_check(self, state: str, description: str, target_url: Optional[str] = None):
+    async def _update_status_check(
+        self, state: str, description: str, target_url: Optional[str] = None
+    ):
         """Update GitHub status check"""
         if not self._can_update_status():
             return
 
-        url = f"{self.github_api_base}/repos/{self.repository}/statuses/{self.commit_sha}"
+        url = (
+            f"{self.github_api_base}/repos/{self.repository}/statuses/{self.commit_sha}"
+        )
 
         data = {
             "state": state,  # pending, success, error, failure
@@ -185,7 +208,10 @@ class GitHubPerformanceCI:
             "target_url": target_url,
         }
 
-        headers = {"Authorization": f"token {self.github_token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {
+            "Authorization": f"token {self.github_token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
 
         try:
             response = requests.post(url, json=data, headers=headers, timeout=10)
@@ -198,12 +224,14 @@ class GitHubPerformanceCI:
         if pipeline_result.status == PipelineStatus.SUCCESS:
             if pipeline_result.regression_detected and self.config.fail_on_regression:
                 state = "failure"
-                description = (
-                    f"Performance regression detected (score: {pipeline_result.overall_performance_score:.1f}%)"
-                )
-            elif pipeline_result.critical_issues and self.config.fail_on_critical_issues:
+                description = f"Performance regression detected (score: {pipeline_result.overall_performance_score:.1f}%)"
+            elif (
+                pipeline_result.critical_issues and self.config.fail_on_critical_issues
+            ):
                 state = "failure"
-                description = f"{len(pipeline_result.critical_issues)} critical issues found"
+                description = (
+                    f"{len(pipeline_result.critical_issues)} critical issues found"
+                )
             else:
                 state = "success"
                 description = f"Performance benchmarks passed (score: {pipeline_result.overall_performance_score:.1f}%)"
@@ -223,7 +251,10 @@ class GitHubPerformanceCI:
 
         url = f"{self.github_api_base}/repos/{self.repository}/issues/{self.pr_number}/comments"
 
-        headers = {"Authorization": f"token {self.github_token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {
+            "Authorization": f"token {self.github_token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
 
         data = {"body": comment_body}
 
@@ -279,10 +310,14 @@ Performance has degraded compared to baseline. Please review the changes.
 """
 
         for stage in pipeline_result.stages:
-            status_icon = "✅" if stage.status.value == "success" else "❌" if stage.status.value == "failed" else "⏸️"
-            comment += (
-                f"| {stage.stage.value.title()} | {status_icon} {stage.status.value} | {stage.execution_time:.1f}s |\n"
+            status_icon = (
+                "✅"
+                if stage.status.value == "success"
+                else "❌"
+                if stage.status.value == "failed"
+                else "⏸️"
             )
+            comment += f"| {stage.stage.value.title()} | {status_icon} {stage.status.value} | {stage.execution_time:.1f}s |\n"
 
         # Add recommendations
         if pipeline_result.recommendations:
@@ -299,7 +334,9 @@ Performance has degraded compared to baseline. Please review the changes.
             comment += f"\n{self.config.team_to_mention} - Performance regression detected, please review.\n"
 
         # Add footer
-        successful_count = len([s for s in pipeline_result.stages if s.status.value == "success"])
+        successful_count = len(
+            [s for s in pipeline_result.stages if s.status.value == "success"]
+        )
         total_stages = len(pipeline_result.stages)
         comment += f"""
 ---

@@ -117,7 +117,10 @@ class AuditMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Skip excluded paths and methods
-        if request.url.path in self.excluded_paths or request.method in self.excluded_methods:
+        if (
+            request.url.path in self.excluded_paths
+            or request.method in self.excluded_methods
+        ):
             return await call_next(request)
 
         # Get or create audit logger
@@ -156,7 +159,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
             # Create audit event
             event = AuditEvent(
-                event_type=self._determine_event_type(request.method, response.status_code),
+                event_type=self._determine_event_type(
+                    request.method, response.status_code
+                ),
                 message=f"{request.method} {request.url.path} -> {response.status_code}",
                 description=f"HTTP request processed: {request.method} {request.url}",
                 actor=actor,
@@ -395,7 +400,10 @@ class AuditEventCollector:
         self.events.append(event)
 
         # Check if we should flush
-        if len(self.events) >= self.batch_size or get_current_timestamp() - self.last_flush >= self.flush_interval:
+        if (
+            len(self.events) >= self.batch_size
+            or get_current_timestamp() - self.last_flush >= self.flush_interval
+        ):
             self.flush()
 
     def flush(self):
@@ -417,7 +425,9 @@ class AuditEventCollector:
             logger.error(f"Failed to flush audit events: {e}")
 
 
-def create_audit_middleware(audit_logger: Optional[AuditLogger] = None, **kwargs) -> AuditMiddleware:
+def create_audit_middleware(
+    audit_logger: Optional[AuditLogger] = None, **kwargs
+) -> AuditMiddleware:
     """Factory function to create audit middleware."""
     if not FASTAPI_AVAILABLE:
         raise ImportError("FastAPI is required for audit middleware")

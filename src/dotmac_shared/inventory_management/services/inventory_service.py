@@ -13,11 +13,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.inventory_manager import InventoryManager
-from ..core.models import (
-    ItemType,
-    MovementType,
-    WarehouseType,
-)
+from ..core.models import ItemType, MovementType, WarehouseType
 from ..core.schemas import (
     ItemCreate,
     ItemResponse,
@@ -69,7 +65,9 @@ class InventoryService:
             platform_data={"equipment_type": equipment_type},
         )
 
-        item = await self.inventory_manager.create_item(db, tenant_id, item_data, created_by)
+        item = await self.inventory_manager.create_item(
+            db, tenant_id, item_data, created_by
+        )
         return ItemResponse.model_validate(item)
 
     async def create_consumable_item(
@@ -93,7 +91,9 @@ class InventoryService:
             track_expiry_dates=category in ["cable", "batteries", "adhesives"],
         )
 
-        item = await self.inventory_manager.create_item(db, tenant_id, item_data, created_by)
+        item = await self.inventory_manager.create_item(
+            db, tenant_id, item_data, created_by
+        )
         return ItemResponse.model_validate(item)
 
     async def get_item_with_stock_summary(
@@ -101,25 +101,35 @@ class InventoryService:
     ) -> Optional[dict[str, Any]]:
         """Get item with complete stock summary."""
 
-        item = await self.inventory_manager.get_item(db, tenant_id, item_id, include_stock=True)
+        item = await self.inventory_manager.get_item(
+            db, tenant_id, item_id, include_stock=True
+        )
         if not item:
             return None
 
-        stock_summary = await self.inventory_manager.get_item_stock_summary(db, tenant_id, item_id)
+        stock_summary = await self.inventory_manager.get_item_stock_summary(
+            db, tenant_id, item_id
+        )
 
         return {
             "item": ItemResponse.model_validate(item),
             "stock_summary": stock_summary,
         }
 
-    async def get_low_stock_items(self, db: AsyncSession, tenant_id: str) -> list[dict[str, Any]]:
+    async def get_low_stock_items(
+        self, db: AsyncSession, tenant_id: str
+    ) -> list[dict[str, Any]]:
         """Get items that are below reorder point."""
 
-        items, _ = await self.inventory_manager.list_items(db, tenant_id, {"low_stock": True})
+        items, _ = await self.inventory_manager.list_items(
+            db, tenant_id, {"low_stock": True}
+        )
 
         low_stock_items = []
         for item in items:
-            stock_summary = await self.inventory_manager.get_item_stock_summary(db, tenant_id, str(item.id))
+            stock_summary = await self.inventory_manager.get_item_stock_summary(
+                db, tenant_id, str(item.id)
+            )
 
             if stock_summary["total_available"] < item.reorder_point:
                 low_stock_items.append(
@@ -128,7 +138,8 @@ class InventoryService:
                         "current_stock": stock_summary["total_available"],
                         "reorder_point": item.reorder_point,
                         "reorder_quantity": item.reorder_quantity,
-                        "shortage": item.reorder_point - stock_summary["total_available"],
+                        "shortage": item.reorder_point
+                        - stock_summary["total_available"],
                     }
                 )
 
@@ -300,7 +311,9 @@ class InventoryService:
             if vendor_id not in vendors_items:
                 vendors_items[vendor_id] = []
 
-            vendors_items[vendor_id].append({"item": item, "quantity_needed": item_data["reorder_quantity"]})
+            vendors_items[vendor_id].append(
+                {"item": item, "quantity_needed": item_data["reorder_quantity"]}
+            )
 
         created_pos = []
         for vendor_id, items in vendors_items.items():
@@ -329,14 +342,18 @@ class InventoryService:
                     )
                 )
 
-            po = await self.inventory_manager.create_purchase_order(db, tenant_id, po_data, line_items, created_by)
+            po = await self.inventory_manager.create_purchase_order(
+                db, tenant_id, po_data, line_items, created_by
+            )
 
             created_pos.append(PurchaseOrderResponse.model_validate(po))
 
         return created_pos
 
     # Analytics and Reporting
-    async def get_inventory_dashboard(self, db: AsyncSession, tenant_id: str, period_days: int = 30) -> dict[str, Any]:
+    async def get_inventory_dashboard(
+        self, db: AsyncSession, tenant_id: str, period_days: int = 30
+    ) -> dict[str, Any]:
         """Get comprehensive inventory dashboard metrics."""
 
         # Get base analytics
@@ -383,7 +400,9 @@ class InventoryService:
 
         return analytics
 
-    async def get_equipment_utilization_report(self, db: AsyncSession, tenant_id: str) -> dict[str, Any]:
+    async def get_equipment_utilization_report(
+        self, db: AsyncSession, tenant_id: str
+    ) -> dict[str, Any]:
         """Get equipment utilization and deployment status."""
 
         # Get all equipment items
@@ -409,7 +428,9 @@ class InventoryService:
         }
 
         for item in equipment_items:
-            stock_summary = await self.inventory_manager.get_item_stock_summary(db, tenant_id, str(item.id))
+            stock_summary = await self.inventory_manager.get_item_stock_summary(
+                db, tenant_id, str(item.id)
+            )
 
             # Determine utilization status
             status = "available"
@@ -423,7 +444,11 @@ class InventoryService:
                 utilization_data["available"] += 1
 
             # Count by type
-            equipment_type = item.platform_data.get("equipment_type", "unknown") if item.platform_data else "unknown"
+            equipment_type = (
+                item.platform_data.get("equipment_type", "unknown")
+                if item.platform_data
+                else "unknown"
+            )
             if equipment_type not in utilization_data["by_type"]:
                 utilization_data["by_type"][equipment_type] = {
                     "total": 0,

@@ -138,7 +138,11 @@ class NetworkFailureInjector(FailureInjector):
         self._network_rules: dict[str, dict[str, Any]] = {}
 
     def supports_failure_type(self, failure_type: FailureType) -> bool:
-        return failure_type in {FailureType.NETWORK_PARTITION, FailureType.HIGH_LATENCY, FailureType.MESSAGE_LOSS}
+        return failure_type in {
+            FailureType.NETWORK_PARTITION,
+            FailureType.HIGH_LATENCY,
+            FailureType.MESSAGE_LOSS,
+        }
 
     async def inject_failure(self, injection: FailureInjection) -> str:
         """Inject network failure."""
@@ -152,7 +156,9 @@ class NetworkFailureInjector(FailureInjector):
             await self._inject_message_loss(injection_id, injection)
 
         self.active_failures.add(injection_id)
-        logger.info(f"Injected {injection.failure_type.value} for {injection.target_service}")
+        logger.info(
+            f"Injected {injection.failure_type.value} for {injection.target_service}"
+        )
         return injection_id
 
     async def remove_failure(self, injection_id: str) -> bool:
@@ -169,7 +175,9 @@ class NetworkFailureInjector(FailureInjector):
         logger.info(f"Removed network failure injection {injection_id}")
         return True
 
-    async def _inject_network_partition(self, injection_id: str, injection: FailureInjection):
+    async def _inject_network_partition(
+        self, injection_id: str, injection: FailureInjection
+    ):
         """Simulate network partition."""
         rule = {
             "type": "partition",
@@ -190,7 +198,9 @@ class NetworkFailureInjector(FailureInjector):
         }
         self._network_rules[injection_id] = rule
 
-    async def _inject_message_loss(self, injection_id: str, injection: FailureInjection):
+    async def _inject_message_loss(
+        self, injection_id: str, injection: FailureInjection
+    ):
         """Inject message loss."""
         rule = {
             "type": "message_loss",
@@ -236,7 +246,9 @@ class ServiceFailureInjector(FailureInjector):
             await self._inject_rate_limit(injection_id, injection)
 
         self.active_failures.add(injection_id)
-        logger.info(f"Injected {injection.failure_type.value} for {injection.target_service}")
+        logger.info(
+            f"Injected {injection.failure_type.value} for {injection.target_service}"
+        )
         return injection_id
 
     async def remove_failure(self, injection_id: str) -> bool:
@@ -253,13 +265,17 @@ class ServiceFailureInjector(FailureInjector):
         logger.info(f"Removed service failure injection {injection_id}")
         return True
 
-    async def _make_service_unavailable(self, injection_id: str, injection: FailureInjection):
+    async def _make_service_unavailable(
+        self, injection_id: str, injection: FailureInjection
+    ):
         """Make service unavailable."""
         override = {
             "service": injection.target_service,
             "type": "unavailable",
             "status_code": injection.parameters.get("status_code", 503),
-            "error_message": injection.parameters.get("error_message", "Service Unavailable"),
+            "error_message": injection.parameters.get(
+                "error_message", "Service Unavailable"
+            ),
         }
         self._service_overrides[injection_id] = override
 
@@ -272,7 +288,9 @@ class ServiceFailureInjector(FailureInjector):
         }
         self._service_overrides[injection_id] = override
 
-    async def _inject_auth_failure(self, injection_id: str, injection: FailureInjection):
+    async def _inject_auth_failure(
+        self, injection_id: str, injection: FailureInjection
+    ):
         """Inject authentication failures."""
         override = {
             "service": injection.target_service,
@@ -305,7 +323,11 @@ class DatabaseFailureInjector(FailureInjector):
         self._db_overrides: dict[str, dict[str, Any]] = {}
 
     def supports_failure_type(self, failure_type: FailureType) -> bool:
-        return failure_type in {FailureType.DATABASE_CONNECTION_LOSS, FailureType.HIGH_LATENCY, FailureType.CORRUPTION}
+        return failure_type in {
+            FailureType.DATABASE_CONNECTION_LOSS,
+            FailureType.HIGH_LATENCY,
+            FailureType.CORRUPTION,
+        }
 
     async def inject_failure(self, injection: FailureInjection) -> str:
         """Inject database failure."""
@@ -332,7 +354,9 @@ class DatabaseFailureInjector(FailureInjector):
         self.active_failures.discard(injection_id)
         return True
 
-    async def _inject_connection_loss(self, injection_id: str, injection: FailureInjection):
+    async def _inject_connection_loss(
+        self, injection_id: str, injection: FailureInjection
+    ):
         """Inject database connection loss."""
         override = {
             "type": "connection_loss",
@@ -452,7 +476,9 @@ class ChaosExperiment:
                     # Schedule removal if duration specified
                     if injection.duration:
                         asyncio.create_task(
-                            self._schedule_injection_removal(injector, injection_id, injection.duration)
+                            self._schedule_injection_removal(
+                                injector, injection_id, injection.duration
+                            )
                         )
 
     def _find_injector(self, failure_type: FailureType) -> Optional[FailureInjector]:
@@ -462,7 +488,9 @@ class ChaosExperiment:
                 return injector
         return None
 
-    async def _schedule_injection_removal(self, injector: FailureInjector, injection_id: str, duration: timedelta):
+    async def _schedule_injection_removal(
+        self, injector: FailureInjector, injection_id: str, duration: timedelta
+    ):
         """Schedule removal of injection after specified duration."""
         await asyncio.sleep(duration.total_seconds())
         await injector.remove_failure(injection_id)
@@ -530,7 +558,11 @@ class ChaosEngineeringFramework:
 
     def _initialize_default_injectors(self):
         """Initialize default failure injectors."""
-        self.injectors = [NetworkFailureInjector(), ServiceFailureInjector(), DatabaseFailureInjector()]
+        self.injectors = [
+            NetworkFailureInjector(),
+            ServiceFailureInjector(),
+            DatabaseFailureInjector(),
+        ]
 
     def create_experiment(
         self,
@@ -597,7 +629,12 @@ def create_service_disruption_experiment(
     if duration is None:
         duration = timedelta(minutes=5)
     return [
-        FailureInjection(failure_type=failure_type, target_service=service_name, duration=duration, probability=1.0)
+        FailureInjection(
+            failure_type=failure_type,
+            target_service=service_name,
+            duration=duration,
+            probability=1.0,
+        )
     ]
 
 
@@ -625,4 +662,10 @@ def create_database_failure_experiment(
     """Create failure injections for database failure testing."""
     if duration is None:
         duration = timedelta(minutes=2)
-    return [FailureInjection(failure_type=failure_type, target_service=database_service, duration=duration)]
+    return [
+        FailureInjection(
+            failure_type=failure_type,
+            target_service=database_service,
+            duration=duration,
+        )
+    ]

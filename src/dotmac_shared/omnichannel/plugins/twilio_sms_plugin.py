@@ -57,7 +57,9 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
 
         # Validation
         if not all([self.account_sid, self.auth_token, self.from_number]):
-            raise ValueError("Missing required Twilio configuration: account_sid, auth_token, from_number")
+            raise ValueError(
+                "Missing required Twilio configuration: account_sid, auth_token, from_number"
+            )
 
     async def initialize(self) -> bool:
         """Initialize Twilio SMS plugin"""
@@ -68,7 +70,9 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                 logger.info("Twilio SMS plugin initialized successfully")
                 return True
             else:
-                logger.error("Twilio SMS plugin initialization failed - invalid credentials")
+                logger.error(
+                    "Twilio SMS plugin initialization failed - invalid credentials"
+                )
                 return False
 
         except Exception as e:
@@ -129,7 +133,8 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                     error_data = await response.json() if response.text else {}
 
                     error_message = (
-                        f"Twilio API error: {response.status_code} - " f"{error_data.get('message', 'Unknown error')}"
+                        f"Twilio API error: {response.status_code} - "
+                        f"{error_data.get('message', 'Unknown error')}"
                     )
                     return MessageResult(
                         success=False,
@@ -286,7 +291,11 @@ class TwilioSMSPlugin(OmnichannelCommunicationPlugin):
                         "message_id": payload.get("MessageSid"),
                         "timestamp": datetime.now(timezone.utc).isoformat(),
                         "provider": "twilio",
-                        "channel_type": ("whatsapp" if payload.get("From", "").startswith("whatsapp:") else "sms"),
+                        "channel_type": (
+                            "whatsapp"
+                            if payload.get("From", "").startswith("whatsapp:")
+                            else "sms"
+                        ),
                         "metadata": {
                             "from_city": payload.get("FromCity"),
                             "from_state": payload.get("FromState"),

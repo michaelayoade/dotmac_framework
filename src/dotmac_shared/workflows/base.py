@@ -13,7 +13,12 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
-from .exceptions import WorkflowError, WorkflowTimeoutError, WorkflowTransientError, WorkflowValidationError
+from .exceptions import (
+    WorkflowError,
+    WorkflowTimeoutError,
+    WorkflowTransientError,
+    WorkflowValidationError,
+)
 
 
 class WorkflowStatus(str, Enum):
@@ -173,7 +178,11 @@ class BaseWorkflow(ABC):
 
             # Optional per-step timeout via metadata timeouts dict
             timeout: Optional[float] = None
-            timeouts = self.metadata.get("timeouts") if isinstance(self.metadata, dict) else None
+            timeouts = (
+                self.metadata.get("timeouts")
+                if isinstance(self.metadata, dict)
+                else None
+            )
             if isinstance(timeouts, dict):
                 maybe = timeouts.get(step_name)
                 if isinstance(maybe, (int, float)) and maybe > 0:
@@ -181,9 +190,13 @@ class BaseWorkflow(ABC):
 
             if timeout:
                 try:
-                    result = await asyncio.wait_for(self.execute_step(step_name), timeout=timeout)
+                    result = await asyncio.wait_for(
+                        self.execute_step(step_name), timeout=timeout
+                    )
                 except asyncio.TimeoutError as e:
-                    raise WorkflowTimeoutError(f"Step timed out after {timeout}s") from e
+                    raise WorkflowTimeoutError(
+                        f"Step timed out after {timeout}s"
+                    ) from e
             else:
                 result = await self.execute_step(step_name)
 

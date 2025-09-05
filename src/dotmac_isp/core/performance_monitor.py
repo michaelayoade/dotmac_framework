@@ -12,10 +12,11 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
-from dotmac.platform.observability.core.signoz_integration import get_signoz
-from dotmac_isp.shared.cache import get_cache_manager
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
+
+from dotmac.platform.observability.core.signoz_integration import get_signoz
+from dotmac_isp.shared.cache import get_cache_manager
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +145,9 @@ class OptimalPerformanceCollector:
         except Exception as e:
             logger.error(f"Metrics flush error: {e}")
             # Re-add failed metrics to buffer if critical
-            critical_metrics = [m for m in current_buffer if m.metric_type == MetricType.ERROR_RATE]
+            critical_metrics = [
+                m for m in current_buffer if m.metric_type == MetricType.ERROR_RATE
+            ]
             self.metric_buffer.extend(critical_metrics[:100])  # Limit backlog
 
     async def _process_metric_batch(self, metrics: list[PerformanceMetric]) -> None:
@@ -160,7 +163,9 @@ class OptimalPerformanceCollector:
         for metric_name, metric_list in metric_groups.items():
             await self._process_metric_group(metric_name, metric_list)
 
-    async def _process_metric_group(self, metric_name: str, metrics: list[PerformanceMetric]) -> None:
+    async def _process_metric_group(
+        self, metric_name: str, metrics: list[PerformanceMetric]
+    ) -> None:
         """Process group of same-named metrics."""
         try:
             # Calculate aggregations
@@ -171,8 +176,16 @@ class OptimalPerformanceCollector:
                 "max": max(values),
                 "avg": statistics.mean(values),
                 "p50": statistics.median(values),
-                "p95": (statistics.quantiles(values, n=20)[18] if len(values) >= 20 else max(values)),
-                "p99": (statistics.quantiles(values, n=100)[98] if len(values) >= 100 else max(values)),
+                "p95": (
+                    statistics.quantiles(values, n=20)[18]
+                    if len(values) >= 20
+                    else max(values)
+                ),
+                "p99": (
+                    statistics.quantiles(values, n=100)[98]
+                    if len(values) >= 100
+                    else max(values)
+                ),
             }
 
             # Store in cache for real-time access
@@ -183,7 +196,9 @@ class OptimalPerformanceCollector:
                 cache_key,
                 {
                     "aggregation": aggregation,
-                    "raw_metrics": [m.to_dict() for m in metrics[-10:]],  # Last 10 samples
+                    "raw_metrics": [
+                        m.to_dict() for m in metrics[-10:]
+                    ],  # Last 10 samples
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 },
                 3600,  # 1 hour TTL
@@ -199,7 +214,9 @@ class OptimalPerformanceCollector:
         except Exception as e:
             logger.error(f"Error processing metric group {metric_name}: {e}")
 
-    async def _send_to_signoz(self, metric_name: str, aggregation: dict, sample_metric: PerformanceMetric) -> None:
+    async def _send_to_signoz(
+        self, metric_name: str, aggregation: dict, sample_metric: PerformanceMetric
+    ) -> None:
         """Send metrics to SignOz efficiently."""
         try:
             # Send key aggregations to SignOz
@@ -242,7 +259,9 @@ class OptimalPerformanceCollector:
             # Fire alert immediately
             asyncio.create_task(self._fire_alert(alert))
 
-    async def _check_performance_thresholds(self, metric_name: str, aggregation: dict) -> None:
+    async def _check_performance_thresholds(
+        self, metric_name: str, aggregation: dict
+    ) -> None:
         """Check performance thresholds against aggregated data."""
         # Check P95 thresholds
         p95_key = f"{metric_name}_p95"
@@ -278,7 +297,9 @@ class OptimalPerformanceCollector:
                 )
                 await self._fire_alert(alert)
 
-    def _is_threshold_exceeded(self, metric: PerformanceMetric, threshold: float) -> bool:
+    def _is_threshold_exceeded(
+        self, metric: PerformanceMetric, threshold: float
+    ) -> bool:
         """Check if metric exceeds threshold."""
         if metric.metric_type == MetricType.ERROR_RATE:
             return metric.value > threshold
@@ -289,7 +310,9 @@ class OptimalPerformanceCollector:
         else:
             return metric.value > threshold
 
-    def _determine_alert_level(self, metric: PerformanceMetric, threshold: float) -> AlertLevel:
+    def _determine_alert_level(
+        self, metric: PerformanceMetric, threshold: float
+    ) -> AlertLevel:
         """Determine appropriate alert level."""
         if metric.metric_type == MetricType.ERROR_RATE:
             if metric.value > threshold * 3:  # 3x threshold
@@ -318,7 +341,11 @@ class OptimalPerformanceCollector:
                 "performance_alerts",
             )
             # Log alert
-            log_level = logging.WARNING if alert.alert_level == AlertLevel.WARNING else logging.ERROR
+            log_level = (
+                logging.WARNING
+                if alert.alert_level == AlertLevel.WARNING
+                else logging.ERROR
+            )
             logger.log(log_level, f"🚨 Performance Alert: {alert.message}")
 
             # Send to SignOz if available
@@ -365,7 +392,9 @@ class DatabasePerformanceMonitor:
         def after_execute(conn, cursor, statement, parameters, context, executemany):
             """Record query performance."""
             try:
-                duration = (time.perf_counter() - context._query_start) * 1000  # Convert to ms
+                duration = (
+                    time.perf_counter() - context._query_start
+                ) * 1000  # Convert to ms
 
                 # Extract query info
                 query_type = self._extract_query_type(statement)
@@ -404,12 +433,16 @@ class DatabasePerformanceMonitor:
                     unit="count",
                     timestamp=datetime.now(timezone.utc),
                     tags={
-                        "error_type": type(exception_context.original_exception).__name__,
+                        "error_type": type(
+                            exception_context.original_exception
+                        ).__name__,
                         "status": "error",
                     },
                     context={
                         "statement": (
-                            str(exception_context.statement)[:200] if exception_context.statement else "unknown"
+                            str(exception_context.statement)[:200]
+                            if exception_context.statement
+                            else "unknown"
                         ),
                         "error": str(exception_context.original_exception)[:500],
                     },
@@ -439,7 +472,9 @@ class DatabasePerformanceMonitor:
             words = statement.strip().upper().split()
             if len(words) > 2 and words[0] in ["SELECT", "INSERT", "UPDATE", "DELETE"]:
                 if words[0] == "SELECT":
-                    from_idx = next((i for i, w in enumerate(words) if w == "FROM"), None)
+                    from_idx = next(
+                        (i for i, w in enumerate(words) if w == "FROM"), None
+                    )
                     if from_idx and from_idx + 1 < len(words):
                         return words[from_idx + 1].split(".")[0]
                 elif words[0] in ["INSERT", "UPDATE"]:
@@ -462,7 +497,9 @@ class HTTPPerformanceMonitor:
     def __init__(self, collector: OptimalPerformanceCollector):
         self.collector = collector
 
-    def record_request(self, method: str, path: str, status_code: int, duration_ms: float, **context) -> None:
+    def record_request(
+        self, method: str, path: str, status_code: int, duration_ms: float, **context
+    ) -> None:
         """Record HTTP request performance."""
         # Request duration metric
         latency_metric = PerformanceMetric(

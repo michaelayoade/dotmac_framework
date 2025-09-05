@@ -5,9 +5,10 @@ FastAPI routes for feature flag management (clean minimal version).
 from datetime import datetime
 from typing import Any, Optional
 
-from dotmac_shared.core.logging import get_logger
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
+
+from dotmac_shared.core.logging import get_logger
 
 from .client import FeatureFlagClient
 from .models import FeatureFlag, FeatureFlagStatus, RolloutStrategy
@@ -56,14 +57,18 @@ def create_feature_flag_router(client: FeatureFlagClient) -> APIRouter:
     router = APIRouter(prefix="/api/feature-flags", tags=["Feature Flags"])
 
     @router.get("/")
-    async def list_flags(tags: Optional[str] = Query(None, description="Comma-separated tags")) -> list[dict[str, Any]]:
+    async def list_flags(
+        tags: Optional[str] = Query(None, description="Comma-separated tags")
+    ) -> list[dict[str, Any]]:
         try:
             tag_list = tags.split(",") if tags else None
             flags_data = await client.list_flags(tag_list)
             return flags_data
         except Exception as e:
             logger.error(f"Error listing flags: {e}")
-            raise HTTPException(status_code=500, detail="Failed to list feature flags") from e
+            raise HTTPException(
+                status_code=500, detail="Failed to list feature flags"
+            ) from e
 
     @router.get("/{flag_key}")
     async def get_flag(flag_key: str) -> dict[str, Any]:
@@ -76,7 +81,9 @@ def create_feature_flag_router(client: FeatureFlagClient) -> APIRouter:
             raise
         except Exception as e:
             logger.error(f"Error getting flag {flag_key}: {e}")
-            raise HTTPException(status_code=500, detail="Failed to get feature flag") from e
+            raise HTTPException(
+                status_code=500, detail="Failed to get feature flag"
+            ) from e
 
     @router.post("/", status_code=201)
     async def create_flag(request: CreateFlagRequest) -> dict[str, Any]:
@@ -87,13 +94,17 @@ def create_feature_flag_router(client: FeatureFlagClient) -> APIRouter:
             flag = FeatureFlag(**data, status=FeatureFlagStatus.ACTIVE)
             success = await client.manager.create_flag(flag)
             if not success:
-                raise HTTPException(status_code=400, detail="Failed to create feature flag")
+                raise HTTPException(
+                    status_code=400, detail="Failed to create feature flag"
+                )
             return {"message": "Feature flag created", "key": request.key}
         except HTTPException:
             raise
         except Exception as e:
             logger.error(f"Error creating flag {request.key}: {e}")
-            raise HTTPException(status_code=500, detail="Failed to create feature flag") from e
+            raise HTTPException(
+                status_code=500, detail="Failed to create feature flag"
+            ) from e
 
     @router.put("/{flag_key}")
     async def update_flag(flag_key: str, request: UpdateFlagRequest) -> dict[str, str]:
@@ -106,13 +117,17 @@ def create_feature_flag_router(client: FeatureFlagClient) -> APIRouter:
             current_flag.updated_at = datetime.utcnow()
             success = await client.manager.update_flag(current_flag)
             if not success:
-                raise HTTPException(status_code=400, detail="Failed to update feature flag")
+                raise HTTPException(
+                    status_code=400, detail="Failed to update feature flag"
+                )
             return {"message": "Feature flag updated"}
         except HTTPException:
             raise
         except Exception as e:
             logger.error(f"Error updating flag {flag_key}: {e}")
-            raise HTTPException(status_code=500, detail="Failed to update feature flag") from e
+            raise HTTPException(
+                status_code=500, detail="Failed to update feature flag"
+            ) from e
 
     @router.delete("/{flag_key}")
     async def delete_flag(flag_key: str) -> dict[str, str]:
@@ -125,10 +140,14 @@ def create_feature_flag_router(client: FeatureFlagClient) -> APIRouter:
             raise
         except Exception as e:
             logger.error(f"Error deleting flag {flag_key}: {e}")
-            raise HTTPException(status_code=500, detail="Failed to delete feature flag") from e
+            raise HTTPException(
+                status_code=500, detail="Failed to delete feature flag"
+            ) from e
 
     @router.post("/{flag_key}/evaluate", response_model=EvaluationResponse)
-    async def evaluate_flag(flag_key: str, request: EvaluationRequest) -> EvaluationResponse:
+    async def evaluate_flag(
+        flag_key: str, request: EvaluationRequest
+    ) -> EvaluationResponse:
         try:
             enabled = await client.is_enabled(flag_key, request.context)
             variant = await client.get_variant(flag_key, request.context)
@@ -136,6 +155,8 @@ def create_feature_flag_router(client: FeatureFlagClient) -> APIRouter:
             return EvaluationResponse(enabled=enabled, variant=variant, payload=payload)
         except Exception as e:
             logger.error(f"Error evaluating flag {flag_key}: {e}")
-            raise HTTPException(status_code=500, detail="Failed to evaluate feature flag") from e
+            raise HTTPException(
+                status_code=500, detail="Failed to evaluate feature flag"
+            ) from e
 
     return router

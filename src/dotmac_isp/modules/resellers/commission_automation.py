@@ -11,10 +11,11 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any, Optional
 
-from dotmac.database.base import Base
 from sqlalchemy import JSON, Column, DateTime, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac.database.base import Base
 
 from .commission_system import CommissionCalculator, CommissionService
 from .services_complete import ResellerCustomerService, ResellerService
@@ -140,25 +141,28 @@ class CommissionAutomationEngine:
         self.calculator = CommissionCalculator()
 
     async def schedule_monthly_commission_run(
-        self, target_date: Optional[date] = None, reseller_ids: Optional[list[str]] = None
+        self,
+        target_date: Optional[date] = None,
+        reseller_ids: Optional[list[str]] = None,
     ) -> dict[str, Any]:
         """Schedule automated monthly commission processing"""
 
         if not target_date:
             target_date = date.today().replace(day=1) - timedelta(days=1)  # Last month
 
-        execution_id = (
-            f"monthly_commissions_{target_date.strftime('%Y_%m')}_{datetime.now(timezone.utc).strftime('%H%M%S')}"
-        )
+        execution_id = f"monthly_commissions_{target_date.strftime('%Y_%m')}_{datetime.now(timezone.utc).strftime('%H%M%S')}"
 
         # Create workflow execution record
         workflow_execution = CommissionWorkflowExecution(
             workflow_type="monthly_commission_processing",
             execution_id=execution_id,
-            period_start=datetime.combine(target_date.replace(day=1), datetime.min.time()),
+            period_start=datetime.combine(
+                target_date.replace(day=1), datetime.min.time()
+            ),
             period_end=datetime.combine(target_date, datetime.max.time()),
             status=CommissionWorkflowStatus.SCHEDULED.value,
-            scheduled_at=datetime.now(timezone.utc) + timedelta(minutes=5),  # Run in 5 minutes
+            scheduled_at=datetime.now(timezone.utc)
+            + timedelta(minutes=5),  # Run in 5 minutes
             workflow_config={
                 "target_month": target_date.strftime("%Y-%m"),
                 "reseller_filter": reseller_ids,
@@ -173,7 +177,9 @@ class CommissionAutomationEngine:
         await self.db.commit()
 
         # Schedule the actual execution (in production, this would use a job queue)
-        asyncio.create_task(self._execute_monthly_commission_workflow(str(workflow_execution.id)))
+        asyncio.create_task(
+            self._execute_monthly_commission_workflow(str(workflow_execution.id))
+        )
 
         return {
             "execution_id": execution_id,
@@ -184,7 +190,9 @@ class CommissionAutomationEngine:
             "status": "scheduled",
         }
 
-    async def _execute_monthly_commission_workflow(self, workflow_id: str) -> dict[str, Any]:
+    async def _execute_monthly_commission_workflow(
+        self, workflow_id: str
+    ) -> dict[str, Any]:
         """Execute monthly commission processing workflow"""
 
         # Simulate execution delay
@@ -195,10 +203,13 @@ class CommissionAutomationEngine:
         workflow_execution = {
             "id": workflow_id,
             "execution_id": f"monthly_commissions_{date.today().strftime('%Y_%m')}",
-            "period_start": datetime.now(timezone.utc).replace(day=1) - timedelta(days=30),
+            "period_start": datetime.now(timezone.utc).replace(day=1)
+            - timedelta(days=30),
             "period_end": datetime.now(timezone.utc).replace(day=1) - timedelta(days=1),
             "workflow_config": {
-                "target_month": (date.today().replace(day=1) - timedelta(days=1)).strftime("%Y-%m"),
+                "target_month": (
+                    date.today().replace(day=1) - timedelta(days=1)
+                ).strftime("%Y-%m"),
                 "reseller_filter": None,
                 "include_adjustments": True,
                 "send_notifications": True,
@@ -207,7 +218,9 @@ class CommissionAutomationEngine:
 
         try:
             # Update status to running
-            await self._update_workflow_status(workflow_id, CommissionWorkflowStatus.RUNNING, 0)
+            await self._update_workflow_status(
+                workflow_id, CommissionWorkflowStatus.RUNNING, 0
+            )
 
             # Get all active resellers
             resellers = await self.reseller_service.list_active_resellers(limit=1000)
@@ -215,7 +228,10 @@ class CommissionAutomationEngine:
 
             if workflow_execution["workflow_config"].get("reseller_filter"):
                 resellers = [
-                    r for r in resellers if r.reseller_id in workflow_execution["workflow_config"]["reseller_filter"]
+                    r
+                    for r in resellers
+                    if r.reseller_id
+                    in workflow_execution["workflow_config"]["reseller_filter"]
                 ]
 
             results = {
@@ -232,7 +248,9 @@ class CommissionAutomationEngine:
                 try:
                     # Update progress
                     progress = (i / len(resellers)) * 100
-                    await self._update_workflow_status(workflow_id, CommissionWorkflowStatus.RUNNING, progress)
+                    await self._update_workflow_status(
+                        workflow_id, CommissionWorkflowStatus.RUNNING, progress
+                    )
 
                     # Process reseller commissions
                     reseller_result = await self._process_reseller_monthly_commissions(
@@ -243,9 +261,15 @@ class CommissionAutomationEngine:
 
                     results["reseller_results"].append(reseller_result)
                     results["total_resellers_processed"] += 1
-                    results["total_commissions_created"] += reseller_result["commissions_created"]
-                    results["total_commission_amount"] += Decimal(str(reseller_result["total_amount"]))
-                    results["total_customers_processed"] += reseller_result["customers_processed"]
+                    results["total_commissions_created"] += reseller_result[
+                        "commissions_created"
+                    ]
+                    results["total_commission_amount"] += Decimal(
+                        str(reseller_result["total_amount"])
+                    )
+                    results["total_customers_processed"] += reseller_result[
+                        "customers_processed"
+                    ]
 
                     # Small delay to prevent overwhelming the system
                     await asyncio.sleep(0.1)
@@ -260,7 +284,10 @@ class CommissionAutomationEngine:
 
             # Mark as completed
             await self._update_workflow_status(
-                workflow_id, CommissionWorkflowStatus.COMPLETED, 100, execution_results=results
+                workflow_id,
+                CommissionWorkflowStatus.COMPLETED,
+                100,
+                execution_results=results,
             )
 
             # Send completion notification
@@ -273,7 +300,9 @@ class CommissionAutomationEngine:
                 "results": {
                     "total_resellers_processed": results["total_resellers_processed"],
                     "total_commissions_created": results["total_commissions_created"],
-                    "total_commission_amount": float(results["total_commission_amount"]),
+                    "total_commission_amount": float(
+                        results["total_commission_amount"]
+                    ),
                     "errors_count": len(results["errors"]),
                 },
             }
@@ -283,7 +312,12 @@ class CommissionAutomationEngine:
             await self._update_workflow_status(
                 workflow_id,
                 CommissionWorkflowStatus.FAILED,
-                error_details=[{"error": str(e), "timestamp": datetime.now(timezone.utc).isoformat()}],
+                error_details=[
+                    {
+                        "error": str(e),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                ],
             )
             raise
 
@@ -293,7 +327,9 @@ class CommissionAutomationEngine:
         """Process monthly commissions for a specific reseller"""
 
         # Get reseller's customers
-        customers = await self.customer_service.list_for_reseller(reseller_id, limit=1000)
+        customers = await self.customer_service.list_for_reseller(
+            reseller_id, limit=1000
+        )
         active_customers = [c for c in customers if c.relationship_status == "active"]
 
         commissions_created = []
@@ -337,7 +373,10 @@ class CommissionAutomationEngine:
         }
 
     async def create_payment_batch(
-        self, commission_ids: list[str], payment_date: Optional[date] = None, payment_method: str = "ach_transfer"
+        self,
+        commission_ids: list[str],
+        payment_date: Optional[date] = None,
+        payment_method: str = "ach_transfer",
     ) -> dict[str, Any]:
         """Create automated payment batch for commissions"""
 
@@ -355,7 +394,9 @@ class CommissionAutomationEngine:
             batch_id=batch_id,
             batch_type="monthly_commissions",
             payment_method=payment_method,
-            payment_date=datetime.combine(payment_date, datetime.time(9, 0)),  # 9 AM payment time
+            payment_date=datetime.combine(
+                payment_date, datetime.time(9, 0)
+            ),  # 9 AM payment time
             total_amount=total_amount,
             total_commissions=len(commission_ids),
             total_resellers=total_resellers,
@@ -432,7 +473,11 @@ class CommissionAutomationEngine:
                 await asyncio.sleep(0.2)
 
             # Update final status
-            final_status = PaymentStatus.COMPLETED if failed_payments == 0 else PaymentStatus.COMPLETED
+            final_status = (
+                PaymentStatus.COMPLETED
+                if failed_payments == 0
+                else PaymentStatus.COMPLETED
+            )
             await self._update_payment_batch_status(
                 batch_id,
                 final_status,
@@ -453,7 +498,9 @@ class CommissionAutomationEngine:
             }
 
         except Exception as e:
-            await self._update_payment_batch_status(batch_id, PaymentStatus.FAILED, error=str(e))
+            await self._update_payment_batch_status(
+                batch_id, PaymentStatus.FAILED, error=str(e)
+            )
             raise
 
     async def setup_recurring_commission_schedule(
@@ -473,7 +520,9 @@ class CommissionAutomationEngine:
             "auto_approve": auto_approve,
             "notification_recipients": notification_recipients or [],
             "enabled": True,
-            "next_execution": self._calculate_next_execution_date(frequency, day_of_month),
+            "next_execution": self._calculate_next_execution_date(
+                frequency, day_of_month
+            ),
             "created_at": datetime.now(timezone.utc).isoformat(),
             "workflow_config": {
                 "include_adjustments": True,
@@ -518,7 +567,10 @@ class CommissionAutomationEngine:
                 "status": "applied",
             }
 
-            adjustment_amount = processed_adjustment["adjusted_amount"] - processed_adjustment["original_amount"]
+            adjustment_amount = (
+                processed_adjustment["adjusted_amount"]
+                - processed_adjustment["original_amount"]
+            )
             processed_adjustment["net_adjustment"] = float(adjustment_amount)
             total_adjustment_amount += adjustment_amount
 
@@ -561,24 +613,32 @@ class CommissionAutomationEngine:
         # In production, this would update the database record
         logger.info(f"💳 Payment Batch {batch_id} status: {status.value}")
         if successful_payments is not None:
-            logger.info(f"   Successful: {successful_payments}, Failed: {failed_payments}")
+            logger.info(
+                f"   Successful: {successful_payments}, Failed: {failed_payments}"
+            )
         if error:
             logger.info(f"   Error: {error}")
 
-    async def _send_workflow_completion_notification(self, workflow_id: str, results: dict[str, Any]):
+    async def _send_workflow_completion_notification(
+        self, workflow_id: str, results: dict[str, Any]
+    ):
         """Send workflow completion notification"""
         logger.info(f"📧 Sending workflow completion notification for {workflow_id}")
         logger.info(f"   Resellers processed: {results['total_resellers_processed']}")
         logger.info(f"   Commissions created: {results['total_commissions_created']}")
         logger.info(f"   Total amount: ${results['total_commission_amount']:,.2f}")
 
-    async def _send_payment_completion_notifications(self, batch_id: str, payment_results: list[dict[str, Any]]):
+    async def _send_payment_completion_notifications(
+        self, batch_id: str, payment_results: list[dict[str, Any]]
+    ):
         """Send payment completion notifications to resellers"""
         logger.info(f"📧 Sending payment notifications for batch {batch_id}")
 
         for result in payment_results:
             if result["status"] == "success":
-                logger.info(f"   ✅ Payment confirmation sent to {result['reseller_id']}: ${result['amount']}")
+                logger.info(
+                    f"   ✅ Payment confirmation sent to {result['reseller_id']}: ${result['amount']}"
+                )
             else:
                 logger.info(
                     f"   ❌ Payment failure notification sent to {result['reseller_id']}: {result.get('error')}"

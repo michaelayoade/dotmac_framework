@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 class TicketManager:
     """Core ticket management system."""
 
-    def __init__(self, db_session_factory=None, config: Optional[dict[str, Any]] = None):
+    def __init__(
+        self, db_session_factory=None, config: Optional[dict[str, Any]] = None
+    ):
         """Initialize ticket manager."""
         self.db_session_factory = db_session_factory
         self.config = config or {}
@@ -64,8 +66,12 @@ class TicketManager:
             ticket_number = self.generate_ticket_number(tenant_id)
 
             # Calculate SLA times
-            sla = self.sla_config.get(ticket_data.priority, self.sla_config[TicketPriority.NORMAL])
-            sla_breach_time = datetime.now(timezone.utc) + timedelta(minutes=sla["resolution"])
+            sla = self.sla_config.get(
+                ticket_data.priority, self.sla_config[TicketPriority.NORMAL]
+            )
+            sla_breach_time = datetime.now(timezone.utc) + timedelta(
+                minutes=sla["resolution"]
+            )
 
             # Create ticket
             ticket = Ticket(
@@ -101,7 +107,9 @@ class TicketManager:
             logger.error(f"Error creating ticket: {str(e)}")
             raise
 
-    async def get_ticket(self, db: AsyncSession, tenant_id: str, ticket_id: str) -> Optional[Ticket]:
+    async def get_ticket(
+        self, db: AsyncSession, tenant_id: str, ticket_id: str
+    ) -> Optional[Ticket]:
         """Get ticket by ID."""
         query = (
             select(Ticket)
@@ -116,11 +124,17 @@ class TicketManager:
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_ticket_by_number(self, db: AsyncSession, tenant_id: str, ticket_number: str) -> Optional[Ticket]:
+    async def get_ticket_by_number(
+        self, db: AsyncSession, tenant_id: str, ticket_number: str
+    ) -> Optional[Ticket]:
         """Get ticket by ticket number."""
         query = (
             select(Ticket)
-            .where(and_(Ticket.ticket_number == ticket_number, Ticket.tenant_id == tenant_id))
+            .where(
+                and_(
+                    Ticket.ticket_number == ticket_number, Ticket.tenant_id == tenant_id
+                )
+            )
             .options(
                 selectinload(Ticket.comments),
                 selectinload(Ticket.attachments),
@@ -266,7 +280,9 @@ class TicketManager:
                     query = query.where(Ticket.category == filters["category"])
 
                 if "assigned_to_id" in filters:
-                    query = query.where(Ticket.assigned_to_id == filters["assigned_to_id"])
+                    query = query.where(
+                        Ticket.assigned_to_id == filters["assigned_to_id"]
+                    )
 
                 if "customer_id" in filters:
                     query = query.where(Ticket.customer_id == filters["customer_id"])
@@ -325,10 +341,14 @@ class TicketManager:
 
             if date_range:
                 start_date, end_date = date_range
-                base_query = base_query.where(and_(Ticket.created_at >= start_date, Ticket.created_at <= end_date))
+                base_query = base_query.where(
+                    and_(Ticket.created_at >= start_date, Ticket.created_at <= end_date)
+                )
 
             # Total tickets
-            total_result = await db.execute(select(func.count()).select_from(base_query.subquery()))
+            total_result = await db.execute(
+                select(func.count()).select_from(base_query.subquery())
+            )
             total_tickets = total_result.scalar()
 
             # Status breakdown
@@ -369,7 +389,9 @@ class TicketManager:
 
             # Average resolution time
             resolution_query = select(
-                func.avg(func.extract("epoch", Ticket.resolved_at - Ticket.created_at) / 3600).label("avg_hours")
+                func.avg(
+                    func.extract("epoch", Ticket.resolved_at - Ticket.created_at) / 3600
+                ).label("avg_hours")
             ).where(and_(Ticket.tenant_id == tenant_id, Ticket.resolved_at.isnot(None)))
 
             if date_range:
@@ -398,7 +420,9 @@ class TicketManager:
             logger.error(f"Error getting ticket metrics: {str(e)}")
             raise
 
-    async def _handle_status_change(self, ticket: Ticket, old_status: TicketStatus, new_status: TicketStatus):
+    async def _handle_status_change(
+        self, ticket: Ticket, old_status: TicketStatus, new_status: TicketStatus
+    ):
         """Handle ticket status changes."""
         if new_status == TicketStatus.RESOLVED and old_status != TicketStatus.RESOLVED:
             ticket.resolved_at = datetime.now(timezone.utc)
@@ -416,7 +440,9 @@ class TicketManager:
         """Trigger events when ticket is updated."""
         logger.info(f"Ticket updated events triggered for {ticket.ticket_number}")
 
-    async def _trigger_comment_added_events(self, ticket: Ticket, comment: TicketComment):
+    async def _trigger_comment_added_events(
+        self, ticket: Ticket, comment: TicketComment
+    ):
         """Trigger events when comment is added."""
         logger.info(f"Comment added events triggered for ticket {ticket.ticket_number}")
 

@@ -173,7 +173,9 @@ def create_service_assurance_sdk(
         ```
     """
     if not SDK_AVAILABLE:
-        raise ImportError("ServiceAssuranceSDK not available. Please ensure all dependencies are installed.")
+        raise ImportError(
+            "ServiceAssuranceSDK not available. Please ensure all dependencies are installed."
+        )
 
     # Merge default config with user config
     merged_config = DEFAULT_CONFIG.copy()
@@ -184,10 +186,14 @@ def create_service_assurance_sdk(
             else:
                 merged_config[section] = settings
 
-    return ServiceAssuranceSDK(tenant_id=tenant_id, database_session=database_session, config=merged_config)
+    return ServiceAssuranceSDK(
+        tenant_id=tenant_id, database_session=database_session, config=merged_config
+    )
 
 
-def create_alarm_processor(tenant_id: str, database_session=None, config: Optional[dict] = None) -> "AlarmService":
+def create_alarm_processor(
+    tenant_id: str, database_session=None, config: Optional[dict] = None
+) -> "AlarmService":
     """
     Create standalone alarm processing service.
 
@@ -221,7 +227,9 @@ def create_alarm_processor(tenant_id: str, database_session=None, config: Option
         ```
     """
     if not SERVICES_AVAILABLE:
-        raise ImportError("AlarmService not available. Please ensure all dependencies are installed.")
+        raise ImportError(
+            "AlarmService not available. Please ensure all dependencies are installed."
+        )
 
     return AlarmService(
         tenant_id=tenant_id,
@@ -230,7 +238,9 @@ def create_alarm_processor(tenant_id: str, database_session=None, config: Option
     )
 
 
-def create_flow_analyzer(tenant_id: str, database_session=None, config: Optional[dict] = None) -> "FlowService":
+def create_flow_analyzer(
+    tenant_id: str, database_session=None, config: Optional[dict] = None
+) -> "FlowService":
     """
     Create standalone flow analytics service.
 
@@ -271,7 +281,9 @@ def create_flow_analyzer(tenant_id: str, database_session=None, config: Optional
         ```
     """
     if not SERVICES_AVAILABLE:
-        raise ImportError("FlowService not available. Please ensure all dependencies are installed.")
+        raise ImportError(
+            "FlowService not available. Please ensure all dependencies are installed."
+        )
 
     return FlowService(
         tenant_id=tenant_id,
@@ -316,7 +328,9 @@ def health_check():
     if SDK_AVAILABLE:
         health["available_components"].append("ServiceAssuranceSDK")
     if SERVICES_AVAILABLE:
-        health["available_components"].extend(["AlarmService", "FlowService", "ProbeService"])
+        health["available_components"].extend(
+            ["AlarmService", "FlowService", "ProbeService"]
+        )
     if UTILS_AVAILABLE:
         health["available_components"].extend(["EventParsers", "MetricsCalculators"])
 

@@ -178,7 +178,9 @@ class PluginRegistry:
     def unregister_plugin(self, plugin_name: str) -> None:
         """Unregister a middleware plugin."""
         if plugin_name not in self._plugins:
-            logger.warning("Attempting to unregister unknown plugin", plugin=plugin_name)
+            logger.warning(
+                "Attempting to unregister unknown plugin", plugin=plugin_name
+            )
             return
 
         plugin = self._plugins[plugin_name]
@@ -278,12 +280,16 @@ class PluginRegistry:
             # Check dependencies
             for dep in metadata.dependencies:
                 if dep not in self._enabled_plugins:
-                    conflicts.append(f"Plugin '{plugin_name}' requires '{dep}' which is not enabled")
+                    conflicts.append(
+                        f"Plugin '{plugin_name}' requires '{dep}' which is not enabled"
+                    )
 
             # Check conflicts
             for conflict in metadata.conflicts:
                 if conflict in self._enabled_plugins:
-                    conflicts.append(f"Plugin '{plugin_name}' conflicts with '{conflict}'")
+                    conflicts.append(
+                        f"Plugin '{plugin_name}' conflicts with '{conflict}'"
+                    )
 
         return conflicts
 
@@ -293,7 +299,10 @@ class PluginRegistry:
             "total_plugins": len(self._plugins),
             "enabled_plugins": len(self._enabled_plugins),
             "disabled_plugins": len(self._plugins) - len(self._enabled_plugins),
-            "plugins_by_phase": {phase.value: len(self.get_plugins_by_phase(phase)) for phase in MiddlewarePhase},
+            "plugins_by_phase": {
+                phase.value: len(self.get_plugins_by_phase(phase))
+                for phase in MiddlewarePhase
+            },
         }
 
 
@@ -353,7 +362,11 @@ class PluginManager:
             # Find plugin class
             plugin_classes = []
             for _name, obj in inspect.getmembers(module):
-                if inspect.isclass(obj) and issubclass(obj, MiddlewarePlugin) and obj != MiddlewarePlugin:
+                if (
+                    inspect.isclass(obj)
+                    and issubclass(obj, MiddlewarePlugin)
+                    and obj != MiddlewarePlugin
+                ):
                     plugin_classes.append(obj)
 
             if not plugin_classes:
@@ -449,7 +462,9 @@ class MiddlewareRegistry:
         self.plugin_manager = PluginManager()
         self._builtin_middlewares: dict[str, type[BaseHTTPMiddleware]] = {}
 
-    def register_builtin_middleware(self, name: str, middleware_class: type[BaseHTTPMiddleware]) -> None:
+    def register_builtin_middleware(
+        self, name: str, middleware_class: type[BaseHTTPMiddleware]
+    ) -> None:
         """Register a built-in middleware component."""
         self._builtin_middlewares[name] = middleware_class
         logger.info("Built-in middleware registered", name=name)
@@ -537,7 +552,9 @@ class SecurityPlugin(MiddlewarePlugin):
             priority=200,
             config_schema={
                 "required": ["blocked_ips"],
-                "properties": {"blocked_ips": {"type": "array", "items": {"type": "string"}}},
+                "properties": {
+                    "blocked_ips": {"type": "array", "items": {"type": "string"}}
+                },
             },
         )
 
@@ -549,6 +566,8 @@ class SecurityPlugin(MiddlewarePlugin):
         if client_ip in blocked_ips:
             from fastapi import HTTPException, status
 
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+            )
 
         return await call_next(request)

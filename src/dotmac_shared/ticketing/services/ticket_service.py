@@ -50,7 +50,9 @@ class TicketService:
             metadata=metadata or {},
         )
 
-        ticket = await self.ticket_manager.create_ticket(db, tenant_id, ticket_data, customer_id)
+        ticket = await self.ticket_manager.create_ticket(
+            db, tenant_id, ticket_data, customer_id
+        )
 
         # Convert to response format
         return TicketResponse.model_validate(ticket)
@@ -85,7 +87,9 @@ class TicketService:
             author_type="system",
         )
 
-        ticket = await self.ticket_manager.update_ticket(db, tenant_id, ticket_id, update_data)
+        ticket = await self.ticket_manager.update_ticket(
+            db, tenant_id, ticket_id, update_data
+        )
 
         if ticket:
             return TicketResponse.model_validate(ticket)
@@ -126,12 +130,16 @@ class TicketService:
             db,
             tenant_id,
             ticket_id,
-            CommentCreate(content=f"Ticket escalated: {escalation_reason}", is_internal=True),
+            CommentCreate(
+                content=f"Ticket escalated: {escalation_reason}", is_internal=True
+            ),
             author_name=escalated_by,
             author_type="staff",
         )
 
-        updated_ticket = await self.ticket_manager.update_ticket(db, tenant_id, ticket_id, update_data)
+        updated_ticket = await self.ticket_manager.update_ticket(
+            db, tenant_id, ticket_id, update_data
+        )
 
         if updated_ticket:
             return TicketResponse.model_validate(updated_ticket)
@@ -183,7 +191,9 @@ class TicketService:
             )
 
         update_data = TicketUpdate(status=TicketStatus.CLOSED)
-        ticket = await self.ticket_manager.update_ticket(db, tenant_id, ticket_id, update_data)
+        ticket = await self.ticket_manager.update_ticket(
+            db, tenant_id, ticket_id, update_data
+        )
 
         if ticket:
             return TicketResponse.model_validate(ticket)
@@ -203,7 +213,9 @@ class TicketService:
         if status_filter:
             filters["status"] = status_filter
 
-        tickets, total = await self.ticket_manager.list_tickets(db, tenant_id, filters, page, page_size)
+        tickets, total = await self.ticket_manager.list_tickets(
+            db, tenant_id, filters, page, page_size
+        )
 
         ticket_responses = [TicketResponse.model_validate(ticket) for ticket in tickets]
         return ticket_responses, total
@@ -222,12 +234,16 @@ class TicketService:
         if status_filter:
             filters["status"] = status_filter
 
-        tickets, total = await self.ticket_manager.list_tickets(db, tenant_id, filters, page, page_size)
+        tickets, total = await self.ticket_manager.list_tickets(
+            db, tenant_id, filters, page, page_size
+        )
 
         ticket_responses = [TicketResponse.model_validate(ticket) for ticket in tickets]
         return ticket_responses, total
 
-    async def get_overdue_tickets(self, db: AsyncSession, tenant_id: str) -> list[TicketResponse]:
+    async def get_overdue_tickets(
+        self, db: AsyncSession, tenant_id: str
+    ) -> list[TicketResponse]:
         """Get tickets that are past their SLA."""
         now = datetime.now(timezone.utc)
         filters = {"created_before": now}
@@ -262,7 +278,9 @@ class TicketService:
         elif end_date:
             date_range = (datetime.now(timezone.utc) - timedelta(days=30), end_date)
 
-        metrics = await self.ticket_manager.get_ticket_metrics(db, tenant_id, date_range)
+        metrics = await self.ticket_manager.get_ticket_metrics(
+            db, tenant_id, date_range
+        )
 
         # Add additional analytics
         overdue_tickets = await self.get_overdue_tickets(db, tenant_id)

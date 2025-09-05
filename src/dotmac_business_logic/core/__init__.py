@@ -2,33 +2,27 @@
 Core utilities for DotMac Business Logic package.
 """
 
-from .exceptions import (
+from .exceptions import (  # Base exceptions; Utilities; File exceptions; Integration exceptions; Task exceptions; Validation exceptions
     BillingError,
-    # Base exceptions
     BusinessLogicError,
     DatabaseConnectionError,
     ErrorCategory,
-    # Utilities
     ErrorHandler,
     ErrorSeverity,
     ExternalServiceError,
-    # File exceptions
     FileProcessingError,
     FileSizeLimitExceededError,
     InsufficientFundsError,
-    # Integration exceptions
     IntegrationError,
     InvalidAmountError,
     InvalidFileTypeError,
     InvoiceNotFoundError,
     PaymentProcessingError,
     RequiredFieldError,
-    # Task exceptions
     TaskError,
     TaskExecutionError,
     TaskTimeoutError,
     TemplateRenderingError,
-    # Validation exceptions
     ValidationError,
     WorkflowError,
 )

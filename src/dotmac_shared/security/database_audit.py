@@ -12,10 +12,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
-from sqlalchemy import (
-    event,
-    text,
-)
+from sqlalchemy import event, text
 from sqlalchemy.engine import Engine
 
 logger = logging.getLogger(__name__)
@@ -133,14 +130,20 @@ class DatabaseAuditLogger:
         """Setup SQLAlchemy event listeners for automatic audit logging"""
 
         @event.listens_for(self.engine, "before_cursor_execute")
-        def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        def before_cursor_execute(
+            conn, cursor, statement, parameters, context, executemany
+        ):
             """Log before query execution"""
             context._query_start_time = datetime.now(timezone.utc)
 
             # Get tenant context if available
             try:
-                tenant_id = conn.execute("SELECT current_setting('app.current_tenant_id', true)").scalar()
-                user_id = conn.execute("SELECT current_setting('app.current_user_id', true)").scalar()
+                tenant_id = conn.execute(
+                    "SELECT current_setting('app.current_tenant_id', true)"
+                ).scalar()
+                user_id = conn.execute(
+                    "SELECT current_setting('app.current_user_id', true)"
+                ).scalar()
             except Exception:
                 tenant_id = None
                 user_id = None
@@ -153,10 +156,14 @@ class DatabaseAuditLogger:
             }
 
         @event.listens_for(self.engine, "after_cursor_execute")
-        def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        def after_cursor_execute(
+            conn, cursor, statement, parameters, context, executemany
+        ):
             """Log after query execution"""
             if hasattr(context, "_query_start_time"):
-                execution_time = (datetime.now(timezone.utc) - context._query_start_time).total_seconds() * 1000
+                execution_time = (
+                    datetime.now(timezone.utc) - context._query_start_time
+                ).total_seconds() * 1000
 
                 audit_data = getattr(context, "_audit_data", {})
 
@@ -181,7 +188,9 @@ class DatabaseAuditLogger:
                             "parameters": audit_data.get("parameters"),
                         },
                         execution_time_ms=int(execution_time),
-                        rows_affected=(cursor.rowcount if hasattr(cursor, "rowcount") else None),
+                        rows_affected=(
+                            cursor.rowcount if hasattr(cursor, "rowcount") else None
+                        ),
                     )
                 )
 
@@ -216,7 +225,9 @@ class DatabaseAuditLogger:
                 if event_data and "statement_preview" in event_data:
                     import hashlib
 
-                    query_hash = hashlib.sha256(event_data["statement_preview"].encode()).hexdigest()[:32]
+                    query_hash = hashlib.sha256(
+                        event_data["statement_preview"].encode()
+                    ).hexdigest()[:32]
 
                 conn.execute(
                     text(
@@ -266,7 +277,9 @@ class DatabaseAuditLogger:
         except Exception as e:
             # Fallback to file logging if database logging fails
             logger.error(f"Database audit logging failed: {e}")
-            logger.info(f"AUDIT: {event_type.value} - {event_title} - Tenant: {tenant_id}")
+            logger.info(
+                f"AUDIT: {event_type.value} - {event_title} - Tenant: {tenant_id}"
+            )
             return False
 
     async def log_tenant_context_change(
@@ -278,7 +291,11 @@ class DatabaseAuditLogger:
     ) -> bool:
         """Log tenant context changes for security monitoring"""
         return await self.log_event(
-            event_type=(AuditEventType.TENANT_CONTEXT_SET if action == "set" else AuditEventType.TENANT_CONTEXT_CLEAR),
+            event_type=(
+                AuditEventType.TENANT_CONTEXT_SET
+                if action == "set"
+                else AuditEventType.TENANT_CONTEXT_CLEAR
+            ),
             severity=AuditSeverity.INFO,
             tenant_id=tenant_id,
             user_id=user_id,
@@ -323,7 +340,9 @@ class DatabaseAuditLogger:
             risk_level="critical",
         )
 
-    async def get_audit_summary(self, tenant_id: Optional[str] = None, hours: int = 24) -> dict[str, Any]:
+    async def get_audit_summary(
+        self, tenant_id: Optional[str] = None, hours: int = 24
+    ) -> dict[str, Any]:
         """Get audit summary for the last N hours"""
         try:
             with self.engine.begin() as conn:

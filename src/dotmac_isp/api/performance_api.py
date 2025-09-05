@@ -8,13 +8,11 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
-from dotmac.application import RouterFactory, standard_exception_handler
-from dotmac_shared.api.dependencies import (
-    StandardDependencies,
-    get_standard_deps,
-)
 from fastapi import Depends, Query
 from pydantic import BaseModel, Field
+
+from dotmac.application import RouterFactory, standard_exception_handler
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +55,9 @@ class PerformanceMetricRequest(BaseModel):
 
     metric_type: MetricType = Field(..., description="Type of metric to retrieve")
     time_range: TimeRange = Field(TimeRange.HOUR, description="Time range for metrics")
-    aggregation: str = Field("avg", description="Aggregation method (avg, max, min, sum)")
+    aggregation: str = Field(
+        "avg", description="Aggregation method (avg, max, min, sum)"
+    )
     include_alerts: bool = Field(True, description="Include alert information")
 
 
@@ -67,7 +67,9 @@ class AlertCreateRequest(BaseModel):
     metric_type: MetricType = Field(..., description="Metric to monitor")
     threshold_value: float = Field(..., description="Alert threshold value")
     severity: AlertSeverity = Field(..., description="Alert severity")
-    comparison_operator: str = Field(">=", description="Comparison operator (>=, <=, ==)")
+    comparison_operator: str = Field(
+        ">=", description="Comparison operator (>=, <=, ==)"
+    )
     description: str | None = Field(None, description="Alert description")
 
 
@@ -76,7 +78,9 @@ class PerformanceReportRequest(BaseModel):
 
     time_range: TimeRange = Field(..., description="Report time range")
     metric_types: list[MetricType] = Field(..., description="Metrics to include")
-    include_recommendations: bool = Field(True, description="Include performance recommendations")
+    include_recommendations: bool = Field(
+        True, description="Include performance recommendations"
+    )
     format: str = Field("json", description="Report format (json, csv)")
 
 
@@ -94,7 +98,8 @@ performance_router = RouterFactory.create_standard_router(
 @performance_router.get("/metrics/realtime", response_model=dict[str, Any])
 @standard_exception_handler
 async def get_realtime_metrics(
-    metric_types: list[MetricType] | None = Query(None, description="Filter by metric types"),
+    metric_types: list[MetricType]
+    | None = Query(None, description="Filter by metric types"),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> dict[str, Any]:
     """Get real-time performance metrics."""

@@ -20,7 +20,12 @@ class CreateTenantStep(SagaStep):
     """Step to create tenant record in database"""
 
     def __init__(self):
-        super().__init__(name="create_tenant", timeout_seconds=30, retry_count=3, compensation_required=True)
+        super().__init__(
+            name="create_tenant",
+            timeout_seconds=30,
+            retry_count=3,
+            compensation_required=True,
+        )
 
     @standard_exception_handler
     async def execute(self, context: SagaContext) -> dict[str, Any]:
@@ -46,7 +51,11 @@ class CreateTenantStep(SagaStep):
 
         await asyncio.sleep(0.1)  # Simulate database operation
 
-        return {"tenant_id": tenant_id, "status": "created", "domain": tenant_data["domain"]}
+        return {
+            "tenant_id": tenant_id,
+            "status": "created",
+            "domain": tenant_data["domain"],
+        }
 
     @standard_exception_handler
     async def compensate(self, context: SagaContext) -> None:
@@ -64,7 +73,12 @@ class ConfigureDatabaseStep(SagaStep):
     """Step to configure tenant database and schema"""
 
     def __init__(self):
-        super().__init__(name="configure_database", timeout_seconds=60, retry_count=2, compensation_required=True)
+        super().__init__(
+            name="configure_database",
+            timeout_seconds=60,
+            retry_count=2,
+            compensation_required=True,
+        )
 
     @standard_exception_handler
     async def execute(self, context: SagaContext) -> dict[str, Any]:
@@ -111,7 +125,12 @@ class SetupDefaultsStep(SagaStep):
     """Step to setup default configurations and data"""
 
     def __init__(self):
-        super().__init__(name="setup_defaults", timeout_seconds=45, retry_count=3, compensation_required=True)
+        super().__init__(
+            name="setup_defaults",
+            timeout_seconds=45,
+            retry_count=3,
+            compensation_required=True,
+        )
 
     @standard_exception_handler
     async def execute(self, context: SagaContext) -> dict[str, Any]:
@@ -185,7 +204,9 @@ class ActivateTenantStep(SagaStep):
             "status": "active",
             "domain": tenant_record.get("domain") if tenant_record else None,
             "activated_at": datetime.utcnow().isoformat(),
-            "access_url": f"https://{tenant_record.get('domain')}.platform.com" if tenant_record else None,
+            "access_url": f"https://{tenant_record.get('domain')}.platform.com"
+            if tenant_record
+            else None,
         }
 
         context.set_shared_data("activation_result", activation_result)
@@ -204,7 +225,9 @@ class TenantProvisioningCompensationHandler(CompensationHandler):
     """Custom compensation handler for tenant provisioning"""
 
     @standard_exception_handler
-    async def compensate(self, context: SagaContext, failed_step: str, completed_steps: list) -> None:
+    async def compensate(
+        self, context: SagaContext, failed_step: str, completed_steps: list
+    ) -> None:
         """Execute custom compensation logic"""
 
         tenant_id = context.get_shared_data("tenant_id")
@@ -249,7 +272,9 @@ class TenantProvisioningOperation(IdempotentOperation[dict[str, Any]]):
         # Validate plan
         valid_plans = ["basic", "pro", "enterprise"]
         if operation_data["plan"] not in valid_plans:
-            raise ValueError(f"Invalid plan: {operation_data['plan']}. Must be one of {valid_plans}")
+            raise ValueError(
+                f"Invalid plan: {operation_data['plan']}. Must be one of {valid_plans}"
+            )
 
         # Validate domain format
         domain = operation_data["domain"]
@@ -262,7 +287,9 @@ class TenantProvisioningOperation(IdempotentOperation[dict[str, Any]]):
             raise ValueError("Valid admin email is required")
 
     @standard_exception_handler
-    async def execute(self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    async def execute(
+        self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
         """Execute tenant provisioning via saga orchestration"""
 
         context = context or {}
@@ -289,7 +316,12 @@ class TenantProvisioningOperation(IdempotentOperation[dict[str, Any]]):
         # In real implementation, you'd use SagaCoordinator
         try:
             # Execute steps sequentially (simplified)
-            steps = [CreateTenantStep(), ConfigureDatabaseStep(), SetupDefaultsStep(), ActivateTenantStep()]
+            steps = [
+                CreateTenantStep(),
+                ConfigureDatabaseStep(),
+                SetupDefaultsStep(),
+                ActivateTenantStep(),
+            ]
 
             step_results = {}
 
@@ -307,7 +339,10 @@ class TenantProvisioningOperation(IdempotentOperation[dict[str, Any]]):
                 "provisioning_completed_at": datetime.utcnow().isoformat(),
                 "step_results": step_results,
                 "access_details": activation_result,
-                "saga_context": {"saga_id": saga_context.saga_id, "correlation_id": saga_context.correlation_id},
+                "saga_context": {
+                    "saga_id": saga_context.saga_id,
+                    "correlation_id": saga_context.correlation_id,
+                },
             }
 
         except Exception as e:
@@ -347,6 +382,13 @@ class TenantProvisioningSaga:
         )
 
         # Add steps in order
-        definition.add_steps([CreateTenantStep(), ConfigureDatabaseStep(), SetupDefaultsStep(), ActivateTenantStep()])
+        definition.add_steps(
+            [
+                CreateTenantStep(),
+                ConfigureDatabaseStep(),
+                SetupDefaultsStep(),
+                ActivateTenantStep(),
+            ]
+        )
 
         return definition

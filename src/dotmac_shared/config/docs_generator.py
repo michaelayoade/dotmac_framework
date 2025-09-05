@@ -50,7 +50,9 @@ class ConfigDocumentationGenerator:
                 environment="all",
                 category="infrastructure",
                 example="production",
-                validation_rules={"allowed_values": ["development", "staging", "production"]},
+                validation_rules={
+                    "allowed_values": ["development", "staging", "production"]
+                },
             ),
             ConfigVariable(
                 name="DATABASE_URL",
@@ -211,7 +213,13 @@ class ConfigDocumentationGenerator:
         ]
 
         # Combine all variable definitions
-        self.config_vars = infrastructure_vars + openbao_vars + security_vars + app_vars + external_vars
+        self.config_vars = (
+            infrastructure_vars
+            + openbao_vars
+            + security_vars
+            + app_vars
+            + external_vars
+        )
 
     def generate_env_documentation(self, output_format: str = "markdown") -> str:
         """
@@ -251,8 +259,12 @@ class ConfigDocumentationGenerator:
         # Generate section for each category
         for category, vars_list in categories.items():
             docs.append(f"### {category.title()} Variables\n")
-            docs.append("| Variable | Description | Required | Default | Environment | Example |")
-            docs.append("|----------|-------------|----------|---------|-------------|---------|")
+            docs.append(
+                "| Variable | Description | Required | Default | Environment | Example |"
+            )
+            docs.append(
+                "|----------|-------------|----------|---------|-------------|---------|"
+            )
 
             for var in vars_list:
                 required = "✅" if var.required else "❌"
@@ -289,7 +301,9 @@ class ConfigDocumentationGenerator:
 
         # Add OpenBao configuration section
         docs.append("## OpenBao Integration\n")
-        docs.append("For production deployments, secrets should be managed through OpenBao:\n")
+        docs.append(
+            "For production deployments, secrets should be managed through OpenBao:\n"
+        )
         docs.append("```bash")
         docs.append("# Required OpenBao configuration")
         docs.append("export OPENBAO_URL=https://vault.yourdomain.com")
@@ -365,17 +379,27 @@ class ConfigDocumentationGenerator:
             current_value = os.getenv(var.name)
 
             if var.required and not current_value:
-                results["missing_required"].append({"variable": var.name, "description": var.description})
+                results["missing_required"].append(
+                    {"variable": var.name, "description": var.description}
+                )
             elif current_value and var.validation_rules:
                 # Validate value against rules
                 if not self._validate_value(current_value, var.validation_rules):
                     results["invalid_values"].append(
-                        {"variable": var.name, "current_value": current_value, "rules": var.validation_rules}
+                        {
+                            "variable": var.name,
+                            "current_value": current_value,
+                            "rules": var.validation_rules,
+                        }
                     )
             elif not current_value and var.default_value:
-                results["using_defaults"].append({"variable": var.name, "default_value": var.default_value})
+                results["using_defaults"].append(
+                    {"variable": var.name, "default_value": var.default_value}
+                )
             elif current_value:
-                results["configured_correctly"].append({"variable": var.name, "value_set": True})
+                results["configured_correctly"].append(
+                    {"variable": var.name, "value_set": True}
+                )
 
         return results
 

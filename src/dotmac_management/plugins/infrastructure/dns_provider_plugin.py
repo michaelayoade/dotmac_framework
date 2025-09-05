@@ -13,6 +13,7 @@ from typing import Any, Optional
 import dns.exception
 import dns.resolver
 import httpx
+
 from dotmac.application import standard_exception_handler
 from dotmac_shared.core.logging import get_logger
 
@@ -46,22 +47,41 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
             configuration_schema={
                 "type": "object",
                 "properties": {
-                    "base_domain": {"type": "string", "description": "Base domain for subdomain validation"},
-                    "timeout": {"type": "integer", "description": "DNS query timeout in seconds", "default": 10},
-                    "dns_servers": {"type": "array", "items": {"type": "string"}, "description": "Custom DNS servers"},
+                    "base_domain": {
+                        "type": "string",
+                        "description": "Base domain for subdomain validation",
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "description": "DNS query timeout in seconds",
+                        "default": 10,
+                    },
+                    "dns_servers": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Custom DNS servers",
+                    },
                 },
                 "required": ["base_domain"],
             },
-            supported_features=["subdomain_validation", "ssl_validation", "dns_propagation_check"],
+            supported_features=[
+                "subdomain_validation",
+                "ssl_validation",
+                "dns_propagation_check",
+            ],
         )
 
     @standard_exception_handler
     async def initialize(self) -> bool:
         """Initialize the DNS plugin."""
         try:
-            self.base_domain = self.config.get("base_domain") or os.getenv("BASE_DOMAIN")
+            self.base_domain = self.config.get("base_domain") or os.getenv(
+                "BASE_DOMAIN"
+            )
             if not self.base_domain:
-                raise PluginError("Base domain is required (base_domain in config or BASE_DOMAIN env var)")
+                raise PluginError(
+                    "Base domain is required (base_domain in config or BASE_DOMAIN env var)"
+                )
 
             self.timeout = self.config.get("timeout", 10)
 
@@ -77,10 +97,14 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
             # Test DNS resolution
             health_result = await self.health_check()
             if not health_result.get("healthy", False):
-                raise PluginError(f"DNS health check failed: {health_result.get('error')}")
+                raise PluginError(
+                    f"DNS health check failed: {health_result.get('error')}"
+                )
 
             self.status = PluginStatus.ACTIVE
-            self._logger.info(f"✅ DNS provider plugin initialized for domain: {self.base_domain}")
+            self._logger.info(
+                f"✅ DNS provider plugin initialized for domain: {self.base_domain}"
+            )
             return True
 
         except Exception as e:
@@ -112,7 +136,9 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
             # Try to resolve the base domain
             result = await self._resolve_domain(self.base_domain, "A")
 
-            response_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+            response_time = (
+                datetime.now(timezone.utc) - start_time
+            ).total_seconds() * 1000
 
             if result.get("success", False):
                 return {
@@ -123,7 +149,11 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
                     "dns_servers": self.resolver.nameservers if self.resolver else [],
                 }
             else:
-                return {"healthy": False, "error": result.get("error", "DNS resolution failed"), "status": "error"}
+                return {
+                    "healthy": False,
+                    "error": result.get("error", "DNS resolution failed"),
+                    "status": "error",
+                }
 
         except Exception as e:
             return {"healthy": False, "error": str(e), "status": "error"}
@@ -131,7 +161,9 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
     # Implementation of DNSProviderPlugin interface methods
 
     @standard_exception_handler
-    async def validate_subdomain_available(self, subdomain: str, base_domain: Optional[str] = None) -> dict[str, Any]:
+    async def validate_subdomain_available(
+        self, subdomain: str, base_domain: Optional[str] = None
+    ) -> dict[str, Any]:
         """Check if a subdomain is available for tenant provisioning."""
         try:
             domain_to_check = base_domain or self.base_domain
@@ -206,7 +238,9 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
             is_valid = ssl_info.get("valid", False)
 
             if expires_at:
-                expires_datetime = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+                expires_datetime = datetime.fromisoformat(
+                    expires_at.replace("Z", "+00:00")
+                )
                 days_until_expiry = (expires_datetime - datetime.now(timezone.utc)).days
                 is_expiring_soon = days_until_expiry < 30
             else:
@@ -232,7 +266,9 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
             }
 
     @standard_exception_handler
-    async def create_dns_record(self, domain: str, record_type: str, value: str, ttl: int = 300) -> dict[str, Any]:
+    async def create_dns_record(
+        self, domain: str, record_type: str, value: str, ttl: int = 300
+    ) -> dict[str, Any]:
         """Create DNS record (not supported in standard DNS provider)."""
         # Standard DNS provider can't create records - this is read-only
         return {
@@ -249,7 +285,9 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
         return False
 
     @standard_exception_handler
-    async def check_dns_propagation(self, domain: str, expected_value: str) -> dict[str, Any]:
+    async def check_dns_propagation(
+        self, domain: str, expected_value: str
+    ) -> dict[str, Any]:
         """Check DNS propagation status."""
         try:
             self._logger.info(f"Checking DNS propagation for: {domain}")
@@ -268,7 +306,11 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
 
             # Check if the resolved value matches expected
             resolved_ips = a_result.get("addresses", [])
-            propagated = expected_value in resolved_ips if expected_value else len(resolved_ips) > 0
+            propagated = (
+                expected_value in resolved_ips
+                if expected_value
+                else len(resolved_ips) > 0
+            )
 
             return {
                 "propagated": propagated,
@@ -304,12 +346,20 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
             # Check A record
             a_result = await self._resolve_domain(domain, "A")
             if a_result.get("success", False):
-                return {"exists": True, "record_type": "A", "addresses": a_result.get("addresses", [])}
+                return {
+                    "exists": True,
+                    "record_type": "A",
+                    "addresses": a_result.get("addresses", []),
+                }
 
             # Check CNAME record
             cname_result = await self._resolve_domain(domain, "CNAME")
             if cname_result.get("success", False):
-                return {"exists": True, "record_type": "CNAME", "target": cname_result.get("target")}
+                return {
+                    "exists": True,
+                    "record_type": "CNAME",
+                    "target": cname_result.get("target"),
+                }
 
             return {"exists": False, "error": "No DNS records found"}
 
@@ -323,12 +373,20 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
                 try:
                     # Try HTTPS first
                     response = await client.get(f"https://{domain}")
-                    return {"exists": True, "protocol": "https", "status_code": response.status_code}
+                    return {
+                        "exists": True,
+                        "protocol": "https",
+                        "status_code": response.status_code,
+                    }
                 except Exception:
                     # Try HTTP
                     try:
                         response = await client.get(f"http://{domain}")
-                        return {"exists": True, "protocol": "http", "status_code": response.status_code}
+                        return {
+                            "exists": True,
+                            "protocol": "http",
+                            "status_code": response.status_code,
+                        }
                     except Exception:
                         return {"exists": False}
 
@@ -343,7 +401,9 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
 
             # Run DNS resolution in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(None, self._sync_resolve_domain, domain, record_type)
+            result = await loop.run_in_executor(
+                None, self._sync_resolve_domain, domain, record_type
+            )
 
             return result
 
@@ -368,7 +428,10 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
 
             elif record_type == "MX":
                 answers = self.resolver.resolve(domain, "MX")
-                mx_records = [{"priority": answer.preference, "host": str(answer.exchange)} for answer in answers]
+                mx_records = [
+                    {"priority": answer.preference, "host": str(answer.exchange)}
+                    for answer in answers
+                ]
                 return {"success": True, "mx_records": mx_records}
 
             elif record_type == "TXT":
@@ -377,7 +440,10 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
                 return {"success": True, "txt_records": txt_records}
 
             else:
-                return {"success": False, "error": f"Unsupported record type: {record_type}"}
+                return {
+                    "success": False,
+                    "error": f"Unsupported record type: {record_type}",
+                }
 
         except dns.resolver.NXDOMAIN:
             return {"success": False, "error": "Domain does not exist"}
@@ -418,8 +484,12 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
                     issuer = dict(x[0] for x in cert.get("issuer", []))
 
                     # Parse dates
-                    not_before = datetime.strptime(cert.get("notBefore"), "%b %d %H:%M:%S %Y %Z")
-                    not_after = datetime.strptime(cert.get("notAfter"), "%b %d %H:%M:%S %Y %Z")
+                    not_before = datetime.strptime(
+                        cert.get("notBefore"), "%b %d %H:%M:%S %Y %Z"
+                    )
+                    not_after = datetime.strptime(
+                        cert.get("notAfter"), "%b %d %H:%M:%S %Y %Z"
+                    )
 
                     # Check if certificate is currently valid
                     now = datetime.now(timezone.utc)
@@ -434,7 +504,9 @@ class StandardDNSProviderPlugin(DNSProviderPlugin):
                         "days_remaining": (not_after - now).days,
                         "serial_number": cert.get("serialNumber"),
                         "version": cert.get("version"),
-                        "subject_alt_names": [x[1] for x in cert.get("subjectAltName", [])],
+                        "subject_alt_names": [
+                            x[1] for x in cert.get("subjectAltName", [])
+                        ],
                     }
 
         except socket.timeout:

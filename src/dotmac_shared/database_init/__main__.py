@@ -70,7 +70,9 @@ async def create_database_command(args) -> int:
         }
 
         logger.info(json.dumps(result, indent=2))
-        logger.info("Database created successfully", database_name=db_instance.database_name)
+        logger.info(
+            "Database created successfully", database_name=db_instance.database_name
+        )
 
         return 0
 
@@ -227,7 +229,9 @@ async def validate_health_command(args) -> int:
         await validator.cleanup()
 
         if health_result.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED]:
-            logger.info("Health validation completed", status=health_result.status.value)
+            logger.info(
+                "Health validation completed", status=health_result.status.value
+            )
             return 0
         else:
             logger.error("Database is unhealthy", status=health_result.status.value)
@@ -354,13 +358,19 @@ Examples:
 
     # Create database command
     create_parser = subparsers.add_parser("create", help="Create a new ISP database")
-    create_parser.add_argument("--admin-username", default="postgres", help="Database admin username")
-    create_parser.add_argument("--admin-password", required=True, help="Database admin password")
+    create_parser.add_argument(
+        "--admin-username", default="postgres", help="Database admin username"
+    )
+    create_parser.add_argument(
+        "--admin-password", required=True, help="Database admin password"
+    )
     create_parser.add_argument("--isp-id", help="ISP UUID (generated if not provided)")
     create_parser.set_defaults(func=create_database_command)
 
     # Initialize schema command
-    schema_parser = subparsers.add_parser("init-schema", help="Initialize database schema")
+    schema_parser = subparsers.add_parser(
+        "init-schema", help="Initialize database schema"
+    )
     schema_parser.add_argument("--database-name", required=True, help="Database name")
     schema_parser.add_argument("--username", required=True, help="Database username")
     schema_parser.add_argument("--password", required=True, help="Database password")
@@ -385,9 +395,15 @@ Examples:
     health_parser.set_defaults(func=validate_health_command)
 
     # Full initialization command
-    full_parser = subparsers.add_parser("full-init", help="Perform full database initialization")
-    full_parser.add_argument("--admin-username", default="postgres", help="Database admin username")
-    full_parser.add_argument("--admin-password", required=True, help="Database admin password")
+    full_parser = subparsers.add_parser(
+        "full-init", help="Perform full database initialization"
+    )
+    full_parser.add_argument(
+        "--admin-username", default="postgres", help="Database admin username"
+    )
+    full_parser.add_argument(
+        "--admin-password", required=True, help="Database admin password"
+    )
     full_parser.add_argument("--isp-id", help="ISP UUID (generated if not provided)")
     full_parser.add_argument("--custom-data", help="Path to custom seed data JSON file")
     full_parser.set_defaults(func=full_initialization_command)

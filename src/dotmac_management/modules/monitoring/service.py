@@ -4,9 +4,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy.orm import Session
+
 from dotmac.core.exceptions import BusinessLogicError, NotFoundError
 from dotmac_shared.services.base import BaseService
-from sqlalchemy.orm import Session
 
 from .models import (
     HealthCheck,
@@ -55,11 +56,15 @@ class ServiceComponentService(BaseService[ServiceComponent]):
         self.repository = ServiceComponentRepository(db, tenant_id)
         super().__init__(db, self.repository, tenant_id)
 
-    async def create_component(self, data: ServiceComponentCreate, user_id: UUID) -> ServiceComponentResponse:
+    async def create_component(
+        self, data: ServiceComponentCreate, user_id: UUID
+    ) -> ServiceComponentResponse:
         """Create a new service component."""
         existing = await self.repository.find_by_name(data.name)
         if existing:
-            raise BusinessLogicError(f"Component with name '{data.name}' already exists")
+            raise BusinessLogicError(
+                f"Component with name '{data.name}' already exists"
+            )
 
         component_data = data.model_dump()
         component = await self.repository.create(component_data)
@@ -79,7 +84,9 @@ class ServiceComponentService(BaseService[ServiceComponent]):
 
         return ServiceComponentResponse.model_validate(component)
 
-    async def get_components_by_type(self, component_type: str) -> list[ServiceComponentResponse]:
+    async def get_components_by_type(
+        self, component_type: str
+    ) -> list[ServiceComponentResponse]:
         """Get components filtered by type."""
         components = await self.repository.find_by_type(component_type)
         return [ServiceComponentResponse.model_validate(comp) for comp in components]
@@ -94,7 +101,9 @@ class ServiceComponentService(BaseService[ServiceComponent]):
         components = await self.repository.get_critical_components()
         return [ServiceComponentResponse.model_validate(comp) for comp in components]
 
-    async def search_components(self, search_term: str) -> list[ServiceComponentResponse]:
+    async def search_components(
+        self, search_term: str
+    ) -> list[ServiceComponentResponse]:
         """Search components by name or description."""
         components = await self.repository.search_components(search_term)
         return [ServiceComponentResponse.model_validate(comp) for comp in components]
@@ -108,7 +117,9 @@ class HealthCheckService(BaseService[HealthCheck]):
         self.component_repository = ServiceComponentRepository(db, tenant_id)
         super().__init__(db, self.repository, tenant_id)
 
-    async def create_health_check(self, data: HealthCheckCreate, user_id: UUID) -> HealthCheckResponse:
+    async def create_health_check(
+        self, data: HealthCheckCreate, user_id: UUID
+    ) -> HealthCheckResponse:
         """Create a new health check record."""
         component = await self.component_repository.get_by_id(data.component_id)
         if not component:
@@ -127,7 +138,9 @@ class HealthCheckService(BaseService[HealthCheck]):
 
         return HealthCheckResponse.model_validate(health_check)
 
-    async def perform_health_checks(self, request: HealthCheckRequest, user_id: UUID) -> list[HealthCheckResponse]:
+    async def perform_health_checks(
+        self, request: HealthCheckRequest, user_id: UUID
+    ) -> list[HealthCheckResponse]:
         """Perform health checks on specified or all components."""
         if request.component_ids:
             components = []
@@ -142,12 +155,19 @@ class HealthCheckService(BaseService[HealthCheck]):
         for component in components:
             if not request.force_check:
                 # Check if we have a recent health check
-                latest_check = await self.repository.get_latest_check_for_component(component.id)
+                latest_check = await self.repository.get_latest_check_for_component(
+                    component.id
+                )
                 if (
                     latest_check
-                    and (datetime.now(timezone.utc) - latest_check.check_timestamp).seconds < component.check_interval
+                    and (
+                        datetime.now(timezone.utc) - latest_check.check_timestamp
+                    ).seconds
+                    < component.check_interval
                 ):
-                    health_checks.append(HealthCheckResponse.model_validate(latest_check))
+                    health_checks.append(
+                        HealthCheckResponse.model_validate(latest_check)
+                    )
                     continue
 
             # Perform actual health check
@@ -158,24 +178,33 @@ class HealthCheckService(BaseService[HealthCheck]):
         return health_checks
 
     async def get_component_health_history(
-        self, component_id: UUID, limit: int = 100, status_filter: HealthCheckStatus = None
+        self,
+        component_id: UUID,
+        limit: int = 100,
+        status_filter: HealthCheckStatus = None,
     ) -> list[HealthCheckResponse]:
         """Get health check history for a component."""
         component = await self.component_repository.get_by_id(component_id)
         if not component:
             raise NotFoundError(f"Component with ID {component_id} not found")
 
-        checks = await self.repository.get_checks_for_component(component_id, limit, status_filter)
+        checks = await self.repository.get_checks_for_component(
+            component_id, limit, status_filter
+        )
         return [HealthCheckResponse.model_validate(check) for check in checks]
 
-    async def get_component_uptime(self, component_id: UUID, hours: int = 24) -> dict[str, Any]:
+    async def get_component_uptime(
+        self, component_id: UUID, hours: int = 24
+    ) -> dict[str, Any]:
         """Get uptime statistics for a component."""
         component = await self.component_repository.get_by_id(component_id)
         if not component:
             raise NotFoundError(f"Component with ID {component_id} not found")
 
         uptime_data = await self.repository.get_component_uptime(component_id, hours)
-        response_time_data = await self.repository.get_response_time_statistics(component_id, hours)
+        response_time_data = await self.repository.get_response_time_statistics(
+            component_id, hours
+        )
 
         return {
             "component_id": str(component_id),
@@ -189,7 +218,9 @@ class HealthCheckService(BaseService[HealthCheck]):
         failed_checks = await self.repository.get_failed_checks(hours)
         return [HealthCheckResponse.model_validate(check) for check in failed_checks]
 
-    async def _execute_health_check(self, component: ServiceComponent) -> dict[str, Any]:
+    async def _execute_health_check(
+        self, component: ServiceComponent
+    ) -> dict[str, Any]:
         """Execute actual health check for a component."""
         import time
 
@@ -199,7 +230,9 @@ class HealthCheckService(BaseService[HealthCheck]):
 
         try:
             if component.endpoint_url:
-                async with httpx.AsyncClient(timeout=component.timeout_seconds) as client:
+                async with httpx.AsyncClient(
+                    timeout=component.timeout_seconds
+                ) as client:
                     response = await client.get(component.endpoint_url)
 
                 response_time_ms = (time.time() - start_time) * 1000
@@ -251,7 +284,9 @@ class SystemMetricService(BaseService[SystemMetric]):
         self.repository = SystemMetricRepository(db, tenant_id)
         super().__init__(db, self.repository, tenant_id)
 
-    async def create_metric(self, data: SystemMetricCreate, user_id: UUID) -> SystemMetricResponse:
+    async def create_metric(
+        self, data: SystemMetricCreate, user_id: UUID
+    ) -> SystemMetricResponse:
         """Create a new system metric."""
         metric = await self.repository.create_metric(
             metric_name=data.metric_name,
@@ -274,12 +309,16 @@ class SystemMetricService(BaseService[SystemMetric]):
         metrics = await self.repository.get_metrics_by_name(metric_name, hours, limit)
         return [SystemMetricResponse.model_validate(metric) for metric in metrics]
 
-    async def get_metrics_by_source(self, source: str, hours: int = 24) -> list[SystemMetricResponse]:
+    async def get_metrics_by_source(
+        self, source: str, hours: int = 24
+    ) -> list[SystemMetricResponse]:
         """Get metrics by source within time range."""
         metrics = await self.repository.get_metrics_by_source(source, hours)
         return [SystemMetricResponse.model_validate(metric) for metric in metrics]
 
-    async def get_metric_statistics(self, metric_name: str, hours: int = 24) -> dict[str, Any]:
+    async def get_metric_statistics(
+        self, metric_name: str, hours: int = 24
+    ) -> dict[str, Any]:
         """Get statistical summary for a metric."""
         stats = await self.repository.get_metric_statistics(metric_name, hours)
         return {
@@ -289,17 +328,26 @@ class SystemMetricService(BaseService[SystemMetric]):
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-    async def query_metrics(self, request: MetricQueryRequest, user_id: UUID) -> MetricQueryResponse:
+    async def query_metrics(
+        self, request: MetricQueryRequest, user_id: UUID
+    ) -> MetricQueryResponse:
         """Query metrics with advanced filtering and aggregation."""
         query_id = str(UUID())
         metric_data = {}
 
         for metric_name in request.metric_names:
-            hours = int((request.time_range_end - request.time_range_start).total_seconds() / 3600)
+            hours = int(
+                (request.time_range_end - request.time_range_start).total_seconds()
+                / 3600
+            )
             metrics = await self.repository.get_metrics_by_name(metric_name, hours)
 
             # Filter metrics within the requested time range
-            filtered_metrics = [m for m in metrics if request.time_range_start <= m.timestamp <= request.time_range_end]
+            filtered_metrics = [
+                m
+                for m in metrics
+                if request.time_range_start <= m.timestamp <= request.time_range_end
+            ]
 
             # Convert to response format
             metric_data[metric_name] = [
@@ -323,7 +371,10 @@ class SystemMetricService(BaseService[SystemMetric]):
             query_metadata={
                 "query_execution_time_ms": 50.0,
                 "data_sources_queried": len(request.metric_names),
-                "time_range_hours": int((request.time_range_end - request.time_range_start).total_seconds() / 3600),
+                "time_range_hours": int(
+                    (request.time_range_end - request.time_range_start).total_seconds()
+                    / 3600
+                ),
                 "aggregation": request.aggregation,
                 "filters_applied": request.filters or {},
             },
@@ -369,7 +420,9 @@ class PerformanceMetricService(BaseService[PerformanceMetric]):
         metrics = await self.repository.get_endpoint_metrics(endpoint, hours, limit)
         return [PerformanceMetricResponse.model_validate(metric) for metric in metrics]
 
-    async def get_endpoint_statistics(self, endpoint: str, hours: int = 24) -> dict[str, Any]:
+    async def get_endpoint_statistics(
+        self, endpoint: str, hours: int = 24
+    ) -> dict[str, Any]:
         """Get performance statistics for an endpoint."""
         stats = await self.repository.get_endpoint_statistics(endpoint, hours)
         return {
@@ -379,17 +432,23 @@ class PerformanceMetricService(BaseService[PerformanceMetric]):
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-    async def get_slow_requests(self, threshold_ms: float = 1000, hours: int = 24) -> list[PerformanceMetricResponse]:
+    async def get_slow_requests(
+        self, threshold_ms: float = 1000, hours: int = 24
+    ) -> list[PerformanceMetricResponse]:
         """Get slow requests exceeding threshold."""
         metrics = await self.repository.get_slow_requests(threshold_ms, hours)
         return [PerformanceMetricResponse.model_validate(metric) for metric in metrics]
 
-    async def get_error_requests(self, hours: int = 24) -> list[PerformanceMetricResponse]:
+    async def get_error_requests(
+        self, hours: int = 24
+    ) -> list[PerformanceMetricResponse]:
         """Get requests with error status codes."""
         metrics = await self.repository.get_error_requests(hours)
         return [PerformanceMetricResponse.model_validate(metric) for metric in metrics]
 
-    async def generate_performance_report(self, hours: int = 24) -> PerformanceReportResponse:
+    async def generate_performance_report(
+        self, hours: int = 24
+    ) -> PerformanceReportResponse:
         """Generate comprehensive performance report."""
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(hours=hours)
@@ -447,7 +506,9 @@ class MonitoringAlertService(BaseService[MonitoringAlert]):
         self.event_repository = AlertEventRepository(db, tenant_id)
         super().__init__(db, self.repository, tenant_id)
 
-    async def create_alert(self, data: MonitoringAlertCreate, user_id: UUID) -> MonitoringAlertResponse:
+    async def create_alert(
+        self, data: MonitoringAlertCreate, user_id: UUID
+    ) -> MonitoringAlertResponse:
         """Create a new monitoring alert."""
         component = await self.component_repository.get_by_id(data.component_id)
         if not component:
@@ -458,12 +519,17 @@ class MonitoringAlertService(BaseService[MonitoringAlert]):
 
         # Create initial event
         await self.event_repository.create_event(
-            alert_id=alert.id, event_type="created", new_state="active", message=f"Alert '{alert.title}' created"
+            alert_id=alert.id,
+            event_type="created",
+            new_state="active",
+            message=f"Alert '{alert.title}' created",
         )
 
         return MonitoringAlertResponse.model_validate(alert)
 
-    async def update_alert(self, alert_id: UUID, data: MonitoringAlertUpdate, user_id: UUID) -> MonitoringAlertResponse:
+    async def update_alert(
+        self, alert_id: UUID, data: MonitoringAlertUpdate, user_id: UUID
+    ) -> MonitoringAlertResponse:
         """Update an existing monitoring alert."""
         alert = await self.repository.get_by_id(alert_id)
         if not alert:
@@ -474,7 +540,9 @@ class MonitoringAlertService(BaseService[MonitoringAlert]):
 
         # Create update event
         await self.event_repository.create_event(
-            alert_id=alert_id, event_type="updated", message=f"Alert '{alert.title}' updated"
+            alert_id=alert_id,
+            event_type="updated",
+            message=f"Alert '{alert.title}' updated",
         )
 
         return MonitoringAlertResponse.model_validate(alert)
@@ -488,7 +556,9 @@ class MonitoringAlertService(BaseService[MonitoringAlert]):
             raise NotFoundError(f"Alert with ID {alert_id} not found")
 
         if action_request.action == "resolve":
-            success = await self.repository.resolve_alert(alert_id, action_request.notes)
+            success = await self.repository.resolve_alert(
+                alert_id, action_request.notes
+            )
             if success:
                 await self.event_repository.create_event(
                     alert_id=alert_id,
@@ -521,7 +591,11 @@ class MonitoringAlertService(BaseService[MonitoringAlert]):
                 event_type="snoozed",
                 message=f"Alert snoozed for {action_request.snooze_duration_minutes} minutes: {action_request.notes or 'No notes provided'}",
             )
-            return {"success": True, "action": "snoozed", "duration_minutes": action_request.snooze_duration_minutes}
+            return {
+                "success": True,
+                "action": "snoozed",
+                "duration_minutes": action_request.snooze_duration_minutes,
+            }
 
         raise BusinessLogicError(f"Unknown alert action: {action_request.action}")
 
@@ -538,13 +612,20 @@ class MonitoringAlertService(BaseService[MonitoringAlert]):
     async def get_alert_summary(self, days: int = 7) -> AlertSummaryResponse:
         """Get alert summary statistics."""
         stats = await self.repository.get_alert_statistics(days)
-        recent_events = await self.event_repository.get_recent_events(hours=24, limit=10)
+        recent_events = await self.event_repository.get_recent_events(
+            hours=24, limit=10
+        )
 
         return AlertSummaryResponse(
             total_alerts=stats["total_alerts"],
             active_alerts=stats["active_alerts"],
             resolved_alerts=stats["resolved_alerts"],
-            alerts_by_severity={"low": 15, "medium": 28, "high": 12, "critical": stats["critical_alerts"]},
+            alerts_by_severity={
+                "low": 15,
+                "medium": 28,
+                "high": 12,
+                "critical": stats["critical_alerts"],
+            },
             alerts_by_component={"database": 18, "api": 25, "cache": 8, "network": 4},
             recent_alerts=[
                 {
@@ -576,7 +657,9 @@ class MonitoringService(BaseService):
         self.performance_service = PerformanceMetricService(db, tenant_id)
         self.alert_service = MonitoringAlertService(db, tenant_id)
 
-    async def get_monitoring_overview(self, user_id: UUID) -> MonitoringOverviewResponse:
+    async def get_monitoring_overview(
+        self, user_id: UUID
+    ) -> MonitoringOverviewResponse:
         """Get comprehensive monitoring overview."""
         components = await self.component_service.get_active_components()
         active_alerts = await self.alert_service.get_active_alerts()
@@ -590,7 +673,9 @@ class MonitoringService(BaseService):
         health_check_repo = HealthCheckRepository(self.db, self.tenant_id)
 
         for component in components:
-            latest_check = await health_check_repo.get_latest_check_for_component(component.id)
+            latest_check = await health_check_repo.get_latest_check_for_component(
+                component.id
+            )
             if latest_check:
                 if latest_check.status == HealthCheckStatus.HEALTHY:
                     healthy_count += 1
@@ -619,10 +704,17 @@ class MonitoringService(BaseService):
                     "event_type": "alert_triggered",
                     "component": "api",
                     "severity": "medium",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=15)).isoformat(),
+                    "timestamp": (
+                        datetime.now(timezone.utc) - timedelta(minutes=15)
+                    ).isoformat(),
                 },
             ],
-            component_status={"database": "healthy", "api": "healthy", "cache": "degraded", "network": "healthy"},
+            component_status={
+                "database": "healthy",
+                "api": "healthy",
+                "cache": "degraded",
+                "network": "healthy",
+            },
             performance_metrics={
                 "cpu_usage": 45.2,
                 "memory_usage": 67.8,
@@ -641,7 +733,9 @@ class MonitoringService(BaseService):
         overall_healthy = True
 
         for component in components:
-            latest_check = await health_check_repo.get_latest_check_for_component(component.id)
+            latest_check = await health_check_repo.get_latest_check_for_component(
+                component.id
+            )
             if latest_check:
                 check_data = {
                     "component_id": str(component.id),
@@ -659,7 +753,9 @@ class MonitoringService(BaseService):
                     if component.is_critical:
                         overall_healthy = False
 
-        overall_status = HealthCheckStatus.HEALTHY if overall_healthy else HealthCheckStatus.DEGRADED
+        overall_status = (
+            HealthCheckStatus.HEALTHY if overall_healthy else HealthCheckStatus.DEGRADED
+        )
         if len(failed_checks) > len(components) * 0.5:  # More than 50% failed
             overall_status = HealthCheckStatus.UNHEALTHY
 
@@ -669,7 +765,11 @@ class MonitoringService(BaseService):
             uptime_seconds=345678,
             component_checks=component_checks,
             failed_checks=failed_checks,
-            performance_summary={"avg_response_time": 245.6, "total_requests": 12450, "error_rate": 2.1},
+            performance_summary={
+                "avg_response_time": 245.6,
+                "total_requests": 12450,
+                "error_rate": 2.1,
+            },
             resource_usage={
                 "cpu_percentage": 45.2,
                 "memory_percentage": 67.8,

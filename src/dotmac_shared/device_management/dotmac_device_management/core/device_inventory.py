@@ -43,7 +43,9 @@ class DeviceInventoryManager:
         # Check if device already exists
         existing = (
             self.session.query(Device)
-            .filter(and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id))
+            .filter(
+                and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id)
+            )
             .first()
         )
 
@@ -82,11 +84,15 @@ class DeviceInventoryManager:
         """Get device by ID."""
         return (
             self.session.query(Device)
-            .filter(and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id))
+            .filter(
+                and_(Device.device_id == device_id, Device.tenant_id == self.tenant_id)
+            )
             .first()
         )
 
-    async def update_device(self, device_id: str, updates: dict[str, Any]) -> Optional[Device]:
+    async def update_device(
+        self, device_id: str, updates: dict[str, Any]
+    ) -> Optional[Device]:
         """Update device information."""
         device = await self.get_device(device_id)
         if not device:
@@ -315,7 +321,11 @@ class DeviceInventoryManager:
             Device.device_id.ilike(f"%{query}%"),
         )
 
-        return self.session.query(Device).filter(and_(Device.tenant_id == self.tenant_id, search_filter)).all()
+        return (
+            self.session.query(Device)
+            .filter(and_(Device.tenant_id == self.tenant_id, search_filter))
+            .all()
+        )
 
     async def get_device_count_by_type(self) -> dict[str, int]:
         """Get device count grouped by type."""
@@ -333,7 +343,9 @@ class DeviceInventoryManager:
     async def get_devices_by_site(self, site_id: str) -> list[Device]:
         """Get all devices for a specific site."""
         return (
-            self.session.query(Device).filter(and_(Device.site_id == site_id, Device.tenant_id == self.tenant_id)).all()
+            self.session.query(Device)
+            .filter(and_(Device.site_id == site_id, Device.tenant_id == self.tenant_id))
+            .all()
         )
 
 
@@ -402,7 +414,9 @@ class DeviceInventoryService:
             raise DeviceInventoryError(f"Device not found: {device_id}")
 
         # Update status to decommissioned
-        await self.manager.update_device(device_id, {"status": DeviceStatus.DECOMMISSIONED})
+        await self.manager.update_device(
+            device_id, {"status": DeviceStatus.DECOMMISSIONED}
+        )
 
         return {
             "device_id": device_id,
@@ -423,8 +437,12 @@ class DeviceInventoryService:
         interface_summary = {
             "total": len(interfaces),
             "up": len([i for i in interfaces if i.oper_status == InterfaceStatus.UP]),
-            "down": len([i for i in interfaces if i.oper_status == InterfaceStatus.DOWN]),
-            "admin_down": len([i for i in interfaces if i.admin_status == InterfaceStatus.ADMIN_DOWN]),
+            "down": len(
+                [i for i in interfaces if i.oper_status == InterfaceStatus.DOWN]
+            ),
+            "admin_down": len(
+                [i for i in interfaces if i.admin_status == InterfaceStatus.ADMIN_DOWN]
+            ),
         }
 
         # Calculate module status summary
@@ -443,5 +461,9 @@ class DeviceInventoryService:
             "interfaces": interface_summary,
             "modules": module_summary,
             "last_updated": device.updated_at.isoformat(),
-            "uptime_days": ((datetime.now(timezone.utc) - device.created_at).days if device.install_date else None),
+            "uptime_days": (
+                (datetime.now(timezone.utc) - device.created_at).days
+                if device.install_date
+                else None
+            ),
         }

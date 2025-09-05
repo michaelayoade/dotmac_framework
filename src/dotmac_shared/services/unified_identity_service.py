@@ -21,14 +21,12 @@ from enum import Enum
 from typing import Any
 from uuid import uuid4
 
-from dotmac_shared.core.exceptions import (
-    AuthenticationError,
-    ValidationError,
-)
-from dotmac_shared.services.base import BaseService
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
+
+from dotmac_shared.core.exceptions import AuthenticationError, ValidationError
+from dotmac_shared.services.base import BaseService
 
 logger = logging.getLogger(__name__)
 
@@ -147,22 +145,34 @@ class UnifiedIdentityService(BaseService):
         self.components = {}
 
         if self.config.enable_authentication:
-            self.components["auth"] = AuthenticationComponent(self.db, self.tenant_id, self.config)
+            self.components["auth"] = AuthenticationComponent(
+                self.db, self.tenant_id, self.config
+            )
 
         if self.config.enable_authorization:
-            self.components["authz"] = AuthorizationComponent(self.db, self.tenant_id, self.config)
+            self.components["authz"] = AuthorizationComponent(
+                self.db, self.tenant_id, self.config
+            )
 
         if self.config.enable_user_management:
-            self.components["user"] = UserManagementComponent(self.db, self.tenant_id, self.config)
+            self.components["user"] = UserManagementComponent(
+                self.db, self.tenant_id, self.config
+            )
 
         if self.config.enable_tenant_management:
-            self.components["tenant"] = TenantManagementComponent(self.db, self.tenant_id, self.config)
+            self.components["tenant"] = TenantManagementComponent(
+                self.db, self.tenant_id, self.config
+            )
 
         if self.config.enable_portal_management:
-            self.components["portal"] = PortalManagementComponent(self.db, self.tenant_id, self.config)
+            self.components["portal"] = PortalManagementComponent(
+                self.db, self.tenant_id, self.config
+            )
 
         if self.config.enable_intelligence:
-            self.components["intelligence"] = IdentityIntelligenceComponent(self.db, self.tenant_id, self.config)
+            self.components["intelligence"] = IdentityIntelligenceComponent(
+                self.db, self.tenant_id, self.config
+            )
 
     # Authentication Interface
 
@@ -178,7 +188,9 @@ class UnifiedIdentityService(BaseService):
         if not auth_component:
             raise ValidationError("Authentication not enabled")
 
-        return await auth_component.authenticate(username, password, provider, additional_data)
+        return await auth_component.authenticate(
+            username, password, provider, additional_data
+        )
 
     async def logout(self, user_id: str, session_id: str | None = None) -> bool:
         """Logout user and invalidate session."""
@@ -218,7 +230,9 @@ class UnifiedIdentityService(BaseService):
         if not authz_component:
             return True  # Default allow if authorization not enabled
 
-        return await authz_component.check_permission(user_id, permission, resource_id, scope)
+        return await authz_component.check_permission(
+            user_id, permission, resource_id, scope
+        )
 
     async def get_user_permissions(self, user_id: str) -> list[dict[str, Any]]:
         """Get all permissions for a user."""
@@ -228,7 +242,9 @@ class UnifiedIdentityService(BaseService):
 
         return await authz_component.get_user_permissions(user_id)
 
-    async def assign_role(self, user_id: str, role: UserRole, scope: str | None = None) -> bool:
+    async def assign_role(
+        self, user_id: str, role: UserRole, scope: str | None = None
+    ) -> bool:
         """Assign role to user."""
         authz_component = self.components.get("authz")
         if not authz_component:
@@ -251,7 +267,9 @@ class UnifiedIdentityService(BaseService):
         if not user_component:
             raise ValidationError("User management not enabled")
 
-        return await user_component.create_user(username, email, password, profile_data, user_id)
+        return await user_component.create_user(
+            username, email, password, profile_data, user_id
+        )
 
     async def get_user(self, user_id: str) -> dict[str, Any] | None:
         """Get user by ID."""
@@ -262,7 +280,10 @@ class UnifiedIdentityService(BaseService):
         return await user_component.get_user(user_id)
 
     async def update_user(
-        self, user_id: str, update_data: dict[str, Any], operator_user_id: str | None = None
+        self,
+        user_id: str,
+        update_data: dict[str, Any],
+        operator_user_id: str | None = None,
     ) -> dict[str, Any]:
         """Update user account."""
         user_component = self.components.get("user")
@@ -271,7 +292,9 @@ class UnifiedIdentityService(BaseService):
 
         return await user_component.update_user(user_id, update_data, operator_user_id)
 
-    async def delete_user(self, user_id: str, operator_user_id: str | None = None) -> bool:
+    async def delete_user(
+        self, user_id: str, operator_user_id: str | None = None
+    ) -> bool:
         """Delete user account."""
         user_component = self.components.get("user")
         if not user_component:
@@ -279,7 +302,9 @@ class UnifiedIdentityService(BaseService):
 
         return await user_component.delete_user(user_id, operator_user_id)
 
-    async def change_password(self, user_id: str, old_password: str, new_password: str) -> bool:
+    async def change_password(
+        self, user_id: str, old_password: str, new_password: str
+    ) -> bool:
         """Change user password."""
         user_component = self.components.get("user")
         if not user_component:
@@ -301,7 +326,9 @@ class UnifiedIdentityService(BaseService):
         if not tenant_component:
             raise ValidationError("Tenant management not enabled")
 
-        return await tenant_component.create_tenant(tenant_name, admin_user_data, tenant_config, creator_user_id)
+        return await tenant_component.create_tenant(
+            tenant_name, admin_user_data, tenant_config, creator_user_id
+        )
 
     async def get_tenant_users(self, tenant_id: str) -> list[dict[str, Any]]:
         """Get all users in a tenant."""
@@ -321,11 +348,15 @@ class UnifiedIdentityService(BaseService):
         if not portal_component:
             raise ValidationError("Portal management not enabled")
 
-        return await portal_component.create_portal_access(user_id, portal_type, access_config)
+        return await portal_component.create_portal_access(
+            user_id, portal_type, access_config
+        )
 
     # Intelligence Interface
 
-    async def track_user_activity(self, user_id: str, activity: str, context: dict[str, Any] | None = None) -> bool:
+    async def track_user_activity(
+        self, user_id: str, activity: str, context: dict[str, Any] | None = None
+    ) -> bool:
         """Track user activity for intelligence."""
         intelligence_component = self.components.get("intelligence")
         if not intelligence_component:
@@ -356,7 +387,10 @@ class UnifiedIdentityService(BaseService):
                     health["overall_status"] = "degraded"
 
             except Exception as e:
-                health["components"][component_type] = {"status": "unhealthy", "error": str(e)}
+                health["components"][component_type] = {
+                    "status": "unhealthy",
+                    "error": str(e),
+                }
                 health["overall_status"] = "unhealthy"
 
         return health
@@ -368,7 +402,12 @@ class UnifiedIdentityService(BaseService):
 class BaseIdentityComponent:
     """Base class for specialized identity components."""
 
-    def __init__(self, db_session: Session | AsyncSession, tenant_id: str | None, config: UnifiedIdentityServiceConfig):
+    def __init__(
+        self,
+        db_session: Session | AsyncSession,
+        tenant_id: str | None,
+        config: UnifiedIdentityServiceConfig,
+    ):
         self.db = db_session
         self.tenant_id = tenant_id
         self.config = config
@@ -382,7 +421,11 @@ class AuthenticationComponent(BaseIdentityComponent):
     """Component for authentication operations."""
 
     async def authenticate(
-        self, username: str, password: str, provider: AuthProvider, additional_data: dict[str, Any] | None
+        self,
+        username: str,
+        password: str,
+        provider: AuthProvider,
+        additional_data: dict[str, Any] | None,
     ) -> dict[str, Any]:
         # Implementation for user authentication
         logger.info(f"Authenticating user: {username} with provider: {provider}")
@@ -409,16 +452,25 @@ class AuthenticationComponent(BaseIdentityComponent):
 
     async def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         # Token refresh logic
-        return {"token": "new_jwt_token", "expires_in": self.config.jwt_expiry_hours * 3600}
+        return {
+            "token": "new_jwt_token",
+            "expires_in": self.config.jwt_expiry_hours * 3600,
+        }
 
 
 class AuthorizationComponent(BaseIdentityComponent):
     """Component for authorization and RBAC operations."""
 
     async def check_permission(
-        self, user_id: str, permission: str, resource_id: str | None, scope: PermissionScope
+        self,
+        user_id: str,
+        permission: str,
+        resource_id: str | None,
+        scope: PermissionScope,
     ) -> bool:
-        logger.info(f"Checking permission {permission} for user {user_id} in scope {scope}")
+        logger.info(
+            f"Checking permission {permission} for user {user_id} in scope {scope}"
+        )
         # Permission checking logic
         return True
 
@@ -426,7 +478,9 @@ class AuthorizationComponent(BaseIdentityComponent):
         # Get user permissions logic
         return []
 
-    async def assign_role(self, user_id: str, role: UserRole, scope: str | None) -> bool:
+    async def assign_role(
+        self, user_id: str, role: UserRole, scope: str | None
+    ) -> bool:
         logger.info(f"Assigning role {role} to user {user_id}")
         return True
 
@@ -435,7 +489,12 @@ class UserManagementComponent(BaseIdentityComponent):
     """Component for user management operations."""
 
     async def create_user(
-        self, username: str, email: str, password: str, profile_data: dict[str, Any] | None, user_id: str | None
+        self,
+        username: str,
+        email: str,
+        password: str,
+        profile_data: dict[str, Any] | None,
+        user_id: str | None,
     ) -> dict[str, Any]:
         logger.info(f"Creating user: {username} ({email})")
 
@@ -467,7 +526,9 @@ class UserManagementComponent(BaseIdentityComponent):
         logger.info(f"Deleting user: {user_id}")
         return True
 
-    async def change_password(self, user_id: str, old_password: str, new_password: str) -> bool:
+    async def change_password(
+        self, user_id: str, old_password: str, new_password: str
+    ) -> bool:
         logger.info(f"Changing password for user: {user_id}")
         # Password change logic with validation
         return True
@@ -498,7 +559,9 @@ class PortalManagementComponent(BaseIdentityComponent):
     async def create_portal_access(
         self, user_id: str, portal_type: str, access_config: dict[str, Any]
     ) -> dict[str, Any]:
-        logger.info(f"Creating portal access for user: {user_id}, portal: {portal_type}")
+        logger.info(
+            f"Creating portal access for user: {user_id}, portal: {portal_type}"
+        )
         # Portal access creation logic
         return {"access_id": str(uuid4()), "portal_type": portal_type}
 
@@ -506,7 +569,9 @@ class PortalManagementComponent(BaseIdentityComponent):
 class IdentityIntelligenceComponent(BaseIdentityComponent):
     """Component for identity intelligence and analytics."""
 
-    async def track_activity(self, user_id: str, activity: str, context: dict[str, Any] | None) -> bool:
+    async def track_activity(
+        self, user_id: str, activity: str, context: dict[str, Any] | None
+    ) -> bool:
         logger.info(f"Tracking activity: {activity} for user: {user_id}")
         # Activity tracking logic
         return True

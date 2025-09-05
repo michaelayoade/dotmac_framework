@@ -6,8 +6,9 @@ Follows existing configuration patterns for consistency.
 import os
 from typing import Any, Optional
 
-from dotmac_isp.core.settings import get_settings
 from pydantic import BaseModel, Field
+
+from dotmac_isp.core.settings import get_settings
 
 
 class GISConfig(BaseModel):
@@ -24,8 +25,12 @@ class GISConfig(BaseModel):
         default="nominatim",
         description="Geocoding service provider (nominatim, google, mapbox)",
     )
-    google_maps_api_key: Optional[str] = Field(default=None, description="Google Maps API key for geocoding")
-    mapbox_access_token: Optional[str] = Field(default=None, description="MapBox access token")
+    google_maps_api_key: Optional[str] = Field(
+        default=None, description="Google Maps API key for geocoding"
+    )
+    mapbox_access_token: Optional[str] = Field(
+        default=None, description="MapBox access token"
+    )
 
     # Coverage Analysis
     default_coverage_threshold: float = Field(
@@ -43,12 +48,18 @@ class GISConfig(BaseModel):
         description="Default vehicle speed for route calculations",
     )
 
-    service_time_per_stop_minutes: int = Field(default=30, ge=5, le=180, description="Default service time per stop")
+    service_time_per_stop_minutes: int = Field(
+        default=30, ge=5, le=180, description="Default service time per stop"
+    )
 
-    max_route_waypoints: int = Field(default=20, ge=2, le=100, description="Maximum waypoints per route optimization")
+    max_route_waypoints: int = Field(
+        default=20, ge=2, le=100, description="Maximum waypoints per route optimization"
+    )
 
     # Caching Configuration
-    topology_cache_ttl: int = Field(default=300, ge=60, le=3600, description="Topology data cache TTL in seconds")
+    topology_cache_ttl: int = Field(
+        default=300, ge=60, le=3600, description="Topology data cache TTL in seconds"
+    )
 
     geocoding_cache_ttl: int = Field(
         default=86400,
@@ -65,16 +76,22 @@ class GISConfig(BaseModel):
         description="Maximum area for coverage analysis",
     )
 
-    max_territory_area_km2: float = Field(default=5000.0, ge=1.0, le=50000.0, description="Maximum territory area")
+    max_territory_area_km2: float = Field(
+        default=5000.0, ge=1.0, le=50000.0, description="Maximum territory area"
+    )
 
     # Feature Flags
     enable_network_topology_integration: bool = Field(
         default=True, description="Enable integration with network topology module"
     )
 
-    enable_advanced_coverage_analysis: bool = Field(default=True, description="Enable ML-powered coverage analysis")
+    enable_advanced_coverage_analysis: bool = Field(
+        default=True, description="Enable ML-powered coverage analysis"
+    )
 
-    enable_real_time_geocoding: bool = Field(default=True, description="Enable real-time geocoding API calls")
+    enable_real_time_geocoding: bool = Field(
+        default=True, description="Enable real-time geocoding API calls"
+    )
 
     enable_route_optimization_caching: bool = Field(
         default=True, description="Enable caching of route optimization results"
@@ -96,9 +113,13 @@ class GISConfig(BaseModel):
         default=True, description="Enable performance monitoring for GIS operations"
     )
 
-    log_coverage_analyses: bool = Field(default=True, description="Log coverage analysis operations for audit")
+    log_coverage_analyses: bool = Field(
+        default=True, description="Log coverage analysis operations for audit"
+    )
 
-    log_route_optimizations: bool = Field(default=False, description="Log route optimization requests")
+    log_route_optimizations: bool = Field(
+        default=False, description="Log route optimization requests"
+    )
 
 
 def get_gis_config() -> GISConfig:
@@ -136,7 +157,9 @@ def get_gis_config() -> GISConfig:
 
     # Performance and Feature Flags
     if os.getenv("MAX_COVERAGE_ANALYSIS_AREA") is not None:
-        config_overrides["max_coverage_analysis_area_km2"] = float(os.getenv("MAX_COVERAGE_ANALYSIS_AREA"))
+        config_overrides["max_coverage_analysis_area_km2"] = float(
+            os.getenv("MAX_COVERAGE_ANALYSIS_AREA")
+        )
 
     if os.getenv("ENABLE_ADVANCED_COVERAGE_ANALYSIS") is not None:
         config_overrides["enable_advanced_coverage_analysis"] = (
@@ -144,7 +167,9 @@ def get_gis_config() -> GISConfig:
         )
 
     if os.getenv("ENABLE_REAL_TIME_GEOCODING") is not None:
-        config_overrides["enable_real_time_geocoding"] = os.getenv("ENABLE_REAL_TIME_GEOCODING").lower() == "true"
+        config_overrides["enable_real_time_geocoding"] = (
+            os.getenv("ENABLE_REAL_TIME_GEOCODING").lower() == "true"
+        )
 
     # Cache TTL Configuration
     if os.getenv("TOPOLOGY_CACHE_TTL"):

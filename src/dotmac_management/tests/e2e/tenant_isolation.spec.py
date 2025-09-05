@@ -65,7 +65,9 @@ class TestDatabaseIsolation:
                     )
                 )
                 tenant_a_session.execute(
-                    text("INSERT INTO customers (tenant_id, name, email) VALUES (:tenant_id, :name, :email)"),
+                    text(
+                        "INSERT INTO customers (tenant_id, name, email) VALUES (:tenant_id, :name, :email)"
+                    ),
                     {
                         "tenant_id": tenant_a.tenant_id,
                         "name": tenant_a_data["test_customer_data"]["name"],
@@ -81,7 +83,9 @@ class TestDatabaseIsolation:
                     )
                 )
                 tenant_b_session.execute(
-                    text("INSERT INTO customers (tenant_id, name, email) VALUES (:tenant_id, :name, :email)"),
+                    text(
+                        "INSERT INTO customers (tenant_id, name, email) VALUES (:tenant_id, :name, :email)"
+                    ),
                     {
                         "tenant_id": tenant_b.tenant_id,
                         "name": tenant_b_data["test_customer_data"]["name"],
@@ -92,36 +96,54 @@ class TestDatabaseIsolation:
 
                 # Verify data isolation
                 isolation_result = DatabaseTestUtils.verify_tenant_data_isolation(
-                    tenant_a_session, tenant_b_session, "customers", tenant_a.tenant_id, tenant_b.tenant_id
+                    tenant_a_session,
+                    tenant_b_session,
+                    "customers",
+                    tenant_a.tenant_id,
+                    tenant_b.tenant_id,
                 )
 
                 assert_data_isolation_maintained(isolation_result)
 
                 # Verify tenant A can only see its own data
                 tenant_a_customers = tenant_a_session.execute(
-                    text("SELECT * FROM customers WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_a.tenant_id}
+                    text("SELECT * FROM customers WHERE tenant_id = :tenant_id"),
+                    {"tenant_id": tenant_a.tenant_id},
                 ).fetchall()
 
                 assert len(tenant_a_customers) == 1
-                assert tenant_a_customers[0].name == tenant_a_data["test_customer_data"]["name"]
+                assert (
+                    tenant_a_customers[0].name
+                    == tenant_a_data["test_customer_data"]["name"]
+                )
 
                 # Verify tenant B can only see its own data
                 tenant_b_customers = tenant_b_session.execute(
-                    text("SELECT * FROM customers WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_b.tenant_id}
+                    text("SELECT * FROM customers WHERE tenant_id = :tenant_id"),
+                    {"tenant_id": tenant_b.tenant_id},
                 ).fetchall()
 
                 assert len(tenant_b_customers) == 1
-                assert tenant_b_customers[0].name == tenant_b_data["test_customer_data"]["name"]
+                assert (
+                    tenant_b_customers[0].name
+                    == tenant_b_data["test_customer_data"]["name"]
+                )
 
                 # Critical test: Verify tenant A cannot see tenant B data
                 cross_tenant_data = tenant_a_session.execute(
-                    text("SELECT * FROM customers WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_b.tenant_id}
+                    text("SELECT * FROM customers WHERE tenant_id = :tenant_id"),
+                    {"tenant_id": tenant_b.tenant_id},
                 ).fetchall()
 
-                assert len(cross_tenant_data) == 0, "CRITICAL: Cross-tenant data access detected!"
+                assert (
+                    len(cross_tenant_data) == 0
+                ), "CRITICAL: Cross-tenant data access detected!"
 
     async def test_tenant_connection_pool_isolation(
-        self, tenant_db_sessions: dict[str, Session], tenant_factory, isolation_test_data
+        self,
+        tenant_db_sessions: dict[str, Session],
+        tenant_factory,
+        isolation_test_data,
     ):
         """Test that tenant database connection pools are isolated."""
 
@@ -148,7 +170,9 @@ class TestDatabaseIsolation:
                     )
                 )
                 tenant_a_session.execute(
-                    text("INSERT INTO connection_test (tenant_id, data) VALUES (:tenant_id, :data)"),
+                    text(
+                        "INSERT INTO connection_test (tenant_id, data) VALUES (:tenant_id, :data)"
+                    ),
                     {"tenant_id": tenant_a.tenant_id, "data": "tenant_a_data"},
                 )
 
@@ -158,7 +182,9 @@ class TestDatabaseIsolation:
                     )
                 )
                 tenant_b_session.execute(
-                    text("INSERT INTO connection_test (tenant_id, data) VALUES (:tenant_id, :data)"),
+                    text(
+                        "INSERT INTO connection_test (tenant_id, data) VALUES (:tenant_id, :data)"
+                    ),
                     {"tenant_id": tenant_b.tenant_id, "data": "tenant_b_data"},
                 )
 
@@ -168,12 +194,16 @@ class TestDatabaseIsolation:
 
                 # Verify data integrity after concurrent transactions
                 tenant_a_data_check = tenant_a_session.execute(
-                    text("SELECT data FROM connection_test WHERE tenant_id = :tenant_id"),
+                    text(
+                        "SELECT data FROM connection_test WHERE tenant_id = :tenant_id"
+                    ),
                     {"tenant_id": tenant_a.tenant_id},
                 ).scalar()
 
                 tenant_b_data_check = tenant_b_session.execute(
-                    text("SELECT data FROM connection_test WHERE tenant_id = :tenant_id"),
+                    text(
+                        "SELECT data FROM connection_test WHERE tenant_id = :tenant_id"
+                    ),
                     {"tenant_id": tenant_b.tenant_id},
                 ).scalar()
 
@@ -186,11 +216,12 @@ class TestDatabaseIsolation:
                     tenant_a_session.execute(text("ROLLBACK"))
                     tenant_b_session.execute(text("ROLLBACK"))
                 except Exception:
-
                     pass
                 raise e
 
-    async def test_tenant_data_encryption_isolation(self, tenant_db_sessions: dict[str, Session], tenant_factory):
+    async def test_tenant_data_encryption_isolation(
+        self, tenant_db_sessions: dict[str, Session], tenant_factory
+    ):
         """Test that tenant data encryption keys are isolated."""
 
         # Create tenants with different encryption settings
@@ -226,7 +257,9 @@ class TestDatabaseIsolation:
                 )
             )
             tenant_a_session.execute(
-                text("INSERT INTO encrypted_data (tenant_id, encrypted_value) VALUES (:tenant_id, :data)"),
+                text(
+                    "INSERT INTO encrypted_data (tenant_id, encrypted_value) VALUES (:tenant_id, :data)"
+                ),
                 {"tenant_id": tenant_a.tenant_id, "data": encrypted_data_a},
             )
             tenant_a_session.commit()
@@ -237,19 +270,25 @@ class TestDatabaseIsolation:
                 )
             )
             tenant_b_session.execute(
-                text("INSERT INTO encrypted_data (tenant_id, encrypted_value) VALUES (:tenant_id, :data)"),
+                text(
+                    "INSERT INTO encrypted_data (tenant_id, encrypted_value) VALUES (:tenant_id, :data)"
+                ),
                 {"tenant_id": tenant_b.tenant_id, "data": encrypted_data_b},
             )
             tenant_b_session.commit()
 
             # Verify each tenant can only access its own encrypted data
             tenant_a_encrypted = tenant_a_session.execute(
-                text("SELECT encrypted_value FROM encrypted_data WHERE tenant_id = :tenant_id"),
+                text(
+                    "SELECT encrypted_value FROM encrypted_data WHERE tenant_id = :tenant_id"
+                ),
                 {"tenant_id": tenant_a.tenant_id},
             ).scalar()
 
             tenant_b_encrypted = tenant_b_session.execute(
-                text("SELECT encrypted_value FROM encrypted_data WHERE tenant_id = :tenant_id"),
+                text(
+                    "SELECT encrypted_value FROM encrypted_data WHERE tenant_id = :tenant_id"
+                ),
                 {"tenant_id": tenant_b.tenant_id},
             ).scalar()
 
@@ -260,22 +299,38 @@ class TestDatabaseIsolation:
     async def test_tenant_backup_isolation(self, tenant_factory, mock_coolify_client):
         """Test that tenant backups are isolated and encrypted separately."""
 
-        tenant_a = tenant_factory(company_name="Backup Isolation A", subdomain="backup_a")
+        tenant_a = tenant_factory(
+            company_name="Backup Isolation A", subdomain="backup_a"
+        )
 
-        tenant_b = tenant_factory(company_name="Backup Isolation B", subdomain="backup_b")
+        tenant_b = tenant_factory(
+            company_name="Backup Isolation B", subdomain="backup_b"
+        )
 
         # Mock separate backup creation for each tenant
         backup_a_id = f"backup_{tenant_a.tenant_id}_{secrets.token_hex(8)}"
         backup_b_id = f"backup_{tenant_b.tenant_id}_{secrets.token_hex(8)}"
 
         mock_coolify_client.create_backup.side_effect = [
-            {"backup_id": backup_a_id, "tenant_id": tenant_a.tenant_id, "encrypted": True},
-            {"backup_id": backup_b_id, "tenant_id": tenant_b.tenant_id, "encrypted": True},
+            {
+                "backup_id": backup_a_id,
+                "tenant_id": tenant_a.tenant_id,
+                "encrypted": True,
+            },
+            {
+                "backup_id": backup_b_id,
+                "tenant_id": tenant_b.tenant_id,
+                "encrypted": True,
+            },
         ]
 
         # Create backups for both tenants
-        backup_a_result = await mock_coolify_client.create_backup(f"app_{tenant_a.tenant_id}")
-        backup_b_result = await mock_coolify_client.create_backup(f"app_{tenant_b.tenant_id}")
+        backup_a_result = await mock_coolify_client.create_backup(
+            f"app_{tenant_a.tenant_id}"
+        )
+        backup_b_result = await mock_coolify_client.create_backup(
+            f"app_{tenant_b.tenant_id}"
+        )
 
         # Verify backups are isolated
         assert backup_a_result["backup_id"] != backup_b_result["backup_id"]
@@ -288,7 +343,9 @@ class TestDatabaseIsolation:
 class TestAPIIsolation:
     """Test API-level tenant isolation."""
 
-    async def test_tenant_api_endpoint_isolation(self, http_client, tenant_factory, isolation_test_data):
+    async def test_tenant_api_endpoint_isolation(
+        self, http_client, tenant_factory, isolation_test_data
+    ):
         """Test that tenant API endpoints are completely isolated."""
 
         tenant_a_data = isolation_test_data["tenant_a"]
@@ -298,9 +355,13 @@ class TestAPIIsolation:
         tenant_b = tenant_factory(**tenant_b_data)
 
         # Create JWT tokens for each tenant
-        ApiTestDataFactory.create_test_jwt_payload(tenant_id=tenant_a.tenant_id, role="tenant_admin")
+        ApiTestDataFactory.create_test_jwt_payload(
+            tenant_id=tenant_a.tenant_id, role="tenant_admin"
+        )
 
-        ApiTestDataFactory.create_test_jwt_payload(tenant_id=tenant_b.tenant_id, role="tenant_admin")
+        ApiTestDataFactory.create_test_jwt_payload(
+            tenant_id=tenant_b.tenant_id, role="tenant_admin"
+        )
 
         # Convert payloads to actual JWT tokens (simplified for testing)
         tenant_a_jwt = f"jwt_token_a_{secrets.token_hex(16)}"
@@ -325,9 +386,17 @@ class TestAPIIsolation:
         tenant_b = tenant_factory(company_name="Auth Boundary B", subdomain="auth_b")
 
         # Create user credentials for each tenant
-        tenant_a_user = {"email": "user@tenant-a.com", "password": "password123", "tenant_id": tenant_a.tenant_id}
+        tenant_a_user = {
+            "email": "user@tenant-a.com",
+            "password": "password123",
+            "tenant_id": tenant_a.tenant_id,
+        }
 
-        tenant_b_user = {"email": "user@tenant-b.com", "password": "password123", "tenant_id": tenant_b.tenant_id}
+        tenant_b_user = {
+            "email": "user@tenant-b.com",
+            "password": "password123",
+            "tenant_id": tenant_b.tenant_id,
+        }
 
         tenant_a_url = f"https://{tenant_a.subdomain}.test.dotmac.local"
         tenant_b_url = f"https://{tenant_b.subdomain}.test.dotmac.local"
@@ -336,7 +405,10 @@ class TestAPIIsolation:
         try:
             response = await http_client.post(
                 f"{tenant_b_url}/api/v1/auth/login",
-                json={"email": tenant_a_user["email"], "password": tenant_a_user["password"]},
+                json={
+                    "email": tenant_a_user["email"],
+                    "password": tenant_a_user["password"],
+                },
             )
 
             # Should fail with 401 Unauthorized or 403 Forbidden
@@ -353,7 +425,10 @@ class TestAPIIsolation:
         try:
             response = await http_client.post(
                 f"{tenant_a_url}/api/v1/auth/login",
-                json={"email": tenant_b_user["email"], "password": tenant_b_user["password"]},
+                json={
+                    "email": tenant_b_user["email"],
+                    "password": tenant_b_user["password"],
+                },
             )
 
             assert response.status_code in [
@@ -397,10 +472,14 @@ class TestAPIIsolation:
         # Test 1: Tenant A JWT should not work on Tenant B
         try:
             response = await http_client.get(
-                f"{tenant_b_url}/api/v1/user/profile", headers={"Authorization": f"Bearer {tenant_a_jwt}"}
+                f"{tenant_b_url}/api/v1/user/profile",
+                headers={"Authorization": f"Bearer {tenant_a_jwt}"},
             )
 
-            assert response.status_code in [401, 403], f"Tenant A JWT worked on Tenant B API: {response.status_code}"
+            assert response.status_code in [
+                401,
+                403,
+            ], f"Tenant A JWT worked on Tenant B API: {response.status_code}"
 
         except Exception:
             # Network/connection errors are acceptable
@@ -409,16 +488,22 @@ class TestAPIIsolation:
         # Test 2: Tenant B JWT should not work on Tenant A
         try:
             response = await http_client.get(
-                f"{tenant_a_url}/api/v1/user/profile", headers={"Authorization": f"Bearer {tenant_b_jwt}"}
+                f"{tenant_a_url}/api/v1/user/profile",
+                headers={"Authorization": f"Bearer {tenant_b_jwt}"},
             )
 
-            assert response.status_code in [401, 403], f"Tenant B JWT worked on Tenant A API: {response.status_code}"
+            assert response.status_code in [
+                401,
+                403,
+            ], f"Tenant B JWT worked on Tenant A API: {response.status_code}"
 
         except Exception:
             # Network/connection errors are acceptable
             pass
 
-    async def test_tenant_api_rate_limiting_isolation(self, http_client, tenant_factory):
+    async def test_tenant_api_rate_limiting_isolation(
+        self, http_client, tenant_factory
+    ):
         """Test that API rate limiting is isolated per tenant."""
 
         tenant_a = tenant_factory(
@@ -443,14 +528,18 @@ class TestAPIIsolation:
         for i in range(10):  # Reduced for testing
             try:
                 await http_client.get(
-                    f"{tenant_a_url}/api/v1/health", headers={"Authorization": f"Bearer {tenant_a_jwt}"}
+                    f"{tenant_a_url}/api/v1/health",
+                    headers={"Authorization": f"Bearer {tenant_a_jwt}"},
                 )
             except Exception:
                 pass  # Ignore connection errors
 
         # Verify tenant B is not affected by tenant A's rate limiting
         try:
-            await http_client.get(f"{tenant_b_url}/api/v1/health", headers={"Authorization": f"Bearer {tenant_b_jwt}"})
+            await http_client.get(
+                f"{tenant_b_url}/api/v1/health",
+                headers={"Authorization": f"Bearer {tenant_b_jwt}"},
+            )
 
             # Tenant B should still be able to make requests
             # In a real scenario with actual rate limiting, we'd verify the response
@@ -482,20 +571,32 @@ class TestUIIsolation:
 
         try:
             # Navigate to tenant A login
-            await tenant_a_page.goto(f"https://{tenant_a.subdomain}.test.dotmac.local/login")
+            await tenant_a_page.goto(
+                f"https://{tenant_a.subdomain}.test.dotmac.local/login"
+            )
 
             # Verify tenant A branding/content
-            await expect(tenant_a_page.locator("title")).to_contain_text(tenant_a.company_name, timeout=10000)
+            await expect(tenant_a_page.locator("title")).to_contain_text(
+                tenant_a.company_name, timeout=10000
+            )
 
             # Navigate to tenant B login
-            await tenant_b_page.goto(f"https://{tenant_b.subdomain}.test.dotmac.local/login")
+            await tenant_b_page.goto(
+                f"https://{tenant_b.subdomain}.test.dotmac.local/login"
+            )
 
             # Verify tenant B branding/content
-            await expect(tenant_b_page.locator("title")).to_contain_text(tenant_b.company_name, timeout=10000)
+            await expect(tenant_b_page.locator("title")).to_contain_text(
+                tenant_b.company_name, timeout=10000
+            )
 
             # Verify different styling/branding (if implemented)
-            tenant_a_theme = await tenant_a_page.evaluate("getComputedStyle(document.body).backgroundColor")
-            tenant_b_theme = await tenant_b_page.evaluate("getComputedStyle(document.body).backgroundColor")
+            tenant_a_theme = await tenant_a_page.evaluate(
+                "getComputedStyle(document.body).backgroundColor"
+            )
+            tenant_b_theme = await tenant_b_page.evaluate(
+                "getComputedStyle(document.body).backgroundColor"
+            )
 
             # In a real implementation with custom themes, these would be different
             # For now, just verify pages loaded independently
@@ -506,12 +607,18 @@ class TestUIIsolation:
             await tenant_a_page.close()
             await tenant_b_page.close()
 
-    async def test_tenant_session_isolation(self, browser_context, tenant_page_factory, tenant_factory):
+    async def test_tenant_session_isolation(
+        self, browser_context, tenant_page_factory, tenant_factory
+    ):
         """Test that tenant user sessions are isolated."""
 
-        tenant_a = tenant_factory(company_name="Session Isolation A", subdomain="session_a")
+        tenant_a = tenant_factory(
+            company_name="Session Isolation A", subdomain="session_a"
+        )
 
-        tenant_b = tenant_factory(company_name="Session Isolation B", subdomain="session_b")
+        tenant_b = tenant_factory(
+            company_name="Session Isolation B", subdomain="session_b"
+        )
 
         # Create isolated browser contexts for each tenant
         tenant_a_context = await browser_context.browser.new_context()
@@ -522,7 +629,9 @@ class TestUIIsolation:
 
         try:
             # Simulate login to tenant A
-            await tenant_a_page.goto(f"https://{tenant_a.subdomain}.test.dotmac.local/login")
+            await tenant_a_page.goto(
+                f"https://{tenant_a.subdomain}.test.dotmac.local/login"
+            )
 
             # Set session cookie for tenant A
             await tenant_a_page.context.add_cookies(
@@ -537,7 +646,9 @@ class TestUIIsolation:
             )
 
             # Simulate login to tenant B
-            await tenant_b_page.goto(f"https://{tenant_b.subdomain}.test.dotmac.local/login")
+            await tenant_b_page.goto(
+                f"https://{tenant_b.subdomain}.test.dotmac.local/login"
+            )
 
             # Set different session cookie for tenant B
             await tenant_b_page.context.add_cookies(
@@ -555,8 +666,12 @@ class TestUIIsolation:
             tenant_a_cookies = await tenant_a_page.context.cookies()
             tenant_b_cookies = await tenant_b_page.context.cookies()
 
-            tenant_a_session = next((c for c in tenant_a_cookies if c["name"] == "session"), None)
-            tenant_b_session = next((c for c in tenant_b_cookies if c["name"] == "session"), None)
+            tenant_a_session = next(
+                (c for c in tenant_a_cookies if c["name"] == "session"), None
+            )
+            tenant_b_session = next(
+                (c for c in tenant_b_cookies if c["name"] == "session"), None
+            )
 
             assert tenant_a_session is not None
             assert tenant_b_session is not None
@@ -608,8 +723,12 @@ class TestResourceIsolation:
         ]
 
         # Get metrics for both tenants
-        tenant_a_metrics = await mock_coolify_client.get_container_metrics(f"app_{tenant_a.tenant_id}")
-        tenant_b_metrics = await mock_coolify_client.get_container_metrics(f"app_{tenant_b.tenant_id}")
+        tenant_a_metrics = await mock_coolify_client.get_container_metrics(
+            f"app_{tenant_a.tenant_id}"
+        )
+        tenant_b_metrics = await mock_coolify_client.get_container_metrics(
+            f"app_{tenant_b.tenant_id}"
+        )
 
         # Verify memory isolation
         assert tenant_a_metrics["memory_limit"] == 2 * 1024 * 1024 * 1024
@@ -651,8 +770,12 @@ class TestResourceIsolation:
         ]
 
         # Get CPU metrics
-        tenant_a_cpu = await mock_coolify_client.get_container_metrics(f"app_{tenant_a.tenant_id}")
-        tenant_b_cpu = await mock_coolify_client.get_container_metrics(f"app_{tenant_b.tenant_id}")
+        tenant_a_cpu = await mock_coolify_client.get_container_metrics(
+            f"app_{tenant_a.tenant_id}"
+        )
+        tenant_b_cpu = await mock_coolify_client.get_container_metrics(
+            f"app_{tenant_b.tenant_id}"
+        )
 
         # Verify CPU isolation
         assert tenant_a_cpu["cpu_limit"] == 2000
@@ -666,11 +789,15 @@ class TestResourceIsolation:
         """Test storage isolation between tenants."""
 
         tenant_a = tenant_factory(
-            company_name="Storage Isolation A", subdomain="storage_a", settings={"storage_limit": "100Gi"}
+            company_name="Storage Isolation A",
+            subdomain="storage_a",
+            settings={"storage_limit": "100Gi"},
         )
 
         tenant_b = tenant_factory(
-            company_name="Storage Isolation B", subdomain="storage_b", settings={"storage_limit": "50Gi"}
+            company_name="Storage Isolation B",
+            subdomain="storage_b",
+            settings={"storage_limit": "50Gi"},
         )
 
         # Mock storage usage
@@ -690,8 +817,12 @@ class TestResourceIsolation:
         ]
 
         # Get storage metrics
-        tenant_a_storage = await mock_coolify_client.get_storage_usage(f"app_{tenant_a.tenant_id}")
-        tenant_b_storage = await mock_coolify_client.get_storage_usage(f"app_{tenant_b.tenant_id}")
+        tenant_a_storage = await mock_coolify_client.get_storage_usage(
+            f"app_{tenant_a.tenant_id}"
+        )
+        tenant_b_storage = await mock_coolify_client.get_storage_usage(
+            f"app_{tenant_b.tenant_id}"
+        )
 
         # Verify storage isolation
         assert tenant_a_storage["storage_limit"] == 100 * 1024 * 1024 * 1024
@@ -704,9 +835,13 @@ class TestResourceIsolation:
     async def test_tenant_network_isolation(self, tenant_factory, http_client):
         """Test network-level isolation between tenants."""
 
-        tenant_a = tenant_factory(company_name="Network Isolation A", subdomain="network_a")
+        tenant_a = tenant_factory(
+            company_name="Network Isolation A", subdomain="network_a"
+        )
 
-        tenant_b = tenant_factory(company_name="Network Isolation B", subdomain="network_b")
+        tenant_b = tenant_factory(
+            company_name="Network Isolation B", subdomain="network_b"
+        )
 
         tenant_a_url = f"https://{tenant_a.subdomain}.test.dotmac.local"
         tenant_b_url = f"https://{tenant_b.subdomain}.test.dotmac.local"
@@ -743,7 +878,9 @@ class TestResourceIsolation:
 class TestSecurityIsolation:
     """Test security-related isolation between tenants."""
 
-    async def test_tenant_audit_log_isolation(self, tenant_db_sessions: dict[str, Session], tenant_factory):
+    async def test_tenant_audit_log_isolation(
+        self, tenant_db_sessions: dict[str, Session], tenant_factory
+    ):
         """Test that audit logs are isolated between tenants."""
 
         tenant_a = tenant_factory(company_name="Audit Log A", subdomain="audit_a")
@@ -761,7 +898,9 @@ class TestSecurityIsolation:
                 )
             )
             tenant_a_session.execute(
-                text("INSERT INTO audit_logs (tenant_id, action, timestamp) VALUES (:tenant_id, :action, NOW())"),
+                text(
+                    "INSERT INTO audit_logs (tenant_id, action, timestamp) VALUES (:tenant_id, :action, NOW())"
+                ),
                 {"tenant_id": tenant_a.tenant_id, "action": "user_login"},
             )
             tenant_a_session.commit()
@@ -772,18 +911,22 @@ class TestSecurityIsolation:
                 )
             )
             tenant_b_session.execute(
-                text("INSERT INTO audit_logs (tenant_id, action, timestamp) VALUES (:tenant_id, :action, NOW())"),
+                text(
+                    "INSERT INTO audit_logs (tenant_id, action, timestamp) VALUES (:tenant_id, :action, NOW())"
+                ),
                 {"tenant_id": tenant_b.tenant_id, "action": "admin_action"},
             )
             tenant_b_session.commit()
 
             # Verify audit log isolation
             tenant_a_logs = tenant_a_session.execute(
-                text("SELECT action FROM audit_logs WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_a.tenant_id}
+                text("SELECT action FROM audit_logs WHERE tenant_id = :tenant_id"),
+                {"tenant_id": tenant_a.tenant_id},
             ).fetchall()
 
             tenant_b_logs = tenant_b_session.execute(
-                text("SELECT action FROM audit_logs WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_b.tenant_id}
+                text("SELECT action FROM audit_logs WHERE tenant_id = :tenant_id"),
+                {"tenant_id": tenant_b.tenant_id},
             ).fetchall()
 
             assert len(tenant_a_logs) == 1
@@ -793,34 +936,54 @@ class TestSecurityIsolation:
 
             # Critical: Verify no cross-tenant audit log access
             cross_logs_a = tenant_a_session.execute(
-                text("SELECT * FROM audit_logs WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_b.tenant_id}
+                text("SELECT * FROM audit_logs WHERE tenant_id = :tenant_id"),
+                {"tenant_id": tenant_b.tenant_id},
             ).fetchall()
 
             cross_logs_b = tenant_b_session.execute(
-                text("SELECT * FROM audit_logs WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_a.tenant_id}
+                text("SELECT * FROM audit_logs WHERE tenant_id = :tenant_id"),
+                {"tenant_id": tenant_a.tenant_id},
             ).fetchall()
 
-            assert len(cross_logs_a) == 0, "CRITICAL: Cross-tenant audit log access detected!"
-            assert len(cross_logs_b) == 0, "CRITICAL: Cross-tenant audit log access detected!"
+            assert (
+                len(cross_logs_a) == 0
+            ), "CRITICAL: Cross-tenant audit log access detected!"
+            assert (
+                len(cross_logs_b) == 0
+            ), "CRITICAL: Cross-tenant audit log access detected!"
 
-    async def test_tenant_security_policy_isolation(self, tenant_factory, management_db_session: Session):
+    async def test_tenant_security_policy_isolation(
+        self, tenant_factory, management_db_session: Session
+    ):
         """Test that security policies are isolated per tenant."""
 
         tenant_a = tenant_factory(
             company_name="Security Policy A",
             subdomain="security_a",
-            settings={"password_policy": "strong", "session_timeout": 3600, "mfa_required": True},
+            settings={
+                "password_policy": "strong",
+                "session_timeout": 3600,
+                "mfa_required": True,
+            },
         )
 
         tenant_b = tenant_factory(
             company_name="Security Policy B",
             subdomain="security_b",
-            settings={"password_policy": "moderate", "session_timeout": 7200, "mfa_required": False},
+            settings={
+                "password_policy": "moderate",
+                "session_timeout": 7200,
+                "mfa_required": False,
+            },
         )
 
         # Verify different security policies
-        assert tenant_a.settings["password_policy"] != tenant_b.settings["password_policy"]
-        assert tenant_a.settings["session_timeout"] != tenant_b.settings["session_timeout"]
+        assert (
+            tenant_a.settings["password_policy"] != tenant_b.settings["password_policy"]
+        )
+        assert (
+            tenant_a.settings["session_timeout"] != tenant_b.settings["session_timeout"]
+        )
         assert tenant_a.settings["mfa_required"] != tenant_b.settings["mfa_required"]
 
         # Verify policies are stored separately and securely

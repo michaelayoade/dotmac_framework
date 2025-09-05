@@ -87,7 +87,11 @@ class PolicyViolationError(BusinessLogicError):
             error_code=f"POLICY_VIOLATION_{policy_name.upper()}",
             context=context,
             severity=severity,
-            details={"policy_name": policy_name, "violated_rules": violated_rules, **kwargs},
+            details={
+                "policy_name": policy_name,
+                "violated_rules": violated_rules,
+                **kwargs,
+            },
         )
         self.policy_name = policy_name
         self.violated_rules = violated_rules
@@ -109,7 +113,11 @@ class RuleEvaluationError(BusinessLogicError):
             error_code=f"RULE_EVALUATION_ERROR_{rule_name.upper()}",
             context=context,
             severity=ErrorSeverity.MEDIUM,
-            details={"rule_name": rule_name, "evaluation_context": evaluation_context, **kwargs},
+            details={
+                "rule_name": rule_name,
+                "evaluation_context": evaluation_context,
+                **kwargs,
+            },
         )
         self.rule_name = rule_name
         self.evaluation_context = evaluation_context
@@ -160,8 +168,15 @@ class SagaError(BusinessLogicError):
             message=message,
             error_code="SAGA_ORCHESTRATION_ERROR",
             context=context,
-            severity=ErrorSeverity.CRITICAL if compensation_failed else ErrorSeverity.HIGH,
-            details={"saga_id": saga_id, "step_name": step_name, "compensation_failed": compensation_failed, **kwargs},
+            severity=ErrorSeverity.CRITICAL
+            if compensation_failed
+            else ErrorSeverity.HIGH,
+            details={
+                "saga_id": saga_id,
+                "step_name": step_name,
+                "compensation_failed": compensation_failed,
+                **kwargs,
+            },
         )
         self.saga_id = saga_id
         self.step_name = step_name

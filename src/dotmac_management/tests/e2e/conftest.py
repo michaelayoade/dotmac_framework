@@ -13,9 +13,10 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
+from sqlalchemy.orm import Session, sessionmaker
+
 from dotmac_management.models.tenant import CustomerTenant, TenantStatus
 from dotmac_shared.core.logging import get_logger
-from sqlalchemy.orm import Session, sessionmaker
 
 logger = get_logger(__name__)
 
@@ -29,19 +30,13 @@ if os.getenv("DOTMAC_E2E_ENABLE") == "1":
 
     import httpx
     import pytest
-    from dotmac_management.models.tenant import CustomerTenant, TenantStatus
-    from dotmac_management.services.tenant_provisioning import (
-        TenantProvisioningService,
-    )
-    from dotmac_shared.core.logging import get_logger
-    from playwright.async_api import (
-        Browser,
-        BrowserContext,
-        Page,
-        async_playwright,
-    )
+    from playwright.async_api import Browser, BrowserContext, Page, async_playwright
     from sqlalchemy import create_engine
     from sqlalchemy.orm import Session, sessionmaker
+
+    from dotmac_management.models.tenant import CustomerTenant, TenantStatus
+    from dotmac_management.services.tenant_provisioning import TenantProvisioningService
+    from dotmac_shared.core.logging import get_logger
 
     logger = get_logger(__name__)
 
@@ -94,7 +89,9 @@ if os.getenv("DOTMAC_E2E_ENABLE") == "1":
     @pytest.fixture(scope="function")
     async def browser_context(browser: Browser):
         """Isolated browser context for each test."""
-        context = await browser.new_context(viewport={"width": 1280, "height": 720}, ignore_https_errors=True)
+        context = await browser.new_context(
+            viewport={"width": 1280, "height": 720}, ignore_https_errors=True
+        )
         yield context
         await context.close()
 
@@ -112,7 +109,9 @@ if os.getenv("DOTMAC_E2E_ENABLE") == "1":
 
         async def create_tenant_page(tenant_subdomain: str) -> Page:
             page = await browser_context.new_page()
-            tenant_url = f"https://{tenant_subdomain}.{TEST_BASE_URL.replace('https://', '')}"
+            tenant_url = (
+                f"https://{tenant_subdomain}.{TEST_BASE_URL.replace('https://', '')}"
+            )
             await page.goto(tenant_url)
             return page
 
@@ -187,7 +186,11 @@ async def mock_coolify_client():
         "status": "created",
     }
 
-    mock_client.get_application_status.return_value = {"id": "test-app", "status": "running", "health": "healthy"}
+    mock_client.get_application_status.return_value = {
+        "id": "test-app",
+        "status": "running",
+        "health": "healthy",
+    }
 
     mock_client.get_deployment_logs.return_value = [
         "Starting deployment...",
@@ -263,7 +266,10 @@ def tenant_factory(management_db_session: Session):
 @pytest.fixture(scope="function")
 async def mock_tenant_provisioning_service(mock_coolify_client):
     """Mocked tenant provisioning service."""
-    with patch("dotmac_management.services.tenant_provisioning.CoolifyClient", return_value=mock_coolify_client):
+    with patch(
+        "dotmac_management.services.tenant_provisioning.CoolifyClient",
+        return_value=mock_coolify_client,
+    ):
         service = TenantProvisioningService()
         yield service
 
@@ -320,7 +326,11 @@ async def isolation_test_data():
             "company_name": "Isolation Test ISP A",
             "admin_email": "admin_a@isolation-test.com",
             "test_customer_email": "customer_a@test.com",
-            "test_customer_data": {"name": "Customer A", "phone": "+1234567890", "address": "123 Test St, City A"},
+            "test_customer_data": {
+                "name": "Customer A",
+                "phone": "+1234567890",
+                "address": "123 Test St, City A",
+            },
         },
         "tenant_b": {
             "tenant_id": "tenant_isolation_b",
@@ -328,7 +338,11 @@ async def isolation_test_data():
             "company_name": "Isolation Test ISP B",
             "admin_email": "admin_b@isolation-test.com",
             "test_customer_email": "customer_b@test.com",
-            "test_customer_data": {"name": "Customer B", "phone": "+0987654321", "address": "456 Test Ave, City B"},
+            "test_customer_data": {
+                "name": "Customer B",
+                "phone": "+0987654321",
+                "address": "456 Test Ave, City B",
+            },
         },
     }
 
@@ -353,9 +367,15 @@ pytestmark = [pytest.mark.e2e, pytest.mark.asyncio]
 
 def pytest_configure(config):
     """Configure test markers."""
-    config.addinivalue_line("markers", "tenant_provisioning: marks tests as tenant provisioning tests")
-    config.addinivalue_line("markers", "container_lifecycle: marks tests as container lifecycle tests")
-    config.addinivalue_line("markers", "tenant_isolation: marks tests as multi-tenant isolation tests")
+    config.addinivalue_line(
+        "markers", "tenant_provisioning: marks tests as tenant provisioning tests"
+    )
+    config.addinivalue_line(
+        "markers", "container_lifecycle: marks tests as container lifecycle tests"
+    )
+    config.addinivalue_line(
+        "markers", "tenant_isolation: marks tests as multi-tenant isolation tests"
+    )
     config.addinivalue_line("markers", "slow: marks tests as slow-running")
 
 

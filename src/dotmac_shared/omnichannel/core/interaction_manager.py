@@ -11,12 +11,7 @@ from enum import Enum
 from typing import Any, Optional, Union
 from uuid import uuid4
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..models.enums import ChannelType
 
@@ -321,7 +316,9 @@ class InteractionManager:
         # Route interaction
         if self.routing_engine:
             try:
-                routing_result = await self.routing_engine.route_interaction(interaction)
+                routing_result = await self.routing_engine.route_interaction(
+                    interaction
+                )
                 if routing_result.agent_id:
                     interaction.assigned_agent_id = routing_result.agent_id
                     interaction.status = InteractionStatus.OPEN
@@ -397,7 +394,10 @@ class InteractionManager:
         interaction.updated_at = datetime.now(timezone.utc)
 
         # Handle status transitions
-        if status == InteractionStatus.IN_PROGRESS and not interaction.first_response_at:
+        if (
+            status == InteractionStatus.IN_PROGRESS
+            and not interaction.first_response_at
+        ):
             interaction.first_response_at = datetime.now(timezone.utc)
 
         elif status == InteractionStatus.RESOLVED and not interaction.resolved_at:
@@ -482,7 +482,9 @@ class InteractionManager:
 
         # Update interaction status and first response time
         if response_type == "reply" and not interaction.first_response_at:
-            await self.update_interaction(interaction_id, status=InteractionStatus.IN_PROGRESS)
+            await self.update_interaction(
+                interaction_id, status=InteractionStatus.IN_PROGRESS
+            )
 
         # Track analytics
         if self.analytics_service:
@@ -509,7 +511,9 @@ class InteractionManager:
         Returns:
             Closed interaction model
         """
-        interaction = await self.update_interaction(interaction_id, status=InteractionStatus.CLOSED)
+        interaction = await self.update_interaction(
+            interaction_id, status=InteractionStatus.CLOSED
+        )
 
         # Add resolution details
         if resolution:
@@ -639,7 +643,11 @@ class InteractionManager:
                 breaches.append("first_response")
 
             # Check resolution SLA
-            if interaction.sla_resolution_due and now > interaction.sla_resolution_due and not interaction.resolved_at:
+            if (
+                interaction.sla_resolution_due
+                and now > interaction.sla_resolution_due
+                and not interaction.resolved_at
+            ):
                 breaches.append("resolution")
 
             # Check escalation SLA
@@ -663,15 +671,21 @@ class InteractionManager:
 
         # First response deadline
         first_response_minutes = int(sla.first_response_minutes * multiplier)
-        interaction.sla_first_response_due = interaction.created_at + timedelta(minutes=first_response_minutes)
+        interaction.sla_first_response_due = interaction.created_at + timedelta(
+            minutes=first_response_minutes
+        )
 
         # Resolution deadline
         resolution_hours = int(sla.resolution_hours * multiplier)
-        interaction.sla_resolution_due = interaction.created_at + timedelta(hours=resolution_hours)
+        interaction.sla_resolution_due = interaction.created_at + timedelta(
+            hours=resolution_hours
+        )
 
         # Escalation deadline
         escalation_minutes = int(sla.escalation_minutes * multiplier)
-        interaction.sla_escalation_due = interaction.created_at + timedelta(minutes=escalation_minutes)
+        interaction.sla_escalation_due = interaction.created_at + timedelta(
+            minutes=escalation_minutes
+        )
 
     async def _notify_interaction_created(self, interaction: InteractionModel):
         """Send notifications for new interaction."""

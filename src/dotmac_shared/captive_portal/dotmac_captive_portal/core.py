@@ -101,23 +101,33 @@ class CaptivePortalService:
             name=name,
             ssid=ssid,
             location=location,
-            portal_url=kwargs.get("portal_url", f"https://portal.guest/{uuid.uuid4().hex[:8]}"),
+            portal_url=kwargs.get(
+                "portal_url", f"https://portal.guest/{uuid.uuid4().hex[:8]}"
+            ),
             auth_methods=kwargs.get("auth_methods", ["social", "voucher"]),
-            session_timeout=kwargs.get("session_timeout", self.config.default_session_timeout),
+            session_timeout=kwargs.get(
+                "session_timeout", self.config.default_session_timeout
+            ),
             require_terms=kwargs.get("require_terms", True),
             require_email_verification=kwargs.get(
                 "require_email_verification",
                 self.config.require_email_verification,
             ),
             max_concurrent_sessions=kwargs.get("max_concurrent_sessions", 100),
-            data_limit_mb=kwargs.get("data_limit_mb", self.config.default_data_limit_mb),
+            data_limit_mb=kwargs.get(
+                "data_limit_mb", self.config.default_data_limit_mb
+            ),
             bandwidth_limit_down=kwargs.get(
                 "bandwidth_limit_down",
                 self.config.default_bandwidth_down,
             ),
-            bandwidth_limit_up=kwargs.get("bandwidth_limit_up", self.config.default_bandwidth_up),
+            bandwidth_limit_up=kwargs.get(
+                "bandwidth_limit_up", self.config.default_bandwidth_up
+            ),
             billing_enabled=kwargs.get("billing_enabled", self.config.billing_enabled),
-            theme_config=kwargs.get("theme_config", {"theme": self.config.default_theme}),
+            theme_config=kwargs.get(
+                "theme_config", {"theme": self.config.default_theme}
+            ),
             **kwargs,
         )
 
@@ -458,7 +468,9 @@ class CaptivePortalService:
 
         # Clear from cache
         expired_tokens = [
-            token for token, session in self._active_sessions.items() if datetime.now(UTC) >= session.expires_at
+            token
+            for token, session in self._active_sessions.items()
+            if datetime.now(UTC) >= session.expires_at
         ]
         for token in expired_tokens:
             del self._active_sessions[token]
@@ -470,7 +482,10 @@ class CaptivePortalService:
 
     def _generate_verification_code(self) -> str:
         """Generate numeric verification code."""
-        return "".join(secrets.choice("0123456789") for _ in range(self.config.verification_code_length))
+        return "".join(
+            secrets.choice("0123456789")
+            for _ in range(self.config.verification_code_length)
+        )
 
     async def _find_user(self, portal_id: str, identifier: str) -> GuestUser | None:
         """Find user by email, phone, or username."""
@@ -502,7 +517,10 @@ class CaptivePortalService:
             if not verification_code or not user.verification_code:
                 return False
 
-            if user.verification_expires and datetime.now(UTC) > user.verification_expires:
+            if (
+                user.verification_expires
+                and datetime.now(UTC) > user.verification_expires
+            ):
                 return False
 
             if verification_code != user.verification_code:
@@ -527,7 +545,11 @@ class CaptivePortalService:
 
         # Check by identifier
         if identifier in self._login_attempts:
-            attempts = [attempt for attempt in self._login_attempts[identifier] if attempt > cutoff]
+            attempts = [
+                attempt
+                for attempt in self._login_attempts[identifier]
+                if attempt > cutoff
+            ]
             self._login_attempts[identifier] = attempts
 
             if len(attempts) >= self.config.max_login_attempts:
@@ -535,10 +557,16 @@ class CaptivePortalService:
 
         # Check by IP if available
         if client_ip and client_ip in self._login_attempts:
-            attempts = [attempt for attempt in self._login_attempts[client_ip] if attempt > cutoff]
+            attempts = [
+                attempt
+                for attempt in self._login_attempts[client_ip]
+                if attempt > cutoff
+            ]
             self._login_attempts[client_ip] = attempts
 
-            if len(attempts) >= self.config.max_login_attempts * 3:  # More lenient for IP
+            if (
+                len(attempts) >= self.config.max_login_attempts * 3
+            ):  # More lenient for IP
                 return False
 
         return True
@@ -598,15 +626,21 @@ class CaptivePortal:
             raise RuntimeError(msg)
         return self._service
 
-    async def create_portal(self, tenant_id: str, name: str, ssid: str, **kwargs) -> Portal:
+    async def create_portal(
+        self, tenant_id: str, name: str, ssid: str, **kwargs
+    ) -> Portal:
         """Create a new captive portal."""
         return await self.service.create_portal(tenant_id, name, ssid, **kwargs)
 
-    async def authenticate_user(self, portal_id: str, identifier: str, **kwargs) -> dict[str, Any]:
+    async def authenticate_user(
+        self, portal_id: str, identifier: str, **kwargs
+    ) -> dict[str, Any]:
         """Authenticate user and create session."""
         return await self.service.authenticate_user(portal_id, identifier, **kwargs)
 
-    async def terminate_session(self, session_id: str, reason: str = "User logout") -> dict[str, Any]:
+    async def terminate_session(
+        self, session_id: str, reason: str = "User logout"
+    ) -> dict[str, Any]:
         """Terminate user session."""
         return await self.service.terminate_session(session_id, reason)
 

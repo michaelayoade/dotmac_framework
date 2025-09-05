@@ -8,12 +8,10 @@ import os
 import sys
 
 import click
-from dotmac_management.core.bootstrap import (
-    bootstrap_manager,
-    run_bootstrap_if_needed,
-)
-from dotmac_shared.core.logging import get_logger
 from sqlalchemy.exc import SQLAlchemyError
+
+from dotmac_management.core.bootstrap import bootstrap_manager, run_bootstrap_if_needed
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -69,7 +67,9 @@ def bootstrap(check_only: bool, force: bool) -> None:
             click.echo("❌ Bootstrap environment validation failed", err=True)
             sys.exit(1)
         # In run mode, still fail fast if env is invalid
-        click.echo("❌ Bootstrap cannot run due to invalid/missing environment", err=True)
+        click.echo(
+            "❌ Bootstrap cannot run due to invalid/missing environment", err=True
+        )
         sys.exit(1)
 
     if check_only:
@@ -91,7 +91,11 @@ def bootstrap(check_only: bool, force: bool) -> None:
         else:
             click.echo("ℹ️ Security bootstrap skipped (already completed)")
 
-    except (ValueError, RuntimeError, SQLAlchemyError):  # pragma: no cover - CLI top-level error
+    except (
+        ValueError,
+        RuntimeError,
+        SQLAlchemyError,
+    ):  # pragma: no cover - CLI top-level error
         logger.exception("Bootstrap failed")
         click.echo("💥 Bootstrap failed", err=True)
         sys.exit(1)

@@ -14,11 +14,21 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from ...application.config import DeploymentContext, DeploymentMode
-from ..environment_security_validator import EnvironmentSecurityValidator, SecuritySeverity, validate_portal_security
+from ..environment_security_validator import (
+    EnvironmentSecurityValidator,
+    SecuritySeverity,
+    validate_portal_security,
+)
 from ..hardened_secret_factory import HardenedSecretFactory, initialize_hardened_secrets
 
 # Import security components
-from ..secrets_policy import Environment, HardenedSecretsManager, OpenBaoClient, SecretsEnvironmentError, SecretType
+from ..secrets_policy import (
+    Environment,
+    HardenedSecretsManager,
+    OpenBaoClient,
+    SecretsEnvironmentError,
+    SecretType,
+)
 from ..unified_csrf_strategy import (
     CSRFConfig,
     CSRFMode,
@@ -66,10 +76,14 @@ class TestSecretsPolicy:
         vault_client.get_secret = AsyncMock(return_value="test_secret_value")
         vault_client.is_healthy = AsyncMock(return_value=True)
 
-        manager = HardenedSecretsManager(Environment.PRODUCTION, vault_client=vault_client)
+        manager = HardenedSecretsManager(
+            Environment.PRODUCTION, vault_client=vault_client
+        )
 
         # Test JWT secret retrieval
-        secret_value = await manager.get_secret(SecretType.JWT_SECRET, "auth", "jwt_secret_key")
+        secret_value = await manager.get_secret(
+            SecretType.JWT_SECRET, "auth", "jwt_secret_key"
+        )
 
         assert secret_value == "test_secret_value"
         vault_client.get_secret.assert_called_with("auth", "jwt_secret_key")
@@ -82,7 +96,9 @@ class TestSecretsPolicy:
         vault_client.put_secret = AsyncMock(return_value=True)
         vault_client.is_healthy = AsyncMock(return_value=True)
 
-        manager = HardenedSecretsManager(Environment.PRODUCTION, vault_client=vault_client)
+        manager = HardenedSecretsManager(
+            Environment.PRODUCTION, vault_client=vault_client
+        )
 
         # Test storing valid secret
         success = await manager.put_secret(
@@ -111,7 +127,9 @@ class TestSecretsPolicy:
         vault_client = Mock(spec=OpenBaoClient)
         vault_client.is_healthy = AsyncMock(return_value=True)
 
-        manager = HardenedSecretsManager(Environment.PRODUCTION, vault_client=vault_client)
+        manager = HardenedSecretsManager(
+            Environment.PRODUCTION, vault_client=vault_client
+        )
 
         compliance = await manager.validate_environment_compliance()
         assert compliance["compliant"] is True
@@ -155,7 +173,9 @@ class TestHardenedSecretFactory:
         secret = await factory.get_jwt_secret()
         assert secret == "test_jwt_secret"
 
-        mock_manager.get_secret.assert_called_with(SecretType.JWT_SECRET, "auth", "jwt_secret_key", None)
+        mock_manager.get_secret.assert_called_with(
+            SecretType.JWT_SECRET, "auth", "jwt_secret_key", None
+        )
 
     @pytest.mark.asyncio
     async def test_database_credentials_retrieval(self):
@@ -165,7 +185,9 @@ class TestHardenedSecretFactory:
 
         # Mock the secrets manager
         mock_manager = AsyncMock()
-        mock_manager.get_secret = AsyncMock(side_effect=["test_db_password", "test_db_user"])
+        mock_manager.get_secret = AsyncMock(
+            side_effect=["test_db_password", "test_db_user"]
+        )
         mock_manager.environment = Environment.DEVELOPMENT
         factory._secrets_manager = mock_manager
 
@@ -244,11 +266,15 @@ class TestUnifiedCSRFStrategy:
         token = token_generator.generate(session_id=session_id, user_id=user_id)
 
         # Validate with correct binding
-        is_valid = token_generator.validate(token, session_id=session_id, user_id=user_id)
+        is_valid = token_generator.validate(
+            token, session_id=session_id, user_id=user_id
+        )
         assert is_valid is True
 
         # Validate with incorrect binding
-        is_valid = token_generator.validate(token, session_id="wrong_session", user_id=user_id)
+        is_valid = token_generator.validate(
+            token, session_id="wrong_session", user_id=user_id
+        )
         assert is_valid is False
 
     @pytest.mark.asyncio
@@ -284,7 +310,9 @@ class TestEnvironmentSecurityValidator:
     def test_validator_creation(self):
         """Test security validator creation."""
 
-        validator = EnvironmentSecurityValidator(Environment.PRODUCTION, portal_name="admin")
+        validator = EnvironmentSecurityValidator(
+            Environment.PRODUCTION, portal_name="admin"
+        )
 
         assert validator.environment == Environment.PRODUCTION
         assert validator.portal_name == "admin"
@@ -319,12 +347,18 @@ class TestEnvironmentSecurityValidator:
     async def test_comprehensive_security_validation(self):
         """Test comprehensive security validation."""
 
-        validator = EnvironmentSecurityValidator(Environment.DEVELOPMENT, portal_name="test")
+        validator = EnvironmentSecurityValidator(
+            Environment.DEVELOPMENT, portal_name="test"
+        )
 
         # Mock secrets manager
         mock_secrets_manager = AsyncMock()
         mock_secrets_manager.validate_environment_compliance = AsyncMock(
-            return_value={"compliant": True, "violations": [], "store_status": {"primary": {"healthy": True}}}
+            return_value={
+                "compliant": True,
+                "violations": [],
+                "store_status": {"primary": {"healthy": True}},
+            }
         )
 
         # Mock CSRF config
@@ -343,12 +377,16 @@ class TestEnvironmentSecurityValidator:
     async def test_production_compliance_violations(self):
         """Test detection of production compliance violations."""
 
-        validator = EnvironmentSecurityValidator(Environment.PRODUCTION, portal_name="admin")
+        validator = EnvironmentSecurityValidator(
+            Environment.PRODUCTION, portal_name="admin"
+        )
 
         # Test without secrets manager (should be violation)
         result = await validator.validate_comprehensive_security()
 
-        critical_violations = result.get_violations_by_severity(SecuritySeverity.CRITICAL)
+        critical_violations = result.get_violations_by_severity(
+            SecuritySeverity.CRITICAL
+        )
         assert len(critical_violations) > 0
         assert any("secrets manager" in v.message.lower() for v in critical_violations)
 
@@ -360,7 +398,9 @@ class TestEnvironmentSecurityValidator:
         portal_types = ["admin", "customer", "management", "reseller", "technician"]
 
         for portal_type in portal_types:
-            result = await validate_portal_security(portal_type=portal_type, environment=Environment.DEVELOPMENT)
+            result = await validate_portal_security(
+                portal_type=portal_type, environment=Environment.DEVELOPMENT
+            )
 
             assert result.environment == Environment.DEVELOPMENT
             assert isinstance(result.security_score, float)
@@ -384,11 +424,15 @@ class TestSecurityIntegration:
 
             # Create security validator
             validator = EnvironmentSecurityValidator(
-                Environment.DEVELOPMENT, portal_name="admin", deployment_context=deployment_context
+                Environment.DEVELOPMENT,
+                portal_name="admin",
+                deployment_context=deployment_context,
             )
 
             # Validate security (should pass in development)
-            result = await validator.validate_comprehensive_security(csrf_config=csrf_config)
+            result = await validator.validate_comprehensive_security(
+                csrf_config=csrf_config
+            )
 
             # Development should be compliant with relaxed requirements
             assert result.compliant is True or result.security_score > 50
@@ -400,7 +444,9 @@ class TestSecurityIntegration:
         # Mock production environment
         with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
             # Test that missing vault causes failures
-            validator = EnvironmentSecurityValidator(Environment.PRODUCTION, portal_name="admin")
+            validator = EnvironmentSecurityValidator(
+                Environment.PRODUCTION, portal_name="admin"
+            )
 
             result = await validator.validate_comprehensive_security()
 
@@ -430,7 +476,11 @@ class TestSecurityIntegration:
     def test_environment_security_tier_consistency(self):
         """Test that security tiers are consistent across environments."""
 
-        environments = [Environment.PRODUCTION, Environment.STAGING, Environment.DEVELOPMENT]
+        environments = [
+            Environment.PRODUCTION,
+            Environment.STAGING,
+            Environment.DEVELOPMENT,
+        ]
 
         for env in environments:
             validator = EnvironmentSecurityValidator(env)

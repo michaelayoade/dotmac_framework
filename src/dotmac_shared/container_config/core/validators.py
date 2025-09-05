@@ -41,9 +41,15 @@ class ValidationResult(BaseModel):
     """Comprehensive validation result."""
 
     valid: bool = Field(..., description="Overall validation status")
-    errors: list[ValidationError] = Field(default_factory=list, description="Validation errors")
-    warnings: list[ValidationError] = Field(default_factory=list, description="Validation warnings")
-    info: list[ValidationError] = Field(default_factory=list, description="Validation info messages")
+    errors: list[ValidationError] = Field(
+        default_factory=list, description="Validation errors"
+    )
+    warnings: list[ValidationError] = Field(
+        default_factory=list, description="Validation warnings"
+    )
+    info: list[ValidationError] = Field(
+        default_factory=list, description="Validation info messages"
+    )
 
     # Summary statistics
     total_checks: int = Field(default=0, description="Total number of checks performed")
@@ -51,8 +57,12 @@ class ValidationResult(BaseModel):
     warning_count: int = Field(default=0, description="Number of warnings")
 
     # Validation metadata
-    validated_at: datetime = Field(default_factory=datetime.now, description="Validation timestamp")
-    validation_duration_ms: float = Field(default=0.0, description="Validation duration in milliseconds")
+    validated_at: datetime = Field(
+        default_factory=datetime.now, description="Validation timestamp"
+    )
+    validation_duration_ms: float = Field(
+        default=0.0, description="Validation duration in milliseconds"
+    )
     validator_version: str = Field(default="1.0.0", description="Validator version")
 
     def add_error(
@@ -152,7 +162,9 @@ class SecurityValidator:
             re.compile(r'key\s*=\s*["\']?test["\']?', re.IGNORECASE),
         ]
 
-    async def validate_security_config(self, config: SecurityConfig, result: ValidationResult, path: str = "security"):
+    async def validate_security_config(
+        self, config: SecurityConfig, result: ValidationResult, path: str = "security"
+    ):
         """Validate security configuration."""
         result.total_checks += 1
 
@@ -215,7 +227,9 @@ class SecurityValidator:
                     config.rate_limit_requests_per_minute,
                 )
 
-    async def validate_secrets_in_config(self, config_dict: dict[str, Any], result: ValidationResult, path: str = ""):
+    async def validate_secrets_in_config(
+        self, config_dict: dict[str, Any], result: ValidationResult, path: str = ""
+    ):
         """Recursively validate secrets in configuration."""
         for key, value in config_dict.items():
             current_path = f"{path}.{key}" if path else key
@@ -246,7 +260,9 @@ class SecurityValidator:
 class NetworkValidator:
     """Validates network-related configuration."""
 
-    async def validate_network_config(self, config: Any, result: ValidationResult, path: str = "network"):
+    async def validate_network_config(
+        self, config: Any, result: ValidationResult, path: str = "network"
+    ):
         """Validate network configuration."""
         result.total_checks += 1
 
@@ -342,7 +358,9 @@ class NetworkValidator:
 class DatabaseValidator:
     """Validates database configuration."""
 
-    async def validate_database_config(self, config: DatabaseConfig, result: ValidationResult, path: str = "database"):
+    async def validate_database_config(
+        self, config: DatabaseConfig, result: ValidationResult, path: str = "database"
+    ):
         """Validate database configuration."""
         result.total_checks += 1
 
@@ -417,8 +435,12 @@ class DatabaseValidator:
         # In production, this would attempt actual connection
         # For now, just validate host format
         if not config.host:
-            result.add_error("MISSING_DATABASE_HOST", "Database host is required", f"{path}.host")
-        elif config.host.startswith("localhost") and not config.host.startswith("localhost:"):
+            result.add_error(
+                "MISSING_DATABASE_HOST", "Database host is required", f"{path}.host"
+            )
+        elif config.host.startswith("localhost") and not config.host.startswith(
+            "localhost:"
+        ):
             result.add_info(
                 "LOCALHOST_DATABASE",
                 "Using localhost database - ensure it's accessible",
@@ -445,7 +467,9 @@ class EnvironmentValidator:
             ("database.pool_size", 20, "Consider smaller pool in development"),
         ]
 
-    async def validate_environment_config(self, config: ISPConfiguration, result: ValidationResult):
+    async def validate_environment_config(
+        self, config: ISPConfiguration, result: ValidationResult
+    ):
         """Validate configuration based on environment."""
         result.total_checks += 1
 
@@ -465,7 +489,9 @@ class EnvironmentValidator:
                 env,
             )
 
-    async def _validate_production_config(self, config: ISPConfiguration, result: ValidationResult):
+    async def _validate_production_config(
+        self, config: ISPConfiguration, result: ValidationResult
+    ):
         """Validate production-specific requirements."""
         # Logging requirements
         if not config.logging.log_to_file:
@@ -509,7 +535,9 @@ class EnvironmentValidator:
                 "monitoring.metrics_enabled",
             )
 
-    async def _validate_development_config(self, config: ISPConfiguration, result: ValidationResult):
+    async def _validate_development_config(
+        self, config: ISPConfiguration, result: ValidationResult
+    ):
         """Validate development-specific configuration."""
         # Development-specific info messages
         if config.database.pool_size > 10:
@@ -528,7 +556,9 @@ class EnvironmentValidator:
                 config.logging.level.value,
             )
 
-    async def _validate_staging_config(self, config: ISPConfiguration, result: ValidationResult):
+    async def _validate_staging_config(
+        self, config: ISPConfiguration, result: ValidationResult
+    ):
         """Validate staging-specific configuration."""
         # Staging should be similar to production
         result.add_info(
@@ -577,14 +607,22 @@ class ConfigurationValidator:
             await self._validate_basic_structure(config, result)
 
             # Component-specific validation
-            await self.security_validator.validate_security_config(config.security, result)
-            await self.database_validator.validate_database_config(config.database, result)
+            await self.security_validator.validate_security_config(
+                config.security, result
+            )
+            await self.database_validator.validate_database_config(
+                config.database, result
+            )
             await self.network_validator.validate_network_config(config.network, result)
-            await self.network_validator.validate_service_dependencies(config.services, result)
+            await self.network_validator.validate_service_dependencies(
+                config.services, result
+            )
 
             # Secret validation
             config_dict = config.model_dump()
-            await self.security_validator.validate_secrets_in_config(config_dict, result)
+            await self.security_validator.validate_secrets_in_config(
+                config_dict, result
+            )
 
             # Environment-specific validation
             await self.environment_validator.validate_environment_config(config, result)
@@ -600,11 +638,15 @@ class ConfigurationValidator:
             await self._validate_cross_component_consistency(config, result)
 
             # Final validation state
-            result.valid = result.error_count == 0 and (not self.strict_mode or result.warning_count == 0)
+            result.valid = result.error_count == 0 and (
+                not self.strict_mode or result.warning_count == 0
+            )
 
             # Calculate duration
             end_time = datetime.now()
-            result.validation_duration_ms = (end_time - start_time).total_seconds() * 1000
+            result.validation_duration_ms = (
+                end_time - start_time
+            ).total_seconds() * 1000
 
             logger.info(f"Configuration validation completed: {result.to_summary()}")
             return result
@@ -619,7 +661,9 @@ class ConfigurationValidator:
             result.valid = False
             return result
 
-    async def _validate_basic_structure(self, config: ISPConfiguration, result: ValidationResult):
+    async def _validate_basic_structure(
+        self, config: ISPConfiguration, result: ValidationResult
+    ):
         """Validate basic configuration structure."""
         result.total_checks += 1
 
@@ -628,12 +672,16 @@ class ConfigurationValidator:
             result.add_error("MISSING_TENANT_ID", "Tenant ID is required", "tenant_id")
 
         if not config.environment:
-            result.add_error("MISSING_ENVIRONMENT", "Environment is required", "environment")
+            result.add_error(
+                "MISSING_ENVIRONMENT", "Environment is required", "environment"
+            )
 
         # Check service names are unique
         service_names = [s.name for s in config.services]
         if len(service_names) != len(set(service_names)):
-            duplicates = [name for name in service_names if service_names.count(name) > 1]
+            duplicates = [
+                name for name in service_names if service_names.count(name) > 1
+            ]
             result.add_error(
                 "DUPLICATE_SERVICE_NAMES",
                 f"Duplicate service names: {', '.join(set(duplicates))}",
@@ -641,14 +689,18 @@ class ConfigurationValidator:
                 duplicates,
             )
 
-    async def _validate_feature_flags(self, config: ISPConfiguration, result: ValidationResult):
+    async def _validate_feature_flags(
+        self, config: ISPConfiguration, result: ValidationResult
+    ):
         """Validate feature flag configuration."""
         result.total_checks += 1
 
         # Check for duplicate feature names
         feature_names = [f.feature_name for f in config.feature_flags]
         if len(feature_names) != len(set(feature_names)):
-            duplicates = [name for name in feature_names if feature_names.count(name) > 1]
+            duplicates = [
+                name for name in feature_names if feature_names.count(name) > 1
+            ]
             result.add_error(
                 "DUPLICATE_FEATURE_FLAGS",
                 f"Duplicate feature flag names: {', '.join(set(duplicates))}",
@@ -698,7 +750,10 @@ class ConfigurationValidator:
                 f"<= {limits['max_services']}",
             )
 
-        if limits["max_external_services"] > 0 and len(config.external_services) > limits["max_external_services"]:
+        if (
+            limits["max_external_services"] > 0
+            and len(config.external_services) > limits["max_external_services"]
+        ):
             result.add_error(
                 "PLAN_EXTERNAL_SERVICE_LIMIT_EXCEEDED",
                 f"Plan '{plan}' allows max {limits['max_external_services']} external services",
@@ -707,12 +762,17 @@ class ConfigurationValidator:
                 f"<= {limits['max_external_services']}",
             )
 
-    async def _validate_cross_component_consistency(self, config: ISPConfiguration, result: ValidationResult):
+    async def _validate_cross_component_consistency(
+        self, config: ISPConfiguration, result: ValidationResult
+    ):
         """Validate consistency across configuration components."""
         result.total_checks += 1
 
         # Validate Redis and database are using different ports if on same host
-        if config.database.host == config.redis.host and config.database.port == config.redis.port:
+        if (
+            config.database.host == config.redis.host
+            and config.database.port == config.redis.port
+        ):
             result.add_error(
                 "PORT_CONFLICT",
                 "Database and Redis cannot use the same host:port combination",
@@ -730,7 +790,8 @@ class ConfigurationValidator:
         # Validate feature flags match enabled services
         analytics_service_exists = any(s.name == "analytics" for s in config.services)
         analytics_feature_enabled = any(
-            f.feature_name == "advanced_analytics" and f.enabled for f in config.feature_flags
+            f.feature_name == "advanced_analytics" and f.enabled
+            for f in config.feature_flags
         )
 
         if analytics_feature_enabled and not analytics_service_exists:
@@ -746,7 +807,9 @@ class ConfigurationValidator:
 
         try:
             ISPConfiguration.model_validate(config_dict)
-            result.add_info("SCHEMA_VALID", "Configuration passes schema validation", "schema")
+            result.add_info(
+                "SCHEMA_VALID", "Configuration passes schema validation", "schema"
+            )
         except ValidationError as e:
             for error in e.errors():
                 loc = ".".join(str(x) for x in error["loc"])

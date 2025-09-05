@@ -93,7 +93,8 @@ class SocialAuth(BaseAuthMethod):
         super().__init__(config)
         self.method_type = AuthMethodType.SOCIAL
         self.providers = {
-            name: SocialAuthConfig(**provider_config) for name, provider_config in config.get("providers", {}).items()
+            name: SocialAuthConfig(**provider_config)
+            for name, provider_config in config.get("providers", {}).items()
         }
         self._oauth_states: dict[str, dict[str, Any]] = {}
 
@@ -133,7 +134,11 @@ class SocialAuth(BaseAuthMethod):
             "response_type": "code",
         }
 
-        auth_url = provider_config.auth_url + "?" + "&".join(f"{key}={value}" for key, value in auth_params.items())
+        auth_url = (
+            provider_config.auth_url
+            + "?"
+            + "&".join(f"{key}={value}" for key, value in auth_params.items())
+        )
 
         logger.info(
             "Social auth prepared",
@@ -188,7 +193,9 @@ class SocialAuth(BaseAuthMethod):
         # Exchange code for access token
         try:
             token_data = await self._exchange_oauth_code(provider_config, oauth_code)
-            user_info = await self._get_user_info(provider_config, token_data["access_token"])
+            user_info = await self._get_user_info(
+                provider_config, token_data["access_token"]
+            )
 
             # Clean up OAuth state
             del self._oauth_states[oauth_state]
@@ -206,8 +213,12 @@ class SocialAuth(BaseAuthMethod):
                     "social_provider": provider,
                     "social_id": user_info.get("id"),
                     "email": user_info.get("email"),
-                    "first_name": user_info.get("first_name", user_info.get("given_name")),
-                    "last_name": user_info.get("last_name", user_info.get("family_name")),
+                    "first_name": user_info.get(
+                        "first_name", user_info.get("given_name")
+                    ),
+                    "last_name": user_info.get(
+                        "last_name", user_info.get("family_name")
+                    ),
                     "profile_picture": user_info.get("picture"),
                     "auth_method": "social",
                     "verified_at": datetime.now(UTC).isoformat(),
@@ -310,13 +321,19 @@ class VoucherAuth(BaseAuthMethod):
         # Process successful authentication
         return await self._process_voucher_success(voucher, voucher_code, portal_id)
 
-    def _validate_voucher_preconditions(self, credentials: dict[str, Any]) -> AuthenticationResult | None:
+    def _validate_voucher_preconditions(
+        self, credentials: dict[str, Any]
+    ) -> AuthenticationResult | None:
         """Validate basic preconditions for voucher authentication."""
         if not self.db_session:
-            return AuthenticationResult(success=False, error_message="Database not configured")
+            return AuthenticationResult(
+                success=False, error_message="Database not configured"
+            )
 
         if not self.validate_credentials(credentials):
-            return AuthenticationResult(success=False, error_message="Invalid voucher code format")
+            return AuthenticationResult(
+                success=False, error_message="Invalid voucher code format"
+            )
 
         return None
 
@@ -329,20 +346,28 @@ class VoucherAuth(BaseAuthMethod):
         )
         return await query.first()
 
-    def _validate_voucher_usage(self, voucher: Voucher | None) -> AuthenticationResult | None:
+    def _validate_voucher_usage(
+        self, voucher: Voucher | None
+    ) -> AuthenticationResult | None:
         """Validate voucher exists and can be used."""
         if not voucher:
-            return AuthenticationResult(success=False, error_message="Invalid voucher code")
+            return AuthenticationResult(
+                success=False, error_message="Invalid voucher code"
+            )
 
         if not voucher.is_valid:
             error_msg = "Voucher expired" if voucher.is_expired else "Voucher not valid"
             return AuthenticationResult(success=False, error_message=error_msg)
 
         if voucher.is_redeemed and not self.allow_multi_use:
-            return AuthenticationResult(success=False, error_message="Voucher already used")
+            return AuthenticationResult(
+                success=False, error_message="Voucher already used"
+            )
 
         if voucher.max_devices and voucher.redemption_count >= voucher.max_devices:
-            return AuthenticationResult(success=False, error_message="Voucher device limit reached")
+            return AuthenticationResult(
+                success=False, error_message="Voucher device limit reached"
+            )
 
         return None
 
@@ -539,7 +564,9 @@ class AuthenticationManager:
             return {"error": f"Authentication method '{method_name}' not available"}
 
         try:
-            return await auth_method.prepare_authentication(user_data, portal_id, **kwargs)
+            return await auth_method.prepare_authentication(
+                user_data, portal_id, **kwargs
+            )
         except Exception as e:
             logger.exception(
                 "Authentication preparation failed",

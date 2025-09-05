@@ -248,7 +248,9 @@ class AgentManager:
                 agent.current_interaction_count = 0
                 agent.capacity_utilization = 0.0
             else:
-                agent.capacity_utilization = agent.current_interaction_count / agent.max_concurrent_interactions
+                agent.capacity_utilization = (
+                    agent.current_interaction_count / agent.max_concurrent_interactions
+                )
 
             # Track status change metrics
             await self._track_status_change(agent, old_status, status)
@@ -314,7 +316,9 @@ class AgentManager:
                 available_agents.append(agent)
 
             # Sort by availability score
-            available_agents.sort(key=lambda a: self._calculate_availability_score(a), reverse=True)
+            available_agents.sort(
+                key=lambda a: self._calculate_availability_score(a), reverse=True
+            )
 
             return available_agents
 
@@ -336,7 +340,9 @@ class AgentManager:
 
             # Update interaction count
             agent.current_interaction_count += 1
-            agent.capacity_utilization = agent.current_interaction_count / agent.max_concurrent_interactions
+            agent.capacity_utilization = (
+                agent.current_interaction_count / agent.max_concurrent_interactions
+            )
 
             # Update status if needed
             if agent.status == AgentStatus.ONLINE and agent.capacity_utilization > 0.8:
@@ -370,7 +376,9 @@ class AgentManager:
             if agent.current_interaction_count > 0:
                 agent.current_interaction_count -= 1
 
-            agent.capacity_utilization = agent.current_interaction_count / agent.max_concurrent_interactions
+            agent.capacity_utilization = (
+                agent.current_interaction_count / agent.max_concurrent_interactions
+            )
 
             # Update status if needed
             if agent.status == AgentStatus.BUSY and agent.capacity_utilization < 0.8:
@@ -506,15 +514,23 @@ class AgentManager:
 
             # Calculate averages
             if response_times:
-                team_metrics["avg_response_time"] = sum(response_times) / len(response_times)
+                team_metrics["avg_response_time"] = sum(response_times) / len(
+                    response_times
+                )
             if resolution_times:
-                team_metrics["avg_resolution_time"] = sum(resolution_times) / len(resolution_times)
+                team_metrics["avg_resolution_time"] = sum(resolution_times) / len(
+                    resolution_times
+                )
             if satisfaction_scores:
-                team_metrics["customer_satisfaction"] = sum(satisfaction_scores) / len(satisfaction_scores)
+                team_metrics["customer_satisfaction"] = sum(satisfaction_scores) / len(
+                    satisfaction_scores
+                )
 
             # Calculate utilization rate
             if team_metrics["total_capacity"] > 0:
-                team_metrics["utilization_rate"] = team_metrics["used_capacity"] / team_metrics["total_capacity"]
+                team_metrics["utilization_rate"] = (
+                    team_metrics["used_capacity"] / team_metrics["total_capacity"]
+                )
             else:
                 team_metrics["utilization_rate"] = 0.0
 
@@ -524,7 +540,9 @@ class AgentManager:
             logger.error(f"Failed to get team performance: {e}")
             return {}
 
-    async def find_best_agent_for_interaction(self, interaction_data: dict[str, Any]) -> Optional[UUID]:
+    async def find_best_agent_for_interaction(
+        self, interaction_data: dict[str, Any]
+    ) -> Optional[UUID]:
         """Find the best available agent for an interaction"""
         try:
             channel = interaction_data.get("channel")
@@ -556,7 +574,9 @@ class AgentManager:
             logger.error(f"Failed to find best agent: {e}")
             return None
 
-    async def get_agent_performance(self, agent_id: UUID, period: str = "today") -> dict[str, Any]:
+    async def get_agent_performance(
+        self, agent_id: UUID, period: str = "today"
+    ) -> dict[str, Any]:
         """Get detailed agent performance metrics"""
         try:
             agent = await self.get_agent(agent_id)
@@ -619,7 +639,9 @@ class AgentManager:
 
         return max(0.0, base_score + performance_bonus - status_penalty)
 
-    async def _calculate_agent_score(self, agent: AgentModel, interaction_data: dict[str, Any]) -> float:
+    async def _calculate_agent_score(
+        self, agent: AgentModel, interaction_data: dict[str, Any]
+    ) -> float:
         """Calculate agent suitability score for interaction"""
         try:
             score = 0.0
@@ -652,7 +674,9 @@ class AgentManager:
             logger.error(f"Failed to calculate agent score: {e}")
             return 0.0
 
-    def _calculate_skill_match_score(self, agent: AgentModel, required_skills: list[str]) -> float:
+    def _calculate_skill_match_score(
+        self, agent: AgentModel, required_skills: list[str]
+    ) -> float:
         """Calculate skill matching score"""
         if not required_skills:
             return 0.0
@@ -664,7 +688,11 @@ class AgentManager:
             for skill_data in agent.skills:
                 if skill_data.get("skill_name") == required_skill:
                     level = skill_data.get("level", "beginner")
-                    skill_level = SkillLevel(level) if level in SkillLevel else SkillLevel.BEGINNER
+                    skill_level = (
+                        SkillLevel(level)
+                        if level in SkillLevel
+                        else SkillLevel.BEGINNER
+                    )
                     total_score += self.skill_weights.get(skill_level, 1.0)
                     matched_skills += 1
                     break
@@ -676,7 +704,9 @@ class AgentManager:
         max_possible = len(required_skills) * self.skill_weights[SkillLevel.EXPERT]
         return min(2.0, (total_score / max_possible) * 2.0)
 
-    async def _track_status_change(self, agent: AgentModel, old_status: AgentStatus, new_status: AgentStatus):
+    async def _track_status_change(
+        self, agent: AgentModel, old_status: AgentStatus, new_status: AgentStatus
+    ):
         """Track agent status change for metrics"""
         try:
             metrics = self.metrics_cache.get(agent.id, AgentMetrics())

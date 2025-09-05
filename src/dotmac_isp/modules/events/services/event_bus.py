@@ -10,9 +10,10 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac.application import standard_exception_handler
 from dotmac_shared.services.base_service import BaseService
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +128,9 @@ class EventBusService(BaseService):
 
         initial_count = len(self._event_handlers[event_type])
         self._event_handlers[event_type] = [
-            sub for sub in self._event_handlers[event_type] if sub.subscriber_id != subscriber_id
+            sub
+            for sub in self._event_handlers[event_type]
+            if sub.subscriber_id != subscriber_id
         ]
 
         removed = initial_count > len(self._event_handlers[event_type])
@@ -266,7 +269,9 @@ class EventBusService(BaseService):
             except asyncio.QueueEmpty:
                 break
 
-        logger.info(f"Flushed {count} events from queue", extra={"tenant_id": self.tenant_id})
+        logger.info(
+            f"Flushed {count} events from queue", extra={"tenant_id": self.tenant_id}
+        )
         return count
 
     @standard_exception_handler
@@ -276,7 +281,9 @@ class EventBusService(BaseService):
             "status": "healthy" if self._processing_active else "stopped",
             "queue_size": await self.get_queue_size(),
             "registered_event_types": len(self._event_handlers),
-            "total_subscribers": sum(len(subs) for subs in self._event_handlers.values()),
+            "total_subscribers": sum(
+                len(subs) for subs in self._event_handlers.values()
+            ),
             "processing_active": self._processing_active,
         }
 

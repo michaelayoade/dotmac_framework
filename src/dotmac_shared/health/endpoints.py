@@ -261,7 +261,9 @@ async def health_check():
 
     # Return appropriate HTTP status based on health
     if health_data["status"] == "unhealthy":
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data
+        )
 
     return health_data
 
@@ -272,7 +274,9 @@ async def detailed_health_check():
     health_data = await get_health_status(detailed=True)
 
     if health_data["status"] == "unhealthy":
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data
+        )
 
     return health_data
 
@@ -313,7 +317,10 @@ async def metrics_endpoint():
         f"dotmac_disk_percent {health_data['disk_percent']}",
         (
             'dotmac_database_healthy{status="%s"} %d'
-            % (health_data["database"], 1 if health_data["database"] == "healthy" else 0)
+            % (
+                health_data["database"],
+                1 if health_data["database"] == "healthy" else 0,
+            )
         ),
         (
             'dotmac_cache_healthy{status="%s"} %d'

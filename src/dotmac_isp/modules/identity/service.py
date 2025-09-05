@@ -7,9 +7,10 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
+from sqlalchemy.orm import Session
+
 from dotmac.application import standard_exception_handler
 from dotmac_shared.services.base import BaseService
-from sqlalchemy.orm import Session
 
 from . import schemas
 from .services.identity_orchestrator import IdentityOrchestrator
@@ -36,7 +37,9 @@ class IdentityService(BaseService):
         return await self.orchestrator.get_user(user_id)
 
     @standard_exception_handler
-    async def update_user(self, user_id: UUID, user_data: schemas.UserUpdate) -> schemas.User:
+    async def update_user(
+        self, user_id: UUID, user_data: schemas.UserUpdate
+    ) -> schemas.User:
         """Update user information."""
         return await self.orchestrator.update_user(user_id, user_data)
 
@@ -50,11 +53,15 @@ class IdentityService(BaseService):
         self, skip: int = 0, limit: int = 100, filters: Optional[dict[str, Any]] = None
     ) -> list[schemas.User]:
         """List users with optional filtering."""
-        return await self.orchestrator.list_users(skip=skip, limit=limit, filters=filters)
+        return await self.orchestrator.list_users(
+            skip=skip, limit=limit, filters=filters
+        )
 
     # Customer management operations
     @standard_exception_handler
-    async def create_customer(self, customer_data: schemas.CustomerCreate) -> schemas.Customer:
+    async def create_customer(
+        self, customer_data: schemas.CustomerCreate
+    ) -> schemas.Customer:
         """Create a new customer."""
         return await self.orchestrator.create_customer(customer_data)
 
@@ -64,7 +71,9 @@ class IdentityService(BaseService):
         return await self.orchestrator.get_customer(customer_id)
 
     @standard_exception_handler
-    async def update_customer(self, customer_id: UUID, customer_data: schemas.CustomerUpdate) -> schemas.Customer:
+    async def update_customer(
+        self, customer_id: UUID, customer_data: schemas.CustomerUpdate
+    ) -> schemas.Customer:
         """Update customer information."""
         return await self.orchestrator.update_customer(customer_id, customer_data)
 
@@ -78,23 +87,33 @@ class IdentityService(BaseService):
         self, skip: int = 0, limit: int = 100, filters: Optional[dict[str, Any]] = None
     ) -> list[schemas.Customer]:
         """List customers with optional filtering."""
-        return await self.orchestrator.list_customers(skip=skip, limit=limit, filters=filters)
+        return await self.orchestrator.list_customers(
+            skip=skip, limit=limit, filters=filters
+        )
 
     # Authentication operations
     @standard_exception_handler
-    async def authenticate_user(self, username: str, password: str) -> Optional[schemas.User]:
+    async def authenticate_user(
+        self, username: str, password: str
+    ) -> Optional[schemas.User]:
         """Authenticate a user with username/password."""
         return await self.orchestrator.authenticate_user(username, password)
 
     @standard_exception_handler
-    async def authenticate_customer_portal(self, portal_id: str, password: str) -> Optional[schemas.Customer]:
+    async def authenticate_customer_portal(
+        self, portal_id: str, password: str
+    ) -> Optional[schemas.Customer]:
         """Authenticate customer via portal ID."""
         return await self.orchestrator.authenticate_customer_portal(portal_id, password)
 
     @standard_exception_handler
-    async def change_password(self, user_id: UUID, old_password: str, new_password: str) -> bool:
+    async def change_password(
+        self, user_id: UUID, old_password: str, new_password: str
+    ) -> bool:
         """Change user password."""
-        return await self.orchestrator.change_password(user_id, old_password, new_password)
+        return await self.orchestrator.change_password(
+            user_id, old_password, new_password
+        )
 
     @standard_exception_handler
     async def reset_password(self, email: str) -> bool:
@@ -108,7 +127,9 @@ class IdentityService(BaseService):
         return await self.orchestrator.generate_portal_id(customer_id)
 
     @standard_exception_handler
-    async def get_customer_by_portal_id(self, portal_id: str) -> Optional[schemas.Customer]:
+    async def get_customer_by_portal_id(
+        self, portal_id: str
+    ) -> Optional[schemas.Customer]:
         """Get customer by portal ID."""
         return await self.orchestrator.get_customer_by_portal_id(portal_id)
 
@@ -119,23 +140,31 @@ class IdentityService(BaseService):
 
     # Bulk operations
     @standard_exception_handler
-    async def bulk_create_users(self, users_data: list[schemas.UserCreate]) -> list[schemas.User]:
+    async def bulk_create_users(
+        self, users_data: list[schemas.UserCreate]
+    ) -> list[schemas.User]:
         """Create multiple users in bulk."""
         return await self.orchestrator.bulk_create_users(users_data)
 
     @standard_exception_handler
-    async def bulk_update_users(self, updates: dict[UUID, schemas.UserUpdate]) -> list[schemas.User]:
+    async def bulk_update_users(
+        self, updates: dict[UUID, schemas.UserUpdate]
+    ) -> list[schemas.User]:
         """Update multiple users in bulk."""
         return await self.orchestrator.bulk_update_users(updates)
 
     # Search and analytics
     @standard_exception_handler
-    async def search_users(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[schemas.User]:
+    async def search_users(
+        self, query: str, filters: Optional[dict[str, Any]] = None
+    ) -> list[schemas.User]:
         """Search users by query."""
         return await self.orchestrator.search_users(query, filters)
 
     @standard_exception_handler
-    async def search_customers(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[schemas.Customer]:
+    async def search_customers(
+        self, query: str, filters: Optional[dict[str, Any]] = None
+    ) -> list[schemas.Customer]:
         """Search customers by query."""
         return await self.orchestrator.search_customers(query, filters)
 
@@ -151,6 +180,8 @@ class IdentityService(BaseService):
         return await self.orchestrator.validate_user_data(user_data)
 
     @standard_exception_handler
-    async def validate_customer_data(self, customer_data: schemas.CustomerCreate) -> dict[str, Any]:
+    async def validate_customer_data(
+        self, customer_data: schemas.CustomerCreate
+    ) -> dict[str, Any]:
         """Validate customer data against business rules."""
         return await self.orchestrator.validate_customer_data(customer_data)

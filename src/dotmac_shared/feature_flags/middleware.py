@@ -64,9 +64,15 @@ class FeatureFlagMiddleware(BaseHTTPMiddleware):
             request.state.feature_flag_manager = self.manager
 
             # Add convenience methods to request state
-            request.state.is_feature_enabled = lambda flag_key: self._check_feature_enabled(flag_key, context)
-            request.state.get_feature_variant = lambda flag_key: self._get_feature_variant(flag_key, context)
-            request.state.get_feature_payload = lambda flag_key: self._get_feature_payload(flag_key, context)
+            request.state.is_feature_enabled = (
+                lambda flag_key: self._check_feature_enabled(flag_key, context)
+            )
+            request.state.get_feature_variant = (
+                lambda flag_key: self._get_feature_variant(flag_key, context)
+            )
+            request.state.get_feature_payload = (
+                lambda flag_key: self._get_feature_payload(flag_key, context)
+            )
 
             # Process request
             response = await call_next(request)
@@ -75,7 +81,9 @@ class FeatureFlagMiddleware(BaseHTTPMiddleware):
             if self.track_performance:
                 end_time = time.time()
                 response.headers["X-Feature-Flags-Processed"] = "true"
-                response.headers["X-Feature-Flags-Time"] = f"{(end_time - start_time) * 1000:.2f}ms"
+                response.headers[
+                    "X-Feature-Flags-Time"
+                ] = f"{(end_time - start_time) * 1000:.2f}ms"
 
             return response
 
@@ -115,7 +123,9 @@ class FeatureFlagMiddleware(BaseHTTPMiddleware):
 
         return context
 
-    async def _check_feature_enabled(self, flag_key: str, context: dict[str, Any]) -> bool:
+    async def _check_feature_enabled(
+        self, flag_key: str, context: dict[str, Any]
+    ) -> bool:
         """Check if feature is enabled for context"""
         try:
             return await self.manager.is_enabled(flag_key, context)
@@ -123,7 +133,9 @@ class FeatureFlagMiddleware(BaseHTTPMiddleware):
             logger.error(f"Error checking feature {flag_key}: {e}")
             return False
 
-    async def _get_feature_variant(self, flag_key: str, context: dict[str, Any]) -> Optional[str]:
+    async def _get_feature_variant(
+        self, flag_key: str, context: dict[str, Any]
+    ) -> Optional[str]:
         """Get feature variant for context"""
         try:
             return await self.manager.get_variant(flag_key, context)
@@ -131,7 +143,9 @@ class FeatureFlagMiddleware(BaseHTTPMiddleware):
             logger.error(f"Error getting variant for {flag_key}: {e}")
             return None
 
-    async def _get_feature_payload(self, flag_key: str, context: dict[str, Any]) -> Optional[dict[str, Any]]:
+    async def _get_feature_payload(
+        self, flag_key: str, context: dict[str, Any]
+    ) -> Optional[dict[str, Any]]:
         """Get feature payload for context"""
         try:
             return await self.manager.get_payload(flag_key, context)
@@ -164,8 +178,12 @@ class DjangoFeatureFlagMiddleware:
             request.feature_flag_manager = self.manager
 
             # Add convenience methods
-            request.is_feature_enabled = lambda flag_key: self._check_feature_enabled_sync(flag_key, context)
-            request.get_feature_variant = lambda flag_key: self._get_feature_variant_sync(flag_key, context)
+            request.is_feature_enabled = (
+                lambda flag_key: self._check_feature_enabled_sync(flag_key, context)
+            )
+            request.get_feature_variant = (
+                lambda flag_key: self._get_feature_variant_sync(flag_key, context)
+            )
 
         response = self.get_response(request)
         return response
@@ -186,7 +204,9 @@ class DjangoFeatureFlagMiddleware:
 
         return context
 
-    def _check_feature_enabled_sync(self, flag_key: str, context: dict[str, Any]) -> bool:
+    def _check_feature_enabled_sync(
+        self, flag_key: str, context: dict[str, Any]
+    ) -> bool:
         """Synchronous wrapper for checking feature flags"""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -198,7 +218,9 @@ class DjangoFeatureFlagMiddleware:
         finally:
             loop.close()
 
-    def _get_feature_variant_sync(self, flag_key: str, context: dict[str, Any]) -> Optional[str]:
+    def _get_feature_variant_sync(
+        self, flag_key: str, context: dict[str, Any]
+    ) -> Optional[str]:
         """Synchronous wrapper for getting feature variants"""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -262,8 +284,12 @@ class FlaskFeatureFlagExtension:
         g.feature_flag_manager = self.manager
 
         # Add convenience functions
-        g.is_feature_enabled = lambda flag_key: self._check_feature_enabled_sync(flag_key, context)
-        g.get_feature_variant = lambda flag_key: self._get_feature_variant_sync(flag_key, context)
+        g.is_feature_enabled = lambda flag_key: self._check_feature_enabled_sync(
+            flag_key, context
+        )
+        g.get_feature_variant = lambda flag_key: self._get_feature_variant_sync(
+            flag_key, context
+        )
 
     def _template_is_feature_enabled(self, flag_key: str) -> bool:
         """Template function to check feature flags"""
@@ -272,7 +298,9 @@ class FlaskFeatureFlagExtension:
             return g.is_feature_enabled(flag_key)
         return False
 
-    def _check_feature_enabled_sync(self, flag_key: str, context: dict[str, Any]) -> bool:
+    def _check_feature_enabled_sync(
+        self, flag_key: str, context: dict[str, Any]
+    ) -> bool:
         """Synchronous wrapper for checking feature flags"""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -284,7 +312,9 @@ class FlaskFeatureFlagExtension:
         finally:
             loop.close()
 
-    def _get_feature_variant_sync(self, flag_key: str, context: dict[str, Any]) -> Optional[str]:
+    def _get_feature_variant_sync(
+        self, flag_key: str, context: dict[str, Any]
+    ) -> Optional[str]:
         """Synchronous wrapper for getting feature variants"""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

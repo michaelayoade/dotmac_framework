@@ -1,4 +1,5 @@
 import logging
+
 logger = logging.getLogger(__name__)
 
 #!/usr/bin/env python3
@@ -16,7 +17,11 @@ from pathlib import Path
 
 def run_test_suite():
     """Run the complete test suite."""
-    test_results = {"timestamp": datetime.now(timezone.utc).isoformat(), "summary": {}, "details": {}}
+    test_results = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "summary": {},
+        "details": {},
+    }
 
     # Test categories to run
     test_categories = {
@@ -37,9 +42,19 @@ def run_test_suite():
 
         try:
             # Run pytest for this category
-            cmd = [sys.executable, "-m", "pytest", test_path, "-v", "--tb=short", "--durations=10"]
+            cmd = [
+                sys.executable,
+                "-m",
+                "pytest",
+                test_path,
+                "-v",
+                "--tb=short",
+                "--durations=10",
+            ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path(__file__).parent.parent)  # noqa: B008
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, cwd=Path(__file__).parent.parent
+            )  # noqa: B008
 
             if result.returncode == 0:
                 logger.info(f"✅ {category}: PASSED")

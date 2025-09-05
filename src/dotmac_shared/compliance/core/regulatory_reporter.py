@@ -103,7 +103,9 @@ class RegulatoryReporter:
             for framework in self.config.enabled_frameworks:
                 await self._load_framework_templates(framework)
 
-            logger.info(f"✅ Regulatory Reporter initialized with {len(self._templates)} templates")
+            logger.info(
+                f"✅ Regulatory Reporter initialized with {len(self._templates)} templates"
+            )
             return True
 
         except Exception as e:
@@ -119,16 +121,22 @@ class RegulatoryReporter:
         """Generate a regulatory compliance report."""
 
         # Find appropriate template
-        template = await self._find_report_template(request.framework, request.report_type)
+        template = await self._find_report_template(
+            request.framework, request.report_type
+        )
 
         if not template:
-            raise ValueError(f"No template found for {request.framework.value} {request.report_type}")
+            raise ValueError(
+                f"No template found for {request.framework.value} {request.report_type}"
+            )
 
         # Collect compliance data
         compliance_data = await self._collect_compliance_data(request, template)
 
         # Generate report content
-        report_content = await self._generate_report_content(template, compliance_data, request)
+        report_content = await self._generate_report_content(
+            template, compliance_data, request
+        )
 
         # Create report record
         report = RegulatoryReport(
@@ -167,7 +175,13 @@ class RegulatoryReporter:
         if request.format != "json":
             export_path = await self._export_report(report, request.format)
             # Store export path in report metadata
-            report.sections.append({"type": "metadata", "export_path": export_path, "format": request.format})
+            report.sections.append(
+                {
+                    "type": "metadata",
+                    "export_path": export_path,
+                    "format": request.format,
+                }
+            )
 
         # Publish report generated event
         if self.event_bus:
@@ -224,7 +238,9 @@ class RegulatoryReporter:
                 expire=None,  # No expiration for schedules
             )
 
-        logger.info(f"Scheduled {frequency.value} {framework.value} {report_type} report")
+        logger.info(
+            f"Scheduled {frequency.value} {framework.value} {report_type} report"
+        )
 
         return schedule_id
 
@@ -264,10 +280,14 @@ class RegulatoryReporter:
 
         # Collect metrics for each framework
         for framework in frameworks:
-            metrics = await self.compliance_manager.get_compliance_metrics(framework, period_start, period_end)
+            metrics = await self.compliance_manager.get_compliance_metrics(
+                framework, period_start, period_end
+            )
 
             alerts = await self.compliance_manager.get_active_alerts(framework)
-            critical_framework_alerts = [a for a in alerts if a.severity.value == "critical"]
+            critical_framework_alerts = [
+                a for a in alerts if a.severity.value == "critical"
+            ]
 
             framework_data = {
                 "framework": framework.value,
@@ -304,7 +324,9 @@ class RegulatoryReporter:
             critical_alerts += len(critical_framework_alerts)
 
         # Calculate overall metrics
-        dashboard_data["overall"]["average_score"] = sum(total_scores) / len(total_scores) if total_scores else 0.0
+        dashboard_data["overall"]["average_score"] = (
+            sum(total_scores) / len(total_scores) if total_scores else 0.0
+        )
         dashboard_data["overall"]["total_checks"] = total_checks
         dashboard_data["overall"]["total_issues"] = total_issues
         dashboard_data["overall"]["critical_alerts"] = critical_alerts
@@ -335,13 +357,25 @@ class RegulatoryReporter:
             framework=ComplianceFramework.SOC2,
             report_type="type2",
             sections=[
-                {"id": "executive_summary", "title": "Executive Summary", "required": True},
+                {
+                    "id": "executive_summary",
+                    "title": "Executive Summary",
+                    "required": True,
+                },
                 {"id": "scope", "title": "Scope and Objectives", "required": True},
                 {"id": "controls", "title": "Control Environment", "required": True},
                 {"id": "testing", "title": "Testing Results", "required": True},
-                {"id": "findings", "title": "Findings and Recommendations", "required": True},
+                {
+                    "id": "findings",
+                    "title": "Findings and Recommendations",
+                    "required": True,
+                },
             ],
-            required_data=["access_controls", "security_monitoring", "change_management"],
+            required_data=[
+                "access_controls",
+                "security_monitoring",
+                "change_management",
+            ],
         )
 
         self._templates[template.template_id] = template
@@ -355,8 +389,16 @@ class RegulatoryReporter:
             framework=ComplianceFramework.GDPR,
             report_type="compliance",
             sections=[
-                {"id": "executive_summary", "title": "Executive Summary", "required": True},
-                {"id": "data_processing", "title": "Data Processing Activities", "required": True},
+                {
+                    "id": "executive_summary",
+                    "title": "Executive Summary",
+                    "required": True,
+                },
+                {
+                    "id": "data_processing",
+                    "title": "Data Processing Activities",
+                    "required": True,
+                },
                 {"id": "consent", "title": "Consent Management", "required": True},
                 {"id": "rights", "title": "Data Subject Rights", "required": True},
                 {"id": "breach", "title": "Data Breach Procedures", "required": True},
@@ -375,13 +417,25 @@ class RegulatoryReporter:
             framework=ComplianceFramework.HIPAA,
             report_type="risk_assessment",
             sections=[
-                {"id": "executive_summary", "title": "Executive Summary", "required": True},
+                {
+                    "id": "executive_summary",
+                    "title": "Executive Summary",
+                    "required": True,
+                },
                 {"id": "phi_inventory", "title": "PHI Inventory", "required": True},
                 {"id": "risk_analysis", "title": "Risk Analysis", "required": True},
-                {"id": "safeguards", "title": "Administrative Safeguards", "required": True},
+                {
+                    "id": "safeguards",
+                    "title": "Administrative Safeguards",
+                    "required": True,
+                },
                 {"id": "technical", "title": "Technical Safeguards", "required": True},
             ],
-            required_data=["phi_access_logs", "security_controls", "workforce_training"],
+            required_data=[
+                "phi_access_logs",
+                "security_controls",
+                "workforce_training",
+            ],
         )
 
         self._templates[template.template_id] = template
@@ -424,7 +478,9 @@ class RegulatoryReporter:
 
         # Collect template-specific data
         for required_data in template.required_data:
-            data[required_data] = await self._collect_specific_data(required_data, request, metrics)
+            data[required_data] = await self._collect_specific_data(
+                required_data, request, metrics
+            )
 
         return data
 
@@ -472,7 +528,9 @@ class RegulatoryReporter:
         metrics: ComplianceMetrics = compliance_data["metrics"]
 
         # Generate executive summary
-        executive_summary = await self._generate_executive_summary(template, metrics, compliance_data)
+        executive_summary = await self._generate_executive_summary(
+            template, metrics, compliance_data
+        )
 
         # Determine overall status
         overall_status = self._determine_compliance_status(metrics.overall_score)
@@ -480,17 +538,23 @@ class RegulatoryReporter:
         # Generate sections
         sections = []
         for section_def in template.sections:
-            section_content = await self._generate_section_content(section_def, compliance_data, request)
+            section_content = await self._generate_section_content(
+                section_def, compliance_data, request
+            )
             sections.append(section_content)
 
         # Generate findings
         findings = await self._generate_findings(compliance_data, template.framework)
 
         # Generate recommendations
-        recommendations = await self._generate_recommendations(compliance_data, template.framework)
+        recommendations = await self._generate_recommendations(
+            compliance_data, template.framework
+        )
 
         # Generate remediation plan
-        remediation_plan = await self._generate_remediation_plan(compliance_data, recommendations)
+        remediation_plan = await self._generate_remediation_plan(
+            compliance_data, recommendations
+        )
 
         return {
             "executive_summary": executive_summary,
@@ -558,8 +622,14 @@ compliance with {framework_name} requirements based on the assessment conducted.
                 "title": section_def["title"],
                 "content": "Control environment assessment results and findings.",
                 "subsections": [
-                    {"title": "Access Controls", "content": "Access control implementation status"},
-                    {"title": "Security Controls", "content": "Security control effectiveness"},
+                    {
+                        "title": "Access Controls",
+                        "content": "Access control implementation status",
+                    },
+                    {
+                        "title": "Security Controls",
+                        "content": "Security control effectiveness",
+                    },
                 ],
             }
 
@@ -698,7 +768,9 @@ compliance with {framework_name} requirements based on the assessment conducted.
         """Export report to specified format."""
 
         # Simplified export - production would have full formatting
-        export_filename = f"{report.framework.value}_{report.report_type}_{report.report_id}.{format}"
+        export_filename = (
+            f"{report.framework.value}_{report.report_type}_{report.report_id}.{format}"
+        )
         export_path = f"{self.config.output_directory}/{export_filename}"
 
         if format == "json":
