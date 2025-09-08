@@ -4,6 +4,7 @@ Files Module
 Document generation, template processing, and file management.
 Provides caching integration and multi-format document generation.
 """
+
 try:
     from .templates import TemplateEngine
 except ImportError:

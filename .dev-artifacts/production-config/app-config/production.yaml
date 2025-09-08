@@ -1,0 +1,63 @@
+database:
+  echo_sql: false
+  pool_pre_ping: true
+  pool_recycle: 3600
+  pool_size: 20
+  pool_timeout: 30
+debug: false
+environment: production
+logging:
+  correlation_id_enabled: true
+  format: json
+  handlers:
+  - backup_count: 10
+    filename: /opt/dotmac/logs/application.log
+    max_size: 100MB
+    type: file
+  - stream: stdout
+    type: console
+  level: INFO
+monitoring:
+  health_checks:
+    enabled: true
+    interval_seconds: 30
+    timeout_seconds: 10
+  prometheus:
+    enabled: true
+    path: /metrics
+    port: 9090
+  sentry:
+    enabled: false
+    environment: production
+redis:
+  connection_pool_size: 10
+  decode_responses: true
+  retry_on_timeout: true
+  socket_connect_timeout: 5
+  socket_timeout: 5
+security:
+  cors:
+    allow_credentials: true
+    allow_headers:
+    - '*'
+    allow_methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    allow_origins:
+    - https://yourdomain.com
+  rate_limiting:
+    burst_size: 100
+    enabled: true
+    requests_per_minute: 1000
+testing: false
+workflows:
+  enabled: true
+  health_check_interval_seconds: 30
+  idempotency_ttl_hours: 24
+  max_concurrent_sagas: 100
+  metrics_enabled: true
+  retry_backoff_seconds: 5
+  retry_max_attempts: 3
+  saga_timeout_minutes: 60

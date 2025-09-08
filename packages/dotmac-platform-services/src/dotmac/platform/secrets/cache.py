@@ -392,12 +392,11 @@ def create_cache(
     """
     if cache_type == "memory":
         return InMemoryCache(**config)
-    elif cache_type == "redis":
+    if cache_type == "redis":
         return RedisCache(**config)
-    elif cache_type == "null":
+    if cache_type == "null":
         return NullCache()
-    else:
-        raise ValueError(f"Unsupported cache type: {cache_type}")
+    raise ValueError(f"Unsupported cache type: {cache_type}")
 
 
 # Register cache classes with SecretCache protocol

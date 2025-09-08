@@ -24,17 +24,13 @@ class UserService(BaseService):
         self.user_repo = UserRepository(db_session, tenant_id)
         self.role_repo = RoleRepository(db_session, tenant_id)
 
-    async def create_user(
-        self, user_data: dict[str, Any], created_by: str
-    ) -> Optional[dict[str, Any]]:
+    async def create_user(self, user_data: dict[str, Any], created_by: str) -> Optional[dict[str, Any]]:
         """Create new user."""
         try:
             # Check if email already exists
             existing_user = await self.user_repo.get_by_email(user_data["email"])
             if existing_user:
-                logger.warning(
-                    f"User creation failed: email {user_data['email']} already exists"
-                )
+                logger.warning(f"User creation failed: email {user_data['email']} already exists")
                 return None
 
             # Create user entity
@@ -95,9 +91,7 @@ class UserService(BaseService):
             logger.error(f"Error getting user {user_id}: {e}")
             return None
 
-    async def update_user(
-        self, user_id: UUID, user_data: dict[str, Any], updated_by: str
-    ) -> Optional[dict[str, Any]]:
+    async def update_user(self, user_id: UUID, user_data: dict[str, Any], updated_by: str) -> Optional[dict[str, Any]]:
         """Update user information."""
         try:
             user = await self.user_repo.get_by_id(user_id)
@@ -156,9 +150,7 @@ class UserService(BaseService):
                     "last_name": user.last_name,
                     "portal_type": user.portal_type,
                     "is_active": user.is_active,
-                    "last_login": user.last_login.isoformat()
-                    if user.last_login
-                    else None,
+                    "last_login": user.last_login.isoformat() if user.last_login else None,
                     "created_at": user.created_at.isoformat(),
                     "tenant_id": user.tenant_id,
                 }

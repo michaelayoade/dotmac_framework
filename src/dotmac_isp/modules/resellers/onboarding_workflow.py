@@ -52,9 +52,7 @@ class ResellerOnboardingChecklist(Base):
     __tablename__ = "reseller_onboarding_checklists"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    reseller_id = Column(
-        UUID(as_uuid=True), ForeignKey("isp_resellers.id"), nullable=False
-    )
+    reseller_id = Column(UUID(as_uuid=True), ForeignKey("isp_resellers.id"), nullable=False)
     checklist_version = Column(String(50), default="1.0")
 
     # Progress tracking
@@ -113,9 +111,7 @@ class OnboardingTask(Base):
     due_date = Column(DateTime, nullable=True)
 
     # Task requirements and completion
-    prerequisites = Column(
-        JSON, default=list
-    )  # List of task_ids that must be completed first
+    prerequisites = Column(JSON, default=list)  # List of task_ids that must be completed first
     completion_criteria = Column(Text, nullable=True)
     completion_notes = Column(Text, nullable=True)
 
@@ -432,13 +428,10 @@ class OnboardingWorkflowEngine:
         checklist_data = {
             "reseller_id": reseller.id,
             "checklist_version": "1.0",
-            "target_completion_date": datetime.now(timezone.utc)
-            + timedelta(days=45),  # 45 days to complete
+            "target_completion_date": datetime.now(timezone.utc) + timedelta(days=45),  # 45 days to complete
             "metadata": {
                 "created_by": "system",
-                "reseller_type": reseller.reseller_type.value
-                if reseller.reseller_type
-                else "standard",
+                "reseller_type": reseller.reseller_type.value if reseller.reseller_type else "standard",
             },
         }
 
@@ -459,15 +452,12 @@ class OnboardingWorkflowEngine:
                 "task_description": task_template["task_description"],
                 "category": task_template["category"],
                 "priority": task_template["priority"],
-                "estimated_duration_minutes": str(
-                    task_template.get("estimated_duration_minutes", 30)
-                ),
+                "estimated_duration_minutes": str(task_template.get("estimated_duration_minutes", 30)),
                 "instructions": task_template.get("instructions", ""),
                 "completion_criteria": task_template.get("completion_criteria", ""),
                 "resources": task_template.get("resources", []),
                 "prerequisites": task_template.get("prerequisites", []),
-                "due_date": datetime.now(timezone.utc)
-                + timedelta(days=task_template.get("due_days", 30)),
+                "due_date": datetime.now(timezone.utc) + timedelta(days=task_template.get("due_days", 30)),
                 "metadata": {"template_version": "1.0", "auto_created": True},
             }
 

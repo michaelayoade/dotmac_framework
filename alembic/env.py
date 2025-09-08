@@ -1,13 +1,27 @@
 import os
 import sys
+from pathlib import Path
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
-# Add the src directory to the path so we can import our models
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Add source roots to import path so we can import models from repo layout
+project_root = Path(__file__).resolve().parent.parent
+src_root = project_root / "src"
+if str(src_root) not in sys.path:
+    sys.path.insert(0, str(src_root))
+
+# Also include each package's src directory (packages/*/src) for namespace packages like `dotmac.*`
+packages_dir = project_root / "packages"
+if packages_dir.is_dir():
+    for pkg in packages_dir.iterdir():
+        pkg_src = pkg / "src"
+        if pkg_src.is_dir():
+            p = str(pkg_src)
+            if p not in sys.path:
+                sys.path.insert(0, p)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -26,6 +40,7 @@ all discovered SQLAlchemy metadata into a list so Alembic autogenerate can
 compare across modules.
 """
 from importlib import import_module
+from typing import List
 
 metadata_list: List = []
 
@@ -44,11 +59,27 @@ def _try_collect(module_name: str, base_attr: str = "Base") -> None:
 service_type = os.getenv("SERVICE_TYPE", "management")
 
 if service_type == "isp":
-    # ISP framework models only
+    # ISP framework models and key ISP modules
     _try_collect("dotmac_isp.models")
+    _try_collect("dotmac_isp.modules.portal_management.models")
+    _try_collect("dotmac_isp.modules.services.models")
+    _try_collect("dotmac_isp.modules.billing.models")
+    _try_collect("dotmac_isp.modules.analytics.models")
+    _try_collect("dotmac_isp.modules.captive_portal.models")
 else:
     # Management platform models (default)
     _try_collect("dotmac_management.models")
+
+# Shared and cross-cutting domain models across both flavors
+_try_collect("dotmac_shared.feature_flags.db_models")
+_try_collect("dotmac_shared.captive_portal.dotmac_captive_portal.models")
+_try_collect("dotmac_shared.service_assurance.core.models")
+_try_collect("dotmac_shared.inventory_management.core.models")
+_try_collect("dotmac_shared.project_management.core.models")
+_try_collect("dotmac_shared.knowledge.models")
+_try_collect("dotmac_shared.ticketing.core.models")
+_try_collect("dotmac_shared.field_operations.models")
+_try_collect("dotmac_shared.workflows.models")
 
 # Fallback to None if nothing found
 target_metadata = metadata_list if metadata_list else None
@@ -113,6 +144,12 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        try:
+            if connection.dialect.name == "postgresql":
+                connection.exec_driver_sql("SET lock_timeout = '5s'")
+                connection.exec_driver_sql("SET statement_timeout = '60s'")
+        except Exception as e:
+            print(f"[alembic] Could not set session timeouts: {e}")
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

@@ -7,7 +7,6 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from dotmac_management.models.base import BaseModel
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -24,6 +23,8 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
+
+from dotmac_management.models.base import BaseModel
 
 from ..schemas.auth_schemas import AuthProvider, SessionType
 
@@ -47,20 +48,12 @@ class UserPasswordModel(BaseModel):
 
     # === Password Information ===
     password_hash = Column(String(255), nullable=False, comment="Hashed password")
-    salt = Column(
-        String(255), nullable=True, comment="Password salt for additional security"
-    )
-    algorithm = Column(
-        String(50), nullable=False, default="bcrypt", comment="Hashing algorithm used"
-    )
+    salt = Column(String(255), nullable=True, comment="Password salt for additional security")
+    algorithm = Column(String(50), nullable=False, default="bcrypt", comment="Hashing algorithm used")
 
     # === Security Metadata ===
-    password_strength_score = Column(
-        Integer, nullable=True, comment="Password strength score (0-100)"
-    )
-    is_temporary = Column(
-        Boolean, nullable=False, default=False, comment="Is this a temporary password"
-    )
+    password_strength_score = Column(Integer, nullable=True, comment="Password strength score (0-100)")
+    is_temporary = Column(Boolean, nullable=False, default=False, comment="Is this a temporary password")
     must_change = Column(
         Boolean,
         nullable=False,
@@ -72,13 +65,9 @@ class UserPasswordModel(BaseModel):
     expires_at = Column(DateTime, nullable=True, comment="Password expiry timestamp")
 
     # === Password Reset ===
-    reset_token = Column(
-        String(255), nullable=True, unique=True, comment="Password reset token"
-    )
+    reset_token = Column(String(255), nullable=True, unique=True, comment="Password reset token")
     reset_token_expires = Column(DateTime, nullable=True, comment="Reset token expiry")
-    reset_attempts = Column(
-        Integer, nullable=False, default=0, comment="Number of reset attempts"
-    )
+    reset_attempts = Column(Integer, nullable=False, default=0, comment="Number of reset attempts")
 
     # === Relationships ===
     user = relationship("UserModel", back_populates="passwords")
@@ -119,9 +108,7 @@ class UserPasswordModel(BaseModel):
         """Generate password reset token."""
         token = secrets.token_urlsafe(32)
         self.reset_token = token
-        self.reset_token_expires = datetime.now(timezone.utc) + timedelta(
-            hours=expires_in_hours
-        )
+        self.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
         self.reset_attempts = 0
         return token
 
@@ -140,9 +127,7 @@ class UserPasswordModel(BaseModel):
         self.expires_at = datetime.now(timezone.utc) + timedelta(days=days)
 
     def __repr__(self) -> str:
-        return (
-            f"<UserPasswordModel(user_id={self.user_id}, algorithm='{self.algorithm}')>"
-        )
+        return f"<UserPasswordModel(user_id={self.user_id}, algorithm='{self.algorithm}')>"
 
 
 class PasswordHistoryModel(BaseModel):
@@ -168,24 +153,16 @@ class PasswordHistoryModel(BaseModel):
     )
 
     # === Password Information ===
-    password_hash = Column(
-        String(255), nullable=False, comment="Historical password hash"
-    )
+    password_hash = Column(String(255), nullable=False, comment="Historical password hash")
     algorithm = Column(String(50), nullable=False, comment="Hashing algorithm used")
 
     # === Metadata ===
-    created_by = Column(
-        UUID(as_uuid=True), nullable=True, comment="User who created this password"
-    )
-    change_reason = Column(
-        String(100), nullable=True, comment="Reason for password change"
-    )
+    created_by = Column(UUID(as_uuid=True), nullable=True, comment="User who created this password")
+    change_reason = Column(String(100), nullable=True, comment="Reason for password change")
 
     # === Relationships ===
     user = relationship("UserModel")
-    current_password = relationship(
-        "UserPasswordModel", back_populates="password_history"
-    )
+    current_password = relationship("UserPasswordModel", back_populates="password_history")
 
     # === Indexes ===
     __table_args__ = (
@@ -215,12 +192,8 @@ class UserSessionModel(BaseModel):
     )
 
     # === Session Identity ===
-    session_token = Column(
-        String(255), nullable=False, unique=True, index=True, comment="Session token"
-    )
-    refresh_token = Column(
-        String(255), nullable=True, unique=True, index=True, comment="Refresh token"
-    )
+    session_token = Column(String(255), nullable=False, unique=True, index=True, comment="Session token")
+    refresh_token = Column(String(255), nullable=True, unique=True, index=True, comment="Refresh token")
 
     # === Session Type and Provider ===
     session_type = Column(
@@ -243,9 +216,7 @@ class UserSessionModel(BaseModel):
         comment="Client IP address",
     )
     user_agent = Column(Text, nullable=True, comment="Client user agent string")
-    device_fingerprint = Column(
-        String(255), nullable=True, comment="Device fingerprint hash"
-    )
+    device_fingerprint = Column(String(255), nullable=True, comment="Device fingerprint hash")
 
     # === Geographic Information ===
     country = Column(String(100), nullable=True, comment="Login country from IP")
@@ -259,9 +230,7 @@ class UserSessionModel(BaseModel):
         index=True,
         comment="Session active status",
     )
-    expires_at = Column(
-        DateTime, nullable=False, index=True, comment="Session expiry timestamp"
-    )
+    expires_at = Column(DateTime, nullable=False, index=True, comment="Session expiry timestamp")
     last_activity = Column(
         DateTime,
         nullable=False,
@@ -270,28 +239,16 @@ class UserSessionModel(BaseModel):
     )
 
     # === Security Flags ===
-    is_suspicious = Column(
-        Boolean, nullable=False, default=False, comment="Marked as suspicious activity"
-    )
-    mfa_verified = Column(
-        Boolean, nullable=False, default=False, comment="MFA verification completed"
-    )
-    remember_device = Column(
-        Boolean, nullable=False, default=False, comment="Device marked as trusted"
-    )
+    is_suspicious = Column(Boolean, nullable=False, default=False, comment="Marked as suspicious activity")
+    mfa_verified = Column(Boolean, nullable=False, default=False, comment="MFA verification completed")
+    remember_device = Column(Boolean, nullable=False, default=False, comment="Device marked as trusted")
 
     # === Termination Information ===
-    terminated_at = Column(
-        DateTime, nullable=True, comment="Session termination timestamp"
-    )
-    termination_reason = Column(
-        String(100), nullable=True, comment="Reason for session termination"
-    )
+    terminated_at = Column(DateTime, nullable=True, comment="Session termination timestamp")
+    termination_reason = Column(String(100), nullable=True, comment="Reason for session termination")
 
     # === Session Metadata ===
-    session_metadata = Column(
-        JSON, nullable=True, default=dict, comment="Additional session metadata"
-    )
+    session_metadata = Column(JSON, nullable=True, default=dict, comment="Additional session metadata")
 
     # === Relationships ===
     user = relationship("UserModel", back_populates="sessions")
@@ -368,15 +325,9 @@ class UserMFAModel(BaseModel):
     )
 
     # === MFA Configuration ===
-    method = Column(
-        String(20), nullable=False, comment="MFA method (totp, sms, email, etc.)"
-    )
-    is_enabled = Column(
-        Boolean, nullable=False, default=True, comment="MFA method enabled status"
-    )
-    is_primary = Column(
-        Boolean, nullable=False, default=False, comment="Is this the primary MFA method"
-    )
+    method = Column(String(20), nullable=False, comment="MFA method (totp, sms, email, etc.)")
+    is_enabled = Column(Boolean, nullable=False, default=True, comment="MFA method enabled status")
+    is_primary = Column(Boolean, nullable=False, default=False, comment="Is this the primary MFA method")
 
     # === Method-specific Data ===
     secret = Column(String(255), nullable=True, comment="Encrypted secret for TOTP")
@@ -384,29 +335,17 @@ class UserMFAModel(BaseModel):
     email = Column(String(255), nullable=True, comment="Email for email MFA")
 
     # === Backup Codes ===
-    backup_codes = Column(
-        JSON, nullable=True, comment="Encrypted backup recovery codes"
-    )
-    backup_codes_used = Column(
-        JSON, nullable=True, default=list, comment="List of used backup codes"
-    )
+    backup_codes = Column(JSON, nullable=True, comment="Encrypted backup recovery codes")
+    backup_codes_used = Column(JSON, nullable=True, default=list, comment="List of used backup codes")
 
     # === Verification Status ===
-    is_verified = Column(
-        Boolean, nullable=False, default=False, comment="MFA method verified status"
-    )
+    is_verified = Column(Boolean, nullable=False, default=False, comment="MFA method verified status")
     verified_at = Column(DateTime, nullable=True, comment="Verification timestamp")
-    last_used = Column(
-        DateTime, nullable=True, comment="Last time this method was used"
-    )
+    last_used = Column(DateTime, nullable=True, comment="Last time this method was used")
 
     # === Usage Statistics ===
-    success_count = Column(
-        Integer, nullable=False, default=0, comment="Successful verification count"
-    )
-    failure_count = Column(
-        Integer, nullable=False, default=0, comment="Failed verification count"
-    )
+    success_count = Column(Integer, nullable=False, default=0, comment="Successful verification count")
+    failure_count = Column(Integer, nullable=False, default=0, comment="Failed verification count")
 
     # === Relationships ===
     user = relationship("UserModel", back_populates="mfa_settings")
@@ -490,27 +429,19 @@ class UserApiKeyModel(BaseModel):
 
     # === Key Data ===
     key_hash = Column(String(255), nullable=False, comment="Hashed API key")
-    key_prefix = Column(
-        String(10), nullable=False, comment="Key prefix for identification"
-    )
+    key_prefix = Column(String(10), nullable=False, comment="Key prefix for identification")
 
     # === Permissions and Scope ===
-    permissions = Column(
-        JSON, nullable=True, default=list, comment="API key permissions"
-    )
+    permissions = Column(JSON, nullable=True, default=list, comment="API key permissions")
     scope = Column(String(500), nullable=True, comment="API key scope")
 
     # === Lifecycle ===
-    is_active = Column(
-        Boolean, nullable=False, default=True, comment="Key active status"
-    )
+    is_active = Column(Boolean, nullable=False, default=True, comment="Key active status")
     expires_at = Column(DateTime, nullable=True, comment="Key expiry timestamp")
 
     # === Usage Tracking ===
     last_used = Column(DateTime, nullable=True, comment="Last usage timestamp")
-    usage_count = Column(
-        Integer, nullable=False, default=0, comment="Total usage count"
-    )
+    usage_count = Column(Integer, nullable=False, default=0, comment="Total usage count")
 
     # === Client Information ===
     last_used_ip = Column(String(45), nullable=True, comment="Last used IP address")
@@ -542,9 +473,7 @@ class UserApiKeyModel(BaseModel):
 
     # === Instance Methods ===
 
-    def record_usage(
-        self, ip_address: Optional[str] = None, user_agent: Optional[str] = None
-    ) -> None:
+    def record_usage(self, ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> None:
         """Record API key usage."""
         self.usage_count += 1
         self.last_used = datetime.now(timezone.utc)
@@ -601,12 +530,8 @@ class AuthAuditModel(BaseModel):
     )
 
     # === Event Information ===
-    event_type = Column(
-        String(50), nullable=False, index=True, comment="Type of authentication event"
-    )
-    success = Column(
-        Boolean, nullable=False, index=True, comment="Whether the event was successful"
-    )
+    event_type = Column(String(50), nullable=False, index=True, comment="Type of authentication event")
+    success = Column(Boolean, nullable=False, index=True, comment="Whether the event was successful")
     failure_reason = Column(String(200), nullable=True, comment="Reason for failure")
 
     # === Session Information ===
@@ -619,13 +544,9 @@ class AuthAuditModel(BaseModel):
     )
 
     # === Client Information ===
-    client_ip = Column(
-        String(45), nullable=True, index=True, comment="Client IP address"
-    )
+    client_ip = Column(String(45), nullable=True, index=True, comment="Client IP address")
     user_agent = Column(Text, nullable=True, comment="Client user agent")
-    device_fingerprint = Column(
-        String(255), nullable=True, comment="Device fingerprint"
-    )
+    device_fingerprint = Column(String(255), nullable=True, comment="Device fingerprint")
 
     # === Geographic Information ===
     country = Column(String(100), nullable=True, comment="Country from IP geolocation")
@@ -640,9 +561,7 @@ class AuthAuditModel(BaseModel):
     risk_factors = Column(JSON, nullable=True, comment="Risk factors identified")
 
     # === Additional Metadata ===
-    event_metadata = Column(
-        JSON, nullable=True, default=dict, comment="Additional event metadata"
-    )
+    event_metadata = Column(JSON, nullable=True, default=dict, comment="Additional event metadata")
 
     # === Relationships ===
     user = relationship("UserModel", back_populates="audit_events")
@@ -669,9 +588,7 @@ class UserInvitationModel(BaseModel):
     __tablename__ = "user_invitations_v2"
 
     # === Invitation Information ===
-    email = Column(
-        String(255), nullable=False, index=True, comment="Email address for invitation"
-    )
+    email = Column(String(255), nullable=False, index=True, comment="Email address for invitation")
     token = Column(
         String(255),
         nullable=False,
@@ -690,18 +607,12 @@ class UserInvitationModel(BaseModel):
 
     # === Role and Permissions ===
     initial_role = Column(String(100), nullable=True, comment="Initial role to assign")
-    permissions = Column(
-        JSON, nullable=True, default=list, comment="Initial permissions to assign"
-    )
+    permissions = Column(JSON, nullable=True, default=list, comment="Initial permissions to assign")
 
     # === Lifecycle ===
     expires_at = Column(DateTime, nullable=False, comment="Invitation expiry timestamp")
-    accepted_at = Column(
-        DateTime, nullable=True, comment="Invitation acceptance timestamp"
-    )
-    declined_at = Column(
-        DateTime, nullable=True, comment="Invitation decline timestamp"
-    )
+    accepted_at = Column(DateTime, nullable=True, comment="Invitation acceptance timestamp")
+    declined_at = Column(DateTime, nullable=True, comment="Invitation decline timestamp")
 
     # === Status ===
     is_used = Column(
@@ -721,9 +632,7 @@ class UserInvitationModel(BaseModel):
     )
 
     # === Metadata ===
-    invitation_metadata = Column(
-        JSON, nullable=True, default=dict, comment="Additional invitation metadata"
-    )
+    invitation_metadata = Column(JSON, nullable=True, default=dict, comment="Additional invitation metadata")
 
     # === Relationships ===
     inviter = relationship("UserModel", foreign_keys=[invited_by])
@@ -808,22 +717,14 @@ class UserActivationModel(BaseModel):
 
     # === Lifecycle ===
     expires_at = Column(DateTime, nullable=False, comment="Activation token expiry")
-    activated_at = Column(
-        DateTime, nullable=True, comment="Activation completion timestamp"
-    )
+    activated_at = Column(DateTime, nullable=True, comment="Activation completion timestamp")
 
     # === Attempts Tracking ===
-    attempts_count = Column(
-        Integer, nullable=False, default=0, comment="Number of activation attempts"
-    )
-    max_attempts = Column(
-        Integer, nullable=False, default=5, comment="Maximum allowed attempts"
-    )
+    attempts_count = Column(Integer, nullable=False, default=0, comment="Number of activation attempts")
+    max_attempts = Column(Integer, nullable=False, default=5, comment="Maximum allowed attempts")
 
     # === Status ===
-    is_activated = Column(
-        Boolean, nullable=False, default=False, comment="Activation completion status"
-    )
+    is_activated = Column(Boolean, nullable=False, default=False, comment="Activation completion status")
     is_blocked = Column(
         Boolean,
         nullable=False,
@@ -840,9 +741,7 @@ class UserActivationModel(BaseModel):
     phone = Column(String(20), nullable=True, comment="Phone for activation")
 
     # === Metadata ===
-    activation_metadata = Column(
-        JSON, nullable=True, default=dict, comment="Additional activation metadata"
-    )
+    activation_metadata = Column(JSON, nullable=True, default=dict, comment="Additional activation metadata")
 
     # === Relationships ===
     user = relationship("UserModel")

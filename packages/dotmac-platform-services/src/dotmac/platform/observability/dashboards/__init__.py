@@ -21,9 +21,9 @@ class SigNozDashboard:
 
 
 __all__ = [
-    "provision_platform_dashboards",
-    "DashboardProvisioningResult",
     "DashboardConfig",
     "DashboardProvisioner",
+    "DashboardProvisioningResult",
     "SigNozDashboard",
+    "provision_platform_dashboards",
 ]

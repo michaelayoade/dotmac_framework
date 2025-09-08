@@ -57,15 +57,11 @@ class InventoryManager:
 
         # Generate item code if not provided
         if not item_data.item_code:
-            item_data.item_code = await self._generate_item_code(
-                db, tenant_id, item_data.item_type
-            )
+            item_data.item_code = await self._generate_item_code(db, tenant_id, item_data.item_type)
 
         # Check for duplicate item codes
         existing = await db.scalar(
-            select(Item).where(
-                and_(Item.tenant_id == tenant_id, Item.item_code == item_data.item_code)
-            )
+            select(Item).where(and_(Item.tenant_id == tenant_id, Item.item_code == item_data.item_code))
         )
         if existing:
             raise ValueError(f"Item with code '{item_data.item_code}' already exists")
@@ -93,9 +89,7 @@ class InventoryManager:
     ) -> Optional[Item]:
         """Get item by ID."""
 
-        query = select(Item).where(
-            and_(Item.tenant_id == tenant_id, Item.id == item_id)
-        )
+        query = select(Item).where(and_(Item.tenant_id == tenant_id, Item.id == item_id))
 
         if include_stock:
             query = query.options(selectinload(Item.stock_items))
@@ -111,9 +105,7 @@ class InventoryManager:
     ) -> Optional[Item]:
         """Get item by item code."""
 
-        query = select(Item).where(
-            and_(Item.tenant_id == tenant_id, Item.item_code == item_code)
-        )
+        query = select(Item).where(and_(Item.tenant_id == tenant_id, Item.item_code == item_code))
 
         if include_stock:
             query = query.options(selectinload(Item.stock_items))
@@ -144,9 +136,7 @@ class InventoryManager:
                 query = query.where(Item.category == filters["category"])
 
             if "manufacturer" in filters:
-                query = query.where(
-                    Item.manufacturer.ilike(f"%{filters['manufacturer']}%")
-                )
+                query = query.where(Item.manufacturer.ilike(f"%{filters['manufacturer']}%"))
 
             if "is_active" in filters:
                 query = query.where(Item.is_active == filters["is_active"])
@@ -168,9 +158,7 @@ class InventoryManager:
 
             if "low_stock" in filters and filters["low_stock"]:
                 # Items below reorder point
-                query = query.join(Item.stock_items).where(
-                    StockItem.available_quantity < Item.reorder_point
-                )
+                query = query.join(Item.stock_items).where(StockItem.available_quantity < Item.reorder_point)
 
         # Get total count
         count_query = select(func.count(Item.id)).where(Item.tenant_id == tenant_id)
@@ -181,9 +169,7 @@ class InventoryManager:
         total = await db.scalar(count_query) or 0
 
         # Apply pagination and ordering
-        query = (
-            query.order_by(Item.name).offset((page - 1) * page_size).limit(page_size)
-        )
+        query = query.order_by(Item.name).offset((page - 1) * page_size).limit(page_size)
 
         result = await db.execute(query)
         items = result.scalars().all()
@@ -238,9 +224,7 @@ class InventoryManager:
             )
         )
         if existing:
-            raise ValueError(
-                f"Warehouse with code '{warehouse_data.warehouse_code}' already exists"
-            )
+            raise ValueError(f"Warehouse with code '{warehouse_data.warehouse_code}' already exists")
 
         warehouse = Warehouse(
             tenant_id=tenant_id,
@@ -255,15 +239,11 @@ class InventoryManager:
         logger.info(f"Created warehouse: {warehouse.warehouse_code} ({warehouse.name})")
         return warehouse
 
-    async def get_warehouse(
-        self, db: AsyncSession, tenant_id: str, warehouse_id: str
-    ) -> Optional[Warehouse]:
+    async def get_warehouse(self, db: AsyncSession, tenant_id: str, warehouse_id: str) -> Optional[Warehouse]:
         """Get warehouse by ID."""
 
         return await db.scalar(
-            select(Warehouse).where(
-                and_(Warehouse.tenant_id == tenant_id, Warehouse.id == warehouse_id)
-            )
+            select(Warehouse).where(and_(Warehouse.tenant_id == tenant_id, Warehouse.id == warehouse_id))
         )
 
     async def list_warehouses(
@@ -304,9 +284,7 @@ class InventoryManager:
             )
         )
 
-    async def get_item_stock_summary(
-        self, db: AsyncSession, tenant_id: str, item_id: str
-    ) -> dict[str, Any]:
+    async def get_item_stock_summary(self, db: AsyncSession, tenant_id: str, item_id: str) -> dict[str, Any]:
         """Get stock summary for an item across all warehouses."""
 
         stock_items = await db.execute(
@@ -367,9 +345,7 @@ class InventoryManager:
         """Create a stock movement and update stock levels."""
 
         # Generate movement ID
-        movement_id = (
-            f"MOV-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
-        )
+        movement_id = f"MOV-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
 
         # Create movement record
         movement = StockMovement(
@@ -430,18 +406,11 @@ class InventoryManager:
             query = query.where(StockMovement.movement_date < end_date)
 
         # Get total count
-        total = (
-            await db.scalar(
-                select(func.count(StockMovement.id)).where(query.whereclause)
-            )
-            or 0
-        )
+        total = await db.scalar(select(func.count(StockMovement.id)).where(query.whereclause)) or 0
 
         # Apply pagination and ordering
         query = (
-            query.options(
-                joinedload(StockMovement.item), joinedload(StockMovement.warehouse)
-            )
+            query.options(joinedload(StockMovement.item), joinedload(StockMovement.warehouse))
             .order_by(desc(StockMovement.movement_date))
             .offset((page - 1) * page_size)
             .limit(page_size)
@@ -487,9 +456,7 @@ class InventoryManager:
                 tenant_id=tenant_id,
                 purchase_order_id=po.id,
                 quantity_remaining=line_data.quantity_ordered,
-                line_total=line_data.unit_price
-                * line_data.quantity_ordered
-                * (1 - line_data.discount_percent / 100),
+                line_total=line_data.unit_price * line_data.quantity_ordered * (1 - line_data.discount_percent / 100),
                 **line_data.model_dump(exclude_unset=True),
             )
             db.add(line)
@@ -510,9 +477,7 @@ class InventoryManager:
     ) -> Optional[PurchaseOrder]:
         """Get purchase order by ID."""
 
-        query = select(PurchaseOrder).where(
-            and_(PurchaseOrder.tenant_id == tenant_id, PurchaseOrder.id == po_id)
-        )
+        query = select(PurchaseOrder).where(and_(PurchaseOrder.tenant_id == tenant_id, PurchaseOrder.id == po_id))
 
         if include_lines:
             query = query.options(selectinload(PurchaseOrder.line_items))
@@ -535,26 +500,17 @@ class InventoryManager:
             # Additional filtering can be added here
 
         # Total items
-        total_items = (
-            await db.scalar(
-                select(func.count(Item.id)).where(Item.tenant_id == tenant_id)
-            )
-            or 0
-        )
+        total_items = await db.scalar(select(func.count(Item.id)).where(Item.tenant_id == tenant_id)) or 0
         active_items = (
             await db.scalar(
-                select(func.count(Item.id)).where(
-                    and_(Item.tenant_id == tenant_id, Item.is_active is True)
-                )
+                select(func.count(Item.id)).where(and_(Item.tenant_id == tenant_id, Item.is_active is True))
             )
             or 0
         )
 
         # Stock value
         stock_value = await db.scalar(
-            select(func.coalesce(func.sum(StockItem.total_value), 0)).where(
-                StockItem.tenant_id == tenant_id
-            )
+            select(func.coalesce(func.sum(StockItem.total_value), 0)).where(StockItem.tenant_id == tenant_id)
         ) or Decimal("0.00")
 
         # Low stock items (below reorder point)
@@ -589,9 +545,7 @@ class InventoryManager:
         # Items by type
         items_by_type = {}
         type_result = await db.execute(
-            select(Item.item_type, func.count(Item.id))
-            .where(Item.tenant_id == tenant_id)
-            .group_by(Item.item_type)
+            select(Item.item_type, func.count(Item.id)).where(Item.tenant_id == tenant_id).group_by(Item.item_type)
         )
         for item_type, count in type_result:
             items_by_type[item_type.value] = count
@@ -627,9 +581,7 @@ class InventoryManager:
         }
 
     # Helper methods
-    async def _generate_item_code(
-        self, db: AsyncSession, tenant_id: str, item_type: ItemType
-    ) -> str:
+    async def _generate_item_code(self, db: AsyncSession, tenant_id: str, item_type: ItemType) -> str:
         """Generate unique item code."""
 
         # Get type prefix
@@ -650,9 +602,7 @@ class InventoryManager:
         # Find next sequence number
         existing = await db.execute(
             select(Item.item_code)
-            .where(
-                and_(Item.tenant_id == tenant_id, Item.item_code.like(f"{prefix}-%"))
-            )
+            .where(and_(Item.tenant_id == tenant_id, Item.item_code.like(f"{prefix}-%")))
             .order_by(desc(Item.item_code))
         )
 
@@ -738,9 +688,7 @@ class InventoryManager:
 
         # Update stock levels
         stock_item.quantity += quantity_change
-        stock_item.available_quantity = max(
-            0, stock_item.quantity - stock_item.reserved_quantity
-        )
+        stock_item.available_quantity = max(0, stock_item.quantity - stock_item.reserved_quantity)
         stock_item.last_movement_date = movement.movement_date
 
         # Update cost information

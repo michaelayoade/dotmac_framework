@@ -61,8 +61,7 @@ class TenantFactory(BaseFactory):
             "id": str(uuid4()),
             "name": kwargs.get("name") or generator.generate(DataType.COMPANY),
             "subdomain": kwargs.get("subdomain") or f"isp{secrets.token_hex(4)}",
-            "domain": kwargs.get("domain")
-            or f"{kwargs.get('subdomain', 'test')}.example.com",
+            "domain": kwargs.get("domain") or f"{kwargs.get('subdomain', 'test')}.example.com",
             "status": "active",
             "plan": kwargs.get("plan", "professional"),
             "region": kwargs.get("region", "us-east-1"),
@@ -172,18 +171,10 @@ class CustomerFactory(TenantIsolatedFactory):
             "email": generator.generate(DataType.EMAIL),
             "phone": generator.generate(DataType.PHONE),
             "address": generator.generate(DataType.ADDRESS),
-            "billing_address": kwargs.get(
-                "billing_address"
-            ),  # Will default to same as address
-            "company_name": generator.generate(DataType.COMPANY)
-            if customer_type == "business"
-            else None,
-            "tax_id": f"TAX{secrets.token_hex(6).upper()}"
-            if customer_type == "business"
-            else None,
-            "credit_limit": Decimal("1000.00")
-            if customer_type == "business"
-            else Decimal("500.00"),
+            "billing_address": kwargs.get("billing_address"),  # Will default to same as address
+            "company_name": generator.generate(DataType.COMPANY) if customer_type == "business" else None,
+            "tax_id": f"TAX{secrets.token_hex(6).upper()}" if customer_type == "business" else None,
+            "credit_limit": Decimal("1000.00") if customer_type == "business" else Decimal("500.00"),
             "payment_terms": kwargs.get("payment_terms", 30),
             "notes": "",
             **self._create_tenant_context(),
@@ -524,9 +515,7 @@ class TicketFactory(TenantIsolatedFactory):
             "customer_id": kwargs.get("customer_id"),
             "ticket_number": f"TKT-{sequence:06d}",
             "subject": kwargs.get("subject", f"Support request #{sequence}"),
-            "description": kwargs.get(
-                "description", "Customer needs assistance with service"
-            ),
+            "description": kwargs.get("description", "Customer needs assistance with service"),
             "category": kwargs.get("category", secrets.choice(categories)),
             "priority": kwargs.get("priority", secrets.choice(priorities)),
             "status": kwargs.get("status", "open"),

@@ -13,6 +13,7 @@ from typing import Optional
 
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .row_level_security import RLSPolicyManager
@@ -41,17 +42,20 @@ class TenantContextManager:
         try:
             # Set tenant context
             await session.execute(
-                f"SELECT set_config('app.current_tenant_id', '{tenant_id}', false);"
+                text("SELECT set_config('app.current_tenant_id', :tenant_id, false);"),
+                {"tenant_id": tenant_id}
             )
 
             if user_id:
                 await session.execute(
-                    f"SELECT set_config('app.current_user_id', '{user_id}', false);"
+                    text("SELECT set_config('app.current_user_id', :user_id, false);"),
+                    {"user_id": user_id}
                 )
 
             if client_ip:
                 await session.execute(
-                    f"SELECT set_config('app.client_ip', '{client_ip}', false);"
+                    text("SELECT set_config('app.client_ip', :client_ip, false);"),
+                    {"client_ip": client_ip}
                 )
 
             self.current_tenant_id = tenant_id
@@ -68,13 +72,9 @@ class TenantContextManager:
     async def clear_context(self, session: Session) -> bool:
         """Clear tenant context"""
         try:
-            await session.execute(
-                "SELECT set_config('app.current_tenant_id', '', false);"
-            )
-            await session.execute(
-                "SELECT set_config('app.current_user_id', '', false);"
-            )
-            await session.execute("SELECT set_config('app.client_ip', '', false);")
+            await session.execute(text("SELECT set_config('app.current_tenant_id', '', false);"))
+            await session.execute(text("SELECT set_config('app.current_user_id', '', false);"))
+            await session.execute(text("SELECT set_config('app.client_ip', '', false);"))
 
             self.current_tenant_id = None
             self.current_user_id = None
@@ -160,16 +160,12 @@ class TenantIsolationMiddleware:
             # Validate tenant access
             if not tenant_id:
                 if self.strict_mode:
-                    error_response = JSONResponse(
-                        status_code=400, content={"detail": "Tenant context required"}
-                    )
+                    error_response = JSONResponse(status_code=400, content={"detail": "Tenant context required"})
                     await error_response(scope, receive, send)
                     return
 
             if tenant_id and not await self.validate_tenant_access(tenant_id, request):
-                error_response = JSONResponse(
-                    status_code=403, content={"detail": "Invalid tenant access"}
-                )
+                error_response = JSONResponse(status_code=403, content={"detail": "Invalid tenant access"})
                 await error_response(scope, receive, send)
                 return
 
@@ -207,12 +203,14 @@ class DatabaseTenantMiddleware:
 
             if user_id:
                 session.execute(
-                    f"SELECT set_config('app.current_user_id', '{user_id}', false);"
+                    text("SELECT set_config('app.current_user_id', :user_id, false);"),
+                    {"user_id": user_id}
                 )
 
             if client_ip:
                 session.execute(
-                    f"SELECT set_config('app.client_ip', '{client_ip}', false);"
+                    text("SELECT set_config('app.client_ip', :client_ip, false);"),
+                    {"client_ip": client_ip}
                 )
 
             logger.debug(f"Database session configured for tenant: {tenant_id}")
@@ -250,10 +248,7 @@ def get_tenant_from_subdomain(request: Request) -> Optional[str]:
         if "." in host:
             subdomain = host.split(".")[0]
             # Validate subdomain format
-            if (
-                len(subdomain) > 3
-                and subdomain.replace("-", "").replace("_", "").isalnum()
-            ):
+            if len(subdomain) > 3 and subdomain.replace("-", "").replace("_", "").isalnum():
                 return subdomain
     except Exception:
         pass

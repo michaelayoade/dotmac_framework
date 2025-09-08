@@ -5,9 +5,10 @@ Centralized authentication utilities for API endpoints.
 from typing import Any
 from uuid import UUID
 
-from dotmac_isp.core.database import get_async_db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from dotmac_isp.core.database import get_async_db
 
 try:
     from dotmac.platform.auth.jwt_service import JWTService
@@ -56,9 +57,7 @@ async def authenticate_user(
         # 4. Return user information
 
         # Placeholder implementation
-        token = (
-            credentials.credentials
-        )  # noqa: S105 - variable name only, not a hardcoded secret
+        token = credentials.credentials  # noqa: S105 - variable name only, not a hardcoded secret
         if not token:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

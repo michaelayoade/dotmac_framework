@@ -93,9 +93,7 @@ class Domain(TenantModel, AuditableMixin):
     full_domain = Column(String(255), nullable=False, unique=True, index=True)
 
     # Domain properties
-    domain_status = Column(
-        SQLEnum(DomainStatus), default=DomainStatus.PENDING, nullable=False, index=True
-    )
+    domain_status = Column(SQLEnum(DomainStatus), default=DomainStatus.PENDING, nullable=False, index=True)
     is_primary = Column(Boolean, default=False, nullable=False, index=True)
     is_wildcard = Column(Boolean, default=False, nullable=False)
 
@@ -122,9 +120,7 @@ class Domain(TenantModel, AuditableMixin):
     verified_at = Column(DateTime, nullable=True, index=True)
 
     # SSL/TLS
-    ssl_status = Column(
-        SQLEnum(SSLStatus), default=SSLStatus.NONE, nullable=False, index=True
-    )
+    ssl_status = Column(SQLEnum(SSLStatus), default=SSLStatus.NONE, nullable=False, index=True)
     ssl_certificate_id = Column(String(100), nullable=True, index=True)
     ssl_issued_at = Column(DateTime, nullable=True)
     ssl_expires_at = Column(DateTime, nullable=True, index=True)
@@ -150,15 +146,9 @@ class Domain(TenantModel, AuditableMixin):
     custom_fields = Column(JSON, nullable=True)
 
     # Relationships
-    dns_records = relationship(
-        "DNSRecord", back_populates="domain", cascade="all, delete-orphan"
-    )
-    ssl_certificates = relationship(
-        "SSLCertificate", back_populates="domain", cascade="all, delete-orphan"
-    )
-    domain_logs = relationship(
-        "DomainLog", back_populates="domain", cascade="all, delete-orphan"
-    )
+    dns_records = relationship("DNSRecord", back_populates="domain", cascade="all, delete-orphan")
+    ssl_certificates = relationship("SSLCertificate", back_populates="domain", cascade="all, delete-orphan")
+    domain_logs = relationship("DomainLog", back_populates="domain", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("ix_domains_tenant_status", "tenant_id", "domain_status"),
@@ -173,9 +163,7 @@ class Domain(TenantModel, AuditableMixin):
     @hybrid_property
     def is_expired(self):
         """Check if domain has expired."""
-        return (
-            self.expiration_date and datetime.now(timezone.utc) > self.expiration_date
-        )
+        return self.expiration_date and datetime.now(timezone.utc) > self.expiration_date
 
     @hybrid_property
     def days_until_expiration(self):
@@ -214,14 +202,10 @@ class DNSRecord(TenantModel, AuditableMixin):
 
     # Record identification
     record_id = Column(String(100), nullable=False, unique=True, index=True)
-    domain_id = Column(
-        String(100), ForeignKey("domains.domain_id"), nullable=False, index=True
-    )
+    domain_id = Column(String(100), ForeignKey("domains.domain_id"), nullable=False, index=True)
 
     # DNS record details
-    name = Column(
-        String(255), nullable=False, index=True
-    )  # Record name (subdomain or @)
+    name = Column(String(255), nullable=False, index=True)  # Record name (subdomain or @)
     record_type = Column(SQLEnum(DNSRecordType), nullable=False, index=True)
     value = Column(String(2000), nullable=False)  # Record value/target
     ttl = Column(Integer, default=3600, nullable=False)  # Time to live in seconds
@@ -234,14 +218,10 @@ class DNSRecord(TenantModel, AuditableMixin):
     # Management
     is_system_managed = Column(Boolean, default=True, nullable=False)
     is_editable = Column(Boolean, default=True, nullable=False)
-    provider_record_id = Column(
-        String(100), nullable=True, index=True
-    )  # Provider's internal ID
+    provider_record_id = Column(String(100), nullable=True, index=True)  # Provider's internal ID
 
     # Status tracking
-    sync_status = Column(
-        String(20), default="pending", nullable=False, index=True
-    )  # pending, synced, failed
+    sync_status = Column(String(20), default="pending", nullable=False, index=True)  # pending, synced, failed
     last_sync_attempt = Column(DateTime, nullable=True)
     sync_error_message = Column(Text, nullable=True)
 
@@ -289,9 +269,7 @@ class SSLCertificate(TenantModel, AuditableMixin):
 
     # Certificate identification
     certificate_id = Column(String(100), nullable=False, unique=True, index=True)
-    domain_id = Column(
-        String(100), ForeignKey("domains.domain_id"), nullable=False, index=True
-    )
+    domain_id = Column(String(100), ForeignKey("domains.domain_id"), nullable=False, index=True)
 
     # Certificate details
     certificate_name = Column(String(200), nullable=False)
@@ -300,9 +278,7 @@ class SSLCertificate(TenantModel, AuditableMixin):
 
     # Certificate authority
     issuer = Column(String(255), nullable=False)
-    certificate_authority = Column(
-        String(100), nullable=True, index=True
-    )  # letsencrypt, comodo, etc.
+    certificate_authority = Column(String(100), nullable=True, index=True)  # letsencrypt, comodo, etc.
 
     # Certificate lifecycle
     issued_at = Column(DateTime, nullable=False, index=True)
@@ -316,9 +292,7 @@ class SSLCertificate(TenantModel, AuditableMixin):
     certificate_chain = Column(Text, nullable=True)
 
     # Status and validation
-    ssl_status = Column(
-        SQLEnum(SSLStatus), default=SSLStatus.PENDING, nullable=False, index=True
-    )
+    ssl_status = Column(SQLEnum(SSLStatus), default=SSLStatus.PENDING, nullable=False, index=True)
     validation_method = Column(String(50), nullable=True)  # HTTP, DNS, email
     validation_token = Column(String(255), nullable=True)
 
@@ -372,11 +346,7 @@ class SSLCertificate(TenantModel, AuditableMixin):
     @hybrid_property
     def is_valid(self):
         """Check if certificate is valid and not expired."""
-        return (
-            self.ssl_status == SSLStatus.ISSUED
-            and not self.is_expired
-            and not self.validation_errors
-        )
+        return self.ssl_status == SSLStatus.ISSUED and not self.is_expired and not self.validation_errors
 
     def __repr__(self):
         return f"<SSLCertificate(id='{self.certificate_id}', domain='{self.common_name}', status='{self.ssl_status}')>"
@@ -388,17 +358,11 @@ class DomainLog(TenantModel):
     __tablename__ = "domain_logs"
 
     # Log identification
-    domain_id = Column(
-        String(100), ForeignKey("domains.domain_id"), nullable=False, index=True
-    )
-    log_timestamp = Column(
-        DateTime(timezone=True), nullable=False, default=func.now(), index=True
-    )
+    domain_id = Column(String(100), ForeignKey("domains.domain_id"), nullable=False, index=True)
+    log_timestamp = Column(DateTime(timezone=True), nullable=False, default=func.now(), index=True)
 
     # Log details
-    action = Column(
-        String(50), nullable=False, index=True
-    )  # created, updated, verified, ssl_issued, etc.
+    action = Column(String(50), nullable=False, index=True)  # created, updated, verified, ssl_issued, etc.
     user_id = Column(String(100), nullable=False, index=True)
 
     # Action details
@@ -506,14 +470,10 @@ class DomainVerification(TenantModel, AuditableMixin):
 
     # Verification identification
     verification_id = Column(String(100), nullable=False, unique=True, index=True)
-    domain_id = Column(
-        String(100), ForeignKey("domains.domain_id"), nullable=False, index=True
-    )
+    domain_id = Column(String(100), ForeignKey("domains.domain_id"), nullable=False, index=True)
 
     # Verification details
-    verification_method = Column(
-        String(50), nullable=False, index=True
-    )  # DNS, HTTP, email
+    verification_method = Column(String(50), nullable=False, index=True)  # DNS, HTTP, email
     verification_token = Column(String(255), nullable=False)
     verification_value = Column(String(1000), nullable=True)
 
@@ -564,10 +524,7 @@ class DomainVerification(TenantModel, AuditableMixin):
     @hybrid_property
     def has_failed(self):
         """Check if verification has failed."""
-        return (
-            self.status == VerificationStatus.FAILED
-            or self.attempts >= self.max_attempts
-        )
+        return self.status == VerificationStatus.FAILED or self.attempts >= self.max_attempts
 
     def __repr__(self):
         return f"<DomainVerification(id='{self.verification_id}', method='{self.verification_method}', status='{self.status}')>"

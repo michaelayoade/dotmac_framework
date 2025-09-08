@@ -2,23 +2,14 @@
 Process Billing Use Case
 Orchestrates billing operations for tenant services
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Optional
 
-try:
-    from dotmac_shared.core.logging import get_logger
-except ImportError:
-    try:
-        import structlog  # type: ignore
-
-        get_logger = structlog.get_logger  # type: ignore
-    except Exception:
-        import logging
-
-        get_logger = logging.getLogger  # type: ignore
+from dotmac_business_logic.platform.logging import get_logger
 
 
 # Mock these classes for standalone package

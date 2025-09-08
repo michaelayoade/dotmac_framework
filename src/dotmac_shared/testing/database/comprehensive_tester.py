@@ -108,12 +108,8 @@ class ComprehensiveDatabaseTester:
         Returns:
             Comprehensive test results and analysis
         """
-        logger.info(
-            f"Starting comprehensive database testing for {len(model_classes)} models"
-        )
-        logger.info(
-            f"Test suites: {[suite.value for suite in self.config.test_suites]}"
-        )
+        logger.info(f"Starting comprehensive database testing for {len(model_classes)} models")
+        logger.info(f"Test suites: {[suite.value for suite in self.config.test_suites]}")
 
         overall_start_time = time.time()
 
@@ -121,23 +117,17 @@ class ComprehensiveDatabaseTester:
         for suite in self.config.test_suites:
             if suite == DatabaseTestSuite.COMPREHENSIVE:
                 # Run all suites
-                await self._run_all_test_suites(
-                    model_classes, test_data, tenant_contexts
-                )
+                await self._run_all_test_suites(model_classes, test_data, tenant_contexts)
                 break
             else:
-                await self._run_single_test_suite(
-                    suite, model_classes, test_data, tenant_contexts
-                )
+                await self._run_single_test_suite(suite, model_classes, test_data, tenant_contexts)
 
         overall_execution_time = time.time() - overall_start_time
 
         # Generate comprehensive report
         report = await self._generate_comprehensive_report(overall_execution_time)
 
-        logger.info(
-            f"✅ Comprehensive database testing completed in {overall_execution_time:.2f} seconds"
-        )
+        logger.info(f"✅ Comprehensive database testing completed in {overall_execution_time:.2f} seconds")
         return report
 
     async def _run_all_test_suites(
@@ -159,9 +149,7 @@ class ComprehensiveDatabaseTester:
             suites_to_run.append(DatabaseTestSuite.TENANT_ISOLATION)
 
         for suite in suites_to_run:
-            await self._run_single_test_suite(
-                suite, model_classes, test_data, tenant_contexts
-            )
+            await self._run_single_test_suite(suite, model_classes, test_data, tenant_contexts)
 
     async def _run_single_test_suite(
         self,
@@ -190,13 +178,9 @@ class ComprehensiveDatabaseTester:
 
             elif suite == DatabaseTestSuite.TENANT_ISOLATION:
                 if tenant_contexts:
-                    await self._run_tenant_isolation_tests(
-                        model_classes, test_data, tenant_contexts
-                    )
+                    await self._run_tenant_isolation_tests(model_classes, test_data, tenant_contexts)
                 else:
-                    logger.warning(
-                        "Skipping tenant isolation tests - no tenant contexts provided"
-                    )
+                    logger.warning("Skipping tenant isolation tests - no tenant contexts provided")
 
         except Exception as e:
             logger.error(f"Test suite {suite.value} failed: {e}")
@@ -204,13 +188,9 @@ class ComprehensiveDatabaseTester:
 
         suite_execution_time = time.time() - suite_start_time
         self.execution_times[suite.value] = suite_execution_time
-        logger.info(
-            f"✅ {suite.value} test suite completed in {suite_execution_time:.2f} seconds"
-        )
+        logger.info(f"✅ {suite.value} test suite completed in {suite_execution_time:.2f} seconds")
 
-    async def _run_transaction_tests(
-        self, model_classes: list[type], test_data: dict[type, list[dict]]
-    ):
+    async def _run_transaction_tests(self, model_classes: list[type], test_data: dict[type, list[dict]]):
         """Run transaction testing suite"""
 
         transaction_results = {}
@@ -227,9 +207,7 @@ class ComprehensiveDatabaseTester:
                     transaction_results[model_class.__name__] = result
 
                 except Exception as e:
-                    logger.error(
-                        f"Transaction tests failed for {model_class.__name__}: {e}"
-                    )
+                    logger.error(f"Transaction tests failed for {model_class.__name__}: {e}")
                     transaction_results[model_class.__name__] = {
                         "status": "error",
                         "error": str(e),
@@ -237,9 +215,7 @@ class ComprehensiveDatabaseTester:
 
         self.test_results["transactions"] = transaction_results
 
-    async def _run_constraint_tests(
-        self, model_classes: list[type], test_data: dict[type, list[dict]]
-    ):
+    async def _run_constraint_tests(self, model_classes: list[type], test_data: dict[type, list[dict]]):
         """Run constraint validation suite"""
 
         constraint_results = {}
@@ -265,9 +241,7 @@ class ComprehensiveDatabaseTester:
                         constraint_results[model_class.__name__] = result
 
                     except Exception as e:
-                        logger.error(
-                            f"Constraint tests failed for {model_class.__name__}: {e}"
-                        )
+                        logger.error(f"Constraint tests failed for {model_class.__name__}: {e}")
                         constraint_results[model_class.__name__] = {
                             "status": "error",
                             "error": str(e),
@@ -275,9 +249,7 @@ class ComprehensiveDatabaseTester:
 
         self.test_results["constraints"] = constraint_results
 
-    async def _run_integrity_tests(
-        self, model_classes: list[type], test_data: dict[type, list[dict]]
-    ):
+    async def _run_integrity_tests(self, model_classes: list[type], test_data: dict[type, list[dict]]):
         """Run data integrity testing suite"""
 
         try:
@@ -294,9 +266,7 @@ class ComprehensiveDatabaseTester:
             logger.error(f"Integrity tests failed: {e}")
             self.test_results["integrity"] = {"status": "error", "error": str(e)}
 
-    async def _run_performance_tests(
-        self, model_classes: list[type], test_data: dict[type, list[dict]]
-    ):
+    async def _run_performance_tests(self, model_classes: list[type], test_data: dict[type, list[dict]]):
         """Run performance testing suite"""
 
         performance_results = {}
@@ -314,9 +284,7 @@ class ComprehensiveDatabaseTester:
                     performance_results[model_class.__name__] = result
 
                 except Exception as e:
-                    logger.error(
-                        f"Performance tests failed for {model_class.__name__}: {e}"
-                    )
+                    logger.error(f"Performance tests failed for {model_class.__name__}: {e}")
                     performance_results[model_class.__name__] = {
                         "status": "error",
                         "error": str(e),
@@ -340,9 +308,7 @@ class ComprehensiveDatabaseTester:
 
             # Use first model's test data for each tenant
             if model_classes and model_classes[0] in test_data:
-                tenant_test_data[tenant_id] = test_data[model_classes[0]][
-                    :3
-                ]  # Limit data per tenant
+                tenant_test_data[tenant_id] = test_data[model_classes[0]][:3]  # Limit data per tenant
 
         try:
             result = await comprehensive_tenant_isolation_test(
@@ -358,9 +324,7 @@ class ComprehensiveDatabaseTester:
             logger.error(f"Tenant isolation tests failed: {e}")
             self.test_results["tenant_isolation"] = {"status": "error", "error": str(e)}
 
-    async def _generate_comprehensive_report(
-        self, total_execution_time: float
-    ) -> dict[str, Any]:
+    async def _generate_comprehensive_report(self, total_execution_time: float) -> dict[str, Any]:
         """Generate comprehensive test report with analysis and recommendations"""
 
         # Count total tests and results
@@ -381,18 +345,14 @@ class ComprehensiveDatabaseTester:
                     }
                 else:
                     # Process suite-specific results
-                    suite_summary = self._analyze_suite_results(
-                        suite_name, suite_result
-                    )
+                    suite_summary = self._analyze_suite_results(suite_name, suite_result)
                     suite_summaries[suite_name] = suite_summary
 
                     if "summary" in suite_result:
                         summary = suite_result["summary"]
                         if isinstance(summary, dict):
                             total_tests += summary.get("total", 0)
-                            passed_tests += summary.get(
-                                "passed", summary.get("successful", 0)
-                            )
+                            passed_tests += summary.get("passed", summary.get("successful", 0))
                             failed_tests += summary.get("failed", 0)
 
         # Generate recommendations
@@ -408,9 +368,7 @@ class ComprehensiveDatabaseTester:
                 "passed_tests": passed_tests,
                 "failed_tests": failed_tests,
                 "error_tests": error_tests,
-                "pass_rate": (passed_tests / total_tests * 100)
-                if total_tests > 0
-                else 0,
+                "pass_rate": (passed_tests / total_tests * 100) if total_tests > 0 else 0,
                 "suites_run": len(self.test_results),
             },
             "suite_summaries": suite_summaries,
@@ -420,9 +378,7 @@ class ComprehensiveDatabaseTester:
             "detailed_results": self.test_results,
         }
 
-    def _analyze_suite_results(
-        self, suite_name: str, suite_result: dict
-    ) -> dict[str, Any]:
+    def _analyze_suite_results(self, suite_name: str, suite_result: dict) -> dict[str, Any]:
         """Analyze results for a specific test suite"""
 
         if "summary" in suite_result:
@@ -430,9 +386,7 @@ class ComprehensiveDatabaseTester:
             return {
                 "status": "completed",
                 "tests_run": summary.get("total", 0),
-                "success_rate": summary.get(
-                    "pass_rate", summary.get("success_rate", 0)
-                ),
+                "success_rate": summary.get("pass_rate", summary.get("success_rate", 0)),
                 "key_metrics": self._extract_key_metrics(suite_name, summary),
             }
 
@@ -478,16 +432,8 @@ class ComprehensiveDatabaseTester:
         if "performance" in self.test_results:
             perf_results = self.test_results["performance"]
             for model_name, model_results in perf_results.items():
-                if (
-                    isinstance(model_results, dict)
-                    and "recommendations" in model_results
-                ):
-                    recommendations.extend(
-                        [
-                            f"{model_name}: {rec}"
-                            for rec in model_results["recommendations"]
-                        ]
-                    )
+                if isinstance(model_results, dict) and "recommendations" in model_results:
+                    recommendations.extend([f"{model_name}: {rec}" for rec in model_results["recommendations"]])
 
         # Integrity recommendations
         if "integrity" in self.test_results:
@@ -495,26 +441,18 @@ class ComprehensiveDatabaseTester:
             if isinstance(integrity_result, dict) and "summary" in integrity_result:
                 violations = integrity_result["summary"].get("total_violations", 0)
                 if violations > 0:
-                    recommendations.append(
-                        f"Review {violations} data integrity violations"
-                    )
+                    recommendations.append(f"Review {violations} data integrity violations")
 
         # Tenant isolation recommendations
         if "tenant_isolation" in self.test_results:
             isolation_result = self.test_results["tenant_isolation"]
             if isinstance(isolation_result, dict) and "summary" in isolation_result:
-                critical_violations = isolation_result["summary"].get(
-                    "critical_violations", 0
-                )
+                critical_violations = isolation_result["summary"].get("critical_violations", 0)
                 if critical_violations > 0:
-                    recommendations.append(
-                        f"CRITICAL: Fix {critical_violations} tenant isolation violations"
-                    )
+                    recommendations.append(f"CRITICAL: Fix {critical_violations} tenant isolation violations")
 
         if not recommendations:
-            recommendations.append(
-                "All tests passed - database appears to be properly configured"
-            )
+            recommendations.append("All tests passed - database appears to be properly configured")
 
         return recommendations
 
@@ -526,8 +464,7 @@ class ComprehensiveDatabaseTester:
 
         total_time = sum(self.execution_times.values())
         suite_percentages = {
-            suite: (time_taken / total_time * 100)
-            for suite, time_taken in self.execution_times.items()
+            suite: (time_taken / total_time * 100) for suite, time_taken in self.execution_times.items()
         }
 
         slowest_suite = max(self.execution_times.items(), key=lambda x: x[1])
@@ -567,6 +504,4 @@ async def run_full_database_test_suite(
 
     tester = ComprehensiveDatabaseTester(config)
 
-    return await tester.run_comprehensive_tests(
-        model_classes, test_data, tenant_contexts
-    )
+    return await tester.run_comprehensive_tests(model_classes, test_data, tenant_contexts)

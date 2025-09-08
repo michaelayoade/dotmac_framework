@@ -112,9 +112,7 @@ class TemplateEngine:
         self._setup_custom_filters()
         self._setup_custom_functions()
 
-        logger.info(
-            f"Template engine initialized with directories: {self.template_dirs}"
-        )
+        logger.info(f"Template engine initialized with directories: {self.template_dirs}")
 
     def _setup_custom_filters(self):
         """Setup custom Jinja2 filters for configuration processing."""
@@ -173,9 +171,7 @@ class TemplateEngine:
                 return int(base_value * multiplier)
             return base_value * multiplier
 
-        def resource_limit(
-            plan: str, resource: str, limits: Optional[dict[str, dict[str, Any]]] = None
-        ):
+        def resource_limit(plan: str, resource: str, limits: Optional[dict[str, dict[str, Any]]] = None):
             """Get resource limit for a plan."""
             if not limits:
                 limits = {
@@ -210,9 +206,7 @@ class TemplateEngine:
             """Generate placeholder for secret injection."""
             return f"${{SECRET:{secret_name}}}"
 
-        def conditional_config(
-            condition: bool, true_config: Any, false_config: Any = None
-        ):
+        def conditional_config(condition: bool, true_config: Any, false_config: Any = None):
             """Conditionally include configuration."""
             return true_config if condition else (false_config or {})
 
@@ -231,9 +225,7 @@ class TemplateEngine:
         self.env.globals["conditional_config"] = conditional_config
         self.env.globals["merge_configs"] = merge_configs
 
-    async def render_template(
-        self, template_name: str, context: dict[str, Any], output_format: str = "yaml"
-    ) -> str:
+    async def render_template(self, template_name: str, context: dict[str, Any], output_format: str = "yaml") -> str:
         """
         Render a template with the given context.
 
@@ -252,9 +244,7 @@ class TemplateEngine:
             context["output_format"] = output_format
 
             # Render template
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, template.render, context
-            )
+            result = await asyncio.get_event_loop().run_in_executor(None, template.render, context)
 
             logger.debug(f"Successfully rendered template {template_name}")
             return result
@@ -289,9 +279,7 @@ class TemplateEngine:
         try:
             template = self.env.from_string(template_string, template_class=Template)
 
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, template.render, context
-            )
+            result = await asyncio.get_event_loop().run_in_executor(None, template.render, context)
 
             logger.debug(f"Successfully rendered inline template {template_name}")
             return result
@@ -434,9 +422,7 @@ class TemplateEngine:
                 for root, _dirs, files in os.walk(template_dir):
                     for file in files:
                         if file.endswith((".j2", ".jinja", ".jinja2")):
-                            rel_path = os.path.relpath(
-                                os.path.join(root, file), template_dir
-                            )
+                            rel_path = os.path.relpath(os.path.join(root, file), template_dir)
                             templates.append(rel_path)
 
         return sorted(set(templates))

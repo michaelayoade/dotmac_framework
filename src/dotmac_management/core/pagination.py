@@ -12,14 +12,12 @@ class PaginationParams:
         page: Optional[int] = None,
         size: Optional[int] = None,
     ):
-        self.page = page
-        self.size = size
+        self.page = page or 1
+        self.size = size or 20
 
     @property
     def skip(self) -> int:
-        """Calculate skip va        if size is None:
-                    size = Query(20, ge=1, le=100, description="Number of items per page")  # noqa: B008
-        lue for database queries."""
+        """Calculate skip value for database queries."""
         return (self.page - 1) * self.size
 
     @property

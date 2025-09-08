@@ -8,10 +8,11 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.exceptions import DotMacException
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
+from dotmac_shared.exceptions import DotMacException
 
 logger = logging.getLogger(__name__)
 
@@ -292,9 +293,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
-async def sqlalchemy_exception_handler(
-    request: Request, exc: SQLAlchemyError
-) -> JSONResponse:
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
     """Handle SQLAlchemy database exceptions."""
     logger.error(
         f"Database exception: {type(exc).__name__} - {str(exc)}",
@@ -347,9 +346,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
 def add_exception_handlers(app: FastAPI) -> None:
     """Add all exception handlers to FastAPI app."""
     app.add_exception_handler(DotMacError, dotmac_exception_handler)
-    app.add_exception_handler(
-        DotMacException, dotmac_exception_handler
-    )  # Legacy support
+    app.add_exception_handler(DotMacException, dotmac_exception_handler)  # Legacy support
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
     app.add_exception_handler(Exception, general_exception_handler)

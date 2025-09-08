@@ -79,9 +79,7 @@ class ComplianceManager:
             for framework in self.config.enabled_frameworks:
                 await self._initialize_framework(framework)
 
-            logger.info(
-                f"✅ Compliance Manager initialized for {len(self.config.enabled_frameworks)} frameworks"
-            )
+            logger.info(f"✅ Compliance Manager initialized for {len(self.config.enabled_frameworks)} frameworks")
             return True
 
         except Exception as e:
@@ -142,9 +140,7 @@ class ComplianceManager:
             raise ValueError(f"Compliance rule {rule_id} not found")
 
         # Perform the actual check (simplified for demo)
-        status = await self._evaluate_compliance_rule(
-            rule, resource_id, resource_type, context
-        )
+        status = await self._evaluate_compliance_rule(rule, resource_id, resource_type, context)
 
         # Create check result
         check = ComplianceCheck(
@@ -158,8 +154,7 @@ class ComplianceManager:
             findings=await self._get_check_findings(rule, status, context),
             recommendations=await self._get_check_recommendations(rule, status),
             evidence=context,
-            next_check_due=datetime.now(timezone.utc)
-            + timedelta(days=30),  # Default 30 days
+            next_check_due=datetime.now(timezone.utc) + timedelta(days=30),  # Default 30 days
         )
 
         # Store check result
@@ -226,9 +221,7 @@ class ComplianceManager:
 
         # Calculate metrics
         total_checks = len(period_checks)
-        passed_checks = len(
-            [c for c in period_checks if c.status == ComplianceStatus.COMPLIANT]
-        )
+        passed_checks = len([c for c in period_checks if c.status == ComplianceStatus.COMPLIANT])
         failed_checks = total_checks - passed_checks
 
         # Calculate overall score
@@ -244,17 +237,11 @@ class ComplianceManager:
                     risk_counts[rule.severity.value] += 1
 
         # Generate trend data (simplified)
-        score_trend = await self._calculate_score_trend(
-            framework, period_start, period_end
-        )
-        issue_trend = await self._calculate_issue_trend(
-            framework, period_start, period_end
-        )
+        score_trend = await self._calculate_score_trend(framework, period_start, period_end)
+        issue_trend = await self._calculate_issue_trend(framework, period_start, period_end)
 
         # Calculate category scores
-        category_scores = await self._calculate_category_scores(
-            framework, period_checks
-        )
+        category_scores = await self._calculate_category_scores(framework, period_checks)
 
         return ComplianceMetrics(
             framework=framework,
@@ -307,9 +294,7 @@ class ComplianceManager:
         for rule in rules:
             self._rules[rule.rule_id] = rule
 
-    async def _load_framework_rules(
-        self, framework: ComplianceFramework
-    ) -> list[ComplianceRule]:
+    async def _load_framework_rules(self, framework: ComplianceFramework) -> list[ComplianceRule]:
         """Load compliance rules for a specific framework."""
         # Simplified rule loading - production would load from database/config
 
@@ -332,9 +317,7 @@ class ComplianceManager:
                 description="Logical and physical access controls restrict access to system resources",
                 category="security",
                 severity=RiskLevel.HIGH,
-                conditions={
-                    "requires": ["authentication", "authorization", "access_logging"]
-                },
+                conditions={"requires": ["authentication", "authorization", "access_logging"]},
                 remediation="Implement proper access controls and logging",
             ),
             ComplianceRule(
@@ -344,9 +327,7 @@ class ComplianceManager:
                 description="Sensitive data is encrypted in transit and at rest",
                 category="security",
                 severity=RiskLevel.CRITICAL,
-                conditions={
-                    "requires": ["encryption_in_transit", "encryption_at_rest"]
-                },
+                conditions={"requires": ["encryption_in_transit", "encryption_at_rest"]},
                 remediation="Enable encryption for all sensitive data",
             ),
         ]
@@ -401,9 +382,7 @@ class ComplianceManager:
 
         # Find rules that apply to this event
         applicable_rules = [
-            rule
-            for rule in self._rules.values()
-            if rule.framework == event.framework and rule.is_active
+            rule for rule in self._rules.values() if rule.framework == event.framework and rule.is_active
         ]
 
         # Perform checks
@@ -481,9 +460,7 @@ class ComplianceManager:
 
         return [rule.remediation]
 
-    async def _create_compliance_alert(
-        self, check: ComplianceCheck, rule: ComplianceRule
-    ):
+    async def _create_compliance_alert(self, check: ComplianceCheck, rule: ComplianceRule):
         """Create a compliance alert for a failed check."""
 
         alert = ComplianceAlert(

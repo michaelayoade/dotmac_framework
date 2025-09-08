@@ -199,8 +199,8 @@ class NetworkMonitor:
                 # Limit concurrent checks
                 semaphore = asyncio.Semaphore(self.config.max_concurrent_checks)
 
-                async def limited_check(task):
-                    async with semaphore:
+                async def limited_check(task, sem=semaphore):
+                    async with sem:
                         return await task
 
                 limited_tasks = [limited_check(task) for task in tasks]

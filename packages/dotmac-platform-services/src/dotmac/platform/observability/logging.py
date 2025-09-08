@@ -312,7 +312,7 @@ class LogAggregator:
             if entry["count"] == 1:
                 # First occurrence, emit immediately
                 return None
-            elif entry["count"] % 10 == 0:  # Emit every 10 occurrences
+            if entry["count"] % 10 == 0:  # Emit every 10 occurrences
                 return self._create_aggregated_entry(agg_key, entry)
 
             return None

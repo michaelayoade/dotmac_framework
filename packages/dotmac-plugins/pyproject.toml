@@ -1,109 +1,81 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
 
-[project]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
 name = "dotmac-plugins"
 version = "1.0.0"
 description = "Universal plugin system for Python applications"
+authors = ["DotMac Framework Team <dev@dotmac.com>"]
+
 readme = "README.md"
-authors = [
-    { name = "DotMac Framework Team" }
-]
-license = { text = "MIT" }
+license = "MIT"
+homepage = "https://github.com/dotmac-framework/dotmac-plugins"
+repository = "https://github.com/dotmac-framework/dotmac-plugins.git"
+documentation = "https://docs.dotmac.com/plugins"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: System :: Distributed Computing",
-]
-keywords = [
-    "plugins",
-    "extensibility",
-    "architecture",
-    "microservices",
-    "framework"
-]
-requires-python = ">=3.8"
-dependencies = [
-    "pyyaml>=6.0",
-    "aiohttp>=3.8.0",
+    "Topic :: System :: Distributed Computing"
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.0.0",
-    "black>=23.0.0",
-    "flake8>=6.0.0",
-    "mypy>=1.0.0",
-    "pre-commit>=3.0.0",
+# Ensure src layout packaging
+packages = [
+    { include = "dotmac_plugins", from = "src" },
+    { include = "dotmac", from = "src" }
 ]
 
-testing = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.0.0",
-    "coverage[toml]>=7.0.0",
-]
+[tool.poetry.dependencies]
+python = "^3.9"
+pyyaml = ">=6.0"
+aiohttp = ">=3.8.0"
 
-docs = [
-    "sphinx>=5.0.0",
-    "sphinx-rtd-theme>=1.2.0",
-    "myst-parser>=0.18.0",
-]
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0.0"
+pytest-asyncio = ">=0.21.0"
+pytest-cov = ">=4.0.0"
+black = ">=23.0.0"
 
-remote = [
-    "aiohttp>=3.8.0",
-    "gitpython>=3.1.0",
-]
-
-[project.urls]
-Homepage = "https://github.com/dotmac-framework/plugins"
-Documentation = "https://dotmac-plugins.readthedocs.io"
-Repository = "https://github.com/dotmac-framework/plugins.git"
-Issues = "https://github.com/dotmac-framework/plugins/issues"
-Changelog = "https://github.com/dotmac-framework/plugins/blob/main/CHANGELOG.md"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["dotmac_plugins*"]
-
+[tool.pytest]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
 python_files = ["test_*.py", "*_test.py"]
+
 python_functions = ["test_*"]
+
 asyncio_mode = "auto"
 addopts = [
+    "-v",
+    "--tb=short",
     "--strict-markers",
     "--strict-config",
     "--cov=dotmac_plugins",
     "--cov-report=term-missing",
     "--cov-report=html",
-    "--cov-report=xml",
+    "--cov-report=xml"
 ]
+
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests",
+    "unit: marks tests as unit tests"
 ]
 
+[tool.coverage]
 [tool.coverage.run]
 source = ["src/dotmac_plugins"]
-omit = [
-    "*/tests/*",
-    "*/test_*",
-    "*/examples/*",
-    "*/__init__.py",
-]
+
+omit = ["*/tests/*", "*/test_*", "*/examples/*", "*/__init__.py"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -114,15 +86,16 @@ exclude_lines = [
     "raise AssertionError",
     "raise NotImplementedError",
     "if 0:",
-    "if __name__ == .__main__.:",
+    "if __name__ == \"__main__\":",
     "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
+    "@(abc\\.)?abstractmethod"
 ]
 
 [tool.black]
 line-length = 100
-target-version = ['py38', 'py39', 'py310', 'py311']
-include = '\.pyi?$'
+target-version = ["py39", "py310", "py311", "py312"]
+
+include = "\\.pyi?$"
 extend-exclude = '''
 /(
   # directories
@@ -138,51 +111,20 @@ extend-exclude = '''
 '''
 
 [tool.mypy]
-python_version = "3.8"
+
+python_version = "3.9"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-
-[[tool.mypy.overrides]]
-module = [
-    "yaml.*",
-    "aiohttp.*",
-]
-ignore_missing_imports = true
 
 [tool.flake8]
 max-line-length = 100
-extend-ignore = [
-    "E203",  # whitespace before ':'
-    "W503",  # line break before binary operator
-    "E501",  # line too long (handled by black)
-]
-exclude = [
-    ".git",
-    "__pycache__",
-    "build",
-    "dist",
-    ".eggs",
-    "*.egg-info",
-    ".venv",
-    "venv",
-]
+extend-ignore = ["E203", "W503", "E501"]
+
+exclude = [".git", "__pycache__", "build", "dist", ".eggs", "*.egg-info", ".venv", "venv"]
 
 [tool.isort]
 profile = "black"
 line_length = 100
 multi_line_output = 3
 include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true

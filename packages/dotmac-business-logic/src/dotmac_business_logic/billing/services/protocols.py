@@ -7,20 +7,42 @@ allowing for platform-specific customization while maintaining consistency.
 
 from datetime import date
 from decimal import Decimal
-from typing import Any, Generic, Optional, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Optional, Protocol, TypeVar
 from uuid import UUID
 
 from ..core.models import (
     BillingPeriod,
-    BillingPlan,
-    Customer,
-    Invoice,
     InvoiceStatus,
-    Payment,
     PaymentStatus,
-    Subscription,
-    UsageRecord,
 )
+
+# Type placeholders for model classes that will be provided by implementations
+if TYPE_CHECKING:
+    class Customer:
+        pass
+
+    class BillingPlan:
+        pass
+
+    class Subscription:
+        pass
+
+    class Invoice:
+        pass
+
+    class Payment:
+        pass
+
+    class UsageRecord:
+        pass
+else:
+    # Runtime placeholders
+    Customer = Any
+    BillingPlan = Any
+    Subscription = Any
+    Invoice = Any
+    Payment = Any
+    UsageRecord = Any
 from ..schemas.billing_schemas import (
     BillingPlanCreate,
     BillingPlanUpdate,
@@ -52,6 +74,26 @@ class DatabaseSessionProtocol(Protocol):
 
     async def refresh(self, instance: Any) -> None:
         """Refresh an instance from the database."""
+        ...
+
+    async def flush(self) -> None:
+        """Flush the current transaction without committing."""
+        ...
+
+    def add(self, instance: Any) -> None:
+        """Add an instance to the session."""
+        ...
+
+    def add_all(self, instances: list[Any]) -> None:
+        """Add multiple instances to the session."""
+        ...
+
+    async def execute(self, statement: Any) -> Any:
+        """Execute a statement and return results."""
+        ...
+
+    async def delete(self, instance: Any) -> None:
+        """Delete an instance from the database."""
         ...
 
 
@@ -147,7 +189,9 @@ class SubscriptionRepositoryProtocol(
         """Get all active subscriptions."""
         ...
 
-    async def get_due_for_billing(self, date: Optional[date] = None) -> list[Subscription]:
+    async def get_due_for_billing(
+        self, date: Optional[date] = None
+    ) -> list[Subscription]:
         """Get subscriptions due for billing on a specific date."""
         ...
 

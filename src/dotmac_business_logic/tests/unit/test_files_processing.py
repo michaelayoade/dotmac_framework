@@ -276,7 +276,7 @@ class TestDocumentGenerator:
 
             def generate_batch(self, templates_data):
                 results = []
-                for i, data in enumerate(templates_data):
+                for i, _data in enumerate(templates_data):
                     results.append(
                         {"id": i, "status": "completed", "document": f"Document {i}"}
                     )

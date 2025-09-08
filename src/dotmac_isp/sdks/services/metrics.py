@@ -8,8 +8,9 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_isp.sdks.core.exceptions import SDKError
 from sqlalchemy.orm import Session
+
+from dotmac_isp.sdks.core.exceptions import SDKError
 
 
 class MetricService:
@@ -146,9 +147,7 @@ class MetricService:
         except Exception as e:
             raise SDKError(f"Failed to delete metric: {str(e)}") from e
 
-    async def get_metrics_summary(
-        self, time_window: Optional[timedelta] = None
-    ) -> dict[str, Any]:
+    async def get_metrics_summary(self, time_window: Optional[timedelta] = None) -> dict[str, Any]:
         """Get         if time_window is None:
                     time_window = timedelta(hours=24)
         summary of metrics within time window."""
@@ -156,9 +155,7 @@ class MetricService:
             end_time = datetime.now(timezone.utc)
             start_time = end_time - time_window
 
-            metrics = await self.query_metrics(
-                start_time=start_time, end_time=end_time, limit=10000
-            )
+            metrics = await self.query_metrics(start_time=start_time, end_time=end_time, limit=10000)
             summary = {
                 "total_metrics": len(metrics),
                 "time_window": str(time_window),
@@ -172,9 +169,7 @@ class MetricService:
                 metric_type = metric.get("metric_type", "unknown")
                 metric_name = metric.get("name", "unknown")
 
-                summary["metric_types"][metric_type] = (
-                    summary["metric_types"].get(metric_type, 0) + 1
-                )
+                summary["metric_types"][metric_type] = summary["metric_types"].get(metric_type, 0) + 1
                 summary["unique_names"].add(metric_name)
 
             summary["unique_names"] = list(summary["unique_names"])

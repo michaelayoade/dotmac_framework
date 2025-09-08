@@ -3,6 +3,8 @@
 
 set -e
 
+# SigNoz-only monitoring setup
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -57,17 +59,7 @@ check_dotmac_network() {
 setup_directories() {
     print_status "Setting up monitoring directories..."
     
-    local dirs=(
-        "monitoring/prometheus/alert_rules"
-        "monitoring/alertmanager/templates"
-        "monitoring/grafana/dashboards"
-        "monitoring/grafana/provisioning/datasources"
-        "monitoring/grafana/provisioning/dashboards"
-        "monitoring/loki"
-        "monitoring/promtail"
-        "monitoring/blackbox"
-        "monitoring/snmp"
-    )
+    local dirs=("monitoring/loki" "monitoring/promtail" "monitoring/alertmanager/templates" "monitoring/blackbox" "monitoring/snmp")
     
     for dir in "${dirs[@]}"; do
         mkdir -p "$dir"
@@ -76,44 +68,7 @@ setup_directories() {
 }
 
 # Create Grafana provisioning files
-setup_grafana_provisioning() {
-    print_status "Setting up Grafana provisioning..."
-    
-    # Datasources
-    cat > monitoring/grafana/provisioning/datasources/prometheus.yml << 'EOF'
-apiVersion: 1
-datasources:
-  - name: Prometheus
-    type: prometheus
-    access: proxy
-    url: http://prometheus:9090
-    isDefault: true
-  - name: Loki
-    type: loki
-    access: proxy
-    url: http://loki:3100
-  - name: Jaeger
-    type: jaeger
-    access: proxy
-    url: http://jaeger:16686
-EOF
-
-    # Dashboard provisioning
-    cat > monitoring/grafana/provisioning/dashboards/dashboards.yml << 'EOF'
-apiVersion: 1
-providers:
-  - name: 'default'
-    orgId: 1
-    folder: ''
-    type: file
-    disableDeletion: false
-    updateIntervalSeconds: 10
-    options:
-      path: /var/lib/grafana/dashboards
-EOF
-
-    print_status "Grafana provisioning files created"
-}
+setup_grafana_provisioning() { :; }
 
 # Create Loki configuration
 setup_loki_config() {
@@ -375,7 +330,7 @@ start_monitoring() {
 show_urls() {
     print_header "\n🎯 MONITORING SERVICES ACCESS"
     echo
-    print_status "Grafana Dashboard: http://localhost:3000"
+    : # Grafana not used
     echo "   Default login: admin / (password from .env.monitoring)"
     echo
     print_status "Prometheus: http://localhost:9090"
@@ -420,7 +375,7 @@ verify_monitoring() {
 main() {
     print_header "📊 DotMac Framework - Monitoring Stack Setup"
     echo "This script will set up a comprehensive monitoring solution"
-    echo "including Prometheus, Grafana, AlertManager, and more."
+    echo "including SigNoz (default)."
     echo "========================================================"
     echo
     
@@ -452,7 +407,7 @@ main() {
         print_warning "Remember to:"
         echo "  1. Update monitoring/.env.monitoring with your actual values"
         echo "  2. Configure your Slack/email notifications in AlertManager"
-        echo "  3. Import additional Grafana dashboards as needed"
+        : # Grafana not used
         echo "  4. Set up retention policies based on your storage requirements"
     else
         print_status "Monitoring configuration complete. Run the following to start:"

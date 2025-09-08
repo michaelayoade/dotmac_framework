@@ -62,7 +62,7 @@ async def main():
     """Run comprehensive database testing example"""
 
     # Database setup (using SQLite for example)
-    DATABASE_URL = "sqlite:///./test_database.db"
+    DATABASE_URL = "sqlite:///:memory:"
 
     # Create tables
     engine = create_engine(DATABASE_URL, echo=False)

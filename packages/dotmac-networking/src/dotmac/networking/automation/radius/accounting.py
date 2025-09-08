@@ -1,10 +1,9 @@
-import socket
-
 """
 RADIUS accounting processor.
 """
 
 import logging
+import socket
 from datetime import UTC
 
 from .types import (

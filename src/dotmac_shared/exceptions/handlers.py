@@ -118,9 +118,7 @@ def handle_exceptions(
             try:
                 return await func(*args, **kwargs)
             except exceptions as e:
-                return _handle_exception(
-                    e, func.__name__, strategy, context, default_return, exc_logger
-                )
+                return _handle_exception(e, func.__name__, strategy, context, default_return, exc_logger)
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
@@ -128,9 +126,7 @@ def handle_exceptions(
             try:
                 return func(*args, **kwargs)
             except exceptions as e:
-                return _handle_exception(
-                    e, func.__name__, strategy, context, default_return, exc_logger
-                )
+                return _handle_exception(e, func.__name__, strategy, context, default_return, exc_logger)
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
@@ -204,9 +200,7 @@ def handle_api_exceptions(
     context: str = "API operation",
 ):
     """Handle API-related exceptions"""
-    return handle_exceptions(
-        strategy=strategy, exceptions=ExceptionContext.API_EXCEPTIONS, context=context
-    )
+    return handle_exceptions(strategy=strategy, exceptions=ExceptionContext.API_EXCEPTIONS, context=context)
 
 
 def handle_database_exceptions(
@@ -226,9 +220,7 @@ def handle_file_exceptions(
     context: str = "File operation",
 ):
     """Handle file operation exceptions"""
-    return handle_exceptions(
-        strategy=strategy, exceptions=ExceptionContext.FILE_EXCEPTIONS, context=context
-    )
+    return handle_exceptions(strategy=strategy, exceptions=ExceptionContext.FILE_EXCEPTIONS, context=context)
 
 
 def handle_external_service_exceptions(

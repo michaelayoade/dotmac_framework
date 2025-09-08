@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 import httpx
+
 from dotmac_shared.core.error_utils import service_operation
 from dotmac_shared.core.logging import get_logger
 
@@ -92,9 +93,7 @@ class CoolifyClient:
             response = await self.client.post("/api/v1/applications", json=payload)
 
             if response.status_code not in [200, 201]:
-                raise Exception(
-                    f"Coolify API error: {response.status_code} - {response.text}"
-                )
+                raise Exception(f"Coolify API error: {response.status_code} - {response.text}")
 
             result = response.json()
             app_id = result.get("uuid") or result.get("id")
@@ -130,9 +129,7 @@ class CoolifyClient:
             response = await self.client.post(f"/api/v1/applications/{app_id}/deploy")
 
             if response.status_code not in [200, 201]:
-                raise Exception(
-                    f"Coolify deploy error: {response.status_code} - {response.text}"
-                )
+                raise Exception(f"Coolify deploy error: {response.status_code} - {response.text}")
 
             result = response.json()
 
@@ -166,9 +163,7 @@ class CoolifyClient:
             if response.status_code == 404:
                 return {"status": "not_found"}
             elif response.status_code != 200:
-                raise Exception(
-                    f"Coolify API error: {response.status_code} - {response.text}"
-                )
+                raise Exception(f"Coolify API error: {response.status_code} - {response.text}")
 
             result = response.json()
 
@@ -186,9 +181,7 @@ class CoolifyClient:
             raise
 
     @service_operation("coolify")
-    async def get_deployment_logs(
-        self, app_id: str, deployment_id: Optional[str] = None
-    ) -> list[str]:
+    async def get_deployment_logs(self, app_id: str, deployment_id: Optional[str] = None) -> list[str]:
         """
         Get deployment logs from Coolify
 
@@ -202,9 +195,7 @@ class CoolifyClient:
 
         try:
             if deployment_id:
-                endpoint = (
-                    f"/api/v1/applications/{app_id}/deployments/{deployment_id}/logs"
-                )
+                endpoint = f"/api/v1/applications/{app_id}/deployments/{deployment_id}/logs"
             else:
                 endpoint = f"/api/v1/applications/{app_id}/logs"
 
@@ -222,9 +213,7 @@ class CoolifyClient:
             return []
 
     @service_operation("coolify")
-    async def create_database_service(
-        self, db_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def create_database_service(self, db_config: dict[str, Any]) -> dict[str, Any]:
         """
         Create a database service in Coolify
 
@@ -252,14 +241,10 @@ class CoolifyClient:
 
             logger.info(f"Creating Coolify database service: {db_config['name']}")
 
-            response = await self.client.post(
-                "/api/v1/services/postgresql", json=payload
-            )
+            response = await self.client.post("/api/v1/services/postgresql", json=payload)
 
             if response.status_code not in [200, 201]:
-                raise Exception(
-                    f"Coolify database API error: {response.status_code} - {response.text}"
-                )
+                raise Exception(f"Coolify database API error: {response.status_code} - {response.text}")
 
             result = response.json()
             service_id = result.get("uuid") or result.get("id")
@@ -278,9 +263,7 @@ class CoolifyClient:
             raise
 
     @service_operation("coolify")
-    async def create_redis_service(
-        self, redis_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def create_redis_service(self, redis_config: dict[str, Any]) -> dict[str, Any]:
         """
         Create a Redis service in Coolify
 
@@ -299,9 +282,7 @@ class CoolifyClient:
                 "version": redis_config.get("version", "7"),
                 "project_uuid": self.config.project_id,
                 "server_uuid": self.config.server_id,
-                "environment_variables": {
-                    "REDIS_PASSWORD": redis_config.get("password", "")
-                },
+                "environment_variables": {"REDIS_PASSWORD": redis_config.get("password", "")},
             }
 
             logger.info(f"Creating Coolify Redis service: {redis_config['name']}")
@@ -309,18 +290,14 @@ class CoolifyClient:
             response = await self.client.post("/api/v1/services/redis", json=payload)
 
             if response.status_code not in [200, 201]:
-                raise Exception(
-                    f"Coolify Redis API error: {response.status_code} - {response.text}"
-                )
+                raise Exception(f"Coolify Redis API error: {response.status_code} - {response.text}")
 
             result = response.json()
             service_id = result.get("uuid") or result.get("id")
 
             logger.info(f"✅ Coolify Redis service created: {service_id}")
 
-            password_part = (
-                f":{redis_config['password']}@" if redis_config.get("password") else "@"
-            )
+            password_part = f":{redis_config['password']}@" if redis_config.get("password") else "@"
             connection_url = f"redis://{password_part}{redis_config['name']}:6379"
 
             return {
@@ -352,9 +329,7 @@ class CoolifyClient:
             response = await self.client.delete(f"/api/v1/applications/{app_id}")
 
             if response.status_code not in [200, 204]:
-                logger.error(
-                    f"Failed to delete application: {response.status_code} - {response.text}"
-                )
+                logger.error(f"Failed to delete application: {response.status_code} - {response.text}")
                 return False
 
             logger.info(f"✅ Coolify application deleted: {app_id}")
@@ -380,14 +355,10 @@ class CoolifyClient:
         try:
             payload = {"domain": domain, "https": True, "redirect_to_https": True}
 
-            response = await self.client.post(
-                f"/api/v1/applications/{app_id}/domains", json=payload
-            )
+            response = await self.client.post(f"/api/v1/applications/{app_id}/domains", json=payload)
 
             if response.status_code not in [200, 201]:
-                logger.error(
-                    f"Failed to set domain: {response.status_code} - {response.text}"
-                )
+                logger.error(f"Failed to set domain: {response.status_code} - {response.text}")
                 return False
 
             logger.info(f"✅ Domain set for application {app_id}: {domain}")

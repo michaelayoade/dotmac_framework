@@ -502,9 +502,9 @@ class AdvancedPluginAuditSystem:
 
     async def _sampling_filter(self, event: AuditEvent) -> bool:
         """Apply sampling filter."""
-        import random
+        import secrets
 
-        return random.random() < self.config.sampling_rate
+        return secrets.SystemRandom().random() < self.config.sampling_rate
 
     async def _gdpr_compliance_filter(self, event: AuditEvent) -> bool:
         """Apply GDPR compliance filter."""

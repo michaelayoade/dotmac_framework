@@ -4,15 +4,13 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_isp.modules.identity import schemas
-from dotmac_isp.modules.portal_management.models import PortalAccountType
 from sqlalchemy.orm import Session
 
 from dotmac.core.exceptions import ServiceError
+from dotmac_isp.modules.identity import schemas
+from dotmac_isp.modules.portal_management.models import PortalAccountType
 
-from .customer_service import CustomerService
 from .portal_service import PortalService
-from .user_service import UserService
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +38,7 @@ class IdentityOrchestrator:
 
     # ===== CUSTOMER MANAGEMENT =====
 
-    async def create_customer(
-        self, customer_data: schemas.CustomerCreate
-    ) -> schemas.CustomerResponse:
+    async def create_customer(self, customer_data: schemas.CustomerCreate) -> schemas.CustomerResponse:
         """Create a new customer with full data validation and business rules."""
         return await self.customer_service.create_customer(customer_data)
 
@@ -50,9 +46,7 @@ class IdentityOrchestrator:
         """Get customer by ID."""
         return await self.customer_service.get_customer(customer_id)
 
-    async def update_customer(
-        self, customer_id: UUID, update_data: schemas.CustomerUpdate
-    ) -> schemas.CustomerResponse:
+    async def update_customer(self, customer_id: UUID, update_data: schemas.CustomerUpdate) -> schemas.CustomerResponse:
         """Update customer information."""
         return await self.customer_service.update_customer(customer_id, update_data)
 
@@ -83,9 +77,7 @@ class IdentityOrchestrator:
         """Get user by ID."""
         return await self.user_service.get_user(user_id)
 
-    async def get_user_by_username(
-        self, username: str
-    ) -> Optional[schemas.UserResponse]:
+    async def get_user_by_username(self, username: str) -> Optional[schemas.UserResponse]:
         """Get user by username."""
         return await self.user_service.get_user_by_username(username)
 
@@ -93,9 +85,7 @@ class IdentityOrchestrator:
         """Get user by email."""
         return await self.user_service.get_user_by_email(email)
 
-    async def update_user(
-        self, user_id: UUID, update_data: schemas.UserUpdate
-    ) -> schemas.UserResponse:
+    async def update_user(self, user_id: UUID, update_data: schemas.UserUpdate) -> schemas.UserResponse:
         """Update user information."""
         return await self.user_service.update_user(user_id, update_data)
 
@@ -134,13 +124,9 @@ class IdentityOrchestrator:
         """Verify access token and return user information."""
         return await self.auth_service.verify_token(access_token)
 
-    async def change_password(
-        self, user_id: UUID, current_password: str, new_password: str
-    ) -> bool:
+    async def change_password(self, user_id: UUID, current_password: str, new_password: str) -> bool:
         """Change user password with current password verification."""
-        return await self.auth_service.change_password(
-            user_id, current_password, new_password
-        )
+        return await self.auth_service.change_password(user_id, current_password, new_password)
 
     async def request_password_reset(self, email: str) -> str:
         """Request password reset and return reset token."""
@@ -152,9 +138,7 @@ class IdentityOrchestrator:
 
     # ===== PORTAL MANAGEMENT =====
 
-    async def create_portal_account(
-        self, account_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def create_portal_account(self, account_data: dict[str, Any]) -> dict[str, Any]:
         """Create a new portal account."""
         return await self.portal_service.create_portal_account(account_data)
 
@@ -166,9 +150,7 @@ class IdentityOrchestrator:
         """Get portal account information."""
         return await self.portal_service.get_portal_account(portal_id)
 
-    async def authenticate_portal_user(
-        self, portal_id: str, password: str
-    ) -> Optional[dict[str, Any]]:
+    async def authenticate_portal_user(self, portal_id: str, password: str) -> Optional[dict[str, Any]]:
         """Authenticate portal user."""
         return await self.portal_service.authenticate_portal_user(portal_id, password)
 
@@ -188,26 +170,20 @@ class IdentityOrchestrator:
 
     # ===== ORCHESTRATION METHODS =====
 
-    async def handle_customer_onboarding(
-        self, onboarding_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def handle_customer_onboarding(self, onboarding_data: dict[str, Any]) -> dict[str, Any]:
         """Handle complete customer onboarding workflow."""
         try:
             customer_data = onboarding_data.get("customer_data")
             user_data = onboarding_data.get("user_data")
 
             # Create customer
-            customer_response = await self.customer_service.create_customer(
-                customer_data
-            )
+            customer_response = await self.customer_service.create_customer(customer_data)
             # Create user account if user data provided
             user_response = None
             if user_data:
                 user_data_dict = user_data.model_copy()
                 user_data_dict["customer_id"] = customer_response.id
-                user_response = await self.user_service.create_user(
-                    schemas.UserCreate(**user_data_dict)
-                )
+                user_response = await self.user_service.create_user(schemas.UserCreate(**user_data_dict))
             # Create portal account
             portal_account = None
             if hasattr(customer_response, "portal_id") and customer_response.portal_id:
@@ -221,9 +197,7 @@ class IdentityOrchestrator:
                     "last_name": customer_response.last_name,
                     "is_active": True,
                 }
-                portal_account = await self.portal_service.create_portal_account(
-                    portal_data
-                )
+                portal_account = await self.portal_service.create_portal_account(portal_data)
             return {
                 "customer": customer_response,
                 "user": user_response,
@@ -235,9 +209,7 @@ class IdentityOrchestrator:
             logger.error(f"Customer onboarding failed: {e}")
             raise ServiceError(f"Customer onboarding failed: {str(e)}") from e
 
-    async def handle_user_authentication_flow(
-        self, auth_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def handle_user_authentication_flow(self, auth_data: dict[str, Any]) -> dict[str, Any]:
         """Handle complete user authentication flow with portal integration."""
         try:
             login_request = schemas.LoginRequest(**auth_data.get("login_data", {}))
@@ -247,9 +219,7 @@ class IdentityOrchestrator:
             # Attempt standard user login
             login_response = None
             try:
-                login_response = await self.auth_service.login(
-                    login_request, ip_address, user_agent
-                )
+                login_response = await self.auth_service.login(login_request, ip_address, user_agent)
             except Exception as e:
                 logger.debug(f"Standard login failed, trying portal auth: {e}")
 
@@ -257,10 +227,8 @@ class IdentityOrchestrator:
             portal_auth_response = None
             if not login_response:
                 try:
-                    portal_auth_response = (
-                        await self.portal_service.authenticate_portal_user(
-                            login_request.username, login_request.password
-                        )
+                    portal_auth_response = await self.portal_service.authenticate_portal_user(
+                        login_request.username, login_request.password
                     )
                 except Exception as e:
                     logger.debug(f"Portal authentication also failed: {e}")
@@ -288,9 +256,7 @@ class IdentityOrchestrator:
             logger.error(f"Authentication flow failed: {e}")
             raise ServiceError(f"Authentication flow failed: {str(e)}") from e
 
-    async def handle_account_recovery(
-        self, recovery_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def handle_account_recovery(self, recovery_data: dict[str, Any]) -> dict[str, Any]:
         """Handle account recovery workflow."""
         try:
             email = recovery_data.get("email")
@@ -306,15 +272,9 @@ class IdentityOrchestrator:
                     user = await self.user_service.get_user_by_email(email)
                     if user:
                         # Find portal account for user
-                        customer = await self.customer_service.get_customer(
-                            user.id
-                        )  # This is simplified
+                        customer = await self.customer_service.get_customer(user.id)  # This is simplified
                         if hasattr(customer, "portal_id"):
-                            portal_reset = (
-                                await self.portal_service.reset_portal_password(
-                                    customer.portal_id
-                                )
-                            )
+                            portal_reset = await self.portal_service.reset_portal_password(customer.portal_id)
                 except Exception as e:
                     logger.debug(f"Portal password reset failed: {e}")
 

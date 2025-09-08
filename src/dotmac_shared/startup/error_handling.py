@@ -67,9 +67,7 @@ class StartupError:
             "timestamp": self.timestamp.isoformat(),
             "retry_count": self.retry_count,
             "max_retries": self.max_retries,
-            "traceback": traceback.format_exception(
-                type(self.error), self.error, self.error.__traceback__
-            ),
+            "traceback": traceback.format_exception(type(self.error), self.error, self.error.__traceback__),
         }
 
 
@@ -85,16 +83,13 @@ class StartupResult:
     @property
     def has_critical_errors(self) -> bool:
         """Check if any critical errors occurred."""
-        return any(
-            error.severity == StartupErrorSeverity.CRITICAL for error in self.errors
-        )
+        return any(error.severity == StartupErrorSeverity.CRITICAL for error in self.errors)
 
     @property
     def has_high_severity_errors(self) -> bool:
         """Check if any high severity errors occurred."""
         return any(
-            error.severity in [StartupErrorSeverity.CRITICAL, StartupErrorSeverity.HIGH]
-            for error in self.errors
+            error.severity in [StartupErrorSeverity.CRITICAL, StartupErrorSeverity.HIGH] for error in self.errors
         )
 
 
@@ -139,20 +134,12 @@ class StartupManager:
 
         for attempt in range(max_retries + 1):
             try:
-                result = (
-                    await operation(**kwargs)
-                    if asyncio.iscoroutinefunction(operation)
-                    else operation(**kwargs)
-                )
+                result = await operation(**kwargs) if asyncio.iscoroutinefunction(operation) else operation(**kwargs)
 
                 if startup_error and attempt > 0:
-                    self._logger.info(
-                        f"✅ {component} recovered after {attempt} attempts"
-                    )
+                    self._logger.info(f"✅ {component} recovered after {attempt} attempts")
 
-                return StartupResult(
-                    success=True, metadata={"attempts": attempt + 1, "result": result}
-                )
+                return StartupResult(success=True, metadata={"attempts": attempt + 1, "result": result})
 
             except Exception as e:
                 startup_error = StartupError(
@@ -173,9 +160,7 @@ class StartupManager:
                     await asyncio.sleep(retry_delay)
                     retry_delay *= 1.5  # Exponential backoff
                 else:
-                    self._logger.error(
-                        f"❌ {component} failed after {max_retries + 1} attempts: {e}"
-                    )
+                    self._logger.error(f"❌ {component} failed after {max_retries + 1} attempts: {e}")
 
         # All attempts failed
         self.startup_errors.append(startup_error)
@@ -217,14 +202,8 @@ class StartupManager:
     def log_startup_summary(self) -> None:
         """Log comprehensive startup summary."""
         total_errors = len(self.startup_errors)
-        critical_errors = sum(
-            1
-            for e in self.startup_errors
-            if e.severity == StartupErrorSeverity.CRITICAL
-        )
-        high_errors = sum(
-            1 for e in self.startup_errors if e.severity == StartupErrorSeverity.HIGH
-        )
+        critical_errors = sum(1 for e in self.startup_errors if e.severity == StartupErrorSeverity.CRITICAL)
+        high_errors = sum(1 for e in self.startup_errors if e.severity == StartupErrorSeverity.HIGH)
 
         self._logger.info("=" * 60)
         self._logger.info(f"🚀 {self.service_name} Startup Summary")
@@ -255,18 +234,12 @@ class StartupManager:
     def should_continue_startup(self) -> bool:
         """Determine if startup should continue based on errors."""
         # Critical errors always stop startup
-        if any(
-            e.severity == StartupErrorSeverity.CRITICAL for e in self.startup_errors
-        ):
+        if any(e.severity == StartupErrorSeverity.CRITICAL for e in self.startup_errors):
             return False
 
         # In production, high severity errors might stop startup
         if self.environment == "production":
-            high_severity_count = sum(
-                1
-                for e in self.startup_errors
-                if e.severity == StartupErrorSeverity.HIGH
-            )
+            high_severity_count = sum(1 for e in self.startup_errors if e.severity == StartupErrorSeverity.HIGH)
             # Allow up to 2 high severity errors in production
             return high_severity_count <= 2
 
@@ -286,16 +259,12 @@ class StartupManager:
                     callback()
                 self._logger.info(f"✅ Shutdown callback completed: {callback.__name__}")
             except Exception as e:
-                self._logger.error(
-                    f"❌ Shutdown callback failed: {callback.__name__}: {e}"
-                )
+                self._logger.error(f"❌ Shutdown callback failed: {callback.__name__}: {e}")
 
         self._logger.info(f"✅ Graceful shutdown of {self.service_name} completed")
 
 
-def create_startup_manager(
-    service_name: str, environment: Optional[str] = None
-) -> StartupManager:
+def create_startup_manager(service_name: str, environment: Optional[str] = None) -> StartupManager:
     """Factory function to create a startup manager."""
     return StartupManager(service_name, environment)
 
@@ -316,8 +285,7 @@ async def managed_startup(
 
         # Check if we should continue based on startup errors
         if fail_on_critical and any(
-            e.severity == StartupErrorSeverity.CRITICAL
-            for e in startup_manager.startup_errors
+            e.severity == StartupErrorSeverity.CRITICAL for e in startup_manager.startup_errors
         ):
             raise RuntimeError("Critical startup errors occurred, cannot continue")
 

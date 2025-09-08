@@ -6,10 +6,11 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.api import StandardDependencies, standard_exception_handler
-from dotmac_shared.api.dependencies import get_standard_deps
 from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic import BaseModel
+
+from dotmac_shared.api import StandardDependencies, standard_exception_handler
+from dotmac_shared.api.dependencies import get_standard_deps
 
 from ..workflow_analytics import (
     WorkflowAnalyticsService,
@@ -77,9 +78,7 @@ def create_workflow_analytics_router(service: WorkflowAnalyticsService) -> APIRo
         period_days: int = Query(7, ge=1, le=90, description="Period in days"),
         deps: StandardDependencies = Depends(get_standard_deps),
     ) -> dict[str, Any]:
-        return await service.get_workflow_analytics_dashboard(
-            period_days=period_days, tenant_id=deps.tenant_id
-        )
+        return await service.get_workflow_analytics_dashboard(period_days=period_days, tenant_id=deps.tenant_id)
 
     @router.get("/health")
     async def health() -> dict[str, Any]:

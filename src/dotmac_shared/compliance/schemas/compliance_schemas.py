@@ -109,16 +109,10 @@ class ComplianceEvent(TenantBaseModel):
     ip_address: Optional[str] = Field(None, description="Source IP address")
     user_agent: Optional[str] = Field(None, description="User agent string")
     risk_level: RiskLevel = Field(default=RiskLevel.LOW, description="Risk assessment")
-    data_classification: Optional[DataClassification] = Field(
-        None, description="Data classification"
-    )
+    data_classification: Optional[DataClassification] = Field(None, description="Data classification")
     details: dict[str, Any] = Field(default_factory=dict, description="Event details")
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
-    timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Event timestamp"
-    )
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Event timestamp")
 
 
 class AuditEvent(BaseModel):
@@ -133,9 +127,7 @@ class AuditEvent(BaseModel):
     risk_score: Optional[int] = Field(None, description="Risk score 0-100")
     compliance_relevant: bool = Field(default=False, description="Compliance relevance")
     context: dict[str, Any] = Field(default_factory=dict, description="Event context")
-    timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Event timestamp"
-    )
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Event timestamp")
 
 
 class ComplianceRule(BaseModel):
@@ -162,16 +154,10 @@ class ComplianceCheck(TenantBaseModel):
     status: ComplianceStatus = Field(..., description="Check result")
     score: Optional[float] = Field(None, description="Compliance score 0-100")
     findings: list[str] = Field(default_factory=list, description="Check findings")
-    recommendations: list[str] = Field(
-        default_factory=list, description="Recommendations"
-    )
-    evidence: dict[str, Any] = Field(
-        default_factory=dict, description="Supporting evidence"
-    )
+    recommendations: list[str] = Field(default_factory=list, description="Recommendations")
+    evidence: dict[str, Any] = Field(default_factory=dict, description="Supporting evidence")
     next_check_due: Optional[datetime] = Field(None, description="Next check due date")
-    checked_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Check timestamp"
-    )
+    checked_at: datetime = Field(default_factory=datetime.utcnow, description="Check timestamp")
 
 
 class RegulatoryReport(TenantBaseModel):
@@ -203,9 +189,7 @@ class RegulatoryReport(TenantBaseModel):
     version: str = Field(default="1.0", description="Report version")
 
     # Timestamps
-    generated_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Generation time"
-    )
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Generation time")
     approved_at: Optional[datetime] = Field(None, description="Approval time")
 
 
@@ -235,9 +219,7 @@ class ComplianceMetrics(BaseModel):
     # Category breakdown
     category_scores: dict[str, float] = Field(..., description="Scores by category")
 
-    calculated_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Calculation time"
-    )
+    calculated_at: datetime = Field(default_factory=datetime.utcnow, description="Calculation time")
 
 
 class ComplianceAlert(TenantBaseModel):
@@ -259,9 +241,7 @@ class ComplianceAlert(TenantBaseModel):
     resolved_by: Optional[UUID] = Field(None, description="User who resolved")
 
     # Timestamps
-    triggered_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Trigger time"
-    )
+    triggered_at: datetime = Field(default_factory=datetime.utcnow, description="Trigger time")
     acknowledged_at: Optional[datetime] = Field(None, description="Acknowledgment time")
     resolved_at: Optional[datetime] = Field(None, description="Resolution time")
 
@@ -281,9 +261,7 @@ class DataRetentionPolicy(BaseModel):
     disposal_method: str = Field(..., description="Data disposal method")
     exceptions: list[str] = Field(default_factory=list, description="Policy exceptions")
     is_active: bool = Field(default=True, description="Policy is active")
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Creation time"
-    )
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation time")
 
 
 class ComplianceReportRequest(BaseModel):
@@ -293,14 +271,10 @@ class ComplianceReportRequest(BaseModel):
     report_type: str = Field(..., description="Report type")
     period_start: datetime = Field(..., description="Report period start")
     period_end: datetime = Field(..., description="Report period end")
-    include_sections: list[str] = Field(
-        default_factory=list, description="Sections to include"
-    )
+    include_sections: list[str] = Field(default_factory=list, description="Sections to include")
     format: str = Field(default="pdf", description="Output format")
     tenant_id: Optional[UUID] = Field(None, description="Tenant scope")
-    filters: dict[str, Any] = Field(
-        default_factory=dict, description="Additional filters"
-    )
+    filters: dict[str, Any] = Field(default_factory=dict, description="Additional filters")
 
 
 class ComplianceSchedule(TenantBaseModel):
@@ -314,6 +288,4 @@ class ComplianceSchedule(TenantBaseModel):
     next_run: datetime = Field(..., description="Next scheduled run")
     is_active: bool = Field(default=True, description="Schedule is active")
     created_by: UUID = Field(..., description="User who created schedule")
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Creation time"
-    )
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation time")

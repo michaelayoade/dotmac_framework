@@ -48,8 +48,9 @@ class BackoffPolicy:
         delay_ms = min(delay_ms, self.max_delay_ms)
 
         # Add jitter to avoid thundering herd
+        # Note: Using random for non-cryptographic jitter in retry delays is acceptable
         if self.jitter_ms > 0:
-            jitter = random.randint(-self.jitter_ms, self.jitter_ms)
+            jitter = random.randint(-self.jitter_ms, self.jitter_ms)  # nosec B311
             delay_ms += jitter
 
         # Ensure non-negative
@@ -97,6 +98,7 @@ class ConsumerOptions:
     backoff_jitter_ms: int = 50
     backoff_max_delay_ms: int = 30000
     dlq_topic: Optional[str] = None  # Default: "{topic}.DLQ"
+    retry_delay: Optional[int] = None  # Legacy parameter for backward compatibility
 
     # Callbacks
     on_retry: Optional[Callable[[Event, int, Exception], Awaitable[None]]] = None

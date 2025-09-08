@@ -6,4 +6,4 @@ Import submodules directly, e.g.:
 
 from dotmac_management.services.tenant_provisioning import TenantProvisioningService
 """
-__all__ = []
+__all__: list[str] = []

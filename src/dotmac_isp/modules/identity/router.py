@@ -18,9 +18,7 @@ from .services import AuthService, CustomerService, PortalService, UserService
 logger = logging.getLogger(__name__)
 
 # Create APIRouter directly due to factory limitations
-identity_router = APIRouter(
-    prefix="/identity", tags=["identity", "authentication", "user-management"]
-)
+identity_router = APIRouter(prefix="/identity", tags=["identity", "authentication", "user-management"])
 
 
 # Request/Response models
@@ -79,9 +77,7 @@ async def login(
         )
 
         if not result:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
         return result
 
@@ -102,17 +98,13 @@ async def logout(
 ):
     """Logout user and invalidate session."""
     try:
-        success = await auth_service.logout_user(
-            session_id=session_id, user_id=current_user["id"]
-        )
+        success = await auth_service.logout_user(session_id=session_id, user_id=current_user["id"])
 
         return {"success": success, "message": "Logged out successfully"}
 
     except Exception as e:
         logger.error(f"Logout error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Logout failed"
-        ) from e
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Logout failed") from e
 
 
 # User management endpoints
@@ -127,14 +119,10 @@ async def create_user(
     """Create new user."""
     try:
         user_data = request.model_dump()
-        result = await user_service.create_user(
-            user_data=user_data, created_by=current_user["id"]
-        )
+        result = await user_service.create_user(user_data=user_data, created_by=current_user["id"])
 
         if not result:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="User creation failed"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User creation failed")
 
         return result
 
@@ -159,9 +147,7 @@ async def get_user(
         result = await user_service.get_user_by_id(user_id)
 
         if not result:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         return result
 
@@ -210,16 +196,12 @@ async def create_customer(
     request: CustomerCreateRequest,
     current_user: dict = Depends(get_current_user),
     _: None = Depends(require_permissions(["customers.create"])),
-    customer_service: CustomerService = Depends(
-        lambda: CustomerService(None, "default")
-    ),
+    customer_service: CustomerService = Depends(lambda: CustomerService(None, "default")),
 ):
     """Create new customer."""
     try:
         customer_data = request.model_dump()
-        result = await customer_service.create_customer(
-            customer_data=customer_data, created_by=current_user["id"]
-        )
+        result = await customer_service.create_customer(customer_data=customer_data, created_by=current_user["id"])
 
         if not result:
             raise HTTPException(
@@ -243,18 +225,14 @@ async def get_customer(
     customer_id: UUID,
     current_user: dict = Depends(get_current_user),
     _: None = Depends(require_permissions(["customers.read"])),
-    customer_service: CustomerService = Depends(
-        lambda: CustomerService(None, "default")
-    ),
+    customer_service: CustomerService = Depends(lambda: CustomerService(None, "default")),
 ):
     """Get customer by ID."""
     try:
         result = await customer_service.get_customer_by_id(customer_id)
 
         if not result:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
 
         return result
 
@@ -275,9 +253,7 @@ async def list_customers(
     search: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
     _: None = Depends(require_permissions(["customers.list"])),
-    customer_service: CustomerService = Depends(
-        lambda: CustomerService(None, "default")
-    ),
+    customer_service: CustomerService = Depends(lambda: CustomerService(None, "default")),
 ):
     """List customers with optional filtering."""
     try:
@@ -340,9 +316,7 @@ async def create_portal_access(
         ) from e
 
 
-@identity_router.get(
-    "/portal-access/{user_id}/{portal_type}", response_model=dict[str, Any]
-)
+@identity_router.get("/portal-access/{user_id}/{portal_type}", response_model=dict[str, Any])
 @standard_exception_handler
 async def get_portal_access(
     user_id: UUID,
@@ -356,9 +330,7 @@ async def get_portal_access(
         result = await portal_service.get_user_portal_access(user_id, portal_type)
 
         if not result:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Portal access not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal access not found")
 
         return result
 

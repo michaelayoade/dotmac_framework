@@ -205,9 +205,7 @@ class ResilienceValidator:
         logger.info(f"Resilience validation completed: {len(results)} tests run")
         return results
 
-    def _get_tests_for_level(
-        self, level: ResilienceLevel, specific_tests: Optional[list[str]]
-    ) -> list[str]:
+    def _get_tests_for_level(self, level: ResilienceLevel, specific_tests: Optional[list[str]]) -> list[str]:
         """Get tests to run for specified level"""
         if specific_tests:
             return [name for name in specific_tests if name in self.tests]
@@ -223,9 +221,7 @@ class ResilienceValidator:
         max_level_index = level_order.index(level)
         included_levels = level_order[: max_level_index + 1]
 
-        return [
-            name for name, test in self.tests.items() if test.level in included_levels
-        ]
+        return [name for name, test in self.tests.items() if test.level in included_levels]
 
     def _order_tests_by_dependencies(self, test_names: list[str]) -> list[str]:
         """Order tests based on their dependencies"""
@@ -242,9 +238,7 @@ class ResilienceValidator:
 
             if not ready_tests:
                 # No tests ready - circular dependency or missing dependency
-                logger.warning(
-                    f"Circular or missing dependencies detected: {remaining}"
-                )
+                logger.warning(f"Circular or missing dependencies detected: {remaining}")
                 ordered.extend(list(remaining))
                 break
 
@@ -254,40 +248,29 @@ class ResilienceValidator:
 
         return ordered
 
-    async def _run_single_test(
-        self, test: ResilienceTest
-    ) -> ResilienceValidationResult:
+    async def _run_single_test(self, test: ResilienceTest) -> ResilienceValidationResult:
         """Run a single resilience test"""
         start_time = utc_now()
 
         try:
             # Check dependencies passed
             for dep in test.dependencies:
-                if (
-                    dep in self.results
-                    and self.results[dep].result == ValidationResult.FAILED
-                ):
+                if dep in self.results and self.results[dep].result == ValidationResult.FAILED:
                     return ResilienceValidationResult(
                         test_name=test.name,
                         result=ValidationResult.FAILED,
                         duration_seconds=0,
                         error_message=f"Dependency {dep} failed",
-                        recommendations=[
-                            f"Fix dependency {dep} before running this test"
-                        ],
+                        recommendations=[f"Fix dependency {dep} before running this test"],
                     )
 
             # Run the test with timeout
-            test_result = await asyncio.wait_for(
-                test.test_function(), timeout=test.timeout_seconds
-            )
+            test_result = await asyncio.wait_for(test.test_function(), timeout=test.timeout_seconds)
 
             duration = (utc_now() - start_time).total_seconds()
 
             # Evaluate success criteria
-            result, recommendations = self._evaluate_success_criteria(
-                test_result, test.success_criteria
-            )
+            result, recommendations = self._evaluate_success_criteria(test_result, test.success_criteria)
 
             return ResilienceValidationResult(
                 test_name=test.name,
@@ -361,9 +344,7 @@ class ResilienceValidator:
             elif criterion.endswith("_compliance"):
                 if not actual:
                     failed_criteria.append(f"{criterion} not met")
-                    recommendations.append(
-                        f"Review {criterion} requirements and implementation"
-                    )
+                    recommendations.append(f"Review {criterion} requirements and implementation")
 
         if failed_criteria:
             return ValidationResult.FAILED, recommendations
@@ -415,9 +396,7 @@ class ResilienceValidator:
             "partition_detection": True,
             "graceful_degradation": True,
             "recovery_time_seconds": 15.2,
-            "chaos_result": result.to_dict()
-            if hasattr(result, "to_dict")
-            else str(result),
+            "chaos_result": result.to_dict() if hasattr(result, "to_dict") else str(result),
         }
 
     async def _test_tenant_isolation_under_stress(self) -> dict[str, Any]:
@@ -515,16 +494,12 @@ class ResilienceValidator:
             "chaos_experiments_count": result["total_experiments"],
         }
 
-    def generate_resilience_report(
-        self, results: list[ResilienceValidationResult]
-    ) -> dict[str, Any]:
+    def generate_resilience_report(self, results: list[ResilienceValidationResult]) -> dict[str, Any]:
         """Generate comprehensive resilience report"""
         total_tests = len(results)
         passed_tests = sum(1 for r in results if r.result == ValidationResult.PASSED)
         failed_tests = sum(1 for r in results if r.result == ValidationResult.FAILED)
-        degraded_tests = sum(
-            1 for r in results if r.result == ValidationResult.DEGRADED
-        )
+        degraded_tests = sum(1 for r in results if r.result == ValidationResult.DEGRADED)
 
         total_duration = sum(r.duration_seconds for r in results)
 
@@ -546,9 +521,7 @@ class ResilienceValidator:
                 "passed": passed_tests,
                 "failed": failed_tests,
                 "degraded": degraded_tests,
-                "success_rate": (passed_tests / total_tests) * 100
-                if total_tests > 0
-                else 0,
+                "success_rate": (passed_tests / total_tests) * 100 if total_tests > 0 else 0,
                 "total_duration_seconds": total_duration,
             },
             "test_results": [
@@ -564,9 +537,7 @@ class ResilienceValidator:
             "resilience_score": self._calculate_resilience_score(results),
         }
 
-    def _calculate_resilience_score(
-        self, results: list[ResilienceValidationResult]
-    ) -> dict[str, Any]:
+    def _calculate_resilience_score(self, results: list[ResilienceValidationResult]) -> dict[str, Any]:
         """Calculate overall resilience score"""
         if not results:
             return {"score": 0, "grade": "F", "explanation": "No tests run"}

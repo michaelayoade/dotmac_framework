@@ -11,21 +11,16 @@ from pathlib import Path
 from typing import IO, Optional, Union
 
 try:
-    from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+    from PIL import Image, ImageFilter
 
     PIL_AVAILABLE = True
 except ImportError:
     PIL_AVAILABLE = False
-    warnings.warn("Pillow (PIL) not available - image processing will be limited")
+    warnings.warn(
+        "Pillow (PIL) not available - image processing will be limited", stacklevel=2
+    )
 
-try:
-    import cv2
-    import numpy as np
-
-    OPENCV_AVAILABLE = True
-except ImportError:
-    OPENCV_AVAILABLE = False
-    # OpenCV is optional - only warn if specifically needed
+OPENCV_AVAILABLE = False  # Not currently used
 
 try:
     import magic
@@ -92,13 +87,13 @@ class BaseProcessor:
                 return magic.from_buffer(file_path, mime=True)
             else:
                 # Fallback - try to guess from content
-                if file_path.startswith(b"\xFF\xD8\xFF"):
+                if file_path.startswith(b"\xff\xd8\xff"):
                     return "image/jpeg"
                 elif file_path.startswith(b"\x89PNG"):
                     return "image/png"
                 elif file_path.startswith(b"GIF8"):
                     return "image/gif"
-                elif file_path.startswith(b"\x42\x4D"):
+                elif file_path.startswith(b"\x42\x4d"):
                     return "image/bmp"
                 elif file_path.startswith(b"RIFF") and b"WEBP" in file_path[:20]:
                     return "image/webp"
@@ -130,7 +125,8 @@ class ImageProcessor(BaseProcessor):
         """Check if required dependencies are available."""
         if not PIL_AVAILABLE:
             warnings.warn(
-                "Pillow not available - image processing will be very limited"
+                "Pillow not available - image processing will be very limited",
+                stacklevel=2,
             )
 
     def get_image_info(
@@ -138,7 +134,7 @@ class ImageProcessor(BaseProcessor):
     ) -> Optional[ImageMetadata]:
         """Get image metadata information."""
         if not PIL_AVAILABLE:
-            warnings.warn("Cannot get image info - Pillow not available")
+            warnings.warn("Cannot get image info - Pillow not available", stacklevel=2)
             return None
 
         try:
@@ -152,7 +148,7 @@ class ImageProcessor(BaseProcessor):
                 with Image.open(image_path) as img:
                     return self._extract_metadata(img)
         except Exception as e:
-            warnings.warn(f"Failed to get image info: {e}")
+            warnings.warn(f"Failed to get image info: {e}", stacklevel=2)
             return None
 
     def _extract_metadata(self, img: "Image.Image") -> ImageMetadata:
@@ -214,7 +210,7 @@ class ImageProcessor(BaseProcessor):
             return self._save_image(resized_img, output_path, options)
 
         except Exception as e:
-            warnings.warn(f"Image resize failed: {e}")
+            warnings.warn(f"Image resize failed: {e}", stacklevel=2)
             return self._fallback_resize(image_path, width, height, output_path)
 
     def crop_image(
@@ -248,7 +244,7 @@ class ImageProcessor(BaseProcessor):
             return self._save_image(cropped_img, output_path, options)
 
         except Exception as e:
-            warnings.warn(f"Image crop failed: {e}")
+            warnings.warn(f"Image crop failed: {e}", stacklevel=2)
             return self._fallback_operation(image_path, output_path, "crop")
 
     def rotate_image(
@@ -280,7 +276,7 @@ class ImageProcessor(BaseProcessor):
             return self._save_image(rotated_img, output_path, options)
 
         except Exception as e:
-            warnings.warn(f"Image rotation failed: {e}")
+            warnings.warn(f"Image rotation failed: {e}", stacklevel=2)
             return self._fallback_operation(image_path, output_path, "rotate")
 
     def apply_filter(
@@ -322,13 +318,13 @@ class ImageProcessor(BaseProcessor):
             if filter_type in filter_map:
                 filtered_img = img.filter(filter_map[filter_type])
             else:
-                warnings.warn(f"Unknown filter type: {filter_type}")
+                warnings.warn(f"Unknown filter type: {filter_type}", stacklevel=2)
                 filtered_img = img
 
             return self._save_image(filtered_img, output_path, options)
 
         except Exception as e:
-            warnings.warn(f"Filter application failed: {e}")
+            warnings.warn(f"Filter application failed: {e}", stacklevel=2)
             return self._fallback_operation(
                 image_path, output_path, f"filter_{filter_type}"
             )
@@ -373,7 +369,7 @@ class ImageProcessor(BaseProcessor):
             return self._save_image(img, output_path, options)
 
         except Exception as e:
-            warnings.warn(f"Format conversion failed: {e}")
+            warnings.warn(f"Format conversion failed: {e}", stacklevel=2)
             return self._fallback_operation(
                 image_path, output_path, f"convert_to_{output_format}"
             )
@@ -412,7 +408,9 @@ class ImageProcessor(BaseProcessor):
         output_path: Optional[Union[str, Path]],
     ) -> bytes:
         """Fallback for image resize when PIL unavailable."""
-        warnings.warn("Image resize not available - returning original image")
+        warnings.warn(
+            "Image resize not available - returning original image", stacklevel=2
+        )
         return self._get_original_bytes(image_path, output_path)
 
     def _fallback_operation(
@@ -422,7 +420,9 @@ class ImageProcessor(BaseProcessor):
         operation: str,
     ) -> bytes:
         """Fallback for image operations when PIL unavailable."""
-        warnings.warn(f"Image {operation} not available - returning original image")
+        warnings.warn(
+            f"Image {operation} not available - returning original image", stacklevel=2
+        )
         return self._get_original_bytes(image_path, output_path)
 
     def _get_original_bytes(
@@ -459,7 +459,8 @@ class DocumentProcessor(BaseProcessor):
     def extract_text(self, document_path: Union[str, Path, bytes, IO]) -> str:
         """Extract text from document (placeholder implementation)."""
         warnings.warn(
-            "Document text extraction not implemented - use specialized libraries"
+            "Document text extraction not implemented - use specialized libraries",
+            stacklevel=2,
         )
 
         if isinstance(document_path, (str, Path)):
@@ -478,7 +479,8 @@ class DocumentProcessor(BaseProcessor):
     ) -> bytes:
         """Convert document to PDF (placeholder implementation)."""
         warnings.warn(
-            "Document to PDF conversion not implemented - use specialized libraries"
+            "Document to PDF conversion not implemented - use specialized libraries",
+            stacklevel=2,
         )
 
         # Return placeholder PDF content

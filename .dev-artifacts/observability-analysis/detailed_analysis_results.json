@@ -1,0 +1,192 @@
+{
+  "timestamp": "2025-09-08 09:23:53",
+  "analysis_sections": {
+    "configuration": {
+      "issues_found": 2,
+      "critical_issues": 1,
+      "major_issues": 1,
+      "issues": [
+        {
+          "component": "config_classes",
+          "severity": "critical",
+          "type": "missing_class",
+          "description": "Missing ExporterConfig class in config.py but imported in bootstrap.py",
+          "location": "/home/dotmac_framework/packages/dotmac-platform-services/src/dotmac/platform/observability/config.py",
+          "fix": "Add ExporterConfig class definition to config.py or update import in bootstrap.py"
+        },
+        {
+          "component": "config_docker",
+          "severity": "major",
+          "type": "port_conflict",
+          "description": "Port conflict between main docker-compose.yml (9000:9000) and gate-e docker-compose (9001:9000)",
+          "location": "/home/dotmac_framework/docker-compose.yml",
+          "fix": "Use consistent port mappings across all compose files"
+        }
+      ]
+    },
+    "docker_services": {
+      "total_services": 6,
+      "running_services": 2,
+      "healthy_services": 2,
+      "services": [
+        {
+          "name": "a59e0ccdeedc_gate-e0c-clickhouse",
+          "running": true,
+          "healthy": true,
+          "ports": [
+            "9009/tcp",
+            "0.0.0.0:8124->8123/tcp",
+            "[::]:8124->8123/tcp",
+            "0.0.0.0:9001->9000/tcp",
+            "[::]:9001->9000/tcp"
+          ],
+          "image": "clickhouse/clickhouse-server:23.8-alpine",
+          "error": null
+        },
+        {
+          "name": "gate-e0-clickhouse",
+          "running": true,
+          "healthy": true,
+          "ports": [
+            "0.0.0.0:8123->8123/tcp",
+            "[::]:8123->8123/tcp",
+            "0.0.0.0:9000->9000/tcp",
+            "[::]:9000->9000/tcp",
+            "9009/tcp"
+          ],
+          "image": "clickhouse/clickhouse-server:23.8-alpine",
+          "error": null
+        },
+        {
+          "name": "dotmac-clickhouse",
+          "running": false,
+          "healthy": false,
+          "ports": [],
+          "image": "unknown",
+          "error": "Service not found"
+        },
+        {
+          "name": "dotmac-signoz-collector",
+          "running": false,
+          "healthy": false,
+          "ports": [],
+          "image": "unknown",
+          "error": "Service not found"
+        },
+        {
+          "name": "dotmac-signoz-query",
+          "running": false,
+          "healthy": false,
+          "ports": [],
+          "image": "unknown",
+          "error": "Service not found"
+        },
+        {
+          "name": "dotmac-signoz-frontend",
+          "running": false,
+          "healthy": false,
+          "ports": [],
+          "image": "unknown",
+          "error": "Service not found"
+        }
+      ]
+    },
+    "network_connectivity": {
+      "total_tests": 6,
+      "successful_tests": 2,
+      "failed_tests": 4,
+      "tests": [
+        {
+          "target": "localhost:3301",
+          "protocol": "http",
+          "success": false,
+          "response_time_ms": null,
+          "error": "HTTPConnectionPool(host='localhost', port=3301): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77dba626c050>: Failed to establish a new connection: [Errno 111] Connection refused'))"
+        },
+        {
+          "target": "localhost:8080",
+          "protocol": "http",
+          "success": false,
+          "response_time_ms": null,
+          "error": "HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77dba626ca40>: Failed to establish a new connection: [Errno 111] Connection refused'))"
+        },
+        {
+          "target": "localhost:9000",
+          "protocol": "tcp",
+          "success": true,
+          "response_time_ms": 0.4901885986328125,
+          "error": null
+        },
+        {
+          "target": "localhost:8123",
+          "protocol": "http",
+          "success": true,
+          "response_time_ms": 10.263204574584961,
+          "error": null
+        },
+        {
+          "target": "localhost:4317",
+          "protocol": "tcp",
+          "success": false,
+          "response_time_ms": 0.5490779876708984,
+          "error": "Connection refused (code: 111)"
+        },
+        {
+          "target": "localhost:4318",
+          "protocol": "http",
+          "success": false,
+          "response_time_ms": null,
+          "error": "HTTPConnectionPool(host='localhost', port=4318): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77dba6237500>: Failed to establish a new connection: [Errno 111] Connection refused'))"
+        }
+      ]
+    },
+    "application_integration": {
+      "ISP Framework": {
+        "observability_imports": false,
+        "bootstrap_initialization": true,
+        "metrics_endpoints": true,
+        "tracing_middleware": false,
+        "environment_variables": false
+      },
+      "Management Platform": {
+        "observability_imports": false,
+        "bootstrap_initialization": true,
+        "metrics_endpoints": true,
+        "tracing_middleware": false,
+        "environment_variables": false
+      }
+    },
+    "environment_variables": {
+      "issues": [
+        "SIGNOZ_ENDPOINT has static value, should use environment variable"
+      ],
+      "total_issues": 1
+    },
+    "file_system": {
+      "issues": [],
+      "total_issues": 0
+    }
+  },
+  "summary": {
+    "overall_health_score": 40.0,
+    "total_issues": 2,
+    "critical_issues": 1,
+    "major_issues": 1,
+    "minor_issues": 0,
+    "services": {
+      "total": 6,
+      "running": 2,
+      "healthy": 2
+    },
+    "connectivity": {
+      "total_tests": 6,
+      "successful": 2,
+      "failed": 4
+    },
+    "recommendations": [
+      "CRITICAL: Fix missing configuration classes (ExporterConfig, ExporterType)",
+      "Start 4 stopped observability services",
+      "Fix 4 connectivity issues"
+    ]
+  }
+}

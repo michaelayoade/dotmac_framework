@@ -65,14 +65,10 @@ class EncryptedField(BaseModel):
     iv: str | None = Field(None, description="Initialization vector if used")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    model_config = ConfigDict(
-        json_encoders={
-            datetime: lambda v: v.isoformat(),
-        }
-    )
+    model_config = ConfigDict()
 
     @field_validator("encrypted_data")
-    def validate_encrypted_data(cls, v):
+    def validate_encrypted_data(self, v):
         """Validate encrypted data is base64 encoded"""
         try:
             base64.b64decode(v)
@@ -381,9 +377,9 @@ def selective_encryption(field_mapping: dict[str, DataClassification]):
 
 __all__ = [
     "EncryptedField",
-    "encrypted_field",
     "FieldEncryption",
     "SecureDataModel",
     "encrypt_sensitive_data",
+    "encrypted_field",
     "selective_encryption",
 ]

@@ -10,14 +10,14 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import uuid4
 
-from dotmac_shared.core.logging import get_logger
-from dotmac_shared.tasks.notifications import NotificationChannel, NotificationChannelProvider
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import declarative_base, relationship
 
 from dotmac_plugins.core.plugin_base import BasePlugin
+from dotmac_shared.core.logging import get_logger
+from dotmac_shared.tasks.notifications import NotificationChannel, NotificationChannelProvider
 
 logger = get_logger(__name__)
 Base = declarative_base()
@@ -84,10 +84,10 @@ class ChatSession(Base):
     referrer = Column(String, nullable=True)
 
     # Timing
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
     started_at = Column(DateTime, nullable=True)  # When agent joined
     ended_at = Column(DateTime, nullable=True)
-    last_activity = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_activity = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Metrics
     wait_time_seconds = Column(Integer, default=0)
@@ -102,7 +102,7 @@ class ChatSession(Base):
     ticket_id = Column(String, nullable=True, index=True)
 
     # Additional data
-    metadata = Column(JSON, default=dict)
+    session_metadata = Column(JSON, default=dict)
 
     # Relationships
     messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
@@ -132,18 +132,18 @@ class ChatMessage(Base):
     file_attachments = Column(JSON, default=list)
 
     # Timestamps
-    sent_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    sent_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
     delivered_at = Column(DateTime, nullable=True)
     read_at = Column(DateTime, nullable=True)
 
     # Additional data
-    metadata = Column(JSON, default=dict)
+    session_metadata = Column(JSON, default=dict)
 
     # Relationships
     session = relationship("ChatSession", back_populates="messages")
 
 
-class AgentStatus(Base):
+class AgentStatusModel(Base):
     """Agent availability and status tracking."""
 
     __tablename__ = "chat_agent_status"
@@ -165,14 +165,14 @@ class AgentStatus(Base):
     queue_memberships = Column(JSON, default=list)
 
     # Timestamps
-    last_seen = Column(DateTime, default=datetime.utcnow, nullable=False)
-    status_changed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_seen = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    status_changed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Session info
     websocket_connection_id = Column(String, nullable=True)
 
     # Metadata
-    metadata = Column(JSON, default=dict)
+    session_metadata = Column(JSON, default=dict)
 
 
 # Pydantic Models
@@ -188,7 +188,7 @@ class ChatSessionCreate(BaseModel):
     initial_message: Optional[str] = Field(None, max_length=5000)
     page_url: Optional[str] = Field(None, max_length=500)
     user_agent: Optional[str] = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    session_metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class ChatMessageCreate(BaseModel):

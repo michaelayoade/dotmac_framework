@@ -34,9 +34,7 @@ class TenantRepository(BaseRepository[Tenant]):
 
     async def get_with_configurations(self, tenant_id: UUID) -> Optional[Tenant]:
         """Get tenant with configurations loaded."""
-        return await self.get_by_id(
-            tenant_id, relationships=["configurations", "users"]
-        )
+        return await self.get_by_id(tenant_id, relationships=["configurations", "users"])
 
     async def get_active_tenants(self, skip: int = 0, limit: int = 100) -> list[Tenant]:
         """Get active tenants."""
@@ -47,13 +45,9 @@ class TenantRepository(BaseRepository[Tenant]):
             order_by="-created_at",
         )
 
-    async def get_tenants_by_status(
-        self, status: TenantStatus, skip: int = 0, limit: int = 100
-    ) -> list[Tenant]:
+    async def get_tenants_by_status(self, status: TenantStatus, skip: int = 0, limit: int = 100) -> list[Tenant]:
         """Get tenants by status."""
-        return await self.list(
-            skip=skip, limit=limit, filters={"status": status}, order_by="-created_at"
-        )
+        return await self.list(skip=skip, limit=limit, filters={"status": status}, order_by="-created_at")
 
     async def search_tenants(
         self,
@@ -98,14 +92,10 @@ class TenantRepository(BaseRepository[Tenant]):
             order_by="-created_at",
         )
 
-    async def get_tenants_summary_bulk(
-        self, tenant_ids: list[UUID]
-    ) -> dict[UUID, dict[str, Any]]:
+    async def get_tenants_summary_bulk(self, tenant_ids: list[UUID]) -> dict[UUID, dict[str, Any]]:
         """Get bulk tenant summary data to prevent N+1 queries."""
         # Get tenants
-        tenants_query = select(Tenant).where(
-            Tenant.id.in_(tenant_ids), Tenant.is_deleted is False
-        )
+        tenants_query = select(Tenant).where(Tenant.id.in_(tenant_ids), Tenant.is_deleted is False)
         result = await self.db.execute(tenants_query)
         tenants = {t.id: t for t in result.scalars().all()}
 
@@ -137,9 +127,7 @@ class TenantRepository(BaseRepository[Tenant]):
         subscriptions = {
             row.tenant_id: {
                 "status": row.status,
-                "monthly_revenue": (
-                    row.monthly_amount_cents / 100 if row.monthly_amount_cents else 0
-                ),
+                "monthly_revenue": (row.monthly_amount_cents / 100 if row.monthly_amount_cents else 0),
             }
             for row in result
         }
@@ -155,12 +143,8 @@ class TenantRepository(BaseRepository[Tenant]):
                 "created_at": tenant.created_at,
                 "users_count": user_counts.get(tenant_id, 0),
                 "health_score": 95,  # Placeholder - would come from monitoring service
-                "monthly_revenue": subscriptions.get(tenant_id, {}).get(
-                    "monthly_revenue", 0
-                ),
-                "subscription_status": subscriptions.get(tenant_id, {}).get(
-                    "status", None
-                ),
+                "monthly_revenue": subscriptions.get(tenant_id, {}).get("monthly_revenue", 0),
+                "subscription_status": subscriptions.get(tenant_id, {}).get("status", None),
             }
 
         return summary
@@ -188,13 +172,9 @@ class TenantRepository(BaseRepository[Tenant]):
 
         return await self.update(tenant_id, update_data, user_id)
 
-    async def check_slug_availability(
-        self, slug: str, exclude_id: Optional[UUID] = None
-    ) -> bool:
+    async def check_slug_availability(self, slug: str, exclude_id: Optional[UUID] = None) -> bool:
         """Check if slug is available."""
-        query = select(func.count(Tenant.id)).where(
-            Tenant.slug == slug, Tenant.is_deleted is False
-        )
+        query = select(func.count(Tenant.id)).where(Tenant.slug == slug, Tenant.is_deleted is False)
         if exclude_id:
             query = query.where(Tenant.id != exclude_id)
 
@@ -222,9 +202,7 @@ class TenantConfigurationRepository(BaseRepository[TenantConfiguration]):
 
         return await self.list(filters=filters, order_by="category")
 
-    async def get_configuration_by_key(
-        self, tenant_id: UUID, category: str, key: str
-    ) -> Optional[TenantConfiguration]:
+    async def get_configuration_by_key(self, tenant_id: UUID, category: str, key: str) -> Optional[TenantConfiguration]:
         """Get specific configuration by key."""
         query = select(TenantConfiguration).where(
             TenantConfiguration.tenant_id == tenant_id,
@@ -270,9 +248,7 @@ class TenantConfigurationRepository(BaseRepository[TenantConfiguration]):
         from sqlalchemy import and_
 
         # First, get all existing configurations in one query
-        existing_keys = [
-            (config["category"], config["key"]) for config in configurations
-        ]
+        existing_keys = [(config["category"], config["key"]) for config in configurations]
 
         query = select(TenantConfiguration).where(
             and_(
@@ -348,22 +324,16 @@ class TenantInvitationRepository(BaseRepository[TenantInvitation]):
         """Get invitation by token."""
         return await self.get_by_field("invitation_token", invitation_token)
 
-    async def get_tenant_invitations(
-        self, tenant_id: UUID, pending_only: bool = True
-    ) -> list[TenantInvitation]:
+    async def get_tenant_invitations(self, tenant_id: UUID, pending_only: bool = True) -> list[TenantInvitation]:
         """Get invitations for a tenant."""
         filters = {"tenant_id": tenant_id}
 
         if pending_only:
             filters["is_accepted"] = False
 
-        return await self.list(
-            filters=filters, order_by="-created_at", relationships=["invited_by_user"]
-        )
+        return await self.list(filters=filters, order_by="-created_at", relationships=["invited_by_user"])
 
-    async def get_invitations_by_email(
-        self, email: str, tenant_id: Optional[UUID] = None
-    ) -> list[TenantInvitation]:
+    async def get_invitations_by_email(self, email: str, tenant_id: Optional[UUID] = None) -> list[TenantInvitation]:
         """Get invitations by email."""
         filters = {"email": email}
 
@@ -395,9 +365,7 @@ class TenantUsageRepository(BaseRepository[UsageRecord]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, UsageRecord)
 
-    async def get_latest_usage(
-        self, tenant_id: UUID, metric_name: str
-    ) -> Optional[UsageRecord]:
+    async def get_latest_usage(self, tenant_id: UUID, metric_name: str) -> Optional[UsageRecord]:
         """Get latest usage record for a tenant metric."""
         query = (
             select(UsageRecord)

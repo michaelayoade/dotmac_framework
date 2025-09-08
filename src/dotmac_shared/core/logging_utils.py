@@ -87,9 +87,7 @@ class LoggingPatterns:
         logger.error(f"❌ {operation.capitalize()} failed: {error}", extra=context)
 
     @staticmethod
-    def log_validation_error(
-        logger, field: str, error: str, entity_id: Optional[str] = None, **kwargs
-    ):
+    def log_validation_error(logger, field: str, error: str, entity_id: Optional[str] = None, **kwargs):
         """Standard logging for validation errors"""
         context = {"validation_field": field, "validation_error": error}
         if entity_id:
@@ -124,9 +122,7 @@ class LoggingPatterns:
             logger.info(f"🔗 {service} API call: {operation}", extra=context)
 
     @staticmethod
-    def log_tenant_action(
-        logger, action: str, tenant_id: str, user_id: Optional[str] = None, **kwargs
-    ):
+    def log_tenant_action(logger, action: str, tenant_id: str, user_id: Optional[str] = None, **kwargs):
         """Standard logging for tenant-scoped actions"""
         context = {"tenant_id": tenant_id, "tenant_action": action}
         if user_id:
@@ -174,11 +170,7 @@ def log_operation(operation_name: str):
             logger = get_logger(func.__module__)
 
             # Try to extract entity ID from kwargs
-            entity_id = (
-                kwargs.get("entity_id")
-                or kwargs.get("user_id")
-                or kwargs.get("tenant_id")
-            )
+            entity_id = kwargs.get("entity_id") or kwargs.get("user_id") or kwargs.get("tenant_id")
 
             correlation_id = LoggingPatterns.log_operation_start(
                 logger, operation_name, entity_id, function=func.__name__
@@ -186,25 +178,17 @@ def log_operation(operation_name: str):
 
             try:
                 result = await func(*args, **kwargs)
-                LoggingPatterns.log_operation_success(
-                    logger, operation_name, entity_id, correlation_id
-                )
+                LoggingPatterns.log_operation_success(logger, operation_name, entity_id, correlation_id)
                 return result
             except Exception as e:
-                LoggingPatterns.log_operation_error(
-                    logger, operation_name, e, entity_id, correlation_id
-                )
+                LoggingPatterns.log_operation_error(logger, operation_name, e, entity_id, correlation_id)
                 raise
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs) -> Any:
             logger = get_logger(func.__module__)
 
-            entity_id = (
-                kwargs.get("entity_id")
-                or kwargs.get("user_id")
-                or kwargs.get("tenant_id")
-            )
+            entity_id = kwargs.get("entity_id") or kwargs.get("user_id") or kwargs.get("tenant_id")
 
             correlation_id = LoggingPatterns.log_operation_start(
                 logger, operation_name, entity_id, function=func.__name__
@@ -212,14 +196,10 @@ def log_operation(operation_name: str):
 
             try:
                 result = func(*args, **kwargs)
-                LoggingPatterns.log_operation_success(
-                    logger, operation_name, entity_id, correlation_id
-                )
+                LoggingPatterns.log_operation_success(logger, operation_name, entity_id, correlation_id)
                 return result
             except Exception as e:
-                LoggingPatterns.log_operation_error(
-                    logger, operation_name, e, entity_id, correlation_id
-                )
+                LoggingPatterns.log_operation_error(logger, operation_name, e, entity_id, correlation_id)
                 raise
 
         return async_wrapper if functools.iscoroutinefunction(func) else sync_wrapper
@@ -255,16 +235,12 @@ def log_external_api(service_name: str):
                 if isinstance(result, dict):
                     status_code = result.get("status_code") or result.get("code")
 
-                LoggingPatterns.log_external_api_call(
-                    logger, service_name, func.__name__, status_code, duration
-                )
+                LoggingPatterns.log_external_api_call(logger, service_name, func.__name__, status_code, duration)
 
                 return result
             except Exception as e:
                 duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-                LoggingPatterns.log_external_api_call(
-                    logger, service_name, func.__name__, 500, duration, error=str(e)
-                )
+                LoggingPatterns.log_external_api_call(logger, service_name, func.__name__, 500, duration, error=str(e))
                 raise
 
         @functools.wraps(func)
@@ -281,16 +257,12 @@ def log_external_api(service_name: str):
                 if isinstance(result, dict):
                     status_code = result.get("status_code") or result.get("code")
 
-                LoggingPatterns.log_external_api_call(
-                    logger, service_name, func.__name__, status_code, duration
-                )
+                LoggingPatterns.log_external_api_call(logger, service_name, func.__name__, status_code, duration)
 
                 return result
             except Exception as e:
                 duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-                LoggingPatterns.log_external_api_call(
-                    logger, service_name, func.__name__, 500, duration, error=str(e)
-                )
+                LoggingPatterns.log_external_api_call(logger, service_name, func.__name__, 500, duration, error=str(e))
                 raise
 
         return async_wrapper if functools.iscoroutinefunction(func) else sync_wrapper

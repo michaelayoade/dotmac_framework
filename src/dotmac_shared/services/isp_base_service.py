@@ -3,12 +3,12 @@
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.services.base import BaseService
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from dotmac.application import standard_exception_handler
+from dotmac_shared.services.base import BaseService
 
 
 class ISPBaseService(BaseService):
@@ -28,9 +28,7 @@ class ISPBaseService(BaseService):
     ) -> Optional[Any]:
         """Get record by ID ensuring tenant isolation."""
 
-        query = select(model_class).where(
-            and_(model_class.id == record_id, model_class.tenant_id == self.tenant_id)
-        )
+        query = select(model_class).where(and_(model_class.id == record_id, model_class.tenant_id == self.tenant_id))
 
         if load_relationships:
             for rel in load_relationships:
@@ -69,9 +67,7 @@ class ISPBaseService(BaseService):
         return result.scalars().all()
 
     @standard_exception_handler
-    async def count_for_tenant(
-        self, model_class: type, filters: Optional[dict] = None
-    ) -> int:
+    async def count_for_tenant(self, model_class: type, filters: Optional[dict] = None) -> int:
         """Count records for tenant."""
 
         query = select(model_class).where(model_class.tenant_id == self.tenant_id)
@@ -99,9 +95,7 @@ class ISPBaseService(BaseService):
         return instance
 
     @standard_exception_handler
-    async def update_for_tenant(
-        self, model_class: type, record_id: UUID, data: dict
-    ) -> Optional[Any]:
+    async def update_for_tenant(self, model_class: type, record_id: UUID, data: dict) -> Optional[Any]:
         """Update record ensuring tenant isolation."""
 
         instance = await self.get_by_id_for_tenant(model_class, record_id)

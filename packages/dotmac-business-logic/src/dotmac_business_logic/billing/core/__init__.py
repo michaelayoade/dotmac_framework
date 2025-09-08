@@ -1,43 +1,45 @@
-"""Core billing models and enumerations."""
+"""
+Core billing domain layer.
 
-from .models import (  # Enums; Models
+This package contains the domain logic, value objects, and interfaces
+for the billing system. It has no dependencies on frameworks or infrastructure.
+"""
+
+from .interfaces import (
+    BillingRepository,
+    PaymentGateway,
+    TaxService,
+    UsageService,
+)
+from .models import (
     BillingCycle,
-    BillingModelMixin,
     BillingPeriod,
-    BillingPlan,
-    Customer,
-    Invoice,
-    InvoiceLineItem,
     InvoiceStatus,
-    Payment,
     PaymentMethod,
     PaymentStatus,
     PricingModel,
     PricingTier,
-    Subscription,
     SubscriptionStatus,
     TaxType,
-    UsageRecord,
 )
+from .services import BillingService
 
 __all__ = [
-    # Enums
-    "InvoiceStatus",
-    "PaymentStatus",
-    "PaymentMethod",
+    # Services
+    "BillingService",
+    # Interfaces
+    "BillingRepository",
+    "PaymentGateway",
+    "TaxService",
+    "UsageService",
+    # Domain Models
     "BillingCycle",
+    "BillingPeriod",
+    "InvoiceStatus",
+    "PaymentMethod",
+    "PaymentStatus",
+    "PricingModel",
+    "PricingTier",
     "SubscriptionStatus",
     "TaxType",
-    "PricingModel",
-    # Models
-    "BillingModelMixin",
-    "Customer",
-    "BillingPlan",
-    "PricingTier",
-    "Subscription",
-    "Invoice",
-    "InvoiceLineItem",
-    "Payment",
-    "UsageRecord",
-    "BillingPeriod",
 ]

@@ -501,7 +501,7 @@ class TestTenantProvisioningWorkflow:
             ), f"Missing expected event type: {expected_type}"
 
         # Verify correlation ID is consistent
-        correlation_ids = set(event.correlation_id for event in events)
+        correlation_ids = {event.correlation_id for event in events}
         assert len(correlation_ids) == 1, "Events should have same correlation ID"
 
         # Verify timing information

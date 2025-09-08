@@ -1,0 +1,232 @@
+version: '3.8'
+
+# Gate E-0c: Enhanced Observability Stack with Vault Integration
+# SECURITY FIX: All secrets now managed through OpenBao/Vault
+
+services:
+  # ClickHouse (SigNoz Storage) - Enhanced with Vault Integration
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: gate-e0c-clickhouse
+    ports:
+      - "9001:9000"
+      - "8124:8123"
+    networks:
+      - gate-e0c-network
+      - gate-e0a-network  # Connect to E-0a for secrets
+      - gate-e0b-network  # Connect to E-0b for data
+    external_links:
+      - gate-e0a-openbao:openbao
+      - gate-e0b-postgres:postgres
+      - gate-e0b-redis:redis
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse-users.xml:/etc/clickhouse-server/users.d/vault-users.xml:ro
+      - /var/run/secrets/openbao:/var/run/secrets/openbao:ro
+    environment:
+      # Enhanced security - users configured via XML with Vault
+      - CLICKHOUSE_DB=signoz_traces
+      - VAULT_ADDR=http://openbao:8200
+      - VAULT_ROLE_ID_FILE=/var/run/secrets/openbao/clickhouse-role-id
+      - VAULT_SECRET_ID_FILE=/var/run/secrets/openbao/clickhouse-secret-id
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -qO- http://localhost:8123/ping | grep -q 'Ok'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ClickHouse Database Initializer - Enhanced with Vault Auth
+  clickhouse-init:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: gate-e0c-clickhouse-init
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    networks:
+      - gate-e0c-network
+      - gate-e0a-network
+    volumes:
+      - /var/run/secrets/openbao:/var/run/secrets/openbao:ro
+      - ./scripts:/scripts:ro
+    environment:
+      - VAULT_ADDR=http://openbao:8200
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=9000
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo "🔐 Initializing ClickHouse with Vault-managed credentials..."
+        
+        # Source Vault authentication helper
+        . /scripts/vault-auth-helper.sh
+        
+        echo "Waiting for ClickHouse to be ready..."
+        until wget -qO- http://clickhouse:8123/ping; do sleep 2; done
+        
+        echo "Getting ClickHouse admin credentials from Vault..."
+        VAULT_TOKEN=$$(vault_authenticate)
+        
+        # Get ClickHouse configuration from Vault
+        CLICKHOUSE_CONFIG=$$(curl -s -H "X-Vault-Token: $$VAULT_TOKEN" \
+          http://openbao:8200/v1/dotmac/data/clickhouse | jq -r '.data.data')
+        
+        echo "Creating SigNoz databases..."
+        clickhouse-client -h clickhouse --port 9000 -q "
+          CREATE DATABASE IF NOT EXISTS signoz_traces;
+          CREATE DATABASE IF NOT EXISTS signoz_metrics; 
+          CREATE DATABASE IF NOT EXISTS signoz_logs;
+          
+          -- Create users for Vault-managed credentials
+          CREATE USER IF NOT EXISTS signoz_query IDENTIFIED BY 'placeholder';
+          CREATE USER IF NOT EXISTS signoz_collector IDENTIFIED BY 'placeholder';
+          
+          -- Grant permissions
+          GRANT SELECT, INSERT, UPDATE, DELETE ON signoz_traces.* TO signoz_query;
+          GRANT SELECT, INSERT, UPDATE, DELETE ON signoz_metrics.* TO signoz_query;
+          GRANT SELECT, INSERT, UPDATE, DELETE ON signoz_logs.* TO signoz_query;
+          
+          GRANT INSERT ON signoz_traces.* TO signoz_collector;
+          GRANT INSERT ON signoz_metrics.* TO signoz_collector;
+          GRANT INSERT ON signoz_logs.* TO signoz_collector;
+        "
+        echo "✅ SigNoz databases and users created successfully"
+    restart: "no"
+
+  # SigNoz Query Service - Enhanced with Vault Integration
+  signoz-query:
+    image: signoz/query-service:0.40.0
+    container_name: gate-e0c-signoz-query
+    ports:
+      - "8081:8080"
+    networks:
+      - gate-e0c-network
+      - gate-e0a-network
+      - gate-e0b-network
+    volumes:
+      - signoz_data:/var/lib/signoz
+      - ./query-service-config-vault.yaml:/etc/signoz/query-service.yaml:ro
+      - /var/run/secrets/openbao:/var/run/secrets/openbao:ro
+      - ./scripts:/scripts:ro
+    environment:
+      # Vault Integration
+      - VAULT_ADDR=http://openbao:8200
+      - VAULT_ROLE_ID_FILE=/var/run/secrets/openbao/signoz-query-role-id
+      - VAULT_SECRET_ID_FILE=/var/run/secrets/openbao/signoz-query-secret-id
+      
+      # Service Configuration
+      - STORAGE=clickhouse
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=9000
+      - QUERY_CONFIG_PATH=/etc/signoz/query-service.yaml
+      
+      # Security Enhancement
+      - ENABLE_VAULT_AUTH=true
+      - SERVICE_NAME=signoz-query
+    depends_on:
+      - clickhouse
+    external_links:
+      - gate-e0a-openbao:openbao
+    command: ["/scripts/vault-entrypoint.sh", "/root/query-service"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # SigNoz Frontend - No changes needed (connects to query service)
+  signoz-frontend:
+    image: signoz/frontend:0.40.0
+    container_name: gate-e0c-signoz-frontend
+    depends_on:
+      signoz-query:
+        condition: service_healthy
+    ports:
+      - "3302:3301"
+    networks:
+      - gate-e0c-network
+    environment:
+      - FRONTEND_API_ENDPOINT=http://signoz-query:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3301"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # OpenTelemetry Collector - Enhanced with Vault Integration
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.88.11
+    container_name: gate-e0c-otel-collector
+    volumes:
+      - ./otel-collector-config-vault.yaml:/etc/otel-collector-config.yaml:ro
+      - /var/run/secrets/openbao:/var/run/secrets/openbao:ro
+      - ./scripts:/scripts:ro
+    ports:
+      - "4319:4317"   # OTLP gRPC receiver
+      - "4320:4318"   # OTLP HTTP receiver
+      - "14251:14250" # Jaeger gRPC receiver
+    networks:
+      - gate-e0c-network
+      - gate-e0a-network
+    environment:
+      # Vault Integration
+      - VAULT_ADDR=http://openbao:8200
+      - VAULT_ROLE_ID_FILE=/var/run/secrets/openbao/signoz-collector-role-id
+      - VAULT_SECRET_ID_FILE=/var/run/secrets/openbao/signoz-collector-secret-id
+      
+      # Service Configuration
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=9000
+      - SERVICE_NAME=otel-collector
+    depends_on:
+      - signoz-query
+    external_links:
+      - gate-e0a-openbao:openbao
+    command: ["/scripts/vault-entrypoint.sh", "/signoz-collector", "--config=/etc/otel-collector-config.yaml"]
+    restart: unless-stopped
+
+  # 🆕 Vault Agent (Sidecar for automatic secret rotation)
+  vault-agent:
+    image: openbao/openbao:latest
+    container_name: gate-e0c-vault-agent
+    networks:
+      - gate-e0c-network
+      - gate-e0a-network
+    volumes:
+      - ./vault-agent-config.hcl:/vault/config/agent.hcl:ro
+      - /var/run/secrets/openbao:/var/run/secrets/openbao:rw
+      - vault_agent_cache:/vault/cache
+    environment:
+      - VAULT_ADDR=http://openbao:8200
+      - VAULT_LOG_LEVEL=INFO
+    external_links:
+      - gate-e0a-openbao:openbao
+    command: ["bao", "agent", "-config=/vault/config/agent.hcl"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "sh", "-c", "test -f /var/run/secrets/openbao/vault-token"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  gate-e0c-network:
+    driver: bridge
+    name: gate-e0c-network
+  gate-e0a-network:
+    external: true
+    name: gate-e0a-network
+  gate-e0b-network:
+    external: true
+    name: gate-e0b-network
+
+volumes:
+  clickhouse_data:
+    name: gate-e0c-clickhouse-data
+  signoz_data:
+    name: gate-e0c-signoz-data
+  vault_agent_cache:
+    name: gate-e0c-vault-agent-cache

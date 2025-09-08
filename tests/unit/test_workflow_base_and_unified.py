@@ -1,4 +1,5 @@
 import asyncio
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -17,7 +18,6 @@ from dotmac_shared.workflows.unified_workflow_service import (
     WorkflowContext,
     WorkflowType,
 )
-from types import SimpleNamespace
 
 
 class SleepWorkflow(BaseWorkflow):
@@ -243,6 +243,7 @@ async def test_plugin_installation_workflow_rollback_on_failure(monkeypatch):
     })
 
     from dotmac_management.workflows.plugin_workflows import PluginInstallationWorkflow
+
     # Build minimal workflow with faked services
     request = SimpleNamespace(plugin_id="pid", license_tier=SimpleNamespace(value="basic"), configuration={})
     plugin_service = SimpleNamespace(license_repo=DummyLicenseRepo())

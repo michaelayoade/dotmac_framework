@@ -72,9 +72,7 @@ class Customer(BaseModel):
 
     # Account information
     account_number = Column(String(50), nullable=True, index=True)
-    customer_since = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+    customer_since = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     last_login = Column(DateTime, nullable=True)
 
     # Payment information
@@ -89,9 +87,7 @@ class Customer(BaseModel):
 
     # Relationships
     tenant = relationship("Tenant", back_populates="customers")
-    services = relationship(
-        "CustomerService", back_populates="customer", cascade="all, delete-orphan"
-    )
+    services = relationship("CustomerService", back_populates="customer", cascade="all, delete-orphan")
     usage_records = relationship("CustomerUsageRecord", back_populates="customer")
 
     def __repr__(self) -> str:
@@ -132,15 +128,11 @@ class CustomerService(BaseModel):
         nullable=False,
         index=True,
     )
-    customer_id = Column(
-        UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False, index=True
-    )
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False, index=True)
 
     # Service information
     service_name = Column(String(255), nullable=False)
-    service_type = Column(
-        String(100), nullable=False, index=True
-    )  # internet, phone, tv, etc.
+    service_type = Column(String(100), nullable=False, index=True)  # internet, phone, tv, etc.
     service_plan = Column(String(255), nullable=True)
 
     # Status and lifecycle
@@ -192,9 +184,7 @@ class CustomerUsageRecord(BaseModel):
         nullable=False,
         index=True,
     )
-    customer_id = Column(
-        UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False, index=True
-    )
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False, index=True)
 
     # Usage period
     period_start = Column(DateTime, nullable=False, index=True)
@@ -249,9 +239,7 @@ class ServiceUsageRecord(BaseModel):
     )
 
     # Usage timestamp
-    recorded_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True
-    )
+    recorded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
 
     # Usage metrics specific to service type
     data_usage_gb = Column(Numeric(15, 6), nullable=False, default=0)

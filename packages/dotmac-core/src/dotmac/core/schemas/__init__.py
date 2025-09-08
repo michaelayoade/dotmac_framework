@@ -3,7 +3,7 @@ Shared schemas module for DotMac platform.
 Provides unified access to all schema definitions across the platform.
 """
 
-from .base_schemas import (
+from dotmac.core.schemas.base_schemas import (
     ActiveEntity,
     AddressMixin,
     # CRUD operation schemas
@@ -35,30 +35,80 @@ from .base_schemas import (
     TimestampMixin,
 )
 
-# Import billing schemas
-from .billing import (
-    # Re-export key billing schemas
-    BillingBaseSchema,
-    BillingPlanResponse,
-    InvoiceResponse,
-    PaymentResponse,
-    SubscriptionResponse,
-)
-from .billing import (
-    CustomerCreateSchema as BillingCustomerCreateSchema,
-)
-from .billing import (
-    CustomerSchema as BillingCustomerSchema,
-)
+# Import billing schemas (optional)
+try:
+    from dotmac.core.schemas.billing import (
+        # Re-export key billing schemas
+        BillingBaseSchema,
+        BillingPlanResponse,
+        InvoiceResponse,
+        PaymentResponse,
+        SubscriptionResponse,
+    )
+    from dotmac.core.schemas.billing import (
+        CustomerCreateSchema as BillingCustomerCreateSchema,
+    )
+    from dotmac.core.schemas.billing import (
+        CustomerSchema as BillingCustomerSchema,
+    )
 
-# Import ISP-specific DRY schemas
-from .isp_schemas import (
-    ISPBaseSchema,
-    ISPCreateSchema,
-    ISPListResponseSchema,
-    ISPResponseSchema,
-    ISPUpdateSchema,
-)
+    _BILLING_AVAILABLE = True
+except ImportError:
+    # Billing schemas not available - create stubs for compatibility
+    _BILLING_AVAILABLE = False
+
+    class BillingBaseSchema:
+        pass
+
+    class BillingPlanResponse:
+        pass
+
+    class InvoiceResponse:
+        pass
+
+    class PaymentResponse:
+        pass
+
+    class SubscriptionResponse:
+        pass
+
+    class BillingCustomerCreateSchema:
+        pass
+
+    class BillingCustomerSchema:
+        pass
+
+
+# Import ISP-specific DRY schemas (optional)
+try:
+    from dotmac.core.schemas.isp_schemas import (
+        ISPBaseSchema,
+        ISPCreateSchema,
+        ISPListResponseSchema,
+        ISPResponseSchema,
+        ISPUpdateSchema,
+    )
+
+    _ISP_SCHEMAS_AVAILABLE = True
+except ImportError:
+    # ISP schemas not available - create stubs for compatibility
+    _ISP_SCHEMAS_AVAILABLE = False
+
+    class ISPBaseSchema:
+        pass
+
+    class ISPCreateSchema:
+        pass
+
+    class ISPListResponseSchema:
+        pass
+
+    class ISPResponseSchema:
+        pass
+
+    class ISPUpdateSchema:
+        pass
+
 
 # Common schemas that were already defined (maintain compatibility)
 # Re-export everything that modules expect to find

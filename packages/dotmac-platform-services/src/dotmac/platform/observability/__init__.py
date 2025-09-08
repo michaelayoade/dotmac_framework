@@ -4,14 +4,37 @@ from typing import Any
 
 from fastapi import FastAPI
 
-from .logging import get_logger
+from .logging import create_logger as get_logger
 
 __all__ = [
-    "get_logger",
-    "initialize_observability_service",
-    "get_observability_service",
-    "is_observability_service_available",
+    # Core functions
     "add_observability_middleware",
+    "get_logger", 
+    "get_observability_service",
+    "initialize_observability_service",
+    "is_observability_service_available",
+    
+    # Configuration (critical for app startup)
+    "create_default_config",
+    "Environment",
+    "ExporterConfig", 
+    "ExporterType",
+    "OTelConfig",
+    
+    # Bootstrap functions
+    "initialize_otel",
+    "shutdown_otel",
+    "OTelBootstrap",
+    
+    # Metrics system
+    "initialize_metrics_registry",
+    "initialize_tenant_metrics", 
+    "MetricsRegistry",
+    "TenantMetrics",
+    
+    # Health checks
+    "check_otel_health",
+    "check_metrics_registry_health",
 ]
 
 # Optional modules with graceful fallbacks
@@ -26,31 +49,20 @@ try:
 
     _bootstrap_available = True
 except ImportError as e:
-    warnings.warn(f"OpenTelemetry bootstrap not available: {e}")
+    warnings.warn(f"OpenTelemetry bootstrap not available: {e}", stacklevel=2)
     OTelBootstrap = initialize_otel = shutdown_otel = None  # type: ignore
     get_current_span_context = create_child_span = None  # type: ignore
     _bootstrap_available = False
 
+_config_available = False
 try:
-    from .config import (
-        DashboardConfig,
-        Environment,
-        ExporterConfig,
-        ExporterType,
-        MetricsConfig,
-        OTelConfig,
-        create_dashboard_config,
-        create_default_config,
-        create_metrics_config,
-    )
-
+    # Import only what exists in config.py
+    from .config import Environment, ExporterConfig, ExporterType, OTelConfig, create_default_config
     _config_available = True
 except ImportError as e:
-    warnings.warn(f"Observability config not available: {e}")
-    OTelConfig = MetricsConfig = DashboardConfig = Environment = None  # type: ignore
+    warnings.warn(f"Observability config not available: {e}", stacklevel=2)
+    OTelConfig = Environment = None  # type: ignore
     ExporterType = ExporterConfig = create_default_config = None  # type: ignore
-    create_metrics_config = create_dashboard_config = None  # type: ignore
-    _config_available = False
 
 try:
     from .metrics import (
@@ -68,7 +80,7 @@ try:
 
     _metrics_available = True
 except ImportError as e:
-    warnings.warn(f"Metrics system not available: {e}")
+    warnings.warn(f"Metrics system not available: {e}", stacklevel=2)
     MetricsRegistry = TenantMetrics = MetricDefinition = MetricType = None  # type: ignore
     BusinessMetricSpec = BusinessMetricType = TenantContext = None  # type: ignore
     SLOEvaluation = initialize_metrics_registry = initialize_tenant_metrics = None  # type: ignore
@@ -85,7 +97,7 @@ try:
 
     _logging_available = True
 except ImportError as e:
-    warnings.warn(f"Structured logging not available: {e}")
+    warnings.warn(f"Structured logging not available: {e}", stacklevel=2)
     StructuredLogger = LogContext = LogLevel = CorrelationIDFilter = None  # type: ignore
     init_structured_logging = None  # type: ignore
     _logging_available = False
@@ -95,7 +107,7 @@ try:
 
     _tracing_available = True
 except ImportError as e:
-    warnings.warn(f"Tracing system not available: {e}")
+    warnings.warn(f"Tracing system not available: {e}", stacklevel=2)
     TracingManager = SpanProcessor = TraceExporter = None  # type: ignore
     get_tracer = None  # type: ignore
     _tracing_available = False
@@ -114,7 +126,7 @@ try:
 
     _health_available = True
 except ImportError as e:
-    warnings.warn(f"Health checks not available: {e}")
+    warnings.warn(f"Health checks not available: {e}", stacklevel=2)
     HealthCheck = HealthStatus = ObservabilityHealth = None  # type: ignore
     check_otel_health = check_metrics_registry_health = None  # type: ignore
     check_tenant_metrics_health = create_health_endpoint_handler = None  # type: ignore
@@ -131,7 +143,7 @@ try:
 
     _dashboards_available = True
 except ImportError as e:
-    warnings.warn(f"Dashboard provisioning not available: {e}")
+    warnings.warn(f"Dashboard provisioning not available: {e}", stacklevel=2)
     DashboardProvisioner = provision_platform_dashboards = None  # type: ignore
     DashboardProvisioningResult = SigNozDashboard = None  # type: ignore
     _dashboards_available = False
@@ -146,7 +158,7 @@ try:
 
     _middleware_available = True
 except ImportError as e:
-    warnings.warn(f"Observability middleware not available: {e}")
+    warnings.warn(f"Observability middleware not available: {e}", stacklevel=2)
     ObservabilityMiddleware = MetricsMiddleware = TracingMiddleware = None  # type: ignore
     LoggingMiddleware = None  # type: ignore
     _middleware_available = False
@@ -166,7 +178,6 @@ def initialize_observability_service(config: dict[str, Any]) -> None:
             service_name=service_name,
             environment=environment,
             otlp_endpoint=config.get("otlp_endpoint"),
-            prometheus_port=config.get("prometheus_port", 9090),
         )
         otel_bootstrap = initialize_otel(otel_config)
         _observability_service_registry["otel"] = otel_bootstrap

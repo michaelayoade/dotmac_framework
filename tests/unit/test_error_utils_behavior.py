@@ -1,5 +1,3 @@
-import asyncio
-import json
 from typing import Any
 
 import pytest
@@ -12,7 +10,12 @@ from dotmac_shared.core.error_utils import (
     send_ws,
     service_operation,
 )
-from dotmac_shared.core.exceptions import DatabaseError, ExternalServiceError, ServiceError, ValidationError
+from dotmac_shared.core.exceptions import (
+    DatabaseError,
+    ExternalServiceError,
+    ServiceError,
+    ValidationError,
+)
 
 
 class DummySession:

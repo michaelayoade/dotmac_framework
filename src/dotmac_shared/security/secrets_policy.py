@@ -7,7 +7,7 @@ Provides Environment and HardenedSecretsManager used by environment_security_val
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class Environment(str, Enum):

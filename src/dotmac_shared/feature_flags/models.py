@@ -165,7 +165,7 @@ class ABTestConfig(BaseModel):
     control_variant: str = "control"
 
     @field_validator("variants")
-    def validate_variants_sum_to_100(cls, v):
+    def validate_variants_sum_to_100(self, v):
         total = sum(variant.percentage for variant in v)
         if abs(total - 100.0) > 0.01:  # Allow small floating point errors
             raise ValueError(f"Variant percentages must sum to 100%, got {total}%")
@@ -221,9 +221,7 @@ class FeatureFlag(BaseModel):
     # Metadata
     tags: list[str] = Field(default_factory=list)
     owner: Optional[str] = None
-    environments: list[str] = Field(
-        default_factory=lambda: ["development", "staging", "production"]
-    )
+    environments: list[str] = Field(default_factory=lambda: ["development", "staging", "production"])
 
     # Dates
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -257,15 +255,11 @@ class FeatureFlag(BaseModel):
         elif self.strategy == RolloutStrategy.TENANT_LIST:
             return context.get("tenant_id") in self.tenant_list
         elif self.strategy == RolloutStrategy.PERCENTAGE:
-            return self._is_user_in_percentage(
-                context.get("user_id", ""), self.percentage
-            )
+            return self._is_user_in_percentage(context.get("user_id", ""), self.percentage)
         elif self.strategy == RolloutStrategy.GRADUAL:
             if self.gradual_rollout:
                 current_percentage = self.gradual_rollout.get_current_percentage()
-                return self._is_user_in_percentage(
-                    context.get("user_id", ""), current_percentage
-                )
+                return self._is_user_in_percentage(context.get("user_id", ""), current_percentage)
         elif self.strategy == RolloutStrategy.AB_TEST:
             if self.ab_test:
                 return True  # A/B test participants are "enabled", variant determines behavior
@@ -281,9 +275,7 @@ class FeatureFlag(BaseModel):
                 return variant.name
         return None
 
-    def get_payload_for_context(
-        self, context: dict[str, Any]
-    ) -> Optional[dict[str, Any]]:
+    def get_payload_for_context(self, context: dict[str, Any]) -> Optional[dict[str, Any]]:
         """Get feature payload for context"""
         if self.strategy == RolloutStrategy.AB_TEST and self.ab_test:
             user_id = context.get("user_id", "")

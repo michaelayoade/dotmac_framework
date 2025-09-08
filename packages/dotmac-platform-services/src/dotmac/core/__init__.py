@@ -86,14 +86,14 @@ def check_database_health():
 
 
 __all__ = [
-    "DotMacError",
-    "ValidationError",
     "AuthorizationError",
-    "ConfigurationError",
     "BaseModel",
-    "TenantContext",
+    "ConfigurationError",
     "DatabaseManager",
+    "DotMacError",
+    "TenantContext",
+    "ValidationError",
+    "check_database_health",
     "get_db",
     "get_db_session",
-    "check_database_health",
 ]

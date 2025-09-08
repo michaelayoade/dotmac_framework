@@ -64,17 +64,15 @@ class ResellerAutomationCoordinator:
         schedules_created = []
 
         # Monthly commission processing (15th of each month)
-        commission_schedule = (
-            await self.commission_engine.setup_recurring_commission_schedule(
-                schedule_name="Monthly Commission Processing",
-                frequency="monthly",
-                day_of_month=15,
-                auto_approve=True,
-                notification_recipients=[
-                    "finance@company.com",
-                    "partnerships@company.com",
-                ],
-            )
+        commission_schedule = await self.commission_engine.setup_recurring_commission_schedule(
+            schedule_name="Monthly Commission Processing",
+            frequency="monthly",
+            day_of_month=15,
+            auto_approve=True,
+            notification_recipients=[
+                "finance@company.com",
+                "partnerships@company.com",
+            ],
         )
         schedules_created.append(commission_schedule)
 
@@ -95,8 +93,7 @@ class ResellerAutomationCoordinator:
             "schedules_created": len(schedules_created),
             "active_schedules": schedules_created,
             "next_execution_dates": {
-                schedule["schedule_name"]: schedule["next_execution"]
-                for schedule in schedules_created
+                schedule["schedule_name"]: schedule["next_execution"] for schedule in schedules_created
             },
         }
 
@@ -118,9 +115,7 @@ class ResellerAutomationCoordinator:
 
         try:
             # 1. Partner health monitoring and alerting
-            health_monitoring_result = (
-                await self.success_engine.monitor_partner_alerts()
-            )
+            health_monitoring_result = await self.success_engine.monitor_partner_alerts()
             daily_results["tasks_executed"].append(
                 {
                     "task": "partner_health_monitoring",
@@ -132,21 +127,15 @@ class ResellerAutomationCoordinator:
                     ),
                 }
             )
-            daily_results["alerts_generated"] += health_monitoring_result[
-                "total_alerts_generated"
-            ]
-            daily_results["interventions_triggered"] += health_monitoring_result[
-                "immediate_interventions"
-            ]
+            daily_results["alerts_generated"] += health_monitoring_result["total_alerts_generated"]
+            daily_results["interventions_triggered"] += health_monitoring_result["immediate_interventions"]
 
             # 2. Check for scheduled commission workflows
             scheduled_workflows = await self._check_scheduled_commission_workflows()
             if scheduled_workflows["workflows_to_execute"]:
                 for _workflow in scheduled_workflows["workflows_to_execute"]:
-                    workflow_result = (
-                        await self.commission_engine.schedule_monthly_commission_run(
-                            target_date=date.today().replace(day=1) - timedelta(days=1)
-                        )
+                    workflow_result = await self.commission_engine.schedule_monthly_commission_run(
+                        target_date=date.today().replace(day=1) - timedelta(days=1)
                     )
                     daily_results["tasks_executed"].append(
                         {
@@ -200,9 +189,7 @@ class ResellerAutomationCoordinator:
             )
 
         daily_results["completed_at"] = datetime.now(timezone.utc).isoformat()
-        daily_results["execution_duration_minutes"] = (
-            datetime.now(timezone.utc) - cycle_start
-        ).total_seconds() / 60
+        daily_results["execution_duration_minutes"] = (datetime.now(timezone.utc) - cycle_start).total_seconds() / 60
 
         return daily_results
 
@@ -215,12 +202,12 @@ class ResellerAutomationCoordinator:
     ) -> dict[str, Any]:
         """Trigger emergency intervention workflow for partner in crisis"""
 
-        intervention_id = f"EMERGENCY_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8].upper()}"
+        intervention_id = (
+            f"EMERGENCY_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8].upper()}"
+        )
 
         # Get current partner state
-        health_analysis = await self.success_engine.calculate_partner_health_score(
-            reseller_id
-        )
+        health_analysis = await self.success_engine.calculate_partner_health_score(reseller_id)
 
         # Create comprehensive intervention plan
         intervention_plan = await self.success_engine.create_success_intervention_plan(
@@ -239,9 +226,7 @@ class ResellerAutomationCoordinator:
         immediate_actions = []
 
         # 1. Alert management team
-        management_alert = await self._alert_management_team(
-            reseller_id, crisis_type, health_analysis
-        )
+        management_alert = await self._alert_management_team(reseller_id, crisis_type, health_analysis)
         immediate_actions.append(management_alert)
 
         # 2. Execute proactive outreach
@@ -257,9 +242,7 @@ class ResellerAutomationCoordinator:
         immediate_actions.append(outreach_result)
 
         # 3. Suspend any automated processes that might be counterproductive
-        process_suspension = await self._suspend_automated_processes(
-            reseller_id, crisis_type
-        )
+        process_suspension = await self._suspend_automated_processes(reseller_id, crisis_type)
         immediate_actions.append(process_suspension)
 
         # 4. Schedule accelerated monitoring
@@ -275,25 +258,15 @@ class ResellerAutomationCoordinator:
             "current_health_score": health_analysis["health_score"],
             "intervention_plan": intervention_plan,
             "immediate_actions_taken": immediate_actions,
-            "estimated_resolution_timeline": self._estimate_resolution_timeline(
-                crisis_type, severity
-            ),
-            "next_checkpoint": (
-                datetime.now(timezone.utc) + timedelta(hours=24)
-            ).isoformat(),
-            "escalation_contacts": await self._get_escalation_contacts(
-                reseller_id, crisis_type
-            ),
-            "success_criteria": await self._define_success_criteria(
-                crisis_type, health_analysis
-            ),
+            "estimated_resolution_timeline": self._estimate_resolution_timeline(crisis_type, severity),
+            "next_checkpoint": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
+            "escalation_contacts": await self._get_escalation_contacts(reseller_id, crisis_type),
+            "success_criteria": await self._define_success_criteria(crisis_type, health_analysis),
         }
 
         return emergency_response
 
-    async def orchestrate_end_of_month_workflows(
-        self, target_month: date
-    ) -> dict[str, Any]:
+    async def orchestrate_end_of_month_workflows(self, target_month: date) -> dict[str, Any]:
         """Orchestrate comprehensive end-of-month processing"""
 
         orchestration_id = f"EOM_{target_month.strftime('%Y%m')}_{datetime.now(timezone.utc).strftime('%H%M%S')}"
@@ -323,45 +296,29 @@ class ResellerAutomationCoordinator:
                 step_start = datetime.now(timezone.utc)
 
                 if workflow_step == "commission_calculation":
-                    result = (
-                        await self.commission_engine.schedule_monthly_commission_run(
-                            target_month
-                        )
-                    )
+                    result = await self.commission_engine.schedule_monthly_commission_run(target_month)
 
                 elif workflow_step == "commission_reconciliation":
-                    result = (
-                        await self.reconciliation_engine.reconcile_monthly_commissions(
-                            target_month
-                        )
-                    )
+                    result = await self.reconciliation_engine.reconcile_monthly_commissions(target_month)
 
                 elif workflow_step == "payment_batch_creation":
                     # Get commission IDs from previous step (simulated)
-                    commission_ids = [
-                        f"COM-{i:06d}" for i in range(1, 151)
-                    ]  # 150 commissions
+                    commission_ids = [f"COM-{i:06d}" for i in range(1, 151)]  # 150 commissions
                     result = await self.commission_engine.create_payment_batch(
                         commission_ids=commission_ids,
                         payment_date=date.today() + timedelta(days=7),
                     )
 
                 elif workflow_step == "partner_performance_analysis":
-                    result = await self._analyze_monthly_partner_performance(
-                        target_month
-                    )
+                    result = await self._analyze_monthly_partner_performance(target_month)
 
                 elif workflow_step == "success_intervention_planning":
-                    result = await self._plan_monthly_success_interventions(
-                        target_month
-                    )
+                    result = await self._plan_monthly_success_interventions(target_month)
 
                 elif workflow_step == "monthly_reporting":
                     result = await self._generate_monthly_executive_report(target_month)
 
-                step_duration = (
-                    datetime.now(timezone.utc) - step_start
-                ).total_seconds()
+                step_duration = (datetime.now(timezone.utc) - step_start).total_seconds()
 
                 orchestration_results["workflow_results"][workflow_step] = {
                     "status": "completed",
@@ -382,9 +339,7 @@ class ResellerAutomationCoordinator:
         orchestration_results["completed_at"] = datetime.now(timezone.utc).isoformat()
         orchestration_results["total_duration_minutes"] = (
             datetime.now(timezone.utc)
-            - datetime.fromisoformat(
-                orchestration_results["started_at"].replace("Z", "+00:00")
-            )
+            - datetime.fromisoformat(orchestration_results["started_at"].replace("Z", "+00:00"))
         ).total_seconds() / 60
 
         return orchestration_results
@@ -470,8 +425,7 @@ class ResellerAutomationCoordinator:
             "schedule_name": "Weekly Partner Health Monitoring",
             "frequency": "weekly",
             "next_execution": (
-                datetime.now(timezone.utc)
-                + timedelta(days=7 - datetime.now(timezone.utc).weekday())
+                datetime.now(timezone.utc) + timedelta(days=7 - datetime.now(timezone.utc).weekday())
             ).isoformat(),
             "status": "active",
         }
@@ -495,9 +449,7 @@ class ResellerAutomationCoordinator:
             "schedule_id": f"QUARTERLY_REVIEW_{uuid.uuid4().hex[:8].upper()}",
             "schedule_name": "Quarterly Partner Success Review",
             "frequency": "quarterly",
-            "next_execution": (
-                datetime.now(timezone.utc) + timedelta(days=90)
-            ).isoformat(),
+            "next_execution": (datetime.now(timezone.utc) + timedelta(days=90)).isoformat(),
             "status": "active",
         }
 
@@ -543,21 +495,13 @@ class ResellerAutomationCoordinator:
             "additional_support_scheduled": 2,
         }
 
-    async def _generate_daily_summary_report(
-        self, daily_results: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _generate_daily_summary_report(self, daily_results: dict[str, Any]) -> dict[str, Any]:
         """Generate daily automation summary report"""
         return {
             "report_type": "daily_automation_summary",
             "date": date.today().isoformat(),
             "total_tasks": len(daily_results["tasks_executed"]),
-            "successful_tasks": len(
-                [
-                    t
-                    for t in daily_results["tasks_executed"]
-                    if t["status"] == "completed"
-                ]
-            ),
+            "successful_tasks": len([t for t in daily_results["tasks_executed"] if t["status"] == "completed"]),
             "alerts_generated": daily_results["alerts_generated"],
             "interventions_triggered": daily_results["interventions_triggered"],
             "key_highlights": [
@@ -583,17 +527,13 @@ class ResellerAutomationCoordinator:
             "urgency": "high",
         }
 
-    async def _suspend_automated_processes(
-        self, reseller_id: str, crisis_type: str
-    ) -> dict[str, Any]:
+    async def _suspend_automated_processes(self, reseller_id: str, crisis_type: str) -> dict[str, Any]:
         """Suspend potentially harmful automated processes during crisis"""
         return {
             "action": "process_suspension",
             "suspended_processes": ["automated_billing", "performance_warnings"],
             "suspension_duration": "72 hours",
-            "review_scheduled": (
-                datetime.now(timezone.utc) + timedelta(days=3)
-            ).isoformat(),
+            "review_scheduled": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
         }
 
     async def _enable_accelerated_monitoring(self, reseller_id: str) -> dict[str, Any]:
@@ -619,15 +559,11 @@ class ResellerAutomationCoordinator:
         }
         return timelines.get(crisis_type, "2-4 weeks")
 
-    async def _get_escalation_contacts(
-        self, reseller_id: str, crisis_type: str
-    ) -> list[str]:
+    async def _get_escalation_contacts(self, reseller_id: str, crisis_type: str) -> list[str]:
         """Get appropriate escalation contacts for crisis"""
         return ["director_partnerships@company.com", "vp_sales@company.com"]
 
-    async def _define_success_criteria(
-        self, crisis_type: str, health_analysis: dict[str, Any]
-    ) -> list[str]:
+    async def _define_success_criteria(self, crisis_type: str, health_analysis: dict[str, Any]) -> list[str]:
         """Define success criteria for crisis resolution"""
         return [
             f"Health score improved by at least 20 points from current {health_analysis['health_score']}",
@@ -635,9 +571,7 @@ class ResellerAutomationCoordinator:
             "Stable revenue performance for 2 consecutive months",
         ]
 
-    async def _analyze_monthly_partner_performance(
-        self, target_month: date
-    ) -> dict[str, Any]:
+    async def _analyze_monthly_partner_performance(self, target_month: date) -> dict[str, Any]:
         """Analyze partner performance for the month"""
         return {
             "analysis_type": "monthly_performance",
@@ -648,9 +582,7 @@ class ResellerAutomationCoordinator:
             "stable_performers": 31,
         }
 
-    async def _plan_monthly_success_interventions(
-        self, target_month: date
-    ) -> dict[str, Any]:
+    async def _plan_monthly_success_interventions(self, target_month: date) -> dict[str, Any]:
         """Plan success interventions based on monthly analysis"""
         return {
             "interventions_planned": 12,
@@ -660,9 +592,7 @@ class ResellerAutomationCoordinator:
             "estimated_impact": "significant",
         }
 
-    async def _generate_monthly_executive_report(
-        self, target_month: date
-    ) -> dict[str, Any]:
+    async def _generate_monthly_executive_report(self, target_month: date) -> dict[str, Any]:
         """Generate executive summary report"""
         return {
             "report_type": "monthly_executive_summary",

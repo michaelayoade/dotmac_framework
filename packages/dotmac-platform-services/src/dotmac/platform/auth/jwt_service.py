@@ -120,12 +120,11 @@ class JWTService:
                 )
             except Exception as e:
                 raise ConfigurationError(f"Invalid public key: {e}") from e
+        # Extract public key from private key if available
+        elif self.private_key:
+            self.public_key = self.private_key.public_key()
         else:
-            # Extract public key from private key if available
-            if self.private_key:
-                self.public_key = self.private_key.public_key()
-            else:
-                self.public_key = None
+            self.public_key = None
 
     def _init_symmetric_secret(self, secret: str | None) -> None:
         """Initialize symmetric secret for HS256"""
@@ -147,8 +146,8 @@ class JWTService:
             if not self.private_key:
                 raise ConfigurationError("Private key required for token signing")
             return self.private_key
-        else:  # HS256
-            return self.secret
+        # HS256
+        return self.secret
 
     def _get_verification_key(self) -> str | rsa.RSAPublicKey:
         """Get the appropriate verification key for the algorithm"""
@@ -156,8 +155,8 @@ class JWTService:
             if not self.public_key:
                 raise ConfigurationError("Public key required for token verification")
             return self.public_key
-        else:  # HS256
-            return self.secret
+        # HS256
+        return self.secret
 
     def issue_access_token(
         self,

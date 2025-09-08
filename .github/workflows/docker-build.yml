@@ -1,0 +1,181 @@
+name: Docker Build Automation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - 'src/**'
+      - 'Dockerfile.*'
+      - 'requirements.docker.txt'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'pyproject.toml'
+      - 'poetry.lock' 
+      - 'src/**'
+      - 'Dockerfile.*'
+      - 'requirements.docker.txt'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_MANAGEMENT: ${{ github.repository }}/dotmac-management
+  IMAGE_NAME_ISP: ${{ github.repository }}/dotmac-isp
+
+jobs:
+  verify-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install Poetry export plugin
+        run: poetry self add poetry-plugin-export
+
+      - name: Verify Poetry lock file
+        run: poetry lock --check
+
+      - name: Export requirements for Management service
+        run: |
+          # Create management-specific requirements
+          poetry export -f requirements.txt --output requirements.management.txt --without-hashes --without-urls
+          echo "Generated requirements.management.txt:"
+          wc -l requirements.management.txt
+
+      - name: Export requirements for ISP service
+        run: |
+          # Create ISP-specific requirements  
+          poetry export -f requirements.txt --output requirements.isp.txt --without-hashes --without-urls
+          echo "Generated requirements.isp.txt:"
+          wc -l requirements.isp.txt
+
+      - name: Validate Management requirements
+        run: python -m pip install --dry-run -r requirements.management.txt
+
+      - name: Validate ISP requirements
+        run: python -m pip install --dry-run -r requirements.isp.txt
+
+      - name: Upload Management requirements artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: requirements-management
+          path: requirements.management.txt
+
+      - name: Upload ISP requirements artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: requirements-isp
+          path: requirements.isp.txt
+
+  build-management:
+    needs: verify-dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Management requirements artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: requirements-management
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_MANAGEMENT }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+
+      - name: Build and push Management image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.management
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-isp:
+    needs: verify-dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download ISP requirements artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: requirements-isp
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_ISP }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+
+      - name: Build and push ISP image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.isp
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  notify-success:
+    needs: [build-management, build-isp]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Success notification
+        run: |
+          echo "✅ All Docker builds completed successfully!"
+          echo "🏗️ Management service: Built and pushed"
+          echo "🌐 ISP service: Built and pushed"

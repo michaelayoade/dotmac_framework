@@ -118,9 +118,7 @@ def format_currency(
         locale.setlocale(locale.LC_MONETARY, f"{locale_name}.UTF-8")
 
         # Format using locale
-        formatted = locale.currency(
-            float(amount), symbol=include_symbol, grouping=True, international=False
-        )
+        formatted = locale.currency(float(amount), symbol=include_symbol, grouping=True, international=False)
 
         # Handle currencies without symbols in locale data
         if include_symbol and currency_code in CURRENCY_SYMBOLS:
@@ -130,16 +128,12 @@ def format_currency(
 
     except (locale.Error, ValueError):
         # Fallback formatting if locale not available
-        formatted = _fallback_format(
-            amount, currency_code, include_symbol, decimal_places
-        )
+        formatted = _fallback_format(amount, currency_code, include_symbol, decimal_places)
 
     return formatted
 
 
-def _fallback_format(
-    amount: Decimal, currency_code: str, include_symbol: bool, decimal_places: int
-) -> str:
+def _fallback_format(amount: Decimal, currency_code: str, include_symbol: bool, decimal_places: int) -> str:
     """Fallback currency formatting when locale is unavailable."""
 
     # Format number with commas

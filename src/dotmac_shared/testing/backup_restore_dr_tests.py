@@ -86,9 +86,7 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "full_backup_creation",
-                    "status": "completed"
-                    if full_backup_result["success"]
-                    else "failed",
+                    "status": "completed" if full_backup_result["success"] else "failed",
                     "duration": full_backup_result.get("duration", 0),
                     "details": full_backup_result,
                 }
@@ -98,9 +96,7 @@ class BackupRestoreDRE2E:
                 raise BusinessRuleError("Full backup creation failed")
 
             # Step 3: Validate backup integrity
-            integrity_result = await self._validate_backup_integrity(
-                full_backup_result["backup_file"]
-            )
+            integrity_result = await self._validate_backup_integrity(full_backup_result["backup_file"])
             results["steps"].append(
                 {
                     "name": "backup_integrity_validation",
@@ -115,24 +111,18 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "additional_data_creation",
-                    "status": "completed"
-                    if additional_data_result["success"]
-                    else "failed",
+                    "status": "completed" if additional_data_result["success"] else "failed",
                     "duration": additional_data_result.get("duration", 0),
                     "details": additional_data_result,
                 }
             )
 
             # Step 5: Create incremental backup
-            incremental_backup_result = await self._create_incremental_backup(
-                full_backup_result["backup_id"]
-            )
+            incremental_backup_result = await self._create_incremental_backup(full_backup_result["backup_id"])
             results["steps"].append(
                 {
                     "name": "incremental_backup_creation",
-                    "status": "completed"
-                    if incremental_backup_result["success"]
-                    else "failed",
+                    "status": "completed" if incremental_backup_result["success"] else "failed",
                     "duration": incremental_backup_result.get("duration", 0),
                     "details": incremental_backup_result,
                 }
@@ -194,9 +184,7 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "container_setup",
-                    "status": "completed"
-                    if container_setup_result["success"]
-                    else "failed",
+                    "status": "completed" if container_setup_result["success"] else "failed",
                     "duration": container_setup_result.get("duration", 0),
                     "details": container_setup_result,
                 }
@@ -226,18 +214,14 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "container_modification",
-                    "status": "completed"
-                    if modification_result["success"]
-                    else "failed",
+                    "status": "completed" if modification_result["success"] else "failed",
                     "duration": modification_result.get("duration", 0),
                     "details": modification_result,
                 }
             )
 
             # Step 4: Restore container from snapshot
-            restore_result = await self._restore_container_from_snapshot(
-                container_id, snapshot_result["snapshot_id"]
-            )
+            restore_result = await self._restore_container_from_snapshot(container_id, snapshot_result["snapshot_id"])
             results["steps"].append(
                 {
                     "name": "container_restoration",
@@ -299,9 +283,7 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "system_backup_creation",
-                    "status": "completed"
-                    if system_backup_result["success"]
-                    else "failed",
+                    "status": "completed" if system_backup_result["success"] else "failed",
                     "duration": system_backup_result.get("duration", 0),
                     "details": system_backup_result,
                 }
@@ -326,18 +308,14 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "system_failure_simulation",
-                    "status": "completed"
-                    if failure_simulation["success"]
-                    else "failed",
+                    "status": "completed" if failure_simulation["success"] else "failed",
                     "duration": failure_simulation.get("duration", 0),
                     "details": failure_simulation,
                 }
             )
 
             # Step 4: Perform system restore
-            restore_result = await self._perform_system_restore(
-                system_backup_result["backup_bundle"]
-            )
+            restore_result = await self._perform_system_restore(system_backup_result["backup_bundle"])
             results["steps"].append(
                 {
                     "name": "system_restore",
@@ -355,24 +333,18 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "service_validation",
-                    "status": "completed"
-                    if service_validation["all_healthy"]
-                    else "failed",
+                    "status": "completed" if service_validation["all_healthy"] else "failed",
                     "duration": service_validation.get("duration", 0),
                     "details": service_validation,
                 }
             )
 
             # Step 6: Verify data integrity
-            integrity_check = await self._verify_data_integrity_post_restore(
-                pre_failure_state["state"]
-            )
+            integrity_check = await self._verify_data_integrity_post_restore(pre_failure_state["state"])
             results["steps"].append(
                 {
                     "name": "data_integrity_verification",
-                    "status": "completed"
-                    if integrity_check["integrity_maintained"]
-                    else "failed",
+                    "status": "completed" if integrity_check["integrity_maintained"] else "failed",
                     "duration": integrity_check.get("duration", 0),
                     "details": integrity_check,
                 }
@@ -383,9 +355,7 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "portal_functionality_test",
-                    "status": "completed"
-                    if portal_test["all_portals_functional"]
-                    else "failed",
+                    "status": "completed" if portal_test["all_portals_functional"] else "failed",
                     "duration": portal_test.get("duration", 0),
                     "details": portal_test,
                 }
@@ -432,9 +402,7 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "multi_tenant_setup",
-                    "status": "completed"
-                    if multi_tenant_setup["success"]
-                    else "failed",
+                    "status": "completed" if multi_tenant_setup["success"] else "failed",
                     "duration": multi_tenant_setup.get("duration", 0),
                     "details": multi_tenant_setup,
                 }
@@ -447,9 +415,7 @@ class BackupRestoreDRE2E:
             other_tenants = multi_tenant_setup["tenants"][1:]
 
             # Step 2: Create tenant-specific backup
-            tenant_backup = await self._create_tenant_specific_backup(
-                target_tenant["id"]
-            )
+            tenant_backup = await self._create_tenant_specific_backup(target_tenant["id"])
             results["steps"].append(
                 {
                     "name": "tenant_backup_creation",
@@ -464,9 +430,7 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "other_tenants_state_capture",
-                    "status": "completed"
-                    if other_tenants_state["success"]
-                    else "failed",
+                    "status": "completed" if other_tenants_state["success"] else "failed",
                     "duration": other_tenants_state.get("duration", 0),
                     "details": other_tenants_state,
                 }
@@ -484,9 +448,7 @@ class BackupRestoreDRE2E:
             )
 
             # Step 5: Restore only affected tenant
-            tenant_restore = await self._restore_specific_tenant(
-                target_tenant["id"], tenant_backup["backup_id"]
-            )
+            tenant_restore = await self._restore_specific_tenant(target_tenant["id"], tenant_backup["backup_id"])
             results["steps"].append(
                 {
                     "name": "tenant_restore",
@@ -503,9 +465,7 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "other_tenants_validation",
-                    "status": "completed"
-                    if other_tenants_validation["all_unaffected"]
-                    else "failed",
+                    "status": "completed" if other_tenants_validation["all_unaffected"] else "failed",
                     "duration": other_tenants_validation.get("duration", 0),
                     "details": other_tenants_validation,
                 }
@@ -518,9 +478,7 @@ class BackupRestoreDRE2E:
             results["steps"].append(
                 {
                     "name": "isolation_validation",
-                    "status": "completed"
-                    if isolation_validation["isolation_maintained"]
-                    else "failed",
+                    "status": "completed" if isolation_validation["isolation_maintained"] else "failed",
                     "duration": isolation_validation.get("duration", 0),
                     "details": isolation_validation,
                 }
@@ -567,18 +525,14 @@ class BackupRestoreDRE2E:
 
             # Generate summary
             total_tests = len(suite_results["tests"])
-            passed_tests = sum(
-                1 for t in suite_results["tests"] if t.get("success", False)
-            )
+            passed_tests = sum(1 for t in suite_results["tests"] if t.get("success", False))
             failed_tests = total_tests - passed_tests
 
             suite_results["summary"] = {
                 "total": total_tests,
                 "passed": passed_tests,
                 "failed": failed_tests,
-                "success_rate": (passed_tests / total_tests) * 100
-                if total_tests > 0
-                else 0,
+                "success_rate": (passed_tests / total_tests) * 100 if total_tests > 0 else 0,
             }
 
             suite_results["status"] = "completed" if failed_tests == 0 else "failed"
@@ -655,9 +609,7 @@ class BackupRestoreDRE2E:
                     "customer_id": test_entities["customers"][i % 15]["id"],
                     "amount": round((i + 1) * 29.99, 2),
                     "status": "paid" if i < 25 else "overdue",
-                    "due_date": (
-                        datetime.now(timezone.utc) + timedelta(days=30)
-                    ).isoformat(),
+                    "due_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
                 }
                 test_entities["billing_records"].append(billing)
 
@@ -721,9 +673,7 @@ class BackupRestoreDRE2E:
 
             # Write backup metadata
             with gzip.open(backup_filepath, "wt") as f:
-                json.dump(
-                    {"metadata": backup_content, "data": self.test_data}, f, indent=2
-                )
+                json.dump({"metadata": backup_content, "data": self.test_data}, f, indent=2)
 
             # Store backup metadata
             self.backup_metadata[backup_id] = backup_content
@@ -852,9 +802,7 @@ class BackupRestoreDRE2E:
                 order = {
                     "id": str(uuid4()),
                     "tenant_id": self.test_tenant_id,
-                    "customer_id": self.test_data["customers"][-1][
-                        "id"
-                    ],  # Use recent customer
+                    "customer_id": self.test_data["customers"][-1]["id"],  # Use recent customer
                     "amount": round((i + 1) * 15.99, 2),
                     "status": "pending",
                     "created_at": datetime.now(timezone.utc).isoformat(),
@@ -884,9 +832,7 @@ class BackupRestoreDRE2E:
 
         try:
             backup_id = str(uuid4())
-            backup_filename = (
-                f"backup_incremental_{self.test_tenant_id}_{backup_id}.sql.gz"
-            )
+            backup_filename = f"backup_incremental_{self.test_tenant_id}_{backup_id}.sql.gz"
             backup_filepath = os.path.join(self.backup_directory, backup_filename)
 
             # Calculate incremental data (mock - in reality would be based on timestamps/WAL)
@@ -916,9 +862,7 @@ class BackupRestoreDRE2E:
 
             # Write incremental backup
             with gzip.open(backup_filepath, "wt") as f:
-                json.dump(
-                    {"metadata": backup_content, "data": incremental_data}, f, indent=2
-                )
+                json.dump({"metadata": backup_content, "data": incremental_data}, f, indent=2)
 
             self.backup_metadata[backup_id] = backup_content
 
@@ -966,17 +910,13 @@ class BackupRestoreDRE2E:
                     "created_at",
                     "checksum",
                 ]
-                missing_fields = [
-                    field for field in required_fields if not metadata.get(field)
-                ]
+                missing_fields = [field for field in required_fields if not metadata.get(field)]
 
                 validation_results.append(
                     {
                         "backup_id": backup_id,
                         "valid": len(missing_fields) == 0,
-                        "errors": [
-                            f"Missing field: {field}" for field in missing_fields
-                        ],
+                        "errors": [f"Missing field: {field}" for field in missing_fields],
                         "backup_type": metadata.get("backup_type"),
                         "created_at": metadata.get("created_at"),
                     }
@@ -1099,9 +1039,7 @@ class BackupRestoreDRE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _restore_container_from_snapshot(
-        self, container_id: str, snapshot_id: str
-    ) -> dict[str, Any]:
+    async def _restore_container_from_snapshot(self, container_id: str, snapshot_id: str) -> dict[str, Any]:
         """Restore container from snapshot."""
         start_time = time.time()
 
@@ -1131,9 +1069,7 @@ class BackupRestoreDRE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _validate_container_restoration(
-        self, container_id: str
-    ) -> dict[str, Any]:
+    async def _validate_container_restoration(self, container_id: str) -> dict[str, Any]:
         """Validate container restoration state."""
         start_time = time.time()
 
@@ -1154,9 +1090,7 @@ class BackupRestoreDRE2E:
             return {
                 "valid": all_passed,
                 "checks": validation_checks,
-                "passed_checks": sum(
-                    1 for c in validation_checks if c["status"] == "pass"
-                ),
+                "passed_checks": sum(1 for c in validation_checks if c["status"] == "pass"),
                 "total_checks": len(validation_checks),
                 "duration": time.time() - start_time,
             }
@@ -1284,9 +1218,7 @@ class BackupRestoreDRE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _perform_system_restore(
-        self, backup_bundle: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _perform_system_restore(self, backup_bundle: dict[str, Any]) -> dict[str, Any]:
         """Perform complete system restore."""
         start_time = time.time()
 
@@ -1351,8 +1283,7 @@ class BackupRestoreDRE2E:
                 "services": services,
                 "healthy_count": sum(1 for s in services if s["status"] == "healthy"),
                 "total_services": len(services),
-                "average_response_time": sum(s["response_time"] for s in services)
-                / len(services),
+                "average_response_time": sum(s["response_time"] for s in services) / len(services),
                 "duration": time.time() - start_time,
             }
 
@@ -1363,9 +1294,7 @@ class BackupRestoreDRE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _verify_data_integrity_post_restore(
-        self, pre_failure_state: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _verify_data_integrity_post_restore(self, pre_failure_state: dict[str, Any]) -> dict[str, Any]:
         """Verify data integrity after restore."""
         start_time = time.time()
 
@@ -1403,16 +1332,12 @@ class BackupRestoreDRE2E:
 
             await asyncio.sleep(2)
 
-            integrity_maintained = all(
-                check["status"] == "pass" for check in integrity_checks
-            )
+            integrity_maintained = all(check["status"] == "pass" for check in integrity_checks)
 
             return {
                 "integrity_maintained": integrity_maintained,
                 "checks": integrity_checks,
-                "passed_checks": sum(
-                    1 for c in integrity_checks if c["status"] == "pass"
-                ),
+                "passed_checks": sum(1 for c in integrity_checks if c["status"] == "pass"),
                 "total_checks": len(integrity_checks),
                 "duration": time.time() - start_time,
             }
@@ -1440,9 +1365,7 @@ class BackupRestoreDRE2E:
                 admin_page = await context.new_page()
                 try:
                     await admin_page.goto(f"{self.frontend_url}/admin/login")
-                    await admin_page.wait_for_selector(
-                        '[data-testid="login-form"]', timeout=5000
-                    )
+                    await admin_page.wait_for_selector('[data-testid="login-form"]', timeout=5000)
                     portal_tests.append({"portal": "admin", "status": "functional"})
                 except Exception:
                     portal_tests.append({"portal": "admin", "status": "failed"})
@@ -1451,25 +1374,19 @@ class BackupRestoreDRE2E:
                 customer_page = await context.new_page()
                 try:
                     await customer_page.goto(f"{self.frontend_url}/customer/login")
-                    await customer_page.wait_for_selector(
-                        '[data-testid="login-form"]', timeout=5000
-                    )
+                    await customer_page.wait_for_selector('[data-testid="login-form"]', timeout=5000)
                     portal_tests.append({"portal": "customer", "status": "functional"})
                 except Exception:
                     portal_tests.append({"portal": "customer", "status": "failed"})
 
                 await browser.close()
 
-            all_functional = all(
-                test["status"] == "functional" for test in portal_tests
-            )
+            all_functional = all(test["status"] == "functional" for test in portal_tests)
 
             return {
                 "all_portals_functional": all_functional,
                 "portal_tests": portal_tests,
-                "functional_count": sum(
-                    1 for t in portal_tests if t["status"] == "functional"
-                ),
+                "functional_count": sum(1 for t in portal_tests if t["status"] == "functional"),
                 "total_portals": len(portal_tests),
                 "duration": time.time() - start_time,
             }
@@ -1563,9 +1480,7 @@ class BackupRestoreDRE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _capture_other_tenants_state(
-        self, other_tenants: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    async def _capture_other_tenants_state(self, other_tenants: list[dict[str, Any]]) -> dict[str, Any]:
         """Capture state of other tenants."""
         start_time = time.time()
 
@@ -1623,9 +1538,7 @@ class BackupRestoreDRE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _restore_specific_tenant(
-        self, tenant_id: str, backup_id: str
-    ) -> dict[str, Any]:
+    async def _restore_specific_tenant(self, tenant_id: str, backup_id: str) -> dict[str, Any]:
         """Restore specific tenant from backup."""
         start_time = time.time()
 
@@ -1679,9 +1592,7 @@ class BackupRestoreDRE2E:
             return {
                 "all_unaffected": all_unaffected,
                 "results": validation_results,
-                "unaffected_count": sum(
-                    1 for r in validation_results if r["unaffected"]
-                ),
+                "unaffected_count": sum(1 for r in validation_results if r["unaffected"]),
                 "total_tenants": len(validation_results),
                 "duration": time.time() - start_time,
             }
@@ -1725,16 +1636,12 @@ class BackupRestoreDRE2E:
 
             await asyncio.sleep(2)
 
-            isolation_maintained = all(
-                check["status"] == "pass" for check in isolation_checks
-            )
+            isolation_maintained = all(check["status"] == "pass" for check in isolation_checks)
 
             return {
                 "isolation_maintained": isolation_maintained,
                 "checks": isolation_checks,
-                "passed_checks": sum(
-                    1 for c in isolation_checks if c["status"] == "pass"
-                ),
+                "passed_checks": sum(1 for c in isolation_checks if c["status"] == "pass"),
                 "total_checks": len(isolation_checks),
                 "duration": time.time() - start_time,
             }
@@ -1768,9 +1675,7 @@ async def test_backup_restore_dr_e2e():
 
     # Assert overall success
     assert results["status"] == "completed", f"Test suite failed: {results}"
-    assert (
-        results["summary"]["success_rate"] >= 70
-    ), f"Success rate too low: {results['summary']}"
+    assert results["summary"]["success_rate"] >= 70, f"Success rate too low: {results['summary']}"
 
     # Log results
     logger.info("\nBackup/Restore DR Test Results:")

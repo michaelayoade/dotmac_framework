@@ -96,9 +96,7 @@ class NetworkTopologyManager:
             .first()
         )
 
-    async def update_node(
-        self, node_id: str, updates: dict[str, Any]
-    ) -> Optional[NetworkNode]:
+    async def update_node(self, node_id: str, updates: dict[str, Any]) -> Optional[NetworkNode]:
         """Update network node."""
         node = await self.get_node(node_id)
         if not node:
@@ -241,9 +239,7 @@ class NetworkTopologyManager:
 
         return neighbors
 
-    async def find_shortest_path(
-        self, source_node_id: str, target_node_id: str
-    ) -> list[str]:
+    async def find_shortest_path(self, source_node_id: str, target_node_id: str) -> list[str]:
         """Find shortest path between nodes using BFS."""
         if source_node_id == target_node_id:
             return [source_node_id]
@@ -340,17 +336,9 @@ class NetworkTopologyManager:
 
     async def get_topology_statistics(self) -> dict[str, Any]:
         """Get topology statistics."""
-        total_nodes = (
-            self.session.query(NetworkNode)
-            .filter(NetworkNode.tenant_id == self.tenant_id)
-            .count()
-        )
+        total_nodes = self.session.query(NetworkNode).filter(NetworkNode.tenant_id == self.tenant_id).count()
 
-        total_links = (
-            self.session.query(NetworkLink)
-            .filter(NetworkLink.tenant_id == self.tenant_id)
-            .count()
-        )
+        total_links = self.session.query(NetworkLink).filter(NetworkLink.tenant_id == self.tenant_id).count()
 
         # Node type breakdown
         from sqlalchemy import func
@@ -391,9 +379,7 @@ class NetworkTopologyManager:
         offset: int = 0,
     ) -> list[NetworkNode]:
         """List nodes with filtering."""
-        query = self.session.query(NetworkNode).filter(
-            NetworkNode.tenant_id == self.tenant_id
-        )
+        query = self.session.query(NetworkNode).filter(NetworkNode.tenant_id == self.tenant_id)
 
         if node_type:
             query = query.filter(NetworkNode.node_type == node_type)
@@ -412,9 +398,7 @@ class NetworkTopologyManager:
         offset: int = 0,
     ) -> list[NetworkLink]:
         """List links with filtering."""
-        query = self.session.query(NetworkLink).filter(
-            NetworkLink.tenant_id == self.tenant_id
-        )
+        query = self.session.query(NetworkLink).filter(NetworkLink.tenant_id == self.tenant_id)
 
         if link_type:
             query = query.filter(NetworkLink.link_type == link_type)
@@ -495,9 +479,7 @@ class NetworkTopologyService:
             "error_details": errors,
         }
 
-    async def discover_network_paths(
-        self, source_device_id: str, target_device_id: str
-    ) -> dict[str, Any]:
+    async def discover_network_paths(self, source_device_id: str, target_device_id: str) -> dict[str, Any]:
         """Discover and analyze network paths between devices."""
         path = await self.manager.find_shortest_path(source_device_id, target_device_id)
 
@@ -530,12 +512,8 @@ class NetworkTopologyService:
 
                 # Find the link to the next hop
                 for link in links:
-                    if (
-                        link.source_node_id == node_id
-                        and link.target_node_id == next_node_id
-                    ) or (
-                        link.source_node_id == next_node_id
-                        and link.target_node_id == node_id
+                    if (link.source_node_id == node_id and link.target_node_id == next_node_id) or (
+                        link.source_node_id == next_node_id and link.target_node_id == node_id
                     ):
                         step_info["outgoing_link"] = {
                             "link_id": link.link_id,
@@ -589,9 +567,7 @@ class NetworkTopologyService:
         # Analyze connectivity
         connectivity_summary = {
             "total_connections": len(links),
-            "active_connections": len(
-                [link for link in links if link.status == "active"]
-            ),
+            "active_connections": len([link for link in links if link.status == "active"]),
             "connection_types": {},
             "bandwidth_summary": {},
         }
@@ -631,11 +607,7 @@ class NetworkTopologyService:
             "links": [
                 {
                     "link_id": link.link_id,
-                    "connected_to": (
-                        link.target_node_id
-                        if link.source_node_id == device_id
-                        else link.source_node_id
-                    ),
+                    "connected_to": (link.target_node_id if link.source_node_id == device_id else link.source_node_id),
                     "link_type": link.link_type,
                     "bandwidth": link.bandwidth,
                     "status": link.status,
@@ -644,9 +616,7 @@ class NetworkTopologyService:
             ],
         }
 
-    async def analyze_network_redundancy(
-        self, critical_devices: list[str]
-    ) -> dict[str, Any]:
+    async def analyze_network_redundancy(self, critical_devices: list[str]) -> dict[str, Any]:
         """Analyze network redundancy for critical devices."""
         redundancy_analysis = {
             "critical_devices": len(critical_devices),
@@ -660,9 +630,7 @@ class NetworkTopologyService:
             links = await self.manager.get_node_links(device_id)
 
             # Calculate redundancy score
-            active_connections = len(
-                [link for link in links if link.status == "active"]
-            )
+            active_connections = len([link for link in links if link.status == "active"])
             redundancy_score = min(active_connections / 2, 1.0)  # Normalize to 0-1
 
             redundancy_analysis["redundancy_scores"][device_id] = {

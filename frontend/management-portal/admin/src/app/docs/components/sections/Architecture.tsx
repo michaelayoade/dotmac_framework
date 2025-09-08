@@ -109,7 +109,7 @@ const architectureLayers = [
       { name: 'Auto Scaling', description: 'Dynamic resource allocation' },
       { name: 'Monitoring & Logging', description: 'System observability' }
     ],
-    technologies: ['Kubernetes', 'Docker', 'Prometheus', 'Grafana', 'ELK Stack']
+    technologies: ['Kubernetes', 'Docker', 'SigNoz (OTLP)', 'ELK Stack']
   }
 ]
 

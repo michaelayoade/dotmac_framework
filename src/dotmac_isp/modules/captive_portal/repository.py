@@ -9,9 +9,10 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from dotmac_isp.shared.base_repository import BaseTenantRepository
 from sqlalchemy import and_, desc, func, or_
 from sqlalchemy.orm import joinedload, selectinload
+
+from dotmac_isp.shared.base_repository import BaseTenantRepository
 
 from .models import (
     AuthMethod,
@@ -51,9 +52,7 @@ class CaptivePortalConfigRepository(BaseTenantRepository[CaptivePortalConfig]):
             logger.error(f"Error finding portal by SSID {ssid}: {e}")
             raise
 
-    def find_by_customer_id(
-        self, customer_id: str, limit: Optional[int] = None
-    ) -> list[CaptivePortalConfig]:
+    def find_by_customer_id(self, customer_id: str, limit: Optional[int] = None) -> list[CaptivePortalConfig]:
         """Find all portal configurations for a customer."""
         try:
             query = (
@@ -87,9 +86,7 @@ class CaptivePortalConfigRepository(BaseTenantRepository[CaptivePortalConfig]):
         """List portal configurations with filtering and pagination."""
         try:
             query = self.db.query(self.model).filter(
-                and_(
-                    self.model.tenant_id == self.tenant_id, self.model.is_active is True
-                )
+                and_(self.model.tenant_id == self.tenant_id, self.model.is_active is True)
             )
 
             # Apply filters
@@ -104,21 +101,14 @@ class CaptivePortalConfigRepository(BaseTenantRepository[CaptivePortalConfig]):
             total = query.count()
 
             # Apply pagination and get results
-            portals = (
-                query.order_by(desc(self.model.created_at))
-                .offset(offset)
-                .limit(limit)
-                .all()
-            )
+            portals = query.order_by(desc(self.model.created_at)).offset(offset).limit(limit).all()
 
             return portals, total
         except Exception as e:
             logger.error(f"Error listing portals with filters: {e}")
             raise
 
-    def check_ssid_availability(
-        self, ssid: str, exclude_id: Optional[str] = None
-    ) -> bool:
+    def check_ssid_availability(self, ssid: str, exclude_id: Optional[str] = None) -> bool:
         """Check if SSID is available for use."""
         try:
             query = self.db.query(self.model).filter(
@@ -199,9 +189,7 @@ class CaptivePortalSessionRepository(BaseTenantRepository[CaptivePortalSession])
             total = query.count()
 
             sessions = (
-                query.options(
-                    joinedload(self.model.user), joinedload(self.model.customer)
-                )
+                query.options(joinedload(self.model.user), joinedload(self.model.customer))
                 .order_by(desc(self.model.start_time))
                 .offset(offset)
                 .limit(limit)
@@ -281,11 +269,9 @@ class CaptivePortalSessionRepository(BaseTenantRepository[CaptivePortalSession])
                 )
                 .update(
                     {
-                        "bytes_downloaded": self.model.bytes_downloaded
-                        + bytes_downloaded,
+                        "bytes_downloaded": self.model.bytes_downloaded + bytes_downloaded,
                         "bytes_uploaded": self.model.bytes_uploaded + bytes_uploaded,
-                        "packets_received": self.model.packets_received
-                        + packets_received,
+                        "packets_received": self.model.packets_received + packets_received,
                         "packets_sent": self.model.packets_sent + packets_sent,
                         "last_activity": datetime.now(timezone.utc),
                     }
@@ -504,9 +490,7 @@ class PortalUsageStatsRepository(BaseTenantRepository[PortalUsageStats]):
             logger.error(f"Error getting usage stats: {e}")
             raise
 
-    def aggregate_session_stats(
-        self, portal_id: str, stats_date: datetime, period_type: str = "day"
-    ) -> dict:
+    def aggregate_session_stats(self, portal_id: str, stats_date: datetime, period_type: str = "day") -> dict:
         """Aggregate session statistics for a specific period."""
         try:
             # This would typically aggregate from the sessions table
@@ -515,12 +499,8 @@ class PortalUsageStatsRepository(BaseTenantRepository[PortalUsageStats]):
 
             # Calculate period boundaries
             if period_type == "day":
-                start_time = stats_date.replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
-                end_time = stats_date.replace(
-                    hour=23, minute=59, second=59, microsecond=999999
-                )
+                start_time = stats_date.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_time = stats_date.replace(hour=23, minute=59, second=59, microsecond=999999)
             else:
                 # Add logic for other period types (hour, week, month)
                 start_time = stats_date
@@ -541,9 +521,7 @@ class PortalUsageStatsRepository(BaseTenantRepository[PortalUsageStats]):
             # Calculate other aggregations
             usage_stats = sessions_query.with_entities(
                 func.count(CaptivePortalSession.id).label("total_sessions"),
-                func.count(CaptivePortalSession.user_id.distinct()).label(
-                    "unique_users"
-                ),
+                func.count(CaptivePortalSession.user_id.distinct()).label("unique_users"),
                 func.avg(
                     func.extract(
                         "epoch",
@@ -551,9 +529,7 @@ class PortalUsageStatsRepository(BaseTenantRepository[PortalUsageStats]):
                     )
                     / 60
                 ).label("avg_duration_minutes"),
-                func.sum(CaptivePortalSession.bytes_downloaded).label(
-                    "total_downloaded"
-                ),
+                func.sum(CaptivePortalSession.bytes_downloaded).label("total_downloaded"),
                 func.sum(CaptivePortalSession.bytes_uploaded).label("total_uploaded"),
             ).first()
 

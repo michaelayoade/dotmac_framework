@@ -69,9 +69,7 @@ class WebSocketEventCreate(WebSocketEventBase):
         if v and values.get("target_user_id"):
             raise ValueError("Cannot specify both target_user_id and target_user_ids")
         if v and values.get("broadcast_to_tenant"):
-            raise ValueError(
-                "Cannot specify target_user_ids when broadcasting to tenant"
-            )
+            raise ValueError("Cannot specify target_user_ids when broadcasting to tenant")
         return v
 
 

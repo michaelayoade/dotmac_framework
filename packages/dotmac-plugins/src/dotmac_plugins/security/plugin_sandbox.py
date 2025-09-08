@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, Optional
 from uuid import UUID
 
-from ...monitoring import get_monitoring
+from .._internal.monitoring import get_monitoring
 from ..core.exceptions import PluginExecutionError, PluginSecurityError
 
 logger = logging.getLogger("plugins.security")

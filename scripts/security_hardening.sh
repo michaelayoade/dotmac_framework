@@ -97,7 +97,7 @@ configure_firewall() {
     
     # Allow monitoring ports (restrict to specific IPs in production)
     ufw allow from 127.0.0.1 to any port 9090 comment 'Prometheus'
-    ufw allow from 127.0.0.1 to any port 3000 comment 'Grafana'
+    # Grafana not used
     
     # Enable UFW
     ufw --force enable

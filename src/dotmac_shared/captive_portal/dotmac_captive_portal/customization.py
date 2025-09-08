@@ -377,9 +377,7 @@ class ContentManager:
 
         # Try fallback language
         if language != fallback_language:
-            fallback_key = (
-                f"{portal_id or 'default'}:{content_type}:{fallback_language}"
-            )
+            fallback_key = f"{portal_id or 'default'}:{content_type}:{fallback_language}"
             if fallback_key in self._content_cache:
                 return self._content_cache[fallback_key]
 
@@ -423,11 +421,7 @@ class ContentManager:
             return self._translations[language][key]
 
         # Fallback to English
-        if (
-            language != "en"
-            and "en" in self._translations
-            and key in self._translations["en"]
-        ):
+        if language != "en" and "en" in self._translations and key in self._translations["en"]:
             return self._translations["en"][key]
 
         # Return key if no translation found
@@ -448,9 +442,7 @@ class ContentManager:
                 count=len(translations),
             )
         except Exception as e:
-            logger.exception(
-                "Failed to load translations", file_path=file_path, error=str(e)
-            )
+            logger.exception("Failed to load translations", file_path=file_path, error=str(e))
 
 
 class AssetManager:

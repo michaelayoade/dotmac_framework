@@ -14,7 +14,6 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
@@ -26,6 +25,7 @@ from dotmac.application.dependencies.dependencies import (
 )
 from dotmac.core.schemas.base_schemas import BaseResponseSchema
 from dotmac.platform.observability.logging import get_logger
+from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 
 from ..core.file_handlers import (
     FileUploadManager,
@@ -249,9 +249,7 @@ async def generate_report_pdf(
 
     pdf_generator = PDFGenerator(tenant_id=deps.tenant_id, template=template)
 
-    pdf_path = await pdf_generator.generate_report_pdf(
-        report_data=data, template=template
-    )
+    pdf_path = await pdf_generator.generate_report_pdf(report_data=data, template=template)
 
     return FileResponse(
         path=pdf_path,
@@ -280,9 +278,7 @@ async def export_csv(
     """Export data to CSV format."""
 
     if request.format != "csv":
-        raise HTTPException(
-            status_code=400, detail="Format must be 'csv' for this endpoint"
-        )
+        raise HTTPException(status_code=400, detail="Format must be 'csv' for this endpoint")
 
     csv_path = await export_data_to_csv(
         data=request.data,
@@ -313,9 +309,7 @@ async def export_excel(
     """Export data to Excel format."""
 
     if request.format != "excel":
-        raise HTTPException(
-            status_code=400, detail="Format must be 'excel' for this endpoint"
-        )
+        raise HTTPException(status_code=400, detail="Format must be 'excel' for this endpoint")
 
     excel_path = await export_data_to_excel(
         data=request.data,
@@ -357,13 +351,9 @@ async def list_files(
         user_id=deps.user.get("user_id") if deps.user else None,
     )
 
-    files = await upload_manager.list_files(
-        category=category, limit=limit, offset=offset
-    )
+    files = await upload_manager.list_files(category=category, limit=limit, offset=offset)
 
-    return BaseResponseSchema(
-        success=True, message=f"Retrieved {len(files)} files", data=files
-    )
+    return BaseResponseSchema(success=True, message=f"Retrieved {len(files)} files", data=files)
 
 
 @router.get(
@@ -410,9 +400,10 @@ async def check_file_service_health(
 ) -> dict:
     """Check file handler service health."""
 
-    # Check upload directory access
-    upload_dir = Path(f"/tmp/uploads/{deps.tenant_id}")
-    upload_dir.mkdir(parents=True, exist_ok=True)
+    # Check upload directory access - use secure temp directory
+    import tempfile
+    upload_dir = Path(tempfile.gettempdir()) / "uploads" / deps.tenant_id
+    upload_dir.mkdir(parents=True, exist_ok=True, mode=0o700)  # Secure permissions
 
     # Basic health checks
     health_status = {

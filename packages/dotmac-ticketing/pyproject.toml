@@ -1,64 +1,62 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "dotmac-ticketing"
 version = "1.0.0"
 description = "Comprehensive ticketing system for DotMac Framework"
+authors = ["DotMac Framework Team <dev@dotmac.com>"]
 readme = "README.md"
-requires-python = ">=3.9"
-authors = [
-    {name = "DotMac Framework Team", email = "dev@dotmac.com"}
-]
+license = "MIT"
+homepage = "https://github.com/dotmac-framework/dotmac-ticketing"
+repository = "https://github.com/dotmac-framework/dotmac-ticketing.git"
+documentation = "https://docs.dotmac.com/ticketing"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.12"
 ]
-dependencies = [
-    "pydantic>=2.0.0",
-    "sqlalchemy>=2.0.0",
-    "fastapi>=0.104.0",
-    "python-multipart>=0.0.6",
-    "structlog>=23.0.0",
-    "pyotp>=2.9.0",
+packages = [
+    { include = "dotmac", from = "src" }
 ]
 
-[project.optional-dependencies]
-enterprise = [
-    "redis>=5.0.0",
-    "celery>=5.3.0",
-]
+[tool.poetry.dependencies]
+python = "^3.9"
+pydantic = ">=2.5.0"
+sqlalchemy = ">=2.0.0"
+fastapi = ">=0.110.0"
+python-multipart = ">=0.0.6"
+structlog = ">=23.0.0"
+pyotp = ">=2.9.0"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-"*" = ["py.typed"]
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0.0"
+pytest-cov = ">=4.0.0"
+ruff = ">=0.1.0"
 
 [tool.ruff]
-line-length = 88
-target-version = "py311"
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
 select = ["E", "F", "W", "C", "I", "N", "B"]
 ignore = ["E203", "C901"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["dotmac"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "--disable-warnings",
-]
+addopts = ["--strict-markers", "--strict-config", "--disable-warnings"]
+asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["src"]
@@ -66,9 +64,4 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-]
+exclude_lines = ["pragma: no cover", "def __repr__", "raise AssertionError", "raise NotImplementedError"]

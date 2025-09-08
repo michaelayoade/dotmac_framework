@@ -9,7 +9,9 @@ Provides database base classes for backward compatibility.
 from datetime import datetime
 
 from sqlalchemy import Column, DateTime, String
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from uuid import uuid4
+from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
@@ -18,6 +20,9 @@ class BaseModel(Base):
     """Base model for all database entities."""
 
     __abstract__ = True
+
+    # Primary key for all ORM entities using this base
+    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
 
     def __init__(self, **kwargs) -> None:
         for key, value in kwargs.items():
@@ -40,4 +45,4 @@ class AuditableMixin:
     updated_by = Column(String(255), nullable=True)
 
 
-__all__ = ["Base", "BaseModel", "AuditableMixin"]
+__all__ = ["AuditableMixin", "Base", "BaseModel"]

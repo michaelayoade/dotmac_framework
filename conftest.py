@@ -15,7 +15,7 @@ sys.path.insert(0, str(src_path))
 # Set environment variables for testing
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("TESTING", "true")
-os.environ.setdefault("DATABASE_URL", "sqlite:///test.db")
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -27,7 +27,7 @@ def test_environment():
     """Test environment configuration"""
     return {
         "environment": "test",
-        "database_url": "sqlite:///test.db",
+        "database_url": "sqlite:///:memory:",
         "redis_url": "redis://localhost:6379/1",
         "api_base_url": "http://localhost:8000",
         "frontend_base_url": "http://localhost:3000",

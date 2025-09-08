@@ -63,9 +63,7 @@ class PartnerRepository(BaseRepository[Partner]):
         await self.db.refresh(partner)
         return partner
 
-    async def suspend(
-        self, partner_id: UUID, reason: Optional[str] = None
-    ) -> Optional[Partner]:
+    async def suspend(self, partner_id: UUID, reason: Optional[str] = None) -> Optional[Partner]:
         partner = await self.get_by_id(partner_id)
         if not partner:
             return None

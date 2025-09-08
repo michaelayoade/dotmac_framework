@@ -148,7 +148,7 @@ class WebSocketConfig:
     """Main WebSocket gateway configuration."""
 
     # Server settings
-    host: str = "0.0.0.0"
+    host: str = "0.0.0.0"  # nosec B104 - intentional binding for container deployment
     port: int = 8765
     path: str = "/ws"
 

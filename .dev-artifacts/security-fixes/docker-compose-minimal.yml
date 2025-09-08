@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # SigNoz Query Service - Minimal Working Configuration
+  signoz-query:
+    image: signoz/query-service:0.40.0
+    container_name: signoz-query-minimal
+    ports:
+      - "8081:8080"
+    environment:
+      - STORAGE=clickhouse
+      - ClickHouse_DSN=tcp://clickhouse:9000?database=signoz_traces
+      - ClickHouse_USERNAME=default
+      - ClickHouse_PASSWORD=
+      - ClickHouse_DATABASE=signoz_traces
+    networks:
+      - gate-e0c-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # SigNoz Frontend
+  signoz-frontend:
+    image: signoz/frontend:0.40.0
+    container_name: signoz-frontend-minimal
+    depends_on:
+      - signoz-query
+    ports:
+      - "3302:3301"
+    environment:
+      - FRONTEND_API_ENDPOINT=http://signoz-query:8080
+    networks:
+      - gate-e0c-network
+    restart: unless-stopped
+
+networks:
+  gate-e0c-network:
+    external: true

@@ -48,4 +48,4 @@ except ImportError:
             return
 
 
-__all__ = ["TenantMiddleware", "TenantIdentityResolver"]
+__all__ = ["TenantIdentityResolver", "TenantMiddleware"]

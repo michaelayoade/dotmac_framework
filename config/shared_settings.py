@@ -29,11 +29,11 @@ class SharedSettings(BaseSettings):
 
     # Security settings
     secret_key: str = Field(
-        default_factory=lambda: os.getenv("SECRET_KEY", "dev-secret-key-change-in-production"),
+        default_factory=lambda: _env_or_file("SECRET_KEY", "dev-secret-key-change-in-production"),
         description="Application secret key",
     )
     jwt_secret_key: str = Field(
-        default_factory=lambda: os.getenv("JWT_SECRET_KEY", "jwt-dev-secret-change-in-production"),
+        default_factory=lambda: _env_or_file("JWT_SECRET_KEY", "jwt-dev-secret-change-in-production"),
         description="JWT secret key",
     )
     jwt_algorithm: str = Field(default="HS256", description="JWT algorithm")
@@ -41,7 +41,7 @@ class SharedSettings(BaseSettings):
 
     # Database settings
     database_url: str = Field(
-        default_factory=lambda: os.getenv(
+        default_factory=lambda: _env_or_file(
             "DATABASE_URL",
             "postgresql+asyncpg://user:password@db:5432/dotmac_framework",
         ),
@@ -52,7 +52,7 @@ class SharedSettings(BaseSettings):
 
     # Redis settings
     redis_url: str = Field(
-        default_factory=lambda: os.getenv("REDIS_URL", "redis://redis:6379/0"),
+        default_factory=lambda: _env_or_file("REDIS_URL", "redis://redis:6379/0"),
         description="Redis connection URL",
     )
     redis_max_connections: int = Field(default=10, description="Redis max connections")
@@ -84,11 +84,11 @@ class SharedSettings(BaseSettings):
 
     # External service integrations
     stripe_secret_key: Optional[str] = Field(
-        default_factory=lambda: os.getenv("STRIPE_SECRET_KEY"),
+        default_factory=lambda: _env_or_file("STRIPE_SECRET_KEY"),
         description="Stripe API secret key",
     )
     sendgrid_api_key: Optional[str] = Field(
-        default_factory=lambda: os.getenv("SENDGRID_API_KEY"),
+        default_factory=lambda: _env_or_file("SENDGRID_API_KEY"),
         description="SendGrid API key",
     )
     twilio_account_sid: Optional[str] = Field(
@@ -96,7 +96,7 @@ class SharedSettings(BaseSettings):
         description="Twilio Account SID",
     )
     twilio_auth_token: Optional[str] = Field(
-        default_factory=lambda: os.getenv("TWILIO_AUTH_TOKEN"),
+        default_factory=lambda: _env_or_file("TWILIO_AUTH_TOKEN"),
         description="Twilio Auth Token",
     )
 
@@ -127,7 +127,7 @@ class ISPSettings(SharedSettings):
     base_domain: str = Field(default="dotmac.io", description="Base domain for ISP")
     dns_strategy: str = Field(default="auto", description="DNS management strategy")
     radius_secret: str = Field(
-        default_factory=lambda: os.getenv("RADIUS_SECRET", "testing123"),
+        default_factory=lambda: _env_or_file("RADIUS_SECRET", "testing123"),
         description="RADIUS shared secret",
     )
 
@@ -170,11 +170,29 @@ def setup_logging(config_path: Optional[str] = None):
         logging.config.fileConfig(config_path)
     else:
         # Fallback basic configuration
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        )
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
 
 # Initialize logging on import
 setup_logging()
+
+
+# ----- helpers -----
+def _read_file(path: str) -> Optional[str]:
+    try:
+        return Path(path).read_text(encoding="utf-8").strip()
+    except Exception:
+        return None
+
+
+def _env_or_file(name: str, default: Optional[str] = None) -> Optional[str]:
+    """Return value from ENV or read from NAME_FILE if set."""
+    file_var = f"{name}_FILE"
+    if file_var in os.environ and os.environ[file_var]:
+        val = _read_file(os.environ[file_var])
+        if val is not None:
+            return val
+    return os.getenv(name, default)

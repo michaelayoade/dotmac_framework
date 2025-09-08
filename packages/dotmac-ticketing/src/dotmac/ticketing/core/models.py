@@ -14,6 +14,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -74,14 +75,30 @@ class TicketSource(str, Enum):
     ESCALATION = "escalation"
 
 
+def _generate_ticket_number() -> str:
+    """Generate unique ticket number with timestamp and random suffix."""
+    from time import time
+    from random import randint
+    timestamp = str(int(time() * 1000))[-8:]  # Last 8 digits of timestamp
+    random_suffix = f"{randint(1000, 9999)}"
+    return f"TKT-{timestamp}-{random_suffix}"
+
+
 class Ticket(Base):
     """Core ticket model."""
 
     __tablename__ = "tickets"
+    
+    # Performance indexes for common dashboard queries
+    __table_args__ = (
+        Index('idx_tickets_dashboard', 'tenant_id', 'status', 'priority'),
+        Index('idx_tickets_tenant_created', 'tenant_id', 'created_at'),
+        Index('idx_tickets_tenant_assigned', 'tenant_id', 'assigned_to_id'),
+    )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     tenant_id = Column(String, nullable=False, index=True)
-    ticket_number = Column(String, unique=True, nullable=False, index=True)
+    ticket_number = Column(String, unique=True, nullable=False, index=True, default=_generate_ticket_number)
 
     # Basic ticket information
     title = Column(String(500), nullable=False)

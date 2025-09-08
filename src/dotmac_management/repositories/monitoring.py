@@ -49,9 +49,7 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
         """Get active alerts for a tenant."""
         query = (
             select(Alert)
-            .where(
-                and_(Alert.tenant_id == tenant_id, Alert.status == AlertStatus.ACTIVE)
-            )
+            .where(and_(Alert.tenant_id == tenant_id, Alert.status == AlertStatus.ACTIVE))
             .order_by(desc(Alert.severity), desc(Alert.first_triggered_at))
         )
 
@@ -60,12 +58,7 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
 
     async def get_latest_sla_record(self, tenant_id: UUID) -> Optional[SLARecord]:
         """Get the latest SLA record for a tenant."""
-        query = (
-            select(SLARecord)
-            .where(SLARecord.tenant_id == tenant_id)
-            .order_by(desc(SLARecord.period_end))
-            .limit(1)
-        )
+        query = select(SLARecord).where(SLARecord.tenant_id == tenant_id).order_by(desc(SLARecord.period_end)).limit(1)
 
         result = await self.db.execute(query)
         return result.scalars().first()
@@ -187,9 +180,7 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
         await self.db.refresh(alert)
         return alert
 
-    async def resolve_alert(
-        self, alert_id: UUID, user_id: Optional[UUID] = None
-    ) -> bool:
+    async def resolve_alert(self, alert_id: UUID, user_id: Optional[UUID] = None) -> bool:
         """Resolve an active alert."""
         query = select(Alert).where(Alert.id == alert_id)
         result = await self.db.execute(query)
@@ -213,14 +204,8 @@ class MonitoringRepository(BaseRepository[HealthCheck]):
         summary = {}
 
         for row in result:
-            severity_key = (
-                row.severity.value
-                if hasattr(row.severity, "value")
-                else str(row.severity)
-            )
-            status_key = (
-                row.status.value if hasattr(row.status, "value") else str(row.status)
-            )
+            severity_key = row.severity.value if hasattr(row.severity, "value") else str(row.severity)
+            status_key = row.status.value if hasattr(row.status, "value") else str(row.status)
 
             if severity_key not in summary:
                 summary[severity_key] = {}
@@ -311,9 +296,7 @@ class SLARecordRepository(BaseRepository[SLARecord]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, SLARecord)
 
-    async def get_sla_history(
-        self, tenant_id: UUID, period_type: str = "monthly", limit: int = 12
-    ) -> list[SLARecord]:
+    async def get_sla_history(self, tenant_id: UUID, period_type: str = "monthly", limit: int = 12) -> list[SLARecord]:
         """Get SLA history for a tenant."""
         query = (
             select(SLARecord)
@@ -347,12 +330,8 @@ class SLARecordRepository(BaseRepository[SLARecord]):
         total_records = len(sla_records)
         compliant_records = len([r for r in sla_records if r.overall_sla_met])
 
-        avg_uptime = (
-            sum(float(r.uptime_percentage) for r in sla_records) / total_records
-        )
-        avg_response_time = (
-            sum(r.response_time_avg_ms for r in sla_records) / total_records
-        )
+        avg_uptime = sum(float(r.uptime_percentage) for r in sla_records) / total_records
+        avg_response_time = sum(r.response_time_avg_ms for r in sla_records) / total_records
         total_incidents = sum(r.incident_count for r in sla_records)
         total_downtime = sum(r.total_downtime_minutes for r in sla_records)
 

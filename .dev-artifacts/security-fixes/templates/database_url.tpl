@@ -1,0 +1,1 @@
+{{ with secret "dotmac/isp" }}postgresql://{{ .Data.data.db_username }}:{{ .Data.data.db_password }}@postgres:5432/{{ .Data.data.db_name }}{{ end }}

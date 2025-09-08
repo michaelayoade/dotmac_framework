@@ -123,9 +123,7 @@ class FakeDataProvider(DataProvider):
     def _generate_with_faker(self, data_type: DataType, **kwargs) -> Any:
         """Generate using Faker library."""
         generators = {
-            DataType.STRING: lambda: self.faker.text(
-                max_nb_chars=kwargs.get("max_length", 100)
-            ),
+            DataType.STRING: lambda: self.faker.text(max_nb_chars=kwargs.get("max_length", 100)),
             DataType.EMAIL: lambda: self.faker.email(),
             DataType.PHONE: lambda: self.faker.phone_number(),
             DataType.NAME: lambda: self.faker.name(),
@@ -135,9 +133,7 @@ class FakeDataProvider(DataProvider):
             DataType.IP_ADDRESS: lambda: self.faker.ipv4(),
             DataType.MAC_ADDRESS: lambda: self.faker.mac_address(),
             DataType.UUID: lambda: str(self.faker.uuid4()),
-            DataType.INTEGER: lambda: self.faker.random_int(
-                min=kwargs.get("min", 1), max=kwargs.get("max", 1000)
-            ),
+            DataType.INTEGER: lambda: self.faker.random_int(min=kwargs.get("min", 1), max=kwargs.get("max", 1000)),
             DataType.DECIMAL: lambda: Decimal(
                 str(
                     self.faker.pydecimal(
@@ -179,18 +175,13 @@ class FakeDataProvider(DataProvider):
         """Generate using basic Python without Faker."""
         generators = {
             DataType.STRING: lambda: "".join(
-                random.choices(
-                    string.ascii_letters + string.digits, k=kwargs.get("length", 10)
-                )
+                random.choices(string.ascii_letters + string.digits, k=kwargs.get("length", 10))
             ),
             DataType.UUID: lambda: str(uuid4()),
-            DataType.INTEGER: lambda: random.randint(
-                kwargs.get("min", 1), kwargs.get("max", 1000)
-            ),
+            DataType.INTEGER: lambda: random.randint(kwargs.get("min", 1), kwargs.get("max", 1000)),
             DataType.BOOLEAN: lambda: random.choice([True, False]),
             DataType.EMAIL: lambda: f"user{random.randint(1000, 9999)}@example.com",
-            DataType.DATETIME: lambda: utc_now()
-            - timedelta(days=random.randint(0, 365)),
+            DataType.DATETIME: lambda: utc_now() - timedelta(days=random.randint(0, 365)),
         }
 
         generator = generators.get(data_type)

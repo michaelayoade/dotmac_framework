@@ -8,7 +8,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 
@@ -48,7 +48,7 @@ class MetricsCollector:
             self._counters[key] += value
 
             point = MetricPoint(
-                name=name, value=self._counters[key], timestamp=datetime.utcnow(), tags=tags or {}
+                name=name, value=self._counters[key], timestamp=datetime.now(timezone.utc), tags=tags or {}
             )
             self._metrics[name].append(point)
 
@@ -59,7 +59,7 @@ class MetricsCollector:
             self._gauges[key] = value
 
             point = MetricPoint(
-                name=name, value=value, timestamp=datetime.utcnow(), tags=tags or {}
+                name=name, value=value, timestamp=datetime.now(timezone.utc), tags=tags or {}
             )
             self._metrics[name].append(point)
 
@@ -74,7 +74,7 @@ class MetricsCollector:
                 self._histograms[key] = self._histograms[key][-1000:]
 
             point = MetricPoint(
-                name=name, value=value, timestamp=datetime.utcnow(), tags=tags or {}
+                name=name, value=value, timestamp=datetime.now(timezone.utc), tags=tags or {}
             )
             self._metrics[name].append(point)
 
@@ -268,7 +268,7 @@ class HealthMonitor:
 
         return {
             "healthy": overall_healthy,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "checks": results,
         }
 
@@ -410,7 +410,7 @@ class CommunicationsObservability:
                 "service": service,
                 "error_type": error_type,
                 "error_message": error_msg,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 

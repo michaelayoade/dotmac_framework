@@ -1,0 +1,259 @@
+# Gate E-0c: Application Layer with Fixed Observability Integration
+# Dependencies: External services from Gate E-0a + Gate E-0b (running separately)
+# Purpose: Business applications with working observability configuration
+
+version: '3.8'
+
+services:
+  # ===== ISP FRAMEWORK WITH OBSERVABILITY =====
+  
+  isp-framework:
+    build:
+      context: .
+      dockerfile: ./isp-framework/Dockerfile
+      target: development
+    container_name: dotmac-isp-framework
+    environment:
+      # Core Application
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      DEBUG: "false"
+      TENANT_ID: "development"
+      DATABASE_SCHEMA: "public"
+      
+      # Database Configuration (assumes E-0a services running)
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD}@dotmac-postgres-shared:5432/dotmac_isp
+      
+      # Redis Configuration (assumes E-0a services running)
+      REDIS_URL: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/0
+      REDIS_NAMESPACE: "dev:"
+      
+      # Background Tasks
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/1
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/2
+      
+      # Secrets Management (assumes E-0a services running)
+      VAULT_URL: http://dotmac-openbao-shared:8200
+      VAULT_TOKEN: ${VAULT_TOKEN}
+      VAULT_PATH: "secret/development"
+      
+      # Fixed Observability Configuration (assumes E-0b services running)
+      SIGNOZ_ENDPOINT: dotmac-signoz-collector:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://dotmac-signoz-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-isp-${TENANT_ID:-dev},tenant.id=${TENANT_ID:-development},service.version=${APP_VERSION:-1.0.0},environment=development"
+      OTEL_SERVICE_NAME: "dotmac-isp-${TENANT_ID:-dev}"
+      
+      # Python and Import Configuration  
+      PYTHONPATH: "/app/src:/app/shared:/app/packages/dotmac-platform-services/src"
+      PYTHONUNBUFFERED: "1"
+      
+      # Application Performance
+      UVICORN_WORKERS: 1
+      UVICORN_TIMEOUT: 60
+      
+    volumes:
+      - ./isp-framework:/app
+      - ./shared:/app/shared
+      - ./packages:/app/packages  # Include platform services
+      - isp_uploads:/app/uploads
+      - isp_logs:/app/logs
+    ports:
+      - "8001:8000"
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s  # Longer startup time for observability initialization
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '${ISP_CPU_LIMIT:-1.0}'
+          memory: ${ISP_MEMORY_LIMIT:-1G}
+        reservations:
+          cpus: '${ISP_CPU_RESERVATION:-0.5}'
+          memory: ${ISP_MEMORY_RESERVATION:-512M}
+
+  # ===== MANAGEMENT PLATFORM WITH OBSERVABILITY =====
+  
+  management-platform:
+    build:
+      context: .
+      dockerfile: ./management-platform/Dockerfile
+      target: development
+    container_name: dotmac-management-platform
+    environment:
+      # Core Application
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      SECRET_KEY: ${MGMT_SECRET_KEY}
+      JWT_SECRET_KEY: ${MGMT_JWT_SECRET_KEY}
+      
+      # Database Configuration (assumes E-0a services running)
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD}@dotmac-postgres-shared:5432/mgmt_platform
+      
+      # Redis Configuration (assumes E-0a services running)
+      REDIS_URL: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/3
+      
+      # Background Tasks
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/4
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/5
+      
+      # Secrets Management (assumes E-0a services running)
+      VAULT_URL: http://dotmac-openbao-shared:8200
+      VAULT_TOKEN: ${VAULT_TOKEN}
+      
+      # Fixed Observability Configuration (assumes E-0b services running)
+      SIGNOZ_ENDPOINT: dotmac-signoz-collector:4317
+      SIGNOZ_ACCESS_TOKEN: ${SIGNOZ_ACCESS_TOKEN:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://dotmac-signoz-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-management-platform,service.version=${APP_VERSION:-1.0.0},environment=development"
+      OTEL_SERVICE_NAME: "dotmac-management-platform"
+      
+      # External Services
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-sg_placeholder}
+      
+      # CORS Configuration
+      CORS_ORIGINS: '${CORS_ORIGINS:-["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]}'
+      
+      # Service Integration
+      ISP_FRAMEWORK_URL: http://dotmac-isp-framework:8000
+      
+      # Python Configuration
+      PYTHONPATH: "/app/src:/app/shared:/app/packages/dotmac-platform-services/src"
+      PYTHONUNBUFFERED: "1"
+      
+    volumes:
+      - ./management-platform:/app
+      - ./shared:/app/shared
+      - ./packages:/app/packages  # Include platform services
+      - mgmt_uploads:/app/uploads
+      - mgmt_logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock  # For deployment tasks
+    ports:
+      - "8000:8000"
+    networks:
+      - dotmac-network
+    depends_on:
+      # Application dependencies within this layer only
+      isp-framework:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s  # Longer startup time for observability initialization
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+
+  # ===== BACKGROUND WORKERS WITH OBSERVABILITY =====
+  
+  mgmt-celery-worker:
+    build:
+      context: .
+      dockerfile: ./management-platform/Dockerfile
+      target: development
+    container_name: dotmac-mgmt-celery-worker
+    environment:
+      # Core Configuration
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      
+      # Database & Redis (assumes E-0a services running)
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD}@dotmac-postgres-shared:5432/mgmt_platform
+      REDIS_URL: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/3
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/4
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/5
+      
+      # Secrets (assumes E-0a services running)
+      VAULT_URL: http://dotmac-openbao-shared:8200
+      VAULT_TOKEN: ${VAULT_TOKEN}
+      
+      # Worker-specific Observability (assumes E-0b services running)
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://dotmac-signoz-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-mgmt-worker,service.version=${APP_VERSION:-1.0.0},environment=development"
+      
+      # Python Configuration
+      PYTHONPATH: "/app/src:/app/shared:/app/packages/dotmac-platform-services/src"
+      
+    volumes:
+      - ./management-platform:/app
+      - ./shared:/app/shared
+      - ./packages:/app/packages
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - dotmac-network
+    depends_on:
+      management-platform:
+        condition: service_healthy
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=4
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+
+  mgmt-celery-beat:
+    build:
+      context: .
+      dockerfile: ./management-platform/Dockerfile
+      target: development
+    container_name: dotmac-mgmt-celery-beat
+    environment:
+      # Core Configuration
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      
+      # Database & Redis (assumes E-0a services running)
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD}@dotmac-postgres-shared:5432/mgmt_platform
+      REDIS_URL: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/3
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/4
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@dotmac-redis-shared:6379/5
+      
+      # Scheduler Observability (assumes E-0b services running)
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://dotmac-signoz-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=dotmac-mgmt-scheduler,service.version=${APP_VERSION:-1.0.0},environment=development"
+      
+      # Python Configuration
+      PYTHONPATH: "/app/src:/app/shared:/app/packages/dotmac-platform-services/src"
+      
+    volumes:
+      - ./management-platform:/app
+      - ./shared:/app/shared
+      - ./packages:/app/packages
+    networks:
+      - dotmac-network
+    command: celery -A app.workers.celery_app beat --loglevel=info
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+
+volumes:
+  isp_uploads:
+    name: dotmac-isp-uploads
+  isp_logs:
+    name: dotmac-isp-logs
+  mgmt_uploads:
+    name: dotmac-mgmt-uploads
+  mgmt_logs:
+    name: dotmac-mgmt-logs
+
+networks:
+  dotmac-network:
+    external: true
+    name: dotmac-network

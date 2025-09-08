@@ -431,7 +431,7 @@ class TestRateLimiting:
         # This would test actual rate limiting
         # For now, just test that the endpoint responds
         responses = []
-        for i in range(5):  # Make several requests
+        for _i in range(5):  # Make several requests
             response = client.get("/api/v1/system/info")
             responses.append(response)
 

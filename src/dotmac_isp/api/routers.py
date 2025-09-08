@@ -96,9 +96,7 @@ def _register_module_routers(app: FastAPI) -> None:
         try:
             # Security: Validate module path is from trusted namespace
             if not module_path.startswith("dotmac_isp."):
-                logger.warning(
-                    f"Security: Blocked router import from untrusted module: {module_path}"
-                )
+                logger.warning(f"Security: Blocked router import from untrusted module: {module_path}")
                 continue
 
             # Use importlib for safer importing
@@ -157,9 +155,7 @@ def _register_portal_routers(app: FastAPI) -> None:
         try:
             # Security: Validate module path is from trusted namespace
             if not module_path.startswith("dotmac_isp."):
-                logger.warning(
-                    f"Security: Blocked portal router import from untrusted module: {module_path}"
-                )
+                logger.warning(f"Security: Blocked portal router import from untrusted module: {module_path}")
                 continue
 
             # Use importlib for safer importing
@@ -172,9 +168,7 @@ def _register_portal_routers(app: FastAPI) -> None:
                 app.include_router(router, prefix=prefix, tags=[prefix.split("/")[-1]])
                 logger.info(f"Registered portal router: {module_path} at {prefix}")
             else:
-                logger.warning(
-                    f"Portal router {router_name} not found in {module_path}"
-                )
+                logger.warning(f"Portal router {router_name} not found in {module_path}")
         except ImportError:
             logger.debug(f"Portal module {module_path} not available yet")
         except Exception as e:
@@ -212,9 +206,7 @@ def _register_integration_routers(app: FastAPI) -> None:
         from dotmac_isp.api.file_router import router as file_router
 
         app.include_router(file_router, prefix="/api", tags=["files"])
-        logger.info(
-            "Registered file handling endpoints at /api/files, /api/upload, /api/export"
-        )
+        logger.info("Registered file handling endpoints at /api/files, /api/upload, /api/export")
     except ImportError as e:
         logger.warning(f"File handling endpoints not available: {e}")
     except Exception as e:
@@ -246,9 +238,7 @@ def _register_integration_routers(app: FastAPI) -> None:
     try:
         from dotmac_isp.api.auth_router import router as tenant_auth_router
 
-        app.include_router(
-            tenant_auth_router, prefix="/api/v1", tags=["tenant-auth", "provisioning"]
-        )
+        app.include_router(tenant_auth_router, prefix="/api/v1", tags=["tenant-auth", "provisioning"])
         logger.info("Registered tenant authentication endpoints at /api/v1/auth")
     except ImportError as e:
         logger.warning(f"Tenant auth endpoints not available: {e}")
@@ -259,9 +249,7 @@ def _register_integration_routers(app: FastAPI) -> None:
     try:
         from dotmac_isp.api.domain_router import router as domain_router
 
-        app.include_router(
-            domain_router, prefix="/api/v1/domains", tags=["domain-management"]
-        )
+        app.include_router(domain_router, prefix="/api/v1/domains", tags=["domain-management"])
         logger.info("Registered domain management endpoints at /api/v1/domains")
     except ImportError as e:
         logger.warning(f"Domain management endpoints not available: {e}")

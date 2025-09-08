@@ -146,9 +146,7 @@ class StandardLifecycleManager:
             if task_name in self.startup_tasks:
                 await self._execute_startup_task(app, startup_manager, task_name)
 
-    async def _execute_startup_task(
-        self, app: FastAPI, startup_manager, task_name: str
-    ):
+    async def _execute_startup_task(self, app: FastAPI, startup_manager, task_name: str):
         """Execute a single startup task with error handling."""
         try:
             task_func = self.startup_tasks[task_name]
@@ -270,18 +268,14 @@ class StandardLifecycleManager:
 
             # Store components for health checks and monitoring
             app.state.observability_components = observability_components
-            app.state.observability_tier = (
-                self.platform_config.observability_config.tier
-            )
+            app.state.observability_tier = self.platform_config.observability_config.tier
 
             # Log successful initialization
             component_count = len(observability_components)
             logger.info("✅ Comprehensive observability initialized")
             logger.info(f"   Components: {component_count}")
             logger.info(f"   Tier: {self.platform_config.observability_config.tier}")
-            logger.info(
-                f"   Business SLOs: {'Enabled' if enable_business_slos else 'Disabled'}"
-            )
+            logger.info(f"   Business SLOs: {'Enabled' if enable_business_slos else 'Disabled'}")
 
             # Record initialization metric
             if "metrics_registry" in observability_components:
@@ -303,9 +297,7 @@ class StandardLifecycleManager:
             await self._fallback_observability_initialization(app, startup_manager)
             raise
 
-    async def _fallback_observability_initialization(
-        self, app: FastAPI, startup_manager
-    ):
+    async def _fallback_observability_initialization(self, app: FastAPI, startup_manager):
         """Fallback to legacy observability initialization."""
         try:
             # Try to get settings for observability
@@ -324,9 +316,7 @@ class StandardLifecycleManager:
                 # Initialize tiered observability
                 observability_instance = settings.create_observability_instance()
 
-                initialization_success = (
-                    await observability_instance.validate_and_initialize()
-                )
+                initialization_success = await observability_instance.validate_and_initialize()
                 if not initialization_success:
                     raise RuntimeError("Observability validation failed")
 
@@ -334,9 +324,7 @@ class StandardLifecycleManager:
                 app.state.observability_instance = observability_instance
                 app.state.observability_tier = status["tier"]
 
-                logger.info(
-                    f"🎯 Legacy observability initialized - Tier: {status['tier']}"
-                )
+                logger.info(f"🎯 Legacy observability initialized - Tier: {status['tier']}")
 
         except Exception as e:
             logger.warning(f"Legacy observability initialization failed: {e}")
@@ -358,9 +346,7 @@ class StandardLifecycleManager:
             add_health_endpoints(app)
             add_startup_status_endpoint(app)
 
-            logger.info(
-                f"Health checks configured: {len(health_checker.health_checks)} checks"
-            )
+            logger.info(f"Health checks configured: {len(health_checker.health_checks)} checks")
 
         except Exception as e:
             logger.error(f"Health check setup failed: {e}")
@@ -421,9 +407,7 @@ class StandardLifecycleManager:
                 elif mode == DeploymentMode.MANAGEMENT_PLATFORM:
                     from dotmac_management.workers.celery_app import celery_app
 
-                    celery_app.send_task(
-                        "app.workers.tasks.monitoring_tasks.health_check"
-                    )
+                    celery_app.send_task("app.workers.tasks.monitoring_tasks.health_check")
 
             logger.info("Celery monitoring started")
 
@@ -513,10 +497,7 @@ class StandardLifecycleManager:
                 logger.info("New observability system shutdown complete")
 
             # Fallback to legacy shutdown
-            elif (
-                hasattr(app.state, "observability_instance")
-                and app.state.observability_instance
-            ):
+            elif hasattr(app.state, "observability_instance") and app.state.observability_instance:
                 if hasattr(app.state.observability_instance, "shutdown"):
                     app.state.observability_instance.shutdown()
                 logger.info("Legacy observability shutdown complete")
@@ -603,9 +584,7 @@ class StandardLifecycleManager:
     async def _initialize_services(self, app: FastAPI, startup_manager):
         """Initialize all business services."""
         if not self.service_registry:
-            logger.info(
-                "No service registry configured, skipping service initialization"
-            )
+            logger.info("No service registry configured, skipping service initialization")
             return
 
         try:
@@ -615,12 +594,8 @@ class StandardLifecycleManager:
             initialization_results = await self.service_registry.initialize_all()
 
             # Log results
-            successful_services = [
-                name for name, success in initialization_results.items() if success
-            ]
-            failed_services = [
-                name for name, success in initialization_results.items() if not success
-            ]
+            successful_services = [name for name, success in initialization_results.items() if success]
+            failed_services = [name for name, success in initialization_results.items() if not success]
 
             if successful_services:
                 logger.info(f"✅ Services initialized: {', '.join(successful_services)}")
@@ -653,19 +628,13 @@ class StandardLifecycleManager:
             shutdown_results = await self.service_registry.shutdown_all()
 
             # Log results
-            successful_shutdowns = [
-                name for name, success in shutdown_results.items() if success
-            ]
-            failed_shutdowns = [
-                name for name, success in shutdown_results.items() if not success
-            ]
+            successful_shutdowns = [name for name, success in shutdown_results.items() if success]
+            failed_shutdowns = [name for name, success in shutdown_results.items() if not success]
 
             if successful_shutdowns:
                 logger.info(f"✅ Services shutdown: {', '.join(successful_shutdowns)}")
             if failed_shutdowns:
-                logger.warning(
-                    f"⚠️ Service shutdown failures: {', '.join(failed_shutdowns)}"
-                )
+                logger.warning(f"⚠️ Service shutdown failures: {', '.join(failed_shutdowns)}")
 
             logger.info(
                 "Business services shutdown complete: "

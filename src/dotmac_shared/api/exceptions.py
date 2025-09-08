@@ -43,9 +43,7 @@ class StandardExceptions:
         )
 
     @staticmethod
-    def already_exists(
-        resource: str, identifier: Optional[str] = None
-    ) -> HTTPException:
+    def already_exists(resource: str, identifier: Optional[str] = None) -> HTTPException:
         """Standard 409 Conflict exception for existing resources"""
         detail = f"{resource} already exists"
         if identifier:

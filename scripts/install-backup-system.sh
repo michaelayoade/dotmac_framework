@@ -230,75 +230,8 @@ print('Configuration loaded successfully')
 }
 
 setup_monitoring_dashboards() {
-    log "Setting up monitoring dashboards..."
-    
-    # Create Prometheus configuration snippet
-    cat > /tmp/backup-metrics.yml << 'EOF'
-# DotMac Backup System Metrics Configuration
-# Add this to your prometheus.yml scrape_configs section
-
-scrape_configs:
-  - job_name: 'dotmac-backup-monitor'
-    static_configs:
-      - targets: ['localhost:8080']
-    scrape_interval: 30s
-    metrics_path: /metrics
-    honor_labels: true
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: instance
-        replacement: 'dotmac-backup-system'
-EOF
-    
-    # Create Grafana dashboard JSON
-    cat > /tmp/backup-dashboard.json << 'EOF'
-{
-  "dashboard": {
-    "title": "DotMac Backup System",
-    "tags": ["dotmac", "backup", "disaster-recovery"],
-    "panels": [
-      {
-        "title": "Backup Health Score",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "dotmac_backup_health_score",
-            "legendFormat": "Health Score"
-          }
-        ]
-      },
-      {
-        "title": "Backup Success Rate",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(dotmac_backup_success_total[24h])",
-            "legendFormat": "Success Rate"
-          },
-          {
-            "expr": "rate(dotmac_backup_failure_total[24h])",
-            "legendFormat": "Failure Rate"
-          }
-        ]
-      },
-      {
-        "title": "Backup Duration",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, dotmac_backup_completion_seconds_bucket)",
-            "legendFormat": "95th Percentile"
-          }
-        ]
-      }
-    ]
-  }
-}
-EOF
-    
-    log "Monitoring configuration files created in /tmp/"
-    log "- Prometheus config: /tmp/backup-metrics.yml"
-    log "- Grafana dashboard: /tmp/backup-dashboard.json"
+    log "Monitoring setup is SigNoz-only. Use platform provisioning to create dashboards."
+    log "Example: python -c \"from dotmac.platform.observability.dashboards.manager import provision_platform_dashboards; print(provision_platform_dashboards('signoz'))\""
 }
 
 start_services() {
@@ -386,8 +319,8 @@ main() {
     echo "1. Review and customize configuration: $CONFIG_DIR/backup-config.yml"
     echo "2. Set up cloud storage credentials (AWS S3, Azure, or GCP)"
     echo "3. Configure notification settings (email/Slack)"
-    echo "4. Add Prometheus metrics to your monitoring system"
-    echo "5. Import Grafana dashboard from /tmp/backup-dashboard.json"
+    echo "4. Verify backup metrics in SigNoz dashboards"
+    echo "5. Optionally provision dashboards via platform provisioning API"
     echo "6. Test the backup system: sudo -u dotmac python3 $SCRIPTS_DIR/backup-system.py backup --backup-type=manual"
     echo
 }

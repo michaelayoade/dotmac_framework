@@ -35,9 +35,7 @@ class AuditMixin(BaseSchema):
     """Mixin for entities with audit fields."""
 
     created_by: Optional[str] = Field(None, description="User who created the entity")
-    updated_by: Optional[str] = Field(
-        None, description="User who last updated the entity"
-    )
+    updated_by: Optional[str] = Field(None, description="User who last updated the entity")
 
 
 class TenantMixin(BaseSchema):
@@ -105,9 +103,7 @@ class BaseTenantUpdateSchema(BaseUpdateSchema):
     pass
 
 
-class BaseTenantResponseSchema(
-    BaseResponseSchema, TenantMixin, AuditMixin, SoftDeleteMixin
-):
+class BaseTenantResponseSchema(BaseResponseSchema, TenantMixin, AuditMixin, SoftDeleteMixin):
     """Base response schema for tenant-aware entities with full audit trail."""
 
     pass
@@ -175,15 +171,9 @@ class ErrorResponseSchema(BaseSchema):
     error: bool = Field(True, description="Error flag")
     message: str = Field(..., description="Error message")
     error_code: str = Field(..., description="Error code")
-    details: Optional[dict[str, Any]] = Field(
-        None, description="Additional error details"
-    )
-    field_errors: Optional[dict[str, str]] = Field(
-        None, description="Field validation errors"
-    )
-    timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Error timestamp"
-    )
+    details: Optional[dict[str, Any]] = Field(None, description="Additional error details")
+    field_errors: Optional[dict[str, str]] = Field(None, description="Field validation errors")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
     request_id: Optional[str] = Field(None, description="Request identifier")
 
 
@@ -198,9 +188,7 @@ class SuccessResponseSchema(BaseSchema):
 class BulkOperationSchema(BaseSchema):
     """Schema for bulk operation requests."""
 
-    items: list[Any] = Field(
-        ..., min_length=1, max_length=1000, description="Items to process"
-    )
+    items: list[Any] = Field(..., min_length=1, max_length=1000, description="Items to process")
     dry_run: bool = Field(False, description="Preview operation without executing")
     force: bool = Field(False, description="Force operation even with warnings")
 
@@ -211,9 +199,7 @@ class BulkOperationResponseSchema(BaseSchema):
     total_items: int = Field(..., description="Total items processed")
     successful: int = Field(..., description="Successfully processed items")
     failed: int = Field(..., description="Failed items")
-    errors: list[dict[str, Any]] = Field(
-        default_factory=list, description="Error details"
-    )
+    errors: list[dict[str, Any]] = Field(default_factory=list, description="Error details")
     warnings: list[str] = Field(default_factory=list, description="Warning messages")
 
 

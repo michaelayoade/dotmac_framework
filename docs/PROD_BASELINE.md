@@ -15,7 +15,7 @@ At startup, apps verify the above conditions unless ALLOW_INSECURE_PROD=true is 
 
 ## Observability
 - OTEL exporters (OTLP) active; `/metrics` exposed
-- Signoz/Grafana dashboards deployed
+- Signoz dashboards deployed (Grafana deprecated)
 
 ## Gateway
 - Nginx tenant header extraction enabled; per-tenant rate limiting active

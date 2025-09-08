@@ -59,7 +59,7 @@ testing = [
 
 workflows = [
     "celery>=5.3.0",
-    "redis>=4.5.0",
+    "redis>=5.0.0",
 ]
 
 notifications = [

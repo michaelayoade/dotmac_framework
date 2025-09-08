@@ -12,22 +12,13 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
+from dotmac.core import rate_limit, standard_exception_handler
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
-from dotmac.core import rate_limit, standard_exception_handler
-
 from .internal.communication import UniversalCommunicationService
-from .internal.events import (
-    EventManager,
-    EventPriority,
-    WebSocketEvent,
-)
-from .models import (
-    NotificationRequest,
-    NotificationResponse,
-    NotificationStatus,
-)
+from .internal.events import EventManager, EventPriority, WebSocketEvent
+from .models import NotificationRequest, NotificationResponse, NotificationStatus
 
 logger = logging.getLogger(__name__)
 

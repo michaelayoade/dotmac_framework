@@ -3,9 +3,10 @@ Integration with DotMac communications system for ticket notifications.
 """
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from ..core.models import Ticket, TicketComment, TicketStatus
+from .templates import NotificationTemplateManager
 
 logger = logging.getLogger(__name__)
 
@@ -13,45 +14,10 @@ logger = logging.getLogger(__name__)
 class TicketNotificationManager:
     """Manages notifications for ticket events."""
 
-    def __init__(self, communication_service=None):
+    def __init__(self, communication_service=None, template_manager: Optional[NotificationTemplateManager] = None):
         """Initialize notification manager."""
         self.communication_service = communication_service
-
-        # Notification templates
-        self.templates = {
-            "ticket_created": {
-                "subject": "Support Ticket Created - #{ticket_number}",
-                "template": "ticket_created_email.html",
-            },
-            "ticket_assigned": {
-                "subject": "Your ticket has been assigned - #{ticket_number}",
-                "template": "ticket_assigned_email.html",
-            },
-            "ticket_updated": {
-                "subject": "Update on your support ticket - #{ticket_number}",
-                "template": "ticket_updated_email.html",
-            },
-            "ticket_resolved": {
-                "subject": "Your support ticket has been resolved - #{ticket_number}",
-                "template": "ticket_resolved_email.html",
-            },
-            "ticket_closed": {
-                "subject": "Support ticket closed - #{ticket_number}",
-                "template": "ticket_closed_email.html",
-            },
-            "comment_added": {
-                "subject": "New response to your support ticket - #{ticket_number}",
-                "template": "comment_added_email.html",
-            },
-            "escalation_notification": {
-                "subject": "Ticket escalated - #{ticket_number}",
-                "template": "ticket_escalated_email.html",
-            },
-            "sla_warning": {
-                "subject": "SLA Warning - #{ticket_number}",
-                "template": "sla_warning_email.html",
-            },
-        }
+        self.template_manager = template_manager or NotificationTemplateManager()
 
     async def notify_ticket_created(
         self, ticket: Ticket, additional_context: dict[str, Any] | None = None
@@ -310,19 +276,26 @@ class TicketNotificationManager:
             return
 
         try:
-            template_config = self.templates.get(notification_type)
-            if not template_config:
-                logger.error(
-                    f"No template found for notification type: {notification_type}"
-                )
+            # Render subject and body using template manager
+            subject = self.template_manager.render_notification(notification_type, context, "subject")
+            body = self.template_manager.render_notification(notification_type, context, "body")
+            html_body = self.template_manager.render_notification(notification_type, context, "html_body")
+            
+            if not subject or not body:
+                logger.error(f"Failed to render template for notification type: {notification_type}")
                 return
 
             # Use the communication service to send notification
             await self.communication_service.send_notification(
                 recipient=recipient,
-                subject=template_config["subject"].format(**context),
-                template=template_config["template"],
-                context=context,
+                subject=subject,
+                template=notification_type,  # Template name for reference
+                context={
+                    **context,
+                    "body": body,
+                    "html_body": html_body,
+                    "rendered_subject": subject,
+                },
                 channel=channel,
             )
 

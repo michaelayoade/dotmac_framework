@@ -24,23 +24,17 @@ class MonitoringProviderPlugin(BasePlugin):
         )
 
     @abstractmethod
-    async def send_alert(
-        self, alert_data: dict[str, Any], channel_config: dict[str, Any]
-    ) -> bool:
+    async def send_alert(self, alert_data: dict[str, Any], channel_config: dict[str, Any]) -> bool:
         """Send alert via this monitoring provider."""
         pass
 
     @abstractmethod
-    async def collect_metrics(
-        self, source_config: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    async def collect_metrics(self, source_config: dict[str, Any]) -> list[dict[str, Any]]:
         """Collect metrics from external monitoring system."""
         pass
 
     @abstractmethod
-    async def execute_health_check(
-        self, target_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def execute_health_check(self, target_config: dict[str, Any]) -> dict[str, Any]:
         """Execute health check against target system."""
         pass
 
@@ -69,37 +63,27 @@ class DeploymentProviderPlugin(TenantAwarePlugin):
         )
 
     @abstractmethod
-    async def provision_infrastructure(
-        self, infrastructure_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def provision_infrastructure(self, infrastructure_config: dict[str, Any]) -> dict[str, Any]:
         """Provision infrastructure. Return infrastructure details."""
         pass
 
     @abstractmethod
-    async def deploy_application(
-        self, app_config: dict[str, Any], infrastructure_id: str
-    ) -> dict[str, Any]:
+    async def deploy_application(self, app_config: dict[str, Any], infrastructure_id: str) -> dict[str, Any]:
         """Deploy application to infrastructure. Return deployment details."""
         pass
 
     @abstractmethod
-    async def scale_application(
-        self, deployment_id: str, scaling_config: dict[str, Any]
-    ) -> bool:
+    async def scale_application(self, deployment_id: str, scaling_config: dict[str, Any]) -> bool:
         """Scale deployed application."""
         pass
 
     @abstractmethod
-    async def rollback_deployment(
-        self, deployment_id: str, target_version: str
-    ) -> bool:
+    async def rollback_deployment(self, deployment_id: str, target_version: str) -> bool:
         """Rollback deployment to previous version."""
         pass
 
     @abstractmethod
-    async def validate_template(
-        self, template_content: dict[str, Any], template_type: str
-    ) -> bool:
+    async def validate_template(self, template_content: dict[str, Any], template_type: str) -> bool:
         """Validate deployment template format."""
         pass
 
@@ -109,9 +93,7 @@ class DeploymentProviderPlugin(TenantAwarePlugin):
         pass
 
     @abstractmethod
-    async def calculate_deployment_cost(
-        self, deployment_config: dict[str, Any]
-    ) -> Decimal:
+    async def calculate_deployment_cost(self, deployment_config: dict[str, Any]) -> Decimal:
         """Calculate estimated deployment cost."""
         pass
 
@@ -125,9 +107,7 @@ class DeploymentProviderPlugin(TenantAwarePlugin):
         """Return list of supported orchestration platforms."""
         pass
 
-    async def calculate_infrastructure_cost(
-        self, infrastructure_config: dict[str, Any]
-    ) -> float:
+    async def calculate_infrastructure_cost(self, infrastructure_config: dict[str, Any]) -> float:
         """Calculate monthly infrastructure cost. Optional method."""
         return 0.0
 
@@ -156,16 +136,12 @@ class NotificationChannelPlugin(BasePlugin):
         pass
 
     @abstractmethod
-    async def send_alert(
-        self, alert_data: dict[str, Any], recipients: list[str]
-    ) -> bool:
+    async def send_alert(self, alert_data: dict[str, Any], recipients: list[str]) -> bool:
         """Send alert notification."""
         pass
 
     @abstractmethod
-    async def send_digest(
-        self, digest_data: dict[str, Any], recipients: list[str]
-    ) -> bool:
+    async def send_digest(self, digest_data: dict[str, Any], recipients: list[str]) -> bool:
         """Send digest notification."""
         pass
 
@@ -210,16 +186,12 @@ class PaymentProviderPlugin(BillablePlugin):
         pass
 
     @abstractmethod
-    async def create_subscription(
-        self, plan_config: dict[str, Any], customer_data: dict[str, Any]
-    ) -> str:
+    async def create_subscription(self, plan_config: dict[str, Any], customer_data: dict[str, Any]) -> str:
         """Create subscription. Return subscription ID."""
         pass
 
     @abstractmethod
-    async def cancel_subscription(
-        self, subscription_id: str, reason: Optional[str] = None
-    ) -> bool:
+    async def cancel_subscription(self, subscription_id: str, reason: Optional[str] = None) -> bool:
         """Cancel subscription."""
         pass
 
@@ -261,16 +233,12 @@ class BillingCalculatorPlugin(BillablePlugin):
         )
 
     @abstractmethod
-    async def calculate_usage_cost(
-        self, usage_data: list[dict[str, Any]], billing_plan: dict[str, Any]
-    ) -> Decimal:
+    async def calculate_usage_cost(self, usage_data: list[dict[str, Any]], billing_plan: dict[str, Any]) -> Decimal:
         """Calculate cost based on usage data and billing plan."""
         pass
 
     @abstractmethod
-    async def calculate_tax(
-        self, amount: Decimal, tax_config: dict[str, Any]
-    ) -> Decimal:
+    async def calculate_tax(self, amount: Decimal, tax_config: dict[str, Any]) -> Decimal:
         """Calculate tax amount."""
         pass
 
@@ -282,9 +250,7 @@ class BillingCalculatorPlugin(BillablePlugin):
         pass
 
     @abstractmethod
-    async def apply_discounts(
-        self, amount: Decimal, discount_rules: list[dict[str, Any]]
-    ) -> Decimal:
+    async def apply_discounts(self, amount: Decimal, discount_rules: list[dict[str, Any]]) -> Decimal:
         """Apply discount rules to amount."""
         pass
 
@@ -347,9 +313,7 @@ class BackupProviderPlugin(TenantAwarePlugin):
         pass
 
     @abstractmethod
-    async def restore_backup(
-        self, backup_id: str, restore_config: dict[str, Any]
-    ) -> bool:
+    async def restore_backup(self, backup_id: str, restore_config: dict[str, Any]) -> bool:
         """Restore from backup."""
         pass
 
@@ -393,16 +357,12 @@ class AnalyticsProviderPlugin(TenantAwarePlugin):
         pass
 
     @abstractmethod
-    async def track_event(
-        self, event_name: str, properties: dict[str, Any], tenant_id: UUID
-    ) -> bool:
+    async def track_event(self, event_name: str, properties: dict[str, Any], tenant_id: UUID) -> bool:
         """Track analytics event."""
         pass
 
     @abstractmethod
-    async def get_tenant_analytics(
-        self, tenant_id: UUID, time_range: str
-    ) -> dict[str, Any]:
+    async def get_tenant_analytics(self, tenant_id: UUID, time_range: str) -> dict[str, Any]:
         """Get analytics data for tenant."""
         pass
 
@@ -426,9 +386,7 @@ class DNSProviderPlugin(BasePlugin):
         )
 
     @abstractmethod
-    async def validate_subdomain_available(
-        self, subdomain: str, base_domain: str
-    ) -> dict[str, Any]:
+    async def validate_subdomain_available(self, subdomain: str, base_domain: str) -> dict[str, Any]:
         """Check if a subdomain is available for provisioning."""
         pass
 
@@ -438,9 +396,7 @@ class DNSProviderPlugin(BasePlugin):
         pass
 
     @abstractmethod
-    async def create_dns_record(
-        self, domain: str, record_type: str, value: str, ttl: int = 300
-    ) -> dict[str, Any]:
+    async def create_dns_record(self, domain: str, record_type: str, value: str, ttl: int = 300) -> dict[str, Any]:
         """Create DNS record."""
         pass
 
@@ -450,9 +406,7 @@ class DNSProviderPlugin(BasePlugin):
         pass
 
     @abstractmethod
-    async def check_dns_propagation(
-        self, domain: str, expected_value: str
-    ) -> dict[str, Any]:
+    async def check_dns_propagation(self, domain: str, expected_value: str) -> dict[str, Any]:
         """Check DNS propagation status."""
         pass
 

@@ -94,7 +94,7 @@ This document confirms that `dotmac-communications` has passed all production re
 - **Manifests**: Complete deployment configurations
 - **Secrets**: Secure configuration management
 - **Scaling**: Horizontal pod autoscaling ready
-- **Monitoring**: Prometheus metrics exposure
+- **Monitoring**: SigNoz (OTLP) integration
 
 ---
 
@@ -146,7 +146,7 @@ This document confirms that `dotmac-communications` has passed all production re
 
 ### Monitoring Integration
 - **Health Endpoints**: `/health` endpoint for load balancers
-- **Metrics Endpoints**: `/metrics` Prometheus-compatible endpoint
+- **Metrics Export**: OTLP via OpenTelemetry SDK
 - **Logging**: Structured JSON logging for aggregation
 
 ---

@@ -1,0 +1,1 @@
+{{ with secret "dotmac/isp" }}redis://{{ .Data.data.redis_password }}@redis:6379/0{{ end }}

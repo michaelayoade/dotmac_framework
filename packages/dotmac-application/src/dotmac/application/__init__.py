@@ -53,7 +53,6 @@ from .config import (
     IsolationLevel,
     ObservabilityProvider,
     PlatformConfig,
-    Providers,
     ResourceLimits,
     RouterConfig,
     SecurityProvider,
@@ -61,8 +60,10 @@ from .config import (
     TenantConfig,
 )
 from .dependencies.dependencies import (
+    PaginatedDependencies,
     StandardDependencies,
     get_current_user,
+    get_paginated_deps,
     get_standard_deps,
 )
 
@@ -97,7 +98,11 @@ from .middleware.rate_limiting_decorators import (
     RateLimitMiddleware,
     create_rate_limiter,
     rate_limit,
+    rate_limit_auth,
+    rate_limit_strict,
+    rate_limit_user,
 )
+from .providers import Providers
 
 # Router registration
 from .routing import (
@@ -105,6 +110,18 @@ from .routing import (
     SafeRouterLoader,
     create_router_registry,
     register_routers,
+)
+from .security import (
+    SENSITIVE_ENDPOINTS,
+    APIKeyValidator,
+    InputSanitizer,
+    SecurityDecorators,
+    SecurityHeaders,
+    apply_security_middleware,
+    require_active_user,
+    require_admin,
+    require_tenant_access,
+    validate_entity_ownership,
 )
 
 __version__ = "1.0.0"
@@ -122,8 +139,8 @@ __all__ = [
     "DeploymentMode",
     "IsolationLevel",
     "ResourceLimits",
-    "Providers",
     # Provider protocols
+    "Providers",
     "SecurityProvider",
     "TenantBoundaryProvider",
     "ObservabilityProvider",
@@ -153,11 +170,28 @@ __all__ = [
     "create_router",
     "create_crud_router",
     "StandardDependencies",
+    "PaginatedDependencies",
     "get_standard_deps",
+    "get_paginated_deps",
     "get_current_user",
+    # Rate limiting
     "rate_limit",
+    "rate_limit_strict",
+    "rate_limit_auth",
+    "rate_limit_user",
     "RateLimitMiddleware",
     "create_rate_limiter",
+    # Security
+    "SecurityDecorators",
+    "SecurityHeaders",
+    "InputSanitizer",
+    "APIKeyValidator",
+    "apply_security_middleware",
+    "require_admin",
+    "require_active_user",
+    "require_tenant_access",
+    "validate_entity_ownership",
+    "SENSITIVE_ENDPOINTS",
     # Package metadata
     "__version__",
 ]

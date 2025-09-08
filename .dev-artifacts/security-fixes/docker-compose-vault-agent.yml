@@ -1,0 +1,114 @@
+version: '3.8'
+
+# Production SigNoz Stack with Vault Agent Sidecars
+services:
+  # Vault Agent for SigNoz services
+  vault-agent-signoz:
+    image: hashicorp/vault:1.15.2
+    container_name: gate-e0c-vault-agent-signoz
+    command: ["vault", "agent", "-config=/vault/config/agent.hcl"]
+    volumes:
+      - ./vault-agent-config.hcl:/vault/config/agent.hcl:ro
+      - ./templates:/vault/templates:ro
+      - signoz-secrets:/secrets
+      - ./vault-auth:/vault/config:ro
+    networks:
+      - gate-e0c-network
+    environment:
+      - VAULT_ADDR=http://openbao:8200
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "test", "-f", "/secrets/ch_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # SigNoz Query Service with Vault-sourced credentials
+  signoz-query:
+    image: signoz/query-service:0.40.0
+    container_name: gate-e0c-signoz-query-vault
+    ports:
+      - "8081:8080"
+    volumes:
+      - signoz-secrets:/secrets:ro
+    environment:
+      - STORAGE=clickhouse
+      - CLICKHOUSE_DSN_FILE=/secrets/clickhouse_dsn
+      - ClickHouseAddr=clickhouse:9000
+      - ClickHouseDatabase=signoz_traces
+      - ClickHouseDialTimeout=10s
+    networks:
+      - gate-e0c-network
+    depends_on:
+      vault-agent-signoz:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c '
+      if [ -f /secrets/ch_user ] && [ -f /secrets/ch_pass ]; then
+        export CLICKHOUSE_USERNAME=$$(cat /secrets/ch_user)
+        export CLICKHOUSE_PASSWORD=$$(cat /secrets/ch_pass)
+        export CLICKHOUSE_DSN=$$(cat /secrets/clickhouse_dsn)
+      fi
+      exec /usr/bin/query-service
+      '
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # SigNoz Frontend
+  signoz-frontend:
+    image: signoz/frontend:0.40.0
+    container_name: gate-e0c-signoz-frontend-vault
+    ports:
+      - "3302:3301"
+    environment:
+      - FRONTEND_API_ENDPOINT=http://signoz-query:8080
+    networks:
+      - gate-e0c-network
+    depends_on:
+      signoz-query:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3301"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # OTEL Collector with Vault-sourced ClickHouse credentials
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.88.11
+    container_name: gate-e0c-otel-collector-vault
+    volumes:
+      - ./otel-collector-config-vault.yaml:/etc/otel/config.yaml:ro
+      - signoz-secrets:/secrets:ro
+    ports:
+      - "4319:4317"   # OTLP gRPC receiver
+      - "4320:4318"   # OTLP HTTP receiver  
+      - "14251:14250" # Jaeger gRPC receiver
+    networks:
+      - gate-e0c-network
+    depends_on:
+      vault-agent-signoz:
+        condition: service_healthy
+      signoz-query:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c '
+      export CLICKHOUSE_USERNAME=$$(cat /secrets/ch_user)
+      export CLICKHOUSE_PASSWORD=$$(cat /secrets/ch_pass)
+      exec /otelcol-signoz --config /etc/otel/config.yaml
+      '
+    restart: unless-stopped
+
+volumes:
+  signoz-secrets:
+    driver: local
+
+networks:
+  gate-e0c-network:
+    external: true
+    name: gate-e0c-network

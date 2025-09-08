@@ -12,6 +12,7 @@ from .base import AdapterConfig, AdapterMetadata, BaseAdapter
 
 __all__ = [
     "RedisEventBus",
+    "RedisStreamsEventBus",  # Alias for backward compatibility
     "RedisConfig",
     "create_redis_bus",
 ]
@@ -448,3 +449,7 @@ def create_redis_bus(config: Optional[RedisConfig] = None) -> RedisEventBus:
         )
 
     return RedisEventBus(config or RedisConfig())
+
+
+# Backward compatibility alias
+RedisStreamsEventBus = RedisEventBus

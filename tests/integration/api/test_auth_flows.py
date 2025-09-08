@@ -10,6 +10,7 @@ from uuid import uuid4
 
 import jwt
 import pytest
+
 from dotmac.auth.jwt import create_access_token, verify_token
 from dotmac.auth.models import SessionData
 
@@ -60,16 +61,16 @@ class TestAuthenticationFlows:
                 "password": "testpassword",
                 "portal_type": "admin"
             }
-            
+
             response = client.post("/identity/auth/login", json=login_data)
-            
+
             assert response.status_code == 200
             data = response.json()
             assert "access_token" in data
             assert data["token_type"] == "bearer"
             assert data["user"]["username"] == "testuser"
             assert data["user"]["tenant_id"] == "tenant-123"
-            
+
             # Verify service was called correctly
             auth_service_mock.authenticate_user.assert_called_once_with(
                 username="testuser",
@@ -85,24 +86,24 @@ class TestAuthenticationFlows:
             mock_instance = AsyncMock()
             mock_instance.authenticate_user.return_value = None
             mock_service.return_value = mock_instance
-            
+
             login_data = {
                 "username": "wronguser",
                 "password": "wrongpassword",
                 "portal_type": "admin"
             }
-            
+
             response = client.post("/identity/auth/login", json=login_data)
-            
+
             assert response.status_code == 401
             assert "Invalid credentials" in response.json()["detail"]
 
     def test_login_missing_fields(self, client):
         """Test login with missing required fields."""
         incomplete_data = {"username": "testuser"}
-        
+
         response = client.post("/identity/auth/login", json=incomplete_data)
-        
+
         assert response.status_code == 422
         assert "validation error" in response.json()["detail"][0]["type"]
 
@@ -112,15 +113,15 @@ class TestAuthenticationFlows:
             mock_instance = AsyncMock()
             mock_instance.authenticate_user.side_effect = Exception("Database error")
             mock_service.return_value = mock_instance
-            
+
             login_data = {
                 "username": "testuser",
                 "password": "testpassword",
                 "portal_type": "admin"
             }
-            
+
             response = client.post("/identity/auth/login", json=login_data)
-            
+
             assert response.status_code == 500
             assert "Authentication failed" in response.json()["detail"]
 
@@ -129,19 +130,19 @@ class TestAuthenticationFlows:
         with patch('dotmac_isp.modules.identity.router.AuthService', return_value=auth_service_mock):
             with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {"id": "user-123", "username": "testuser"}
-                
+
                 headers = {"Authorization": f"Bearer {valid_jwt_token}"}
                 response = client.post(
                     "/identity/auth/logout",
                     params={"session_id": "session-123"},
                     headers=headers
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["success"] is True
                 assert "Logged out successfully" in data["message"]
-                
+
                 # Verify service was called correctly
                 auth_service_mock.logout_user.assert_called_once_with(
                     session_id="session-123",
@@ -154,7 +155,7 @@ class TestAuthenticationFlows:
             "/identity/auth/logout",
             params={"session_id": "session-123"}
         )
-        
+
         assert response.status_code == 401
 
     def test_logout_service_error(self, client, valid_jwt_token):
@@ -165,14 +166,14 @@ class TestAuthenticationFlows:
                 mock_instance.logout_user.side_effect = Exception("Service error")
                 mock_service.return_value = mock_instance
                 mock_get_user.return_value = {"id": "user-123", "username": "testuser"}
-                
+
                 headers = {"Authorization": f"Bearer {valid_jwt_token}"}
                 response = client.post(
                     "/identity/auth/logout",
                     params={"session_id": "session-123"},
                     headers=headers
                 )
-                
+
                 assert response.status_code == 500
                 assert "Logout failed" in response.json()["detail"]
 
@@ -188,11 +189,11 @@ class TestTokenManagement:
             "tenant_id": "tenant-123",
             "exp": datetime.now(timezone.utc) + timedelta(hours=1)
         }
-        
+
         token = create_access_token(user_data)
         assert token is not None
         assert isinstance(token, str)
-        
+
         # Decode without verification to check structure
         decoded = jwt.decode(token, options={"verify_signature": False})
         assert decoded["sub"] == "user-123"
@@ -210,7 +211,7 @@ class TestTokenManagement:
             "iat": datetime.now(timezone.utc)
         }
         token = create_access_token(payload)
-        
+
         # Validate token
         result = verify_token(token)
         assert result is not None
@@ -228,7 +229,7 @@ class TestTokenManagement:
             "iat": datetime.now(timezone.utc) - timedelta(hours=2)
         }
         token = create_access_token(payload)
-        
+
         # Attempt to validate expired token
         result = verify_token(token)
         assert result is None  # Should be None for expired tokens
@@ -242,10 +243,10 @@ class TestTokenManagement:
             "tenant_id": "tenant-123",
             "exp": datetime.now(timezone.utc) + timedelta(hours=1)
         }
-        
+
         # Create token with different secret
         token = jwt.encode(payload, "wrong-secret", algorithm="HS256")
-        
+
         # Attempt to validate with correct secret
         result = verify_token(token)
         assert result is None  # Should be None for invalid signature
@@ -287,18 +288,18 @@ class TestSessionManagement:
             expires_at=datetime.now(timezone.utc) - timedelta(hours=1),  # Expired
             last_activity=datetime.now(timezone.utc) - timedelta(hours=2)
         )
-        
+
         assert expired_session.is_expired()
 
     def test_session_activity_update(self, session_data):
         """Test updating session last activity."""
         original_activity = session_data.last_activity
-        
+
         # Wait a moment and update activity
         import time
         time.sleep(0.1)
         session_data.update_activity()
-        
+
         assert session_data.last_activity > original_activity
 
 
@@ -310,7 +311,7 @@ class TestMultiTenantAuthentication:
         with patch('dotmac_isp.modules.identity.router.AuthService') as mock_service:
             # Mock service to return different results for different tenants
             mock_instance = AsyncMock()
-            
+
             def mock_auth(username, password, portal_type, **kwargs):
                 if username == "tenant1user":
                     return {
@@ -319,31 +320,31 @@ class TestMultiTenantAuthentication:
                     }
                 elif username == "tenant2user":
                     return {
-                        "access_token": "tenant2_token", 
+                        "access_token": "tenant2_token",
                         "user": {"id": "user-2", "tenant_id": "tenant-2"}
                     }
                 return None
-            
+
             mock_instance.authenticate_user.side_effect = mock_auth
             mock_service.return_value = mock_instance
-            
+
             # Test tenant 1 user
             response1 = client.post("/identity/auth/login", json={
                 "username": "tenant1user",
                 "password": "password",
                 "portal_type": "admin"
             })
-            
+
             assert response1.status_code == 200
             assert response1.json()["user"]["tenant_id"] == "tenant-1"
-            
+
             # Test tenant 2 user
             response2 = client.post("/identity/auth/login", json={
                 "username": "tenant2user",
                 "password": "password",
                 "portal_type": "admin"
             })
-            
+
             assert response2.status_code == 200
             assert response2.json()["user"]["tenant_id"] == "tenant-2"
 
@@ -355,19 +356,15 @@ class TestMultiTenantAuthentication:
             "tenant_id": "tenant-1",
             "exp": datetime.now(timezone.utc) + timedelta(hours=1)
         })
-        
+
         with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
             mock_get_user.return_value = {
                 "id": "user-1",
                 "tenant_id": "tenant-1"
             }
-            
+
             # Attempt to access resource with tenant context
-            headers = {
-                "Authorization": f"Bearer {tenant1_token}",
-                "X-Tenant-ID": "tenant-2"  # Different tenant
-            }
-            
+
             # This would typically be caught by tenant validation middleware
             # For now, just verify the token contains correct tenant
             decoded = jwt.decode(tenant1_token, options={"verify_signature": False})
@@ -384,18 +381,18 @@ class TestAuthenticationSecurity:
             mock_instance = AsyncMock()
             mock_instance.authenticate_user.return_value = None  # Always fail
             mock_service.return_value = mock_instance
-            
+
             login_data = {
                 "username": "testuser",
                 "password": "wrongpassword",
                 "portal_type": "admin"
             }
-            
+
             responses = []
-            for i in range(5):
+            for _i in range(5):
                 response = client.post("/identity/auth/login", json=login_data)
                 responses.append(response)
-            
+
             # All should fail with 401
             for response in responses:
                 assert response.status_code == 401
@@ -410,7 +407,7 @@ class TestAuthenticationSecurity:
             "exp": datetime.now(timezone.utc) + timedelta(hours=1)
         }
         token = create_access_token(payload)
-        
+
         # Tamper with token by changing payload
         parts = token.split('.')
         tampered_payload = {
@@ -419,14 +416,14 @@ class TestAuthenticationSecurity:
             "tenant_id": "tenant-123",
             "exp": datetime.now(timezone.utc) + timedelta(hours=1)
         }
-        
+
         import base64
         tampered_payload_encoded = base64.urlsafe_b64encode(
             json.dumps(tampered_payload).encode()
         ).decode().rstrip('=')
-        
+
         tampered_token = f"{parts[0]}.{tampered_payload_encoded}.{parts[2]}"
-        
+
         # Verification should fail
         result = verify_token(tampered_token)
         assert result is None
@@ -443,15 +440,15 @@ class TestAuthenticationSecurity:
             "jti": str(uuid4())  # JWT ID for tracking
         }
         token = create_access_token(payload)
-        
+
         # Token should be valid initially
         result = verify_token(token)
         assert result is not None
-        
+
         # Wait for expiry
         import time
         time.sleep(2)
-        
+
         # Token should now be expired
         result = verify_token(token)
         assert result is None
@@ -467,41 +464,41 @@ class TestAuthenticationIntegration:
                 # Setup mocks
                 auth_mock = AsyncMock()
                 user_mock = AsyncMock()
-                
+
                 auth_mock.authenticate_user.return_value = {
                     "access_token": "test_token",
                     "user": {"id": "user-123", "username": "testuser"}
                 }
-                
+
                 user_mock.get_user_by_id.return_value = {
                     "id": "user-123",
                     "username": "testuser",
                     "email": "test@example.com",
                     "is_active": True
                 }
-                
+
                 mock_auth_service.return_value = auth_mock
                 mock_user_service.return_value = user_mock
-                
+
                 # Login first
                 login_response = client.post("/identity/auth/login", json={
                     "username": "testuser",
                     "password": "testpassword",
                     "portal_type": "admin"
                 })
-                
+
                 assert login_response.status_code == 200
                 token = login_response.json()["access_token"]
-                
+
                 # Use token to access user endpoint
                 with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                     with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                         mock_get_user.return_value = {"id": "user-123"}
                         mock_perms.return_value = lambda: None
-                        
+
                         headers = {"Authorization": f"Bearer {token}"}
                         user_response = client.get("/identity/users/user-123", headers=headers)
-                        
+
                         assert user_response.status_code == 200
                         assert user_response.json()["username"] == "testuser"
 
@@ -509,7 +506,7 @@ class TestAuthenticationIntegration:
         """Test complete authentication lifecycle."""
         with patch('dotmac_isp.modules.identity.router.AuthService') as mock_service:
             mock_instance = AsyncMock()
-            
+
             # Setup login response
             mock_instance.authenticate_user.return_value = {
                 "access_token": "lifecycle_token",
@@ -521,29 +518,29 @@ class TestAuthenticationIntegration:
                     "tenant_id": "tenant-123"
                 }
             }
-            
+
             # Setup logout response
             mock_instance.logout_user.return_value = True
-            
+
             mock_service.return_value = mock_instance
-            
+
             # Step 1: Login
             login_response = client.post("/identity/auth/login", json={
                 "username": "lifecycleuser",
                 "password": "password",
                 "portal_type": "admin"
             })
-            
+
             assert login_response.status_code == 200
             token = login_response.json()["access_token"]
-            
+
             # Step 2: Use authenticated endpoint
             with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 mock_get_user.return_value = {
                     "id": "user-123",
                     "username": "lifecycleuser"
                 }
-                
+
                 # Step 3: Logout
                 headers = {"Authorization": f"Bearer {token}"}
                 logout_response = client.post(
@@ -551,6 +548,6 @@ class TestAuthenticationIntegration:
                     params={"session_id": "session-123"},
                     headers=headers
                 )
-                
+
                 assert logout_response.status_code == 200
                 assert logout_response.json()["success"] is True

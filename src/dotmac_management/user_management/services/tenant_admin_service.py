@@ -60,9 +60,7 @@ class TenantAdminService(BaseService):
 
         # Check if user has super admin role
         user_roles = await self.rbac_repo.get_user_roles(self.admin_user_id)
-        super_admin_roles = [
-            role for role in user_roles if "super_admin" in role.name.lower()
-        ]
+        super_admin_roles = [role for role in user_roles if "super_admin" in role.name.lower()]
 
         if not super_admin_roles:
             raise AuthorizationError("User does not have super admin privileges")
@@ -100,9 +98,7 @@ class TenantAdminService(BaseService):
         return self._tenant_subscriptions
 
     @standard_exception_handler
-    async def create_cross_app_role(
-        self, role_data: CrossAppRoleCreateSchema
-    ) -> RoleModel:
+    async def create_cross_app_role(self, role_data: CrossAppRoleCreateSchema) -> RoleModel:
         """Create a role that spans multiple applications."""
         await self.verify_super_admin_access()
 
@@ -119,9 +115,7 @@ class TenantAdminService(BaseService):
             name=role_data.name,
             display_name=role_data.display_name,
             description=role_data.description,
-            role_category=role_data.role_category
-            if hasattr(role_data, "role_category")
-            else "custom",
+            role_category=role_data.role_category if hasattr(role_data, "role_category") else "custom",
             is_active=True,
             tenant_id=self.tenant_id,
             app_scope=None if role_data.is_tenant_wide else "multi",
@@ -138,9 +132,7 @@ class TenantAdminService(BaseService):
         return role
 
     @standard_exception_handler
-    async def create_cross_app_user(
-        self, user_data: CrossAppUserCreateSchema
-    ) -> UserModel:
+    async def create_cross_app_user(self, user_data: CrossAppUserCreateSchema) -> UserModel:
         """Create a user with access to multiple applications."""
         await self.verify_super_admin_access()
 
@@ -176,13 +168,9 @@ class TenantAdminService(BaseService):
             for role_name in role_names:
                 role = await self.rbac_repo.get_role_by_name(role_name)
                 if role:
-                    await self.rbac_repo.assign_role_to_user(
-                        user.id, role.id, self.admin_user_id
-                    )
+                    await self.rbac_repo.assign_role_to_user(user.id, role.id, self.admin_user_id)
 
-        logger.info(
-            f"Created cross-app user: {user.username} for tenant: {self.tenant_id}"
-        )
+        logger.info(f"Created cross-app user: {user.username} for tenant: {self.tenant_id}")
         return user
 
     @standard_exception_handler
@@ -246,9 +234,7 @@ class TenantAdminService(BaseService):
         return results[: search_params.limit], len(results)
 
     @standard_exception_handler
-    async def bulk_user_operation(
-        self, operation_data: BulkUserOperationSchema
-    ) -> dict[str, Any]:
+    async def bulk_user_operation(self, operation_data: BulkUserOperationSchema) -> dict[str, Any]:
         """Perform bulk operations on multiple users."""
         await self.verify_super_admin_access()
 
@@ -262,14 +248,10 @@ class TenantAdminService(BaseService):
 
                     role = await self.rbac_repo.get_role_by_name(role_name)
                     if role:
-                        await self.rbac_repo.assign_role_to_user(
-                            user_id, role.id, self.admin_user_id
-                        )
+                        await self.rbac_repo.assign_role_to_user(user_id, role.id, self.admin_user_id)
                         results["success_count"] += 1
                     else:
-                        results["errors"].append(
-                            f"Role {role_name} not found for user {user_id}"
-                        )
+                        results["errors"].append(f"Role {role_name} not found for user {user_id}")
                         results["error_count"] += 1
 
                 elif operation_data.operation == "remove_role":
@@ -307,9 +289,7 @@ class TenantAdminService(BaseService):
         return results
 
     @standard_exception_handler
-    async def get_tenant_analytics(
-        self, period_start: datetime, period_end: datetime
-    ) -> dict[str, Any]:
+    async def get_tenant_analytics(self, period_start: datetime, period_end: datetime) -> dict[str, Any]:
         """Get comprehensive analytics across all tenant applications."""
         await self.verify_super_admin_access()
 
@@ -323,9 +303,7 @@ class TenantAdminService(BaseService):
         # Get user type breakdown
         user_type_query = (
             select(UserModel.user_type, func.count(UserModel.id))
-            .where(
-                and_(UserModel.tenant_id == self.tenant_id, UserModel.is_active is True)
-            )
+            .where(and_(UserModel.tenant_id == self.tenant_id, UserModel.is_active is True))
             .group_by(UserModel.user_type)
         )
 
@@ -341,9 +319,7 @@ class TenantAdminService(BaseService):
             "period_end": period_end,
             "total_users": total_users,
             "user_type_breakdown": user_type_counts,
-            "subscribed_apps": [
-                sub["app"] for sub in subscriptions if sub["is_active"]
-            ],
+            "subscribed_apps": [sub["app"] for sub in subscriptions if sub["is_active"]],
             "app_usage": {
                 # TODO: Implement app-specific usage metrics
                 # This would query each application's usage data
@@ -381,10 +357,7 @@ class TenantAdminService(BaseService):
             if role.app_scope:
                 # Get traditional role permissions
                 role_permissions = await self.rbac_repo.get_role_permissions(role.id)
-                app_perms = [
-                    f"{perm.resource}:{perm.permission_type.value}"
-                    for perm in role_permissions
-                ]
+                app_perms = [f"{perm.resource}:{perm.permission_type.value}" for perm in role_permissions]
 
                 if role.app_scope not in app_permissions:
                     app_permissions[role.app_scope] = set()
@@ -394,9 +367,7 @@ class TenantAdminService(BaseService):
         return {app: list(perms) for app, perms in app_permissions.items()}
 
     @standard_exception_handler
-    async def update_tenant_security_policy(
-        self, policy_data: TenantSecurityPolicySchema
-    ) -> dict[str, Any]:
+    async def update_tenant_security_policy(self, policy_data: TenantSecurityPolicySchema) -> dict[str, Any]:
         """Update tenant-wide security policies."""
         await self.verify_super_admin_access()
 
@@ -475,9 +446,7 @@ class TenantAdminService(BaseService):
             "quick_stats": {
                 "total_users": total_users,
                 "active_sessions": 25,  # Mock data
-                "subscribed_apps": [
-                    sub["app"] for sub in subscriptions if sub["is_active"]
-                ],
+                "subscribed_apps": [sub["app"] for sub in subscriptions if sub["is_active"]],
             },
             "recent_activity": {
                 "recent_logins": recent_logins,

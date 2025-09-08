@@ -33,7 +33,7 @@ class CoreDNSProvider:
             # Read existing hosts file
             hosts_content = ""
             if Path(self.hosts_file).exists():
-                async with aiofiles.open(self.hosts_file, "r") as f:
+                async with aiofiles.open(self.hosts_file) as f:
                     hosts_content = await f.read()
 
             # Add tenant section

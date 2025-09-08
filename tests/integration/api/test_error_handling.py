@@ -16,18 +16,18 @@ class TestHTTPErrorCodes:
         """Test 400 Bad Request responses."""
         # Invalid JSON payload
         invalid_json = '{"invalid": json}'
-        
+
         headers = {
             "Authorization": "Bearer valid_token",
             "Content-Type": "application/json"
         }
-        
+
         response = client.post(
             "/identity/customers",
             data=invalid_json,
             headers=headers
         )
-        
+
         assert response.status_code == 422  # FastAPI returns 422 for JSON parsing errors
         assert "detail" in response.json()
 
@@ -35,13 +35,13 @@ class TestHTTPErrorCodes:
         """Test 401 Unauthorized responses."""
         # No Authorization header
         response = client.get("/identity/users/user-123")
-        
+
         assert response.status_code == 401
-        
+
         # Invalid token format
         headers = {"Authorization": "Bearer invalid_token_format"}
         response = client.get("/identity/users/user-123", headers=headers)
-        
+
         assert response.status_code == 401
 
     def test_403_forbidden(self, client):
@@ -51,13 +51,13 @@ class TestHTTPErrorCodes:
                 # User authenticated but lacks permissions
                 mock_get_user.return_value = {"id": "user-123", "role": "limited"}
                 mock_perms.side_effect = HTTPException(
-                    status_code=403, 
+                    status_code=403,
                     detail="Insufficient permissions"
                 )
-                
+
                 headers = {"Authorization": "Bearer valid_token"}
                 response = client.post("/identity/customers", json={}, headers=headers)
-                
+
                 assert response.status_code == 403
                 assert "Insufficient permissions" in response.json()["detail"]
 
@@ -70,13 +70,13 @@ class TestHTTPErrorCodes:
                     mock_instance = AsyncMock()
                     mock_instance.get_customer_by_id.return_value = None
                     mock_service.return_value = mock_instance
-                    
+
                     mock_get_user.return_value = {"id": "user-123"}
                     mock_perms.return_value = lambda: None
-                    
+
                     headers = {"Authorization": "Bearer valid_token"}
                     response = client.get("/identity/customers/nonexistent-id", headers=headers)
-                    
+
                     assert response.status_code == 404
                     assert "Customer not found" in response.json()["detail"]
 
@@ -89,18 +89,18 @@ class TestHTTPErrorCodes:
             "phone": 1234567890       # Should be string, not int
             # Missing last_name (required field)
         }
-        
+
         headers = {"Authorization": "Bearer valid_token"}
         response = client.post(
             "/identity/customers",
             json=invalid_customer_data,
             headers=headers
         )
-        
+
         assert response.status_code == 422
         error_detail = response.json()["detail"]
         assert isinstance(error_detail, list)
-        
+
         # Check that validation errors are properly formatted
         field_errors = [error["loc"][-1] for error in error_detail]
         assert "email" in field_errors or "first_name" in field_errors
@@ -117,15 +117,15 @@ class TestHTTPErrorCodes:
                 headers={"Retry-After": "60"}
             )
             mock_service.return_value = mock_instance
-            
+
             login_data = {
                 "username": "testuser",
                 "password": "password",
                 "portal_type": "admin"
             }
-            
+
             response = client.post("/identity/auth/login", json=login_data)
-            
+
             assert response.status_code == 429
             assert "Rate limit exceeded" in response.json()["detail"]
             assert "Retry-After" in response.headers
@@ -137,15 +137,15 @@ class TestHTTPErrorCodes:
             mock_instance = AsyncMock()
             mock_instance.authenticate_user.side_effect = Exception("Database connection failed")
             mock_service.return_value = mock_instance
-            
+
             login_data = {
                 "username": "testuser",
                 "password": "password",
                 "portal_type": "admin"
             }
-            
+
             response = client.post("/identity/auth/login", json=login_data)
-            
+
             assert response.status_code == 500
             assert "Authentication failed" in response.json()["detail"]
 
@@ -158,10 +158,10 @@ class TestHTTPErrorCodes:
                 detail="Service temporarily unavailable",
                 headers={"Retry-After": "300"}
             )
-            
+
             headers = {"Authorization": "Bearer valid_token"}
             response = client.get("/services/dashboard", headers=headers)
-            
+
             assert response.status_code == 503
             assert "Service temporarily unavailable" in response.json()["detail"]
 
@@ -179,20 +179,20 @@ class TestValidationErrors:
             "spaces in@email.com",
             ""
         ]
-        
+
         for invalid_email in invalid_emails:
             customer_data = {
                 "email": invalid_email,
                 "first_name": "Test",
                 "last_name": "User"
             }
-            
+
             headers = {"Authorization": "Bearer valid_token"}
             response = client.post("/identity/customers", json=customer_data, headers=headers)
-            
+
             assert response.status_code == 422
             error_detail = response.json()["detail"]
-            
+
             # Check that email validation error is present
             email_errors = [e for e in error_detail if "email" in str(e["loc"])]
             assert len(email_errors) > 0
@@ -204,13 +204,13 @@ class TestValidationErrors:
             "email": "test@example.com"
             # Missing first_name and last_name
         }
-        
+
         headers = {"Authorization": "Bearer valid_token"}
         response = client.post("/identity/customers", json=incomplete_data, headers=headers)
-        
+
         assert response.status_code == 422
         error_detail = response.json()["detail"]
-        
+
         # Check for missing field errors
         missing_fields = [error["loc"][-1] for error in error_detail if error["type"] == "missing"]
         assert "first_name" in missing_fields or "last_name" in missing_fields
@@ -224,13 +224,13 @@ class TestValidationErrors:
             "last_name": {"dict": "value"},  # Should be string
             "phone": True            # Should be string
         }
-        
+
         headers = {"Authorization": "Bearer valid_token"}
         response = client.post("/identity/customers", json=invalid_types_data, headers=headers)
-        
+
         assert response.status_code == 422
         error_detail = response.json()["detail"]
-        
+
         # Check for type validation errors
         type_errors = [e for e in error_detail if "type" in e["type"]]
         assert len(type_errors) > 0
@@ -241,7 +241,7 @@ class TestValidationErrors:
             with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 mock_get_user.return_value = {"id": "user-123"}
                 mock_perms.return_value = lambda: None
-                
+
                 # Invalid UUID formats
                 invalid_uuids = [
                     "not-a-uuid",
@@ -249,11 +249,11 @@ class TestValidationErrors:
                     "abc-def-ghi",
                     "123e4567-e89b-12d3-a456-42661417400g"  # Invalid character
                 ]
-                
+
                 for invalid_uuid in invalid_uuids:
                     headers = {"Authorization": "Bearer valid_token"}
                     response = client.get(f"/identity/customers/{invalid_uuid}", headers=headers)
-                    
+
                     assert response.status_code == 422
 
     def test_date_validation_errors(self, client):
@@ -263,7 +263,7 @@ class TestValidationErrors:
                 mock_get_user.return_value = {"id": "user-123"}
                 mock_service = AsyncMock()
                 mock_get_service.return_value = mock_service
-                
+
                 # Invalid date formats
                 invalid_dates = [
                     "not-a-date",
@@ -271,14 +271,14 @@ class TestValidationErrors:
                     "2024-02-30",     # Invalid day
                     "24-01-01",       # Wrong format
                 ]
-                
+
                 for invalid_date in invalid_dates:
                     headers = {"Authorization": "Bearer valid_token"}
                     response = client.get(
                         f"/services/instances/service-123/usage?start_date={invalid_date}&end_date=2024-01-31",
                         headers=headers
                     )
-                    
+
                     assert response.status_code == 422
 
 
@@ -298,19 +298,19 @@ class TestDatabaseErrors:
                         None
                     )
                     mock_service.return_value = mock_instance
-                    
+
                     mock_get_user.return_value = {"id": "user-123"}
                     mock_perms.return_value = lambda: None
-                    
+
                     customer_data = {
                         "email": "duplicate@example.com",
                         "first_name": "Test",
                         "last_name": "User"
                     }
-                    
+
                     headers = {"Authorization": "Bearer valid_token"}
                     response = client.post("/identity/customers", json=customer_data, headers=headers)
-                    
+
                     assert response.status_code == 400  # or 409 for conflicts
                     assert "constraint" in response.json()["detail"].lower()
 
@@ -327,13 +327,13 @@ class TestDatabaseErrors:
                         None
                     )
                     mock_service.return_value = mock_instance
-                    
+
                     mock_get_user.return_value = {"id": "user-123"}
                     mock_perms.return_value = lambda: None
-                    
+
                     headers = {"Authorization": "Bearer valid_token"}
                     response = client.get("/identity/customers/customer-123", headers=headers)
-                    
+
                     assert response.status_code == 500
                     assert "Failed to retrieve customer" in response.json()["detail"]
 
@@ -345,9 +345,9 @@ class TestDatabaseErrors:
                 mock_service = AsyncMock()
                 mock_service.activate_service.side_effect = Exception("Transaction failed during provisioning")
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123"}
-                
+
                 activation_data = {
                     "customer_id": "customer-123",
                     "service_plan_id": "plan-123",
@@ -358,10 +358,10 @@ class TestDatabaseErrors:
                         "zip_code": "90210"
                     }
                 }
-                
+
                 headers = {"Authorization": "Bearer valid_token"}
                 response = client.post("/services/activate", json=activation_data, headers=headers)
-                
+
                 assert response.status_code == 500
 
 
@@ -378,12 +378,12 @@ class TestBusinessLogicErrors:
                     "role": "customer_service",
                     "permissions": ["customers.read"]
                 }
-                
+
                 mock_perms.side_effect = HTTPException(
                     status_code=403,
                     detail="Insufficient permissions: requires users.create"
                 )
-                
+
                 user_data = {
                     "username": "newuser",
                     "email": "new@example.com",
@@ -391,10 +391,10 @@ class TestBusinessLogicErrors:
                     "last_name": "User",
                     "password_hash": "hashed_password"
                 }
-                
+
                 headers = {"Authorization": "Bearer valid_token"}
                 response = client.post("/identity/users", json=user_data, headers=headers)
-                
+
                 assert response.status_code == 403
                 assert "Insufficient permissions" in response.json()["detail"]
 
@@ -407,21 +407,21 @@ class TestBusinessLogicErrors:
                     "id": "user-123",
                     "tenant_id": "tenant-a"
                 }
-                
+
                 mock_instance = AsyncMock()
                 mock_instance.get_customer_by_id.side_effect = HTTPException(
                     status_code=404,  # Or 403, depending on security preference
                     detail="Customer not found"  # Hide existence from other tenants
                 )
                 mock_service.return_value = mock_instance
-                
+
                 headers = {
                     "Authorization": "Bearer valid_token",
                     "X-Tenant-ID": "tenant-b"  # Different tenant
                 }
-                
+
                 response = client.get("/identity/customers/customer-from-tenant-b", headers=headers)
-                
+
                 assert response.status_code == 404
 
     def test_service_state_transition_errors(self, client):
@@ -435,15 +435,15 @@ class TestBusinessLogicErrors:
                     detail="Cannot reactivate service: service is already active"
                 )
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123", "user_id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer valid_token"}
                 response = client.post(
                     "/services/instances/service-123/reactivate?reason=Test",
                     headers=headers
                 )
-                
+
                 assert response.status_code == 400
                 assert "already active" in response.json()["detail"]
 
@@ -453,7 +453,7 @@ class TestBusinessLogicErrors:
         # For now, simulate common billing errors
         with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
             mock_get_user.return_value = {"id": "user-123"}
-            
+
             # Simulate payment method validation error
             invalid_payment_data = {
                 "card_number": "1234",  # Too short
@@ -461,11 +461,11 @@ class TestBusinessLogicErrors:
                 "expiry_year": 2020,    # Past year
                 "cvv": "12345"          # Too long
             }
-            
+
             headers = {"Authorization": "Bearer valid_token"}
             # This would be a billing endpoint
             response = client.post("/billing/payment-methods", json=invalid_payment_data, headers=headers)
-            
+
             # Since we don't have actual billing router, expect 404
             assert response.status_code in [404, 422]
 
@@ -484,21 +484,21 @@ class TestConcurrencyErrors:
                     detail="Update conflict: record has been modified by another user"
                 )
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123", "user_id": "user-123"}
-                
+
                 status_update = {
                     "new_status": "suspended",
                     "reason": "Concurrent update test"
                 }
-                
+
                 headers = {"Authorization": "Bearer valid_token"}
                 response = client.patch(
                     "/services/instances/service-123/status",
                     json=status_update,
                     headers=headers
                 )
-                
+
                 assert response.status_code == 409
                 assert "Update conflict" in response.json()["detail"]
 
@@ -513,18 +513,18 @@ class TestConcurrencyErrors:
                     detail="Operation timed out: resource is locked by another process"
                 )
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123", "user_id": "user-123"}
-                
+
                 bulk_request = {
                     "service_instance_ids": ["service-123", "service-456"],
                     "operation": "suspend",
                     "reason": "Timeout test"
                 }
-                
+
                 headers = {"Authorization": "Bearer valid_token"}
                 response = client.post("/services/bulk-operation", json=bulk_request, headers=headers)
-                
+
                 assert response.status_code == 408
                 assert "timed out" in response.json()["detail"]
 
@@ -538,16 +538,16 @@ class TestSecurityErrors:
             with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
                 mock_get_user.return_value = {"id": "user-123"}
                 mock_perms.return_value = lambda: None
-                
+
                 # Attempt SQL injection in search parameter
                 malicious_search = "'; DROP TABLE customers; --"
-                
+
                 headers = {"Authorization": "Bearer valid_token"}
                 response = client.get(
                     f"/identity/customers?search={malicious_search}",
                     headers=headers
                 )
-                
+
                 # Should not cause server error - parameterized queries prevent injection
                 assert response.status_code in [200, 422]
 
@@ -560,17 +560,17 @@ class TestSecurityErrors:
                     mock_service.return_value = mock_instance
                     mock_get_user.return_value = {"id": "user-123"}
                     mock_perms.return_value = lambda: None
-                    
+
                     # Attempt XSS in user input
                     malicious_data = {
                         "email": "test@example.com",
                         "first_name": "<script>alert('xss')</script>",
                         "last_name": "User"
                     }
-                    
+
                     headers = {"Authorization": "Bearer valid_token"}
                     response = client.post("/identity/customers", json=malicious_data, headers=headers)
-                    
+
                     # Should process normally - input sanitization handles XSS
                     assert response.status_code in [200, 201, 422]
 
@@ -583,10 +583,10 @@ class TestSecurityErrors:
             "first_name": "CSRF",
             "last_name": "Test"
         }
-        
+
         # Request without CSRF token (if required by middleware)
         response = client.post("/identity/customers", json=customer_data)
-        
+
         # Depending on CSRF implementation, could be 403 or require token
         assert response.status_code in [401, 403, 422]
 
@@ -601,15 +601,15 @@ class TestExceptionHandlingMiddleware:
             mock_instance = AsyncMock()
             mock_instance.authenticate_user.side_effect = RuntimeError("Unexpected error")
             mock_service.return_value = mock_instance
-            
+
             login_data = {
                 "username": "testuser",
                 "password": "password",
                 "portal_type": "admin"
             }
-            
+
             response = client.post("/identity/auth/login", json=login_data)
-            
+
             # Should be handled gracefully by exception handler
             assert response.status_code == 500
             assert "Authentication failed" in response.json()["detail"]
@@ -622,15 +622,15 @@ class TestExceptionHandlingMiddleware:
                 mock_instance = AsyncMock()
                 mock_instance.authenticate_user.side_effect = Exception("Database connection failed")
                 mock_service.return_value = mock_instance
-                
+
                 login_data = {
                     "username": "testuser",
                     "password": "password",
                     "portal_type": "admin"
                 }
-                
+
                 response = client.post("/identity/auth/login", json=login_data)
-                
+
                 # Verify error was logged
                 assert response.status_code == 500
                 mock_logger.error.assert_called()
@@ -638,7 +638,7 @@ class TestExceptionHandlingMiddleware:
     def test_error_response_format_consistency(self, client):
         """Test that all error responses follow consistent format."""
         error_responses = []
-        
+
         # Collect various error responses
         test_cases = [
             # 404 error
@@ -648,16 +648,16 @@ class TestExceptionHandlingMiddleware:
             # 401 unauthorized
             {"method": "get", "url": "/identity/users/user-123", "expected_status": 401}
         ]
-        
+
         for case in test_cases:
             method = getattr(client, case["method"])
             kwargs = {k: v for k, v in case.items() if k not in ["method", "url", "expected_status"]}
-            
+
             response = method(case["url"], **kwargs)
-            
+
             if response.status_code == case["expected_status"]:
                 error_responses.append(response.json())
-        
+
         # Check that all error responses have consistent structure
         for error_response in error_responses:
             assert "detail" in error_response

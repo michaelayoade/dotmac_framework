@@ -152,6 +152,17 @@ class ServiceError(DotMacException):
             self.details["service"] = service_name
 
 
+class RepositoryError(DotMacException):
+    """Exception raised for repository operation errors."""
+
+    def __init__(self, message: str = "Repository operation failed"):
+        super().__init__(
+            message=message,
+            error_code="REPOSITORY_ERROR",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
 class RateLimitError(DotMacException):
     """Exception raised when rate limit is exceeded."""
 

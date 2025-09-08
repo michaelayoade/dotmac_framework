@@ -141,9 +141,7 @@ class SubscriptionBase(BaseModel):
     end_date: Optional[date] = Field(None, description="Subscription end date")
     trial_end_date: Optional[date] = Field(None, description="Trial end date")
     auto_renew: bool = Field(default=True, description="Auto-renewal setting")
-    custom_pricing: Optional[dict[str, Any]] = Field(
-        None, description="Custom pricing overrides"
-    )
+    custom_pricing: Optional[dict[str, Any]] = Field(None, description="Custom pricing overrides")
 
 
 class SubscriptionCreate(SubscriptionBase):
@@ -184,9 +182,7 @@ class InvoiceBase(BaseModel):
     currency: str = Field(default="USD", description="Currency code")
     billing_period_start: date = Field(..., description="Billing period start")
     billing_period_end: date = Field(..., description="Billing period end")
-    metadata: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class InvoiceCreate(InvoiceBase):
@@ -217,9 +213,7 @@ class InvoiceLineItemBase(BaseModel):
     quantity: Decimal = Field(..., gt=0, description="Quantity")
     unit_price: Decimal = Field(..., ge=0, description="Unit price")
     total_price: Decimal = Field(..., ge=0, description="Total price")
-    metadata: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class InvoiceLineItemCreate(InvoiceLineItemBase):
@@ -244,12 +238,8 @@ class PaymentBase(BaseModel):
     status: str = Field(..., description="Payment status")
     payment_method: str = Field(..., description="Payment method")
     transaction_id: Optional[str] = Field(None, description="External transaction ID")
-    processed_at: Optional[datetime] = Field(
-        None, description="Payment processing timestamp"
-    )
-    metadata: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    processed_at: Optional[datetime] = Field(None, description="Payment processing timestamp")
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class PaymentCreate(PaymentBase):
@@ -281,9 +271,7 @@ class UsageRecordBase(BaseModel):
     metric_name: str = Field(..., description="Usage metric name")
     quantity: Decimal = Field(..., ge=0, description="Usage quantity")
     timestamp: datetime = Field(..., description="Usage timestamp")
-    metadata: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class UsageRecordCreate(UsageRecordBase):

@@ -377,7 +377,7 @@ class CommunicationAdapter:
                     self._logger.error(f"Bulk send failed for provider {provider_name}: {e}")
 
                     # Mark all messages in batch as failed
-                    for message in batch:
+                    for _message in batch:
                         all_results.append(
                             MessageResult(
                                 success=False,

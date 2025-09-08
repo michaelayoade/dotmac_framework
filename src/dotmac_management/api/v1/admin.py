@@ -13,7 +13,6 @@ These endpoints require superuser privileges and should be used carefully.
 import os
 import time
 
-from dotmac_shared.api.response import APIResponse
 from fastapi import Depends, HTTPException, status
 
 from dotmac.application import (
@@ -23,6 +22,7 @@ from dotmac.application import (
     rate_limit_strict,
     standard_exception_handler,
 )
+from dotmac.application.api.response import APIResponse
 from dotmac.application.api.router_factory import RouterFactory
 from dotmac.platform.observability.logging import get_logger
 
@@ -86,9 +86,7 @@ router = RouterFactory("Admin").create_router(prefix="/admin", tags=["Admin"])
     tags=["Security"],
     operation_id="removeBootstrapCredentials",
 )
-@rate_limit_auth(
-    max_requests=5, time_window_seconds=60
-)  # Critical admin operations - very strict limits
+@rate_limit_auth(max_requests=5, time_window_seconds=60)  # Critical admin operations - very strict limits
 @standard_exception_handler
 async def remove_bootstrap_credentials(
     deps: StandardDependencies = Depends(get_standard_deps),
@@ -289,9 +287,7 @@ async def remove_bootstrap_credentials(
     tags=["Security"],
     operation_id="getBootstrapStatus",
 )
-@rate_limit_strict(
-    max_requests=20, time_window_seconds=60
-)  # Admin status checks - moderate limits
+@rate_limit_strict(max_requests=20, time_window_seconds=60)  # Admin status checks - moderate limits
 @standard_exception_handler
 async def get_bootstrap_status(
     deps: StandardDependencies = Depends(get_standard_deps),
@@ -339,9 +335,7 @@ async def get_bootstrap_status(
             status_info[
                 "warning"
             ] = "🚨 SECURITY RISK: Bootstrap credentials are still present in environment variables"
-            status_info[
-                "recommendation"
-            ] = "Call POST /admin/remove-bootstrap-credentials immediately"
+            status_info["recommendation"] = "Call POST /admin/remove-bootstrap-credentials immediately"
 
             # Log security risk
             logger.warning(
@@ -380,9 +374,7 @@ async def get_bootstrap_status(
             },
         )
 
-        return APIResponse(
-            success=True, message="Bootstrap status retrieved", data=status_info
-        )
+        return APIResponse(success=True, message="Bootstrap status retrieved", data=status_info)
 
     except Exception as e:
         # Log unexpected errors with full context
@@ -471,9 +463,7 @@ async def get_bootstrap_status(
     tags=["Security"],
     operation_id="getSecurityChecklist",
 )
-@rate_limit_strict(
-    max_requests=20, time_window_seconds=60
-)  # Security checklist access - moderate limits
+@rate_limit_strict(max_requests=20, time_window_seconds=60)  # Security checklist access - moderate limits
 @standard_exception_handler
 async def get_security_checklist(
     deps: StandardDependencies = Depends(get_standard_deps),
@@ -504,9 +494,7 @@ async def get_security_checklist(
     )
 
     try:
-        bootstrap_credentials = bool(
-            os.getenv("AUTH_ADMIN_EMAIL") or os.getenv("AUTH_INITIAL_ADMIN_PASSWORD")
-        )
+        bootstrap_credentials = bool(os.getenv("AUTH_ADMIN_EMAIL") or os.getenv("AUTH_INITIAL_ADMIN_PASSWORD"))
         smtp_configured = bool(os.getenv("SMTP_HOST"))
         cors_configured = bool(os.getenv("CORS_ORIGINS"))
         secret_key_strong = len(os.getenv("SECRET_KEY", "")) >= 32
@@ -557,9 +545,7 @@ async def get_security_checklist(
         ]
 
         completed_items = sum(1 for item in checklist if item["completed"])
-        critical_incomplete = sum(
-            1 for item in checklist if item["critical"] and not item["completed"]
-        )
+        critical_incomplete = sum(1 for item in checklist if item["critical"] and not item["completed"])
 
         security_score = (completed_items / len(checklist)) * 100
 
@@ -577,20 +563,14 @@ async def get_security_checklist(
                 "smtp_configured": smtp_configured,
                 "cors_configured": cors_configured,
                 "secret_key_strong": secret_key_strong,
-                "security_status": "SECURE"
-                if critical_incomplete == 0
-                else "ACTION_REQUIRED",
+                "security_status": "SECURE" if critical_incomplete == 0 else "ACTION_REQUIRED",
                 "operation": "get_security_checklist",
             },
         )
 
         # Log security warnings for critical incomplete items
         if critical_incomplete > 0:
-            incomplete_items = [
-                item["item"]
-                for item in checklist
-                if item["critical"] and not item["completed"]
-            ]
+            incomplete_items = [item["item"] for item in checklist if item["critical"] and not item["completed"]]
             logger.warning(
                 "Critical security items incomplete",
                 extra={
@@ -625,9 +605,7 @@ async def get_security_checklist(
                     "completed_items": completed_items,
                     "critical_incomplete": critical_incomplete,
                     "security_score": round(security_score, 1),
-                    "status": "SECURE"
-                    if critical_incomplete == 0
-                    else "ACTION_REQUIRED",
+                    "status": "SECURE" if critical_incomplete == 0 else "ACTION_REQUIRED",
                 },
             },
         )

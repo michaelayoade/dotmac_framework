@@ -7,10 +7,9 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+from dotmac.platform.auth.jwt_service import JWTService
+from dotmac.platform.auth.session_manager import SessionManager
 from dotmac_shared.services.base import BaseService
-
-from dotmac.platform.auth.core.jwt_service import JWTService
-from dotmac.platform.auth.core.sessions import SessionManager
 
 from ..models import User
 from ..repository import AuthenticationRepository, UserRepository
@@ -84,9 +83,7 @@ class AuthService(BaseService):
                 return None
 
             # Create session
-            session_data = await self._create_user_session(
-                user, portal_type, ip_address, user_agent
-            )
+            session_data = await self._create_user_session(user, portal_type, ip_address, user_agent)
 
             # Update user login info
             await self.user_repo.update_last_login(user.id)

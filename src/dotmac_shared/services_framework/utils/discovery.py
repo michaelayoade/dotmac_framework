@@ -23,9 +23,7 @@ class ServiceDiscovery:
         self._discovery_cache_ttl = 300  # 5 minutes
         self._last_discovery_time = 0
 
-    async def discover_services(
-        self, refresh: bool = False
-    ) -> dict[str, dict[str, Any]]:
+    async def discover_services(self, refresh: bool = False) -> dict[str, dict[str, Any]]:
         """Discover all available services."""
         current_time = time.time()
 
@@ -87,27 +85,15 @@ class ServiceDiscovery:
 
     def find_services_by_status(self, status: ServiceStatus) -> list[str]:
         """Find services with a specific status."""
-        return [
-            name
-            for name, service in self.registry.services.items()
-            if service.get_status() == status
-        ]
+        return [name for name, service in self.registry.services.items() if service.get_status() == status]
 
     def find_ready_services(self) -> list[str]:
         """Find all ready services."""
-        return [
-            name
-            for name, service in self.registry.services.items()
-            if service.is_ready()
-        ]
+        return [name for name, service in self.registry.services.items() if service.is_ready()]
 
     def find_unhealthy_services(self) -> list[str]:
         """Find all unhealthy services."""
-        return [
-            name
-            for name, service in self.registry.services.items()
-            if not service.is_healthy()
-        ]
+        return [name for name, service in self.registry.services.items() if not service.is_healthy()]
 
     def find_services_with_priority(
         self, min_priority: Optional[int] = None, max_priority: Optional[int] = None
@@ -133,9 +119,7 @@ class ServiceDiscovery:
         if not self.registry.has_service(service_name):
             raise ValueError(f"Service {service_name} not found")
 
-        def build_dependency_tree(
-            name: str, visited: Optional[set[str]] = None
-        ) -> dict[str, Any]:
+        def build_dependency_tree(name: str, visited: Optional[set[str]] = None) -> dict[str, Any]:
             """build_dependency_tree service method."""
             if visited is None:
                 visited = set()
@@ -155,9 +139,7 @@ class ServiceDiscovery:
                     if self.registry.has_service(name)
                     else "not_found"
                 ),
-                "dependencies": [
-                    build_dependency_tree(dep, visited.copy()) for dep in dependencies
-                ],
+                "dependencies": [build_dependency_tree(dep, visited.copy()) for dep in dependencies],
                 "dependents": dependents,
             }
 
@@ -248,9 +230,7 @@ class ServiceDiscovery:
 
             # Add dependencies
             for dep in self.registry.get_service_dependencies(service_name):
-                dependencies.append(
-                    {"from": service_name, "to": dep, "type": "depends_on"}
-                )
+                dependencies.append({"from": service_name, "to": dep, "type": "depends_on"})
 
         return {
             "services": services,
@@ -268,15 +248,13 @@ class ServiceDiscovery:
     ) -> dict[str, bool]:
         """Wait for specific services to become ready."""
         start_time = time.time()
-        results = {name: False for name in service_names}
+        results = dict.fromkeys(service_names, False)
 
         while time.time() - start_time < timeout_seconds:
             all_ready = True
 
             for service_name in service_names:
-                if not results[
-                    service_name
-                ]:  # Only check services that aren't ready yet
+                if not results[service_name]:  # Only check services that aren't ready yet
                     if self.registry.has_service(service_name):
                         service = self.registry.get_service(service_name)
                         if service.is_ready():
@@ -299,9 +277,7 @@ class ServiceDiscovery:
             logger.info(f"Services ready: {', '.join(ready_services)}")
 
         if not_ready_services:
-            logger.warning(
-                f"Services not ready within timeout: {', '.join(not_ready_services)}"
-            )
+            logger.warning(f"Services not ready within timeout: {', '.join(not_ready_services)}")
 
         return results
 
@@ -314,7 +290,5 @@ class ServiceDiscovery:
             "cache_ttl_seconds": self._discovery_cache_ttl,
             "ready_services": len(self.find_ready_services()),
             "unhealthy_services": len(self.find_unhealthy_services()),
-            "registry_initialized": getattr(
-                self.registry, "_registry_initialized", False
-            ),
+            "registry_initialized": getattr(self.registry, "_registry_initialized", False),
         }

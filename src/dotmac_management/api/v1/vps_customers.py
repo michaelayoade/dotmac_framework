@@ -6,20 +6,20 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from pydantic import BaseModel, ConfigDict, IPvAnyAddress, field_validator
+
+from dotmac.application import StandardDependencies, get_standard_deps
+from dotmac.application.api.response import APIResponse
+from dotmac.platform.auth.dependencies import get_current_active_user
+from dotmac.platform.auth.models import User
+from dotmac.platform.observability.logging import get_logger
 from dotmac_management.models.tenant import TenantPlan
 from dotmac_management.models.vps_customer import SupportTier, VPSCustomer, VPSStatus
 from dotmac_management.services.vps_provisioning import VPSProvisioningService
 from dotmac_management.services.vps_requirements import VPSRequirementsService
 from dotmac_shared.api.exceptions import standard_exception_handler
-from dotmac_shared.api.response import APIResponse
 from dotmac_shared.validation.common_validators import CommonValidators
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from pydantic import BaseModel, ConfigDict, IPvAnyAddress, field_validator
-
-from dotmac.application import StandardDependencies, get_standard_deps
-from dotmac.platform.auth.dependencies import get_current_active_user
-from dotmac.platform.auth.models import User
-from dotmac.platform.observability.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/vps-customers", tags=["vps-customers"])
@@ -210,9 +210,7 @@ async def setup_vps_customer(
         db = deps.db
         current_user = deps.current_user
         # Check if subdomain is already taken
-        existing_customer = (
-            db.query(VPSCustomer).filter_by(subdomain=setup_request.subdomain).first()
-        )
+        existing_customer = db.query(VPSCustomer).filter_by(subdomain=setup_request.subdomain).first()
 
         if existing_customer:
             raise HTTPException(
@@ -258,15 +256,11 @@ async def setup_vps_customer(
         db.commit()
         db.refresh(vps_customer)
 
-        logger.info(
-            f"VPS customer created: {customer_id} for {setup_request.company_name}"
-        )
+        logger.info(f"VPS customer created: {customer_id} for {setup_request.company_name}")
 
         # Queue deployment validation and setup in background
         provisioning_service = VPSProvisioningService()
-        background_tasks.add_task(
-            provisioning_service.setup_vps_customer, vps_customer.id, db
-        )
+        background_tasks.add_task(provisioning_service.setup_vps_customer, vps_customer.id, db)
 
         # Generate URLs for customer access
         base_url = "https://admin.yourdomain.com"  # Should come from config
@@ -426,24 +420,14 @@ async def get_deployment_status(
         progress_percentage=progress_map.get(customer.status, 0),
         current_step=customer.status.value.replace("_", " ").title(),
         estimated_completion_minutes=completion_estimates.get(customer.status),
-        error_message=customer.settings.get("last_error")
-        if customer.settings
-        else None,
+        error_message=customer.settings.get("last_error") if customer.settings else None,
         logs=customer.deployment_logs or [],
-        ssh_connection_test=customer.settings.get("ssh_test_passed")
-        if customer.settings
-        else None,
-        server_requirements_check=customer.settings.get("requirements_passed")
-        if customer.settings
-        else None,
-        deployment_readiness=customer.settings.get("deployment_ready")
-        if customer.settings
-        else None,
+        ssh_connection_test=customer.settings.get("ssh_test_passed") if customer.settings else None,
+        server_requirements_check=customer.settings.get("requirements_passed") if customer.settings else None,
+        deployment_readiness=customer.settings.get("deployment_ready") if customer.settings else None,
     )
 
-    return APIResponse(
-        success=True, message="Deployment status retrieved", data=status_response
-    )
+    return APIResponse(success=True, message="Deployment status retrieved", data=status_response)
 
 
 @router.post("/{customer_id}/retry-deployment")
@@ -487,9 +471,7 @@ async def retry_deployment(
     )
 
 
-@router.get(
-    "/{customer_id}/setup-instructions", response_model=APIResponse[dict[str, Any]]
-)
+@router.get("/{customer_id}/setup-instructions", response_model=APIResponse[dict[str, Any]])
 @standard_exception_handler
 async def get_setup_instructions(
     customer_id: str,
@@ -556,6 +538,4 @@ async def get_setup_instructions(
         ],
     }
 
-    return APIResponse(
-        success=True, message="Setup instructions generated", data=instructions
-    )
+    return APIResponse(success=True, message="Setup instructions generated", data=instructions)

@@ -84,9 +84,7 @@ class IStorageProvider(ABC):
     # File operations
 
     @abstractmethod
-    async def upload_file(
-        self, storage_name: str, file_path: str, content: BinaryIO
-    ) -> FileMetadata:
+    async def upload_file(self, storage_name: str, file_path: str, content: BinaryIO) -> FileMetadata:
         """Upload file to storage"""
         pass
 
@@ -101,9 +99,7 @@ class IStorageProvider(ABC):
         pass
 
     @abstractmethod
-    async def list_files(
-        self, storage_name: str, prefix: str = ""
-    ) -> list[FileMetadata]:
+    async def list_files(self, storage_name: str, prefix: str = "") -> list[FileMetadata]:
         """List files in storage"""
         pass
 
@@ -113,9 +109,7 @@ class IStorageProvider(ABC):
         pass
 
     @abstractmethod
-    async def get_file_metadata(
-        self, storage_name: str, file_path: str
-    ) -> FileMetadata:
+    async def get_file_metadata(self, storage_name: str, file_path: str) -> FileMetadata:
         """Get file metadata"""
         pass
 

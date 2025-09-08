@@ -561,11 +561,10 @@ class AdvancedDashboardProvisioner:
                     "version": target_version or "previous",
                     "action": "rollback_completed",
                 }
-            else:
-                return {
-                    "success": False,
-                    "error": f"Failed to rollback dashboard: {deployment_result.get('error')}",
-                }
+            return {
+                "success": False,
+                "error": f"Failed to rollback dashboard: {deployment_result.get('error')}",
+            }
 
         except Exception as e:
             return {"success": False, "error": f"Rollback failed: {e!s}"}

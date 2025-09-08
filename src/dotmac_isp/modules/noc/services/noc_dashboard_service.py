@@ -9,6 +9,10 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+from sqlalchemy import and_, desc, func
+from sqlalchemy.orm import Session
+
+from dotmac.application import standard_exception_handler
 from dotmac_shared.device_management.dotmac_device_management.core.models import (
     Device,
     MonitoringRecord,
@@ -16,11 +20,7 @@ from dotmac_shared.device_management.dotmac_device_management.core.models import
 from dotmac_shared.device_management.dotmac_device_management.services.device_service import (
     DeviceService,
 )
-from dotmac_shared.services.base import BaseTenantService
-from sqlalchemy import and_, desc, func
-from sqlalchemy.orm import Session
-
-from dotmac.application import standard_exception_handler
+from dotmac_shared.services.base import BaseManagementService as BaseTenantService
 
 from ..models.alarms import Alarm, AlarmSeverity, AlarmStatus
 from ..models.events import NetworkEvent
@@ -46,14 +46,10 @@ class NOCDashboardService(BaseTenantService):
     async def get_network_status_overview(self) -> dict[str, Any]:
         """Get high-level network status overview."""
         # Get device statistics
-        total_devices = (
-            self.db.query(Device).filter(Device.tenant_id == self.tenant_id).count()
-        )
+        total_devices = self.db.query(Device).filter(Device.tenant_id == self.tenant_id).count()
 
         online_devices = (
-            self.db.query(Device)
-            .filter(and_(Device.tenant_id == self.tenant_id, Device.status == "active"))
-            .count()
+            self.db.query(Device).filter(and_(Device.tenant_id == self.tenant_id, Device.status == "active")).count()
         )
 
         offline_devices = total_devices - online_devices
@@ -77,9 +73,7 @@ class NOCDashboardService(BaseTenantService):
         total_active_alarms = sum(alarm_counts.values())
 
         # Calculate network health score
-        health_score = self._calculate_network_health_score(
-            online_devices, total_devices, total_active_alarms
-        )
+        health_score = self._calculate_network_health_score(online_devices, total_devices, total_active_alarms)
 
         # Get recent events count
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
@@ -103,9 +97,7 @@ class NOCDashboardService(BaseTenantService):
                 "total_devices": total_devices,
                 "online_devices": online_devices,
                 "offline_devices": offline_devices,
-                "availability_percentage": round(
-                    (online_devices / max(total_devices, 1)) * 100, 2
-                ),
+                "availability_percentage": round((online_devices / max(total_devices, 1)) * 100, 2),
             },
             "alarm_summary": {
                 "total_active": total_active_alarms,
@@ -120,9 +112,7 @@ class NOCDashboardService(BaseTenantService):
         }
 
     @standard_exception_handler
-    async def get_device_status_summary(
-        self, limit: int = 50, include_metrics: bool = True
-    ) -> dict[str, Any]:
+    async def get_device_status_summary(self, limit: int = 50, include_metrics: bool = True) -> dict[str, Any]:
         """Get summary of device statuses with latest metrics."""
         devices = (
             self.db.query(Device)
@@ -142,9 +132,7 @@ class NOCDashboardService(BaseTenantService):
                 "status": device.status,
                 "site_id": device.site_id,
                 "management_ip": device.management_ip,
-                "last_seen": device.updated_at.isoformat()
-                if device.updated_at
-                else None,
+                "last_seen": device.updated_at.isoformat() if device.updated_at else None,
             }
 
             if include_metrics:
@@ -180,18 +168,12 @@ class NOCDashboardService(BaseTenantService):
         self, severity_filter: Optional[list[str]] = None, limit: int = 100
     ) -> dict[str, Any]:
         """Get active alarms for dashboard display."""
-        query = self.db.query(Alarm).filter(
-            and_(Alarm.tenant_id == self.tenant_id, Alarm.status == AlarmStatus.ACTIVE)
-        )
+        query = self.db.query(Alarm).filter(and_(Alarm.tenant_id == self.tenant_id, Alarm.status == AlarmStatus.ACTIVE))
 
         if severity_filter:
             query = query.filter(Alarm.severity.in_(severity_filter))
 
-        alarms = (
-            query.order_by(desc(Alarm.severity), desc(Alarm.last_occurrence))
-            .limit(limit)
-            .all()
-        )
+        alarms = query.order_by(desc(Alarm.severity), desc(Alarm.last_occurrence)).limit(limit).all()
 
         # Group by severity for dashboard display
         alarms_by_severity = {}
@@ -213,12 +195,7 @@ class NOCDashboardService(BaseTenantService):
                 "acknowledged": alarm.acknowledged_at is not None,
                 "acknowledged_by": alarm.acknowledged_by,
                 "context_data": alarm.context_data,
-                "age_minutes": int(
-                    (
-                        datetime.now(timezone.utc) - alarm.first_occurrence
-                    ).total_seconds()
-                    / 60
-                ),
+                "age_minutes": int((datetime.now(timezone.utc) - alarm.first_occurrence).total_seconds() / 60),
             }
 
             alarm_summaries.append(alarm_data)
@@ -259,9 +236,7 @@ class NOCDashboardService(BaseTenantService):
                     MonitoringRecord.tenant_id == self.tenant_id,
                     MonitoringRecord.collection_timestamp >= since,
                     MonitoringRecord.collection_status == "success",
-                    func.json_extract(MonitoringRecord.metrics, "$.cpu_usage").isnot(
-                        None
-                    ),
+                    func.json_extract(MonitoringRecord.metrics, "$.cpu_usage").isnot(None),
                 )
             )
             .first()
@@ -288,9 +263,7 @@ class NOCDashboardService(BaseTenantService):
                     MonitoringRecord.tenant_id == self.tenant_id,
                     MonitoringRecord.collection_timestamp >= since,
                     MonitoringRecord.collection_status == "success",
-                    func.json_extract(MonitoringRecord.metrics, "$.memory_usage").isnot(
-                        None
-                    ),
+                    func.json_extract(MonitoringRecord.metrics, "$.memory_usage").isnot(None),
                 )
             )
             .first()
@@ -299,9 +272,7 @@ class NOCDashboardService(BaseTenantService):
         # Get interface statistics
         interface_stats = (
             self.db.query(
-                func.count(func.distinct(MonitoringRecord.device_id)).label(
-                    "monitored_devices"
-                ),
+                func.count(func.distinct(MonitoringRecord.device_id)).label("monitored_devices"),
                 func.sum(
                     func.cast(
                         func.json_extract(MonitoringRecord.metrics, "$.interfaces_up"),
@@ -310,9 +281,7 @@ class NOCDashboardService(BaseTenantService):
                 ).label("total_interfaces_up"),
                 func.sum(
                     func.cast(
-                        func.json_extract(
-                            MonitoringRecord.metrics, "$.interfaces_down"
-                        ),
+                        func.json_extract(MonitoringRecord.metrics, "$.interfaces_down"),
                         int,
                     )
                 ).label("total_interfaces_down"),
@@ -345,10 +314,7 @@ class NOCDashboardService(BaseTenantService):
                     (
                         (interface_stats.total_interfaces_up or 0)
                         / max(
-                            (
-                                (interface_stats.total_interfaces_up or 0)
-                                + (interface_stats.total_interfaces_down or 0)
-                            ),
+                            ((interface_stats.total_interfaces_up or 0) + (interface_stats.total_interfaces_down or 0)),
                             1,
                         )
                     )
@@ -392,10 +358,7 @@ class NOCDashboardService(BaseTenantService):
                 "device_id": event.device_id,
                 "customer_id": event.customer_id,
                 "event_timestamp": event.event_timestamp.isoformat(),
-                "age_minutes": int(
-                    (datetime.now(timezone.utc) - event.event_timestamp).total_seconds()
-                    / 60
-                ),
+                "age_minutes": int((datetime.now(timezone.utc) - event.event_timestamp).total_seconds() / 60),
                 "category": event.category,
                 "source_system": event.source_system,
             }
@@ -443,9 +406,7 @@ class NOCDashboardService(BaseTenantService):
 
     # Private helper methods
 
-    def _calculate_network_health_score(
-        self, online_devices: int, total_devices: int, active_alarms: int
-    ) -> float:
+    def _calculate_network_health_score(self, online_devices: int, total_devices: int, active_alarms: int) -> float:
         """Calculate overall network health score (0-100)."""
         if total_devices == 0:
             return 100.0
@@ -479,9 +440,7 @@ class NOCDashboardService(BaseTenantService):
         else:
             return "critical"
 
-    async def _get_device_latest_metrics(
-        self, device_id: str
-    ) -> Optional[dict[str, Any]]:
+    async def _get_device_latest_metrics(self, device_id: str) -> Optional[dict[str, Any]]:
         """Get latest metrics for a specific device."""
         latest_record = (
             self.db.query(MonitoringRecord)

@@ -1,21 +1,9 @@
-from pydantic import BaseModel
+"""DotMac Core Package - Namespace initializer."""
 
-"""
-DotMac Core Package - Stub Implementation
+from pkgutil import extend_path
 
-This is a stub implementation to enable testing while the full framework
-is being developed by the team. Replace with actual implementation when available.
-"""
+# Enable namespace package across dotmac-* packages
+__path__ = extend_path(__path__, __name__)
 
-from .exceptions import AuthorizationError, ConfigurationError, DotMacError, ValidationError
-from .models import BaseModel, TenantContext
-
+# Minimal metadata (avoid re-exporting to prevent conflicts)
 __version__ = "0.1.0-stub"
-__all__ = [
-    "DotMacError",
-    "ValidationError",
-    "AuthorizationError",
-    "ConfigurationError",
-    "BaseModel",
-    "TenantContext",
-]

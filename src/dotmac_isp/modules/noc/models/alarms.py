@@ -116,16 +116,10 @@ class Alarm(Base):
             "customer_id": self.customer_id,
             "title": self.title,
             "description": self.description,
-            "first_occurrence": self.first_occurrence.isoformat()
-            if self.first_occurrence
-            else None,
-            "last_occurrence": self.last_occurrence.isoformat()
-            if self.last_occurrence
-            else None,
+            "first_occurrence": self.first_occurrence.isoformat() if self.first_occurrence else None,
+            "last_occurrence": self.last_occurrence.isoformat() if self.last_occurrence else None,
             "occurrence_count": self.occurrence_count,
-            "acknowledged_at": self.acknowledged_at.isoformat()
-            if self.acknowledged_at
-            else None,
+            "acknowledged_at": self.acknowledged_at.isoformat() if self.acknowledged_at else None,
             "acknowledged_by": self.acknowledged_by,
             "cleared_at": self.cleared_at.isoformat() if self.cleared_at else None,
             "cleared_by": self.cleared_by,

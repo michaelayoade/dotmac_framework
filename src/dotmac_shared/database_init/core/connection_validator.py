@@ -59,9 +59,7 @@ class ConnectionValidator:
 
     def __init__(self, db_instance: DatabaseInstance):
         self.db_instance = db_instance
-        self.logger = logger.bind(
-            component="connection_validator", database=db_instance.database_name
-        )
+        self.logger = logger.bind(component="connection_validator", database=db_instance.database_name)
         self._connection_pool = None
 
     async def _get_connection_pool(self):
@@ -75,9 +73,7 @@ class ConnectionValidator:
             )
         return self._connection_pool
 
-    @retry(
-        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=8)
-    )
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=8))
     async def validate_database_health(self) -> HealthCheckResult:
         """
         Comprehensive database health validation.
@@ -106,26 +102,10 @@ class ConnectionValidator:
 
             # Compile details
             details = {
-                "connectivity": (
-                    checks[0]
-                    if not isinstance(checks[0], Exception)
-                    else {"error": str(checks[0])}
-                ),
-                "schema": (
-                    checks[1]
-                    if not isinstance(checks[1], Exception)
-                    else {"error": str(checks[1])}
-                ),
-                "performance": (
-                    checks[2]
-                    if not isinstance(checks[2], Exception)
-                    else {"error": str(checks[2])}
-                ),
-                "disk_space": (
-                    checks[3]
-                    if not isinstance(checks[3], Exception)
-                    else {"error": str(checks[3])}
-                ),
+                "connectivity": (checks[0] if not isinstance(checks[0], Exception) else {"error": str(checks[0])}),
+                "schema": (checks[1] if not isinstance(checks[1], Exception) else {"error": str(checks[1])}),
+                "performance": (checks[2] if not isinstance(checks[2], Exception) else {"error": str(checks[2])}),
+                "disk_space": (checks[3] if not isinstance(checks[3], Exception) else {"error": str(checks[3])}),
                 "validation_time_ms": response_time_ms,
             }
 
@@ -220,9 +200,7 @@ class ConnectionValidator:
                 # Get current migration version
                 current_version = None
                 if alembic_exists:
-                    current_version = await conn.fetchval(
-                        "SELECT version_num FROM alembic_version LIMIT 1"
-                    )
+                    current_version = await conn.fetchval("SELECT version_num FROM alembic_version LIMIT 1")
 
                 # Check for constraints and indexes
                 constraint_count = await conn.fetchval(
@@ -291,9 +269,7 @@ class ConnectionValidator:
 
                 # Calculate connection utilization
                 max_connections = await conn.fetchval("SHOW max_connections")
-                utilization = (
-                    connection_stats["total_connections"] / int(max_connections)
-                ) * 100
+                utilization = (connection_stats["total_connections"] / int(max_connections)) * 100
 
                 # Determine performance status
                 status = "healthy"
@@ -311,9 +287,7 @@ class ConnectionValidator:
                         "utilization_percent": round(utilization, 2),
                     },
                     "database_size": db_size,
-                    "slow_queries": (
-                        [dict(q) for q in slow_queries] if slow_queries else []
-                    ),
+                    "slow_queries": ([dict(q) for q in slow_queries] if slow_queries else []),
                 }
 
         except Exception as e:
@@ -336,13 +310,9 @@ class ConnectionValidator:
                 )
 
                 # Get database size details
-                db_size_bytes = await conn.fetchval(
-                    "SELECT pg_database_size($1)", self.db_instance.database_name
-                )
+                db_size_bytes = await conn.fetchval("SELECT pg_database_size($1)", self.db_instance.database_name)
 
-                db_size_pretty = await conn.fetchval(
-                    "SELECT pg_size_pretty($1)", db_size_bytes
-                )
+                db_size_pretty = await conn.fetchval("SELECT pg_size_pretty($1)", db_size_bytes)
 
                 # Check table sizes
                 table_sizes = await conn.fetch(
@@ -427,8 +397,7 @@ class ConnectionValidator:
                     idle_connections=stats["idle_connections"] or 0,
                     total_connections=stats["total_connections"] or 0,
                     max_connections=int(max_connections),
-                    connection_utilization=(stats["total_connections"] or 0)
-                    / int(max_connections),
+                    connection_utilization=(stats["total_connections"] or 0) / int(max_connections),
                     avg_response_time_ms=stats["avg_query_time_ms"] or 0.0,
                 )
 
@@ -436,9 +405,7 @@ class ConnectionValidator:
             self.logger.error("Failed to get connection metrics", error=str(e))
             raise
 
-    async def test_query_performance(
-        self, test_queries: Optional[list[str]] = None
-    ) -> dict[str, Any]:
+    async def test_query_performance(self, test_queries: Optional[list[str]] = None) -> dict[str, Any]:
         """Test query performance with sample queries."""
         if test_queries is None:
             test_queries = [
@@ -481,9 +448,7 @@ class ConnectionValidator:
         successful_queries = [r for r in results.values() if r["status"] == "success"]
         avg_execution_time = 0
         if successful_queries:
-            avg_execution_time = sum(
-                q["execution_time_ms"] for q in successful_queries
-            ) / len(successful_queries)
+            avg_execution_time = sum(q["execution_time_ms"] for q in successful_queries) / len(successful_queries)
 
         return {
             "average_execution_time_ms": avg_execution_time,

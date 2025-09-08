@@ -55,8 +55,7 @@ _IMPORT_MAP = {
 def _issue_deprecation_warning(name: str) -> None:
     """Issue a deprecation warning for a specific import."""
     warnings.warn(
-        f"{name} has been moved to dotmac.tasks package. "
-        f"Use 'from dotmac.tasks import {name}' instead.",
+        f"{name} has been moved to dotmac.tasks package. " f"Use 'from dotmac.tasks import {name}' instead.",
         DeprecationWarning,
         stacklevel=3,
     )
@@ -97,14 +96,12 @@ except ImportError:
 
         def __call__(self, *args, **kwargs):
             raise ImportError(
-                f"{self.name} requires dotmac-tasks package. "
-                f"Install with: pip install dotmac-tasks[redis]"
+                f"{self.name} requires dotmac-tasks package. " f"Install with: pip install dotmac-tasks[redis]"
             )
 
         def __getattr__(self, attr):
             raise ImportError(
-                f"{self.name}.{attr} requires dotmac-tasks package. "
-                f"Install with: pip install dotmac-tasks[redis]"
+                f"{self.name}.{attr} requires dotmac-tasks package. " f"Install with: pip install dotmac-tasks[redis]"
             )
 
     # Create placeholder objects for all exports

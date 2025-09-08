@@ -18,7 +18,6 @@ from .services_complete import ResellerCustomerService
 class AdvancedCustomerManager:
     """Advanced customer management with lifecycle integration"""
 
-    # TODO: Fix parameter ordering - parameters without defaults must come before those with defaults
     def __init__(
         self,
         db: AsyncSession,
@@ -35,9 +34,7 @@ class AdvancedCustomerManager:
         """Get comprehensive overview of customer portfolio"""
 
         # Get all customers for reseller
-        customers = await self.customer_service.list_for_reseller(
-            reseller_id, limit=1000
-        )
+        customers = await self.customer_service.list_for_reseller(reseller_id, limit=1000)
 
         if not customers:
             return {
@@ -54,15 +51,10 @@ class AdvancedCustomerManager:
         # Calculate portfolio metrics
         portfolio_summary = {
             "total_customers": len(customers),
-            "active_customers": len(
-                [c for c in customers if c.relationship_status == "active"]
-            ),
+            "active_customers": len([c for c in customers if c.relationship_status == "active"]),
             "total_mrr": sum(c.monthly_recurring_revenue for c in customers),
             "total_ltv": sum(c.lifetime_value or 0 for c in customers),
-            "average_customer_value": sum(
-                c.monthly_recurring_revenue for c in customers
-            )
-            / len(customers),
+            "average_customer_value": sum(c.monthly_recurring_revenue for c in customers) / len(customers),
             "customer_acquisition_rate": self._calculate_acquisition_rate(customers),
             "churn_rate": self._calculate_churn_rate(customers),
         }
@@ -77,9 +69,7 @@ class AdvancedCustomerManager:
         revenue_summary = {
             "mrr_by_segment": self._calculate_mrr_by_segment(customers),
             "revenue_growth_trend": await self._calculate_revenue_trend(reseller_id),
-            "top_customers_by_value": self._get_top_customers_by_value(
-                customers, limit=10
-            ),
+            "top_customers_by_value": self._get_top_customers_by_value(customers, limit=10),
         }
 
         # Growth and performance metrics
@@ -88,12 +78,8 @@ class AdvancedCustomerManager:
             "quarter_over_quarter_growth": 18.7,
             "customer_expansion_rate": 12.3,
             "net_revenue_retention": 108.5,
-            "customers_at_risk": len(
-                [c for c in customers if self._is_customer_at_risk(c)]
-            ),
-            "expansion_opportunities": len(
-                [c for c in customers if self._has_expansion_opportunity(c)]
-            ),
+            "customers_at_risk": len([c for c in customers if self._is_customer_at_risk(c)]),
+            "expansion_opportunities": len([c for c in customers if self._has_expansion_opportunity(c)]),
         }
 
         # Generate recommendations
@@ -116,9 +102,7 @@ class AdvancedCustomerManager:
     async def get_customer_health_dashboard(self, reseller_id: str) -> dict[str, Any]:
         """Get customer health monitoring dashboard"""
 
-        customers = await self.customer_service.list_for_reseller(
-            reseller_id, limit=1000
-        )
+        customers = await self.customer_service.list_for_reseller(reseller_id, limit=1000)
 
         # Simulate health scores (in production, these would come from lifecycle records)
         customers_with_health = []
@@ -142,43 +126,21 @@ class AdvancedCustomerManager:
         # Health summary statistics
         health_scores = [c["health_score"] for c in customers_with_health]
         health_summary = {
-            "average_health_score": sum(health_scores) / len(health_scores)
-            if health_scores
-            else 0,
-            "customers_critical": len(
-                [c for c in customers_with_health if c["health_score"] < 30]
-            ),
-            "customers_at_risk": len(
-                [c for c in customers_with_health if 30 <= c["health_score"] < 50]
-            ),
-            "customers_fair": len(
-                [c for c in customers_with_health if 50 <= c["health_score"] < 70]
-            ),
-            "customers_good": len(
-                [c for c in customers_with_health if 70 <= c["health_score"] < 90]
-            ),
-            "customers_excellent": len(
-                [c for c in customers_with_health if c["health_score"] >= 90]
-            ),
-            "revenue_at_risk": sum(
-                c["monthly_value"]
-                for c in customers_with_health
-                if c["health_score"] < 50
-            ),
+            "average_health_score": sum(health_scores) / len(health_scores) if health_scores else 0,
+            "customers_critical": len([c for c in customers_with_health if c["health_score"] < 30]),
+            "customers_at_risk": len([c for c in customers_with_health if 30 <= c["health_score"] < 50]),
+            "customers_fair": len([c for c in customers_with_health if 50 <= c["health_score"] < 70]),
+            "customers_good": len([c for c in customers_with_health if 70 <= c["health_score"] < 90]),
+            "customers_excellent": len([c for c in customers_with_health if c["health_score"] >= 90]),
+            "revenue_at_risk": sum(c["monthly_value"] for c in customers_with_health if c["health_score"] < 50),
         }
 
         return {
             "reseller_id": reseller_id,
             "health_summary": health_summary,
-            "critical_customers": [
-                c for c in customers_with_health if c["health_score"] < 30
-            ][:10],
-            "at_risk_customers": [
-                c for c in customers_with_health if 30 <= c["health_score"] < 50
-            ][:15],
-            "improvement_opportunities": [
-                c for c in customers_with_health if 50 <= c["health_score"] < 70
-            ][:10],
+            "critical_customers": [c for c in customers_with_health if c["health_score"] < 30][:10],
+            "at_risk_customers": [c for c in customers_with_health if 30 <= c["health_score"] < 50][:15],
+            "improvement_opportunities": [c for c in customers_with_health if 50 <= c["health_score"] < 70][:10],
             "health_trends": {
                 "weekly_change": -2.3,  # Average health score change over past week
                 "monthly_change": 1.8,
@@ -218,9 +180,7 @@ class AdvancedCustomerManager:
         if not customer:
             raise HTTPException(status_code=404, detail="Customer not found")
 
-        lifecycle_summary = await self.lifecycle_manager.get_customer_lifecycle_summary(
-            customer_id, UUID(reseller_id)
-        )
+        lifecycle_summary = await self.lifecycle_manager.get_customer_lifecycle_summary(customer_id, UUID(reseller_id))
 
         # Generate action plan based on focus areas and current state
         action_plan = {
@@ -228,17 +188,15 @@ class AdvancedCustomerManager:
             "reseller_id": reseller_id,
             "plan_created_at": datetime.now(timezone.utc).isoformat(),
             "timeline_days": timeline_days,
-            "target_completion_date": (
-                datetime.now(timezone.utc) + timedelta(days=timeline_days)
-            ).isoformat(),
+            "target_completion_date": (datetime.now(timezone.utc) + timedelta(days=timeline_days)).isoformat(),
             "focus_areas": focus_areas,
             "current_state": {
                 "lifecycle_stage": lifecycle_summary.get("current_stage", "unknown"),
                 "health_score": lifecycle_summary.get("health_score", 0),
                 "monthly_value": float(customer.monthly_recurring_revenue),
-                "days_since_last_interaction": lifecycle_summary.get(
-                    "recent_interactions", {}
-                ).get("days_since_last", 0),
+                "days_since_last_interaction": lifecycle_summary.get("recent_interactions", {}).get(
+                    "days_since_last", 0
+                ),
             },
             "objectives": [],
             "action_items": [],
@@ -252,9 +210,7 @@ class AdvancedCustomerManager:
                 {
                     "category": "health_improvement",
                     "objective": "Improve customer health score by 20 points",
-                    "target_value": min(
-                        100, lifecycle_summary.get("health_score", 0) + 20
-                    ),
+                    "target_value": min(100, lifecycle_summary.get("health_score", 0) + 20),
                     "priority": "high",
                 }
             )
@@ -265,9 +221,7 @@ class AdvancedCustomerManager:
                         "id": "health_check_call",
                         "title": "Schedule health check call",
                         "description": "Proactive call to understand concerns and satisfaction",
-                        "due_date": (
-                            datetime.now(timezone.utc) + timedelta(days=7)
-                        ).isoformat(),
+                        "due_date": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
                         "priority": "high",
                         "estimated_duration": 60,
                     },
@@ -275,9 +229,7 @@ class AdvancedCustomerManager:
                         "id": "satisfaction_survey",
                         "title": "Send satisfaction survey",
                         "description": "Gather detailed feedback on service experience",
-                        "due_date": (
-                            datetime.now(timezone.utc) + timedelta(days=14)
-                        ).isoformat(),
+                        "due_date": (datetime.now(timezone.utc) + timedelta(days=14)).isoformat(),
                         "priority": "medium",
                         "estimated_duration": 15,
                     },
@@ -289,8 +241,7 @@ class AdvancedCustomerManager:
                 {
                     "category": "revenue_expansion",
                     "objective": "Identify and propose expansion opportunities",
-                    "target_value": float(customer.monthly_recurring_revenue)
-                    * 1.3,  # 30% increase
+                    "target_value": float(customer.monthly_recurring_revenue) * 1.3,  # 30% increase
                     "priority": "medium",
                 }
             )
@@ -301,9 +252,7 @@ class AdvancedCustomerManager:
                         "id": "usage_analysis",
                         "title": "Analyze customer usage patterns",
                         "description": "Review usage data to identify expansion opportunities",
-                        "due_date": (
-                            datetime.now(timezone.utc) + timedelta(days=14)
-                        ).isoformat(),
+                        "due_date": (datetime.now(timezone.utc) + timedelta(days=14)).isoformat(),
                         "priority": "medium",
                         "estimated_duration": 90,
                     },
@@ -311,9 +260,7 @@ class AdvancedCustomerManager:
                         "id": "expansion_proposal",
                         "title": "Create expansion proposal",
                         "description": "Develop customized expansion proposal with ROI analysis",
-                        "due_date": (
-                            datetime.now(timezone.utc) + timedelta(days=30)
-                        ).isoformat(),
+                        "due_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
                         "priority": "medium",
                         "estimated_duration": 120,
                     },
@@ -327,9 +274,7 @@ class AdvancedCustomerManager:
                         "id": "training_session",
                         "title": "Schedule product training session",
                         "description": "Provide advanced training to increase product adoption",
-                        "due_date": (
-                            datetime.now(timezone.utc) + timedelta(days=21)
-                        ).isoformat(),
+                        "due_date": (datetime.now(timezone.utc) + timedelta(days=21)).isoformat(),
                         "priority": "medium",
                         "estimated_duration": 90,
                     },
@@ -337,9 +282,7 @@ class AdvancedCustomerManager:
                         "id": "quarterly_review",
                         "title": "Schedule quarterly business review",
                         "description": "Regular strategic review meeting to align on goals",
-                        "due_date": (
-                            datetime.now(timezone.utc) + timedelta(days=45)
-                        ).isoformat(),
+                        "due_date": (datetime.now(timezone.utc) + timedelta(days=45)).isoformat(),
                         "priority": "low",
                         "estimated_duration": 120,
                     },
@@ -392,14 +335,10 @@ class AdvancedCustomerManager:
 
         return action_plan
 
-    async def get_customer_revenue_analysis(
-        self, reseller_id: str, period_months: int = 12
-    ) -> dict[str, Any]:
+    async def get_customer_revenue_analysis(self, reseller_id: str, period_months: int = 12) -> dict[str, Any]:
         """Analyze customer revenue trends and opportunities"""
 
-        customers = await self.customer_service.list_for_reseller(
-            reseller_id, limit=1000
-        )
+        customers = await self.customer_service.list_for_reseller(reseller_id, limit=1000)
 
         # Calculate revenue metrics
         total_mrr = sum(c.monthly_recurring_revenue for c in customers)
@@ -410,43 +349,26 @@ class AdvancedCustomerManager:
         for i in range(period_months):
             month_date = date.today().replace(day=1) - timedelta(days=30 * i)
             # Simulate growth trend with some variation
-            base_revenue = float(total_mrr) * (
-                1 + (period_months - i) * 0.02
-            )  # 2% monthly growth
+            base_revenue = float(total_mrr) * (1 + (period_months - i) * 0.02)  # 2% monthly growth
             monthly_revenue.append(
                 {
                     "month": month_date.strftime("%Y-%m"),
-                    "mrr": round(
-                        base_revenue * (0.95 + 0.1 * (i % 3)), 2
-                    ),  # Add variation
-                    "customer_count": len(customers)
-                    + i
-                    - 2,  # Simulate customer growth
-                    "new_customers": max(
-                        0, 2 - (i % 4)
-                    ),  # Simulate new customer additions
-                    "churned_customers": max(
-                        0, 1 if i % 6 == 0 else 0
-                    ),  # Simulate occasional churn
+                    "mrr": round(base_revenue * (0.95 + 0.1 * (i % 3)), 2),  # Add variation
+                    "customer_count": len(customers) + i - 2,  # Simulate customer growth
+                    "new_customers": max(0, 2 - (i % 4)),  # Simulate new customer additions
+                    "churned_customers": max(0, 1 if i % 6 == 0 else 0),  # Simulate occasional churn
                 }
             )
 
         monthly_revenue.reverse()  # Chronological order
 
         # Customer segmentation by value
-        customers_by_value = sorted(
-            customers, key=lambda x: x.monthly_recurring_revenue, reverse=True
-        )
+        customers_by_value = sorted(customers, key=lambda x: x.monthly_recurring_revenue, reverse=True)
 
         # Calculate revenue concentration
         top_10_percent_count = max(1, len(customers) // 10)
-        top_10_percent_revenue = sum(
-            c.monthly_recurring_revenue
-            for c in customers_by_value[:top_10_percent_count]
-        )
-        revenue_concentration = (
-            (top_10_percent_revenue / total_mrr * 100) if total_mrr > 0 else 0
-        )
+        top_10_percent_revenue = sum(c.monthly_recurring_revenue for c in customers_by_value[:top_10_percent_count])
+        revenue_concentration = (top_10_percent_revenue / total_mrr * 100) if total_mrr > 0 else 0
 
         revenue_analysis = {
             "reseller_id": reseller_id,
@@ -454,9 +376,7 @@ class AdvancedCustomerManager:
             "current_metrics": {
                 "total_mrr": float(total_mrr),
                 "total_arr": float(total_arr),
-                "average_customer_value": float(total_mrr) / len(customers)
-                if customers
-                else 0,
+                "average_customer_value": float(total_mrr) / len(customers) if customers else 0,
                 "customer_count": len(customers),
                 "revenue_concentration_top_10_percent": round(revenue_concentration, 1),
             },
@@ -468,45 +388,23 @@ class AdvancedCustomerManager:
             },
             "customer_segments": {
                 "enterprise": {
-                    "count": len(
-                        [c for c in customers if c.monthly_recurring_revenue >= 1000]
-                    ),
+                    "count": len([c for c in customers if c.monthly_recurring_revenue >= 1000]),
                     "revenue": float(
-                        sum(
-                            c.monthly_recurring_revenue
-                            for c in customers
-                            if c.monthly_recurring_revenue >= 1000
-                        )
+                        sum(c.monthly_recurring_revenue for c in customers if c.monthly_recurring_revenue >= 1000)
                     ),
                     "percentage_of_total": 0,
                 },
                 "mid_market": {
-                    "count": len(
-                        [
-                            c
-                            for c in customers
-                            if 200 <= c.monthly_recurring_revenue < 1000
-                        ]
-                    ),
+                    "count": len([c for c in customers if 200 <= c.monthly_recurring_revenue < 1000]),
                     "revenue": float(
-                        sum(
-                            c.monthly_recurring_revenue
-                            for c in customers
-                            if 200 <= c.monthly_recurring_revenue < 1000
-                        )
+                        sum(c.monthly_recurring_revenue for c in customers if 200 <= c.monthly_recurring_revenue < 1000)
                     ),
                     "percentage_of_total": 0,
                 },
                 "small_business": {
-                    "count": len(
-                        [c for c in customers if c.monthly_recurring_revenue < 200]
-                    ),
+                    "count": len([c for c in customers if c.monthly_recurring_revenue < 200]),
                     "revenue": float(
-                        sum(
-                            c.monthly_recurring_revenue
-                            for c in customers
-                            if c.monthly_recurring_revenue < 200
-                        )
+                        sum(c.monthly_recurring_revenue for c in customers if c.monthly_recurring_revenue < 200)
                     ),
                     "percentage_of_total": 0,
                 },
@@ -516,8 +414,7 @@ class AdvancedCustomerManager:
                     "customer_id": str(c.customer_id),
                     "company_name": c.company_name or "Unknown",
                     "current_mrr": float(c.monthly_recurring_revenue),
-                    "expansion_potential": float(c.monthly_recurring_revenue)
-                    * 1.5,  # 50% expansion potential
+                    "expansion_potential": float(c.monthly_recurring_revenue) * 1.5,  # 50% expansion potential
                     "confidence_score": 75,  # Out of 100
                     "recommended_actions": [
                         "Usage analysis",
@@ -526,47 +423,29 @@ class AdvancedCustomerManager:
                     ],
                 }
                 for c in customers_by_value[:10]
-                if c.monthly_recurring_revenue
-                >= 200  # Top customers with expansion potential
-            ][
-                :5
-            ],  # Limit to top 5 opportunities
+                if c.monthly_recurring_revenue >= 200  # Top customers with expansion potential
+            ][:5],  # Limit to top 5 opportunities
             "risk_analysis": {
                 "revenue_at_risk": float(
-                    sum(
-                        c.monthly_recurring_revenue
-                        for c in customers
-                        if self._is_customer_at_risk(c)
-                    )
+                    sum(c.monthly_recurring_revenue for c in customers if self._is_customer_at_risk(c))
                 ),
-                "customers_at_risk_count": len(
-                    [c for c in customers if self._is_customer_at_risk(c)]
-                ),
-                "concentration_risk_score": min(
-                    100, revenue_concentration
-                ),  # Higher concentration = higher risk
-                "churn_risk_revenue": float(total_mrr)
-                * 0.05,  # Estimate 5% at risk of churn
+                "customers_at_risk_count": len([c for c in customers if self._is_customer_at_risk(c)]),
+                "concentration_risk_score": min(100, revenue_concentration),  # Higher concentration = higher risk
+                "churn_risk_revenue": float(total_mrr) * 0.05,  # Estimate 5% at risk of churn
             },
         }
 
         # Calculate percentages for customer segments
         if total_mrr > 0:
             for segment in revenue_analysis["customer_segments"].values():
-                segment["percentage_of_total"] = round(
-                    segment["revenue"] / float(total_mrr) * 100, 1
-                )
+                segment["percentage_of_total"] = round(segment["revenue"] / float(total_mrr) * 100, 1)
 
         return revenue_analysis
 
     def _calculate_acquisition_rate(self, customers) -> float:
         """Calculate customer acquisition rate"""
         # Simple calculation based on recent customers
-        recent_customers = [
-            c
-            for c in customers
-            if c.created_at >= datetime.now(timezone.utc) - timedelta(days=30)
-        ]
+        recent_customers = [c for c in customers if c.created_at >= datetime.now(timezone.utc) - timedelta(days=30)]
         return (len(recent_customers) / 30) * 365  # Annualized rate
 
     def _calculate_churn_rate(self, customers) -> float:
@@ -610,25 +489,13 @@ class AdvancedCustomerManager:
         """Calculate MRR breakdown by customer segment"""
         return {
             "enterprise": float(
-                sum(
-                    c.monthly_recurring_revenue
-                    for c in customers
-                    if c.monthly_recurring_revenue >= 1000
-                )
+                sum(c.monthly_recurring_revenue for c in customers if c.monthly_recurring_revenue >= 1000)
             ),
             "mid_market": float(
-                sum(
-                    c.monthly_recurring_revenue
-                    for c in customers
-                    if 200 <= c.monthly_recurring_revenue < 1000
-                )
+                sum(c.monthly_recurring_revenue for c in customers if 200 <= c.monthly_recurring_revenue < 1000)
             ),
             "small_business": float(
-                sum(
-                    c.monthly_recurring_revenue
-                    for c in customers
-                    if c.monthly_recurring_revenue < 200
-                )
+                sum(c.monthly_recurring_revenue for c in customers if c.monthly_recurring_revenue < 200)
             ),
         }
 
@@ -649,13 +516,9 @@ class AdvancedCustomerManager:
         trends.reverse()
         return trends
 
-    def _get_top_customers_by_value(
-        self, customers, limit: int = 10
-    ) -> list[dict[str, Any]]:
+    def _get_top_customers_by_value(self, customers, limit: int = 10) -> list[dict[str, Any]]:
         """Get top customers by monthly value"""
-        sorted_customers = sorted(
-            customers, key=lambda x: x.monthly_recurring_revenue, reverse=True
-        )
+        sorted_customers = sorted(customers, key=lambda x: x.monthly_recurring_revenue, reverse=True)
 
         return [
             {
@@ -676,10 +539,7 @@ class AdvancedCustomerManager:
             or customer.monthly_recurring_revenue < 50
             or (
                 customer.last_service_date
-                and (
-                    datetime.now(timezone.utc).date() - customer.last_service_date
-                ).days
-                > 60
+                and (datetime.now(timezone.utc).date() - customer.last_service_date).days > 60
             )
         )
 
@@ -688,8 +548,7 @@ class AdvancedCustomerManager:
         return (
             customer.relationship_status == "active"
             and customer.monthly_recurring_revenue >= 200
-            and (datetime.now(timezone.utc) - customer.created_at).days
-            >= 90  # Customer for at least 90 days
+            and (datetime.now(timezone.utc) - customer.created_at).days >= 90  # Customer for at least 90 days
         )
 
     async def _generate_portfolio_recommendations(
@@ -702,28 +561,19 @@ class AdvancedCustomerManager:
         recommendations = []
 
         if portfolio_summary["churn_rate"] > 10:
-            recommendations.append(
-                "Focus on customer retention - churn rate is above healthy threshold"
-            )
+            recommendations.append("Focus on customer retention - churn rate is above healthy threshold")
 
         if (
             health_distribution.get("critical", 0) + health_distribution.get("poor", 0)
             > portfolio_summary["total_customers"] * 0.2
         ):
-            recommendations.append(
-                "Immediate action needed for customers with poor health scores"
-            )
+            recommendations.append("Immediate action needed for customers with poor health scores")
 
-        if (
-            lifecycle_distribution.get("prospect", 0)
-            > portfolio_summary["total_customers"] * 0.3
-        ):
+        if lifecycle_distribution.get("prospect", 0) > portfolio_summary["total_customers"] * 0.3:
             recommendations.append("Focus on converting prospects to qualified leads")
 
         if portfolio_summary["average_customer_value"] < 200:
-            recommendations.append(
-                "Explore upselling opportunities to increase average customer value"
-            )
+            recommendations.append("Explore upselling opportunities to increase average customer value")
 
         return recommendations
 
@@ -736,9 +586,7 @@ class AdvancedCustomerManager:
         ranges = [(0, 30), (30, 50), (50, 70), (70, 90), (90, 100)]
 
         selected_range = random.choices(ranges, weights=weights)[0]
-        return round(
-            random.uniform(selected_range[0], selected_range[1]), 1
-        )  # noqa: S311 - demo-only
+        return round(random.uniform(selected_range[0], selected_range[1]), 1)  # noqa: S311 - demo-only
 
     def _determine_risk_level(self, health_score: float) -> str:
         """Determine risk level from health score"""

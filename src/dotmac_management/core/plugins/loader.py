@@ -22,9 +22,7 @@ class PluginLoader:
     def __init__(self):
         self._loaded_modules = {}
 
-    async def discover_plugins(
-        self, plugin_directory: str
-    ) -> list[tuple[type[BasePlugin], dict[str, Any]]]:
+    async def discover_plugins(self, plugin_directory: str) -> list[tuple[type[BasePlugin], dict[str, Any]]]:
         """Discover plugins in a directory."""
         plugins = []
         plugin_path = Path(plugin_directory)
@@ -47,9 +45,7 @@ class PluginLoader:
         logger.info(f"Discovered {len(plugins)} plugins in {plugin_directory}")
         return plugins
 
-    async def load_plugin_by_name(
-        self, plugin_name: str, plugin_path: str
-    ) -> tuple[type[BasePlugin], dict[str, Any]]:
+    async def load_plugin_by_name(self, plugin_name: str, plugin_path: str) -> tuple[type[BasePlugin], dict[str, Any]]:
         """Load a specific plugin by name and path."""
         try:
             # Load plugin module
@@ -74,9 +70,7 @@ class PluginLoader:
             logger.exception("Failed to load plugin %s", plugin_name)
             raise PluginError(f"Failed to load plugin: {e}") from e
 
-    async def _load_plugin_from_directory(
-        self, plugin_dir: Path
-    ) -> Optional[tuple[type[BasePlugin], dict[str, Any]]]:
+    async def _load_plugin_from_directory(self, plugin_dir: Path) -> Optional[tuple[type[BasePlugin], dict[str, Any]]]:
         """Load plugin from directory structure."""
         try:
             # Look for main plugin file
@@ -116,9 +110,7 @@ class PluginLoader:
             logger.exception("Failed to load plugin from directory %s", plugin_dir)
             return None
 
-    async def _load_plugin_from_file(
-        self, plugin_file: Path
-    ) -> Optional[tuple[type[BasePlugin], dict[str, Any]]]:
+    async def _load_plugin_from_file(self, plugin_file: Path) -> Optional[tuple[type[BasePlugin], dict[str, Any]]]:
         """Load plugin from single Python file."""
         try:
             module_name = f"plugin_{plugin_file.stem}"
@@ -135,9 +127,7 @@ class PluginLoader:
                 return None
 
             # Look for configuration file in same directory
-            config = await self._load_plugin_config(
-                plugin_file.parent, plugin_file.stem
-            )
+            config = await self._load_plugin_config(plugin_file.parent, plugin_file.stem)
 
             return plugin_class, config
 
@@ -150,18 +140,12 @@ class PluginLoader:
         for name in dir(module):
             obj = getattr(module, name)
 
-            if (
-                isinstance(obj, type)
-                and issubclass(obj, BasePlugin)
-                and obj != BasePlugin
-            ):
+            if isinstance(obj, type) and issubclass(obj, BasePlugin) and obj != BasePlugin:
                 return obj
 
         return None
 
-    async def _load_plugin_config(
-        self, plugin_dir: Path, plugin_name: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def _load_plugin_config(self, plugin_dir: Path, plugin_name: Optional[str] = None) -> dict[str, Any]:
         """Load plugin configuration from various formats."""
         config = {}
 
@@ -176,9 +160,7 @@ class PluginLoader:
         ]
 
         if plugin_name:
-            config_files.extend(
-                [f"{plugin_name}.json", f"{plugin_name}.yaml", f"{plugin_name}.yml"]
-            )
+            config_files.extend([f"{plugin_name}.json", f"{plugin_name}.yaml", f"{plugin_name}.yml"])
 
         for config_file in config_files:
             config_path = plugin_dir / config_file

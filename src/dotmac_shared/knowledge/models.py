@@ -99,12 +99,8 @@ class KnowledgeArticle(Base):
     article_metadata = Column(JSON, default=dict)
 
     # Relationships
-    comments = relationship(
-        "ArticleComment", back_populates="article", cascade="all, delete-orphan"
-    )
-    analytics = relationship(
-        "ArticleAnalytics", back_populates="article", cascade="all, delete-orphan"
-    )
+    comments = relationship("ArticleComment", back_populates="article", cascade="all, delete-orphan")
+    analytics = relationship("ArticleAnalytics", back_populates="article", cascade="all, delete-orphan")
 
     # Indexes for performance
     __table_args__ = (
@@ -121,9 +117,7 @@ class ArticleComment(Base):
     __tablename__ = "article_comments"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
-    article_id = Column(
-        String, ForeignKey("knowledge_articles.id"), nullable=False, index=True
-    )
+    article_id = Column(String, ForeignKey("knowledge_articles.id"), nullable=False, index=True)
     tenant_id = Column(String, nullable=False, index=True)
 
     # Content
@@ -156,9 +150,7 @@ class ArticleAnalytics(Base):
     __tablename__ = "article_analytics"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
-    article_id = Column(
-        String, ForeignKey("knowledge_articles.id"), nullable=False, index=True
-    )
+    article_id = Column(String, ForeignKey("knowledge_articles.id"), nullable=False, index=True)
     tenant_id = Column(String, nullable=False, index=True)
 
     # Analytics data
@@ -176,9 +168,7 @@ class ArticleAnalytics(Base):
 
     # Search analytics
     search_queries = Column(JSON, default=list)  # Queries that led to this article
-    search_position = Column(
-        Integer, nullable=True
-    )  # Average position in search results
+    search_position = Column(Integer, nullable=True)  # Average position in search results
 
     # Traffic sources
     traffic_sources = Column(JSON, default=dict)  # direct, search, referral, etc.
@@ -230,11 +220,7 @@ class CustomerPortalSettings(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    __table_args__ = (
-        UniqueConstraint(
-            "customer_id", "tenant_id", name="uq_customer_portal_settings"
-        ),
-    )
+    __table_args__ = (UniqueConstraint("customer_id", "tenant_id", name="uq_customer_portal_settings"),)
 
 
 # Pydantic v2 Models for API
@@ -243,9 +229,7 @@ class CustomerPortalSettings(Base):
 class ArticleCreate(BaseModel):
     """Create article request."""
 
-    model_config = ConfigDict(
-        from_attributes=True, populate_by_name=True, str_strip_whitespace=True
-    )
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True, str_strip_whitespace=True)
 
     title: str = Field(..., min_length=1, max_length=500)
     slug: Optional[str] = Field(None, max_length=500, pattern=r"^[a-z0-9-]+$")
@@ -273,9 +257,7 @@ class ArticleCreate(BaseModel):
 class ArticleUpdate(BaseModel):
     """Update article request."""
 
-    model_config = ConfigDict(
-        from_attributes=True, populate_by_name=True, str_strip_whitespace=True
-    )
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True, str_strip_whitespace=True)
 
     title: Optional[str] = Field(None, min_length=1, max_length=500)
     summary: Optional[str] = Field(None, max_length=1000)
@@ -327,9 +309,7 @@ class ArticleSearchParams(BaseModel):
     category: Optional[str] = None
     article_type: Optional[ArticleType] = None
     tags: Optional[list[str]] = Field(None, max_items=10)
-    status: Optional[list[ArticleStatus]] = Field(
-        default_factory=lambda: [ArticleStatus.PUBLISHED]
-    )
+    status: Optional[list[ArticleStatus]] = Field(default_factory=lambda: [ArticleStatus.PUBLISHED])
     sort_by: str = Field(
         default="relevance",
         pattern=r"^(relevance|created_at|updated_at|view_count|helpful_votes)$",

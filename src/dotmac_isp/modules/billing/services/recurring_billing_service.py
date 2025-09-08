@@ -3,9 +3,10 @@
 from datetime import date, datetime
 from typing import Optional
 
-from dotmac_isp.modules.billing.models import BillingCycle, Invoice, Subscription
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac_isp.modules.billing.models import BillingCycle, Invoice, Subscription
 
 from .billing_service import BillingService
 
@@ -38,9 +39,7 @@ class RecurringBillingService:
 
         return invoices
 
-    async def _create_invoice_from_subscription(
-        self, subscription: Subscription
-    ) -> Optional[Invoice]:
+    async def _create_invoice_from_subscription(self, subscription: Subscription) -> Optional[Invoice]:
         """Create an invoice from a subscription."""
         line_items = [
             {
@@ -63,21 +62,15 @@ class RecurringBillingService:
         if subscription.billing_cycle == BillingCycle.MONTHLY:
             from dateutil.relativedelta import relativedelta
 
-            subscription.next_billing_date = (
-                subscription.next_billing_date + relativedelta(months=1)
-            )
+            subscription.next_billing_date = subscription.next_billing_date + relativedelta(months=1)
         elif subscription.billing_cycle == BillingCycle.QUARTERLY:
             from dateutil.relativedelta import relativedelta
 
-            subscription.next_billing_date = (
-                subscription.next_billing_date + relativedelta(months=3)
-            )
+            subscription.next_billing_date = subscription.next_billing_date + relativedelta(months=3)
         elif subscription.billing_cycle == BillingCycle.ANNUALLY:
             from dateutil.relativedelta import relativedelta
 
-            subscription.next_billing_date = (
-                subscription.next_billing_date + relativedelta(years=1)
-            )
+            subscription.next_billing_date = subscription.next_billing_date + relativedelta(years=1)
 
         await self.db_session.commit()
 

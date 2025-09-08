@@ -69,7 +69,7 @@ The framework includes a comprehensive shared services ecosystem with **388 Pyth
 ### ✅ Observability Service (`observability/`)
 
 **Status**: Production Ready
-**Features**: Distributed tracing, Prometheus metrics, SignOz integration, health reporting
+**Features**: Distributed tracing, OTLP metrics (SigNoz), health reporting
 
 ### ✅ Additional Services
 

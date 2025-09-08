@@ -45,14 +45,10 @@ class ValidationHandler(ConfigurationHandler):
             if not context.has_errors():
                 logger.info("Configuration validation passed successfully")
             else:
-                logger.error(
-                    f"Configuration validation failed with {len(context.errors)} errors"
-                )
+                logger.error(f"Configuration validation failed with {len(context.errors)} errors")
 
         except Exception as e:
-            raise ConfigurationHandlerError(
-                f"Configuration validation failed: {str(e)}"
-            ) from e
+            raise ConfigurationHandlerError(f"Configuration validation failed: {str(e)}") from e
 
         return context
 
@@ -62,14 +58,10 @@ class ValidationHandler(ConfigurationHandler):
 
         # Check for required top-level sections
         required_sections = ["database", "redis", "api"]
-        missing_sections = [
-            section for section in required_sections if section not in config
-        ]
+        missing_sections = [section for section in required_sections if section not in config]
 
         if missing_sections:
-            context.add_error(
-                f"Missing required configuration sections: {missing_sections}"
-            )
+            context.add_error(f"Missing required configuration sections: {missing_sections}")
 
         # Validate database configuration
         if "database" in config:
@@ -93,35 +85,25 @@ class ValidationHandler(ConfigurationHandler):
         missing_keys = [key for key in required_db_keys if key not in db_config]
 
         if missing_keys:
-            context.add_error(
-                f"Missing required database configuration keys: {missing_keys}"
-            )
+            context.add_error(f"Missing required database configuration keys: {missing_keys}")
 
         # Validate port number
         if "port" in db_config:
             try:
                 port = int(db_config["port"])
                 if not (1 <= port <= 65535):
-                    context.add_error(
-                        f"Database port {port} is not valid (must be 1-65535)"
-                    )
+                    context.add_error(f"Database port {port} is not valid (must be 1-65535)")
             except (ValueError, TypeError):
-                context.add_error(
-                    f"Database port '{db_config['port']}' is not a valid number"
-                )
+                context.add_error(f"Database port '{db_config['port']}' is not a valid number")
 
         # Validate connection pool settings
         if "pool_size" in db_config:
             try:
                 pool_size = int(db_config["pool_size"])
                 if pool_size < 1 or pool_size > 100:
-                    context.add_warning(
-                        f"Database pool_size {pool_size} may be suboptimal (recommended: 5-20)"
-                    )
+                    context.add_warning(f"Database pool_size {pool_size} may be suboptimal (recommended: 5-20)")
             except (ValueError, TypeError):
-                context.add_error(
-                    f"Database pool_size '{db_config['pool_size']}' is not a valid number"
-                )
+                context.add_error(f"Database pool_size '{db_config['pool_size']}' is not a valid number")
 
     def _validate_redis_config(self, redis_config: Any, context: ReloadContext) -> None:
         """Validate Redis configuration."""
@@ -133,35 +115,25 @@ class ValidationHandler(ConfigurationHandler):
         missing_keys = [key for key in required_redis_keys if key not in redis_config]
 
         if missing_keys:
-            context.add_error(
-                f"Missing required Redis configuration keys: {missing_keys}"
-            )
+            context.add_error(f"Missing required Redis configuration keys: {missing_keys}")
 
         # Validate port number
         if "port" in redis_config:
             try:
                 port = int(redis_config["port"])
                 if not (1 <= port <= 65535):
-                    context.add_error(
-                        f"Redis port {port} is not valid (must be 1-65535)"
-                    )
+                    context.add_error(f"Redis port {port} is not valid (must be 1-65535)")
             except (ValueError, TypeError):
-                context.add_error(
-                    f"Redis port '{redis_config['port']}' is not a valid number"
-                )
+                context.add_error(f"Redis port '{redis_config['port']}' is not a valid number")
 
         # Validate database number
         if "db" in redis_config:
             try:
                 db_num = int(redis_config["db"])
                 if not (0 <= db_num <= 15):
-                    context.add_error(
-                        f"Redis database number {db_num} is not valid (must be 0-15)"
-                    )
+                    context.add_error(f"Redis database number {db_num} is not valid (must be 0-15)")
             except (ValueError, TypeError):
-                context.add_error(
-                    f"Redis database '{redis_config['db']}' is not a valid number"
-                )
+                context.add_error(f"Redis database '{redis_config['db']}' is not a valid number")
 
     def _validate_api_config(self, api_config: Any, context: ReloadContext) -> None:
         """Validate API configuration."""
@@ -174,20 +146,17 @@ class ValidationHandler(ConfigurationHandler):
             try:
                 port = int(api_config["port"])
                 if not (1024 <= port <= 65535):
-                    context.add_warning(
-                        f"API port {port} should be >= 1024 for non-privileged operation"
-                    )
+                    context.add_warning(f"API port {port} should be >= 1024 for non-privileged operation")
             except (ValueError, TypeError):
-                context.add_error(
-                    f"API port '{api_config['port']}' is not a valid number"
-                )
+                context.add_error(f"API port '{api_config['port']}' is not a valid number")
 
         # Validate host binding
         if "host" in api_config:
             host = api_config["host"]
             if host == "0.0.0.0":
                 context.add_warning(
-                    "API host '0.0.0.0' binds to all interfaces (security risk)"
+                    "API host '0.0.0.0' binds to all interfaces (security risk). "
+                    "Consider using '127.0.0.1' for local access or specific interface IPs."
                 )
 
         # Validate rate limiting
@@ -198,17 +167,11 @@ class ValidationHandler(ConfigurationHandler):
                     try:
                         rpm = int(rate_limit["requests_per_minute"])
                         if rpm <= 0:
-                            context.add_error(
-                                "API rate limit requests_per_minute must be positive"
-                            )
+                            context.add_error("API rate limit requests_per_minute must be positive")
                         elif rpm > 10000:
-                            context.add_warning(
-                                f"API rate limit {rpm} RPM is very high"
-                            )
+                            context.add_warning(f"API rate limit {rpm} RPM is very high")
                     except (ValueError, TypeError):
-                        context.add_error(
-                            "API rate limit requests_per_minute must be a number"
-                        )
+                        context.add_error("API rate limit requests_per_minute must be a number")
 
     def _validate_security_constraints(self, context: ReloadContext) -> None:
         """Validate security-related configuration constraints."""
@@ -223,9 +186,7 @@ class ValidationHandler(ConfigurationHandler):
         # Check authentication settings
         self._validate_auth_config(config, context)
 
-    def _check_for_exposed_secrets(
-        self, config: dict[str, Any], context: ReloadContext
-    ) -> None:
+    def _check_for_exposed_secrets(self, config: dict[str, Any], context: ReloadContext) -> None:
         """Check for potentially exposed secrets in configuration."""
         secret_patterns = [
             (r'password.*["\'].*[a-zA-Z0-9]{8,}.*["\']', "password"),
@@ -243,9 +204,7 @@ class ValidationHandler(ConfigurationHandler):
                     f"Use environment variables or secure vaults instead."
                 )
 
-    def _validate_tls_config(
-        self, config: dict[str, Any], context: ReloadContext
-    ) -> None:
+    def _validate_tls_config(self, config: dict[str, Any], context: ReloadContext) -> None:
         """Validate TLS/SSL configuration."""
         # Check if TLS is disabled in production-like environments
         env = config.get("environment", "").lower()
@@ -255,13 +214,9 @@ class ValidationHandler(ConfigurationHandler):
 
             tls_version = config.get("api", {}).get("tls_version", "")
             if tls_version and tls_version < "1.2":
-                context.add_error(
-                    f"TLS version {tls_version} is deprecated, use TLS 1.2 or higher"
-                )
+                context.add_error(f"TLS version {tls_version} is deprecated, use TLS 1.2 or higher")
 
-    def _validate_auth_config(
-        self, config: dict[str, Any], context: ReloadContext
-    ) -> None:
+    def _validate_auth_config(self, config: dict[str, Any], context: ReloadContext) -> None:
         """Validate authentication configuration."""
         auth_config = config.get("authentication", {})
 
@@ -272,17 +227,13 @@ class ValidationHandler(ConfigurationHandler):
                 if "secret_key" in jwt_config:
                     secret_key = jwt_config["secret_key"]
                     if isinstance(secret_key, str) and len(secret_key) < 32:
-                        context.add_error(
-                            "JWT secret key must be at least 32 characters"
-                        )
+                        context.add_error("JWT secret key must be at least 32 characters")
 
                 if "expiration" in jwt_config:
                     try:
                         exp = int(jwt_config["expiration"])
                         if exp > 86400 * 7:  # 7 days
-                            context.add_warning(
-                                f"JWT expiration {exp}s is longer than recommended (7 days max)"
-                            )
+                            context.add_warning(f"JWT expiration {exp}s is longer than recommended (7 days max)")
                     except (ValueError, TypeError):
                         context.add_error("JWT expiration must be a number (seconds)")
 
@@ -293,9 +244,7 @@ class ValidationHandler(ConfigurationHandler):
         # Validate tenant isolation settings
         if "multi_tenant" in config and config["multi_tenant"]:
             if not config.get("tenant_isolation", {}).get("enabled", False):
-                context.add_error(
-                    "Multi-tenant mode requires tenant isolation to be enabled"
-                )
+                context.add_error("Multi-tenant mode requires tenant isolation to be enabled")
 
         # Validate service dependencies
         services = config.get("services", {})
@@ -320,17 +269,11 @@ class ValidationHandler(ConfigurationHandler):
                     try:
                         memory = int(resources["memory_mb"])
                         if memory < 128:
-                            context.add_warning(
-                                f"Service '{service_name}' memory limit {memory}MB is very low"
-                            )
+                            context.add_warning(f"Service '{service_name}' memory limit {memory}MB is very low")
                         elif memory > 8192:
-                            context.add_warning(
-                                f"Service '{service_name}' memory limit {memory}MB is very high"
-                            )
+                            context.add_warning(f"Service '{service_name}' memory limit {memory}MB is very high")
                     except (ValueError, TypeError):
-                        context.add_error(
-                            f"Service '{service_name}' memory_mb must be a number"
-                        )
+                        context.add_error(f"Service '{service_name}' memory_mb must be a number")
 
     def _validate_cross_references(self, context: ReloadContext) -> None:
         """Validate cross-references between configuration sections."""

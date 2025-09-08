@@ -13,6 +13,21 @@ from .snmp_collector import SNMPCollector
 
 logger = get_logger(__name__)
 
+# Optional integrations - fallback to logging if not available
+try:
+    from dotmac_shared.monitoring.integrations import IntegratedMonitoringService
+
+    _HAS_NOTIFICATION_INTEGRATION = True
+except ImportError:
+    _HAS_NOTIFICATION_INTEGRATION = False
+
+try:
+    from dotmac_benchmarking import BenchmarkRunner
+
+    _HAS_METRICS_INTEGRATION = True
+except ImportError:
+    _HAS_METRICS_INTEGRATION = False
+
 
 @dataclass
 class MonitoringTarget:
@@ -49,12 +64,23 @@ class NetworkMonitor:
     for ISP network infrastructure.
     """
 
-    def __init__(self, config: Optional[dict[str, Any]] = None):
+    def __init__(
+        self,
+        config: Optional[dict[str, Any]] = None,
+        notification_service: Optional[Any] = None,
+        metrics_manager: Optional[Any] = None,
+    ):
         self.config = config or {}
         self.snmp_collector = SNMPCollector()
         self.targets: dict[str, MonitoringTarget] = {}
         self.running = False
         self._monitoring_tasks: list[asyncio.Task] = []
+
+        # Initialize optional integrations
+        self.notification_service = self._init_notification_service(
+            notification_service
+        )
+        self.metrics_manager = self._init_metrics_manager(metrics_manager)
 
         # Default alert thresholds
         self.default_thresholds = {
@@ -63,6 +89,37 @@ class NetworkMonitor:
             "interface_utilization": 90.0,
             "interface_errors_rate": 1.0,  # errors per second
         }
+
+    def _init_notification_service(
+        self, notification_service: Optional[Any]
+    ) -> Optional[Any]:
+        """Initialize notification service with fallback"""
+        if notification_service:
+            return notification_service
+
+        if _HAS_NOTIFICATION_INTEGRATION:
+            try:
+                return IntegratedMonitoringService(
+                    service_name="dotmac-networking",
+                    tenant_id=self.config.get("tenant_id", "default"),
+                )
+            except Exception as e:
+                logger.warning(f"Failed to initialize notification service: {e}")
+
+        return None
+
+    def _init_metrics_manager(self, metrics_manager: Optional[Any]) -> Optional[Any]:
+        """Initialize metrics manager with fallback"""
+        if metrics_manager:
+            return metrics_manager
+
+        if _HAS_METRICS_INTEGRATION:
+            try:
+                return BenchmarkRunner()
+            except Exception as e:
+                logger.warning(f"Failed to initialize metrics manager: {e}")
+
+        return None
 
     def add_target(self, target: MonitoringTarget) -> None:
         """Add a device to monitoring"""
@@ -243,14 +300,96 @@ class NetworkMonitor:
         """Send alerts for threshold violations"""
         for alert in alerts:
             logger.warning(f"ALERT [{target.name}]: {alert['message']}")
-            # TODO: Integrate with notification system
-            # await notification_service.send_alert(target, alert)
+
+            # Send through integrated notification service if available
+            if self.notification_service:
+                try:
+                    # Check if it's an async method
+                    if hasattr(self.notification_service, "_send_error_alert"):
+                        self.notification_service._send_error_alert(
+                            error_type=alert["type"], service=target.name, count=1
+                        )
+                    elif hasattr(self.notification_service, "record_error"):
+                        await self.notification_service.record_error(
+                            error_type=alert["type"],
+                            service_name=target.name,
+                            details=alert,
+                        )
+                    else:
+                        logger.debug(
+                            "Notification service available but no compatible method found"
+                        )
+                except Exception as e:
+                    logger.error(f"Failed to send alert via notification service: {e}")
+                    # Fallback to logging already done above
 
     async def _store_metrics(self, metrics: DeviceMetrics) -> None:
-        """Store metrics to backend (implement your storage here)"""
-        # TODO: Implement metrics storage
-        # This could integrate with InfluxDB, Prometheus, or database
-        pass
+        """Store metrics to backend with integrated storage or fallback"""
+        # Convert DeviceMetrics to dict for storage
+        metrics_data = {
+            "host": metrics.host,
+            "timestamp": metrics.timestamp.isoformat(),
+            "cpu_utilization": metrics.cpu_utilization,
+            "memory_utilization": metrics.memory_utilization,
+            "uptime": metrics.uptime,
+            "system_name": metrics.system_name,
+            "system_description": metrics.system_description,
+            "interface_count": len(metrics.interfaces) if metrics.interfaces else 0,
+        }
+
+        # Add interface metrics summary
+        if metrics.interfaces:
+            total_rx_bytes = sum(
+                iface.get("rx_bytes", 0) for iface in metrics.interfaces
+            )
+            total_tx_bytes = sum(
+                iface.get("tx_bytes", 0) for iface in metrics.interfaces
+            )
+            total_errors = sum(iface.get("errors", 0) for iface in metrics.interfaces)
+
+            metrics_data.update(
+                {
+                    "total_rx_bytes": total_rx_bytes,
+                    "total_tx_bytes": total_tx_bytes,
+                    "total_interface_errors": total_errors,
+                }
+            )
+
+        # Store through integrated metrics manager if available
+        if self.metrics_manager:
+            try:
+                # Check for different storage methods
+                if hasattr(self.metrics_manager, "record_metric"):
+                    await self.metrics_manager.record_metric(
+                        metric_name="network_device_metrics",
+                        value=metrics_data,
+                        labels={"host": metrics.host, "device_type": "network"},
+                    )
+                elif hasattr(self.metrics_manager, "store_results"):
+                    await self.metrics_manager.store_results(
+                        results={"network_metrics": metrics_data}
+                    )
+                elif hasattr(self.metrics_manager, "_store_benchmark_results"):
+                    # Direct access to storage method
+                    benchmark_metrics = type(
+                        "BenchmarkMetrics", (), {"network_data": metrics_data}
+                    )()
+                    await self.metrics_manager._store_benchmark_results(
+                        benchmark_metrics
+                    )
+                else:
+                    logger.debug(
+                        "Metrics manager available but no compatible storage method found"
+                    )
+            except Exception as e:
+                logger.error(f"Failed to store metrics via metrics manager: {e}")
+                # Continue to fallback storage
+
+        # Fallback: Log metrics for basic observability
+        logger.info(
+            f"Device metrics [{metrics.host}]: CPU={metrics.cpu_utilization}%, "
+            f"Memory={metrics.memory_utilization}%, Uptime={metrics.uptime}s"
+        )
 
     async def get_device_status(self, host: str) -> Optional[dict[str, Any]]:
         """Get current status of a monitored device"""

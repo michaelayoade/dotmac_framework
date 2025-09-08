@@ -68,7 +68,9 @@ try:
     )
 except Exception:  # pragma: no cover
     ApiKeyRepository = AuthAuditRepository = AuthRepository = BaseRepository = MFARepository = None  # type: ignore
-    PermissionRepository = RoleRepository = SessionRepository = UserProfileRepository = UserRepository = UserSearchRepository = None  # type: ignore
+    PermissionRepository = (
+        RoleRepository
+    ) = SessionRepository = UserProfileRepository = UserRepository = UserSearchRepository = None  # type: ignore
 
 try:
     from .schemas import (
@@ -126,10 +128,14 @@ try:
         UserUpdateSchema,
     )
 except Exception:  # pragma: no cover
-    ApiKeyCreateSchema = ApiKeySchema = AuthAuditSchema = BulkPermissionAssignmentSchema = BulkRoleAssignmentSchema = None  # type: ignore
+    ApiKeyCreateSchema = (
+        ApiKeySchema
+    ) = AuthAuditSchema = BulkPermissionAssignmentSchema = BulkRoleAssignmentSchema = None  # type: ignore
     ChangePasswordSchema = LoginRequestSchema = LoginResponseSchema = LogoutSchema = MFASetupResponseSchema = None  # type: ignore
     MFASetupSchema = MFAVerifySchema = PasswordResetConfirmSchema = PasswordResetRequestSchema = None  # type: ignore
-    PermissionCheckRequestSchema = PermissionCheckResponseSchema = PermissionCreateSchema = PermissionGroupCreateSchema = None  # type: ignore
+    PermissionCheckRequestSchema = (
+        PermissionCheckResponseSchema
+    ) = PermissionCreateSchema = PermissionGroupCreateSchema = None  # type: ignore
     PermissionGroupResponseSchema = PermissionResponseSchema = PermissionSearchSchema = PermissionUpdateSchema = None  # type: ignore
     RefreshTokenSchema = RoleCreateSchema = RoleDetailResponseSchema = RolePermissionCreateSchema = None  # type: ignore
     RolePermissionResponseSchema = RolePermissionUpdateSchema = RoleResponseSchema = RoleSearchSchema = None  # type: ignore

@@ -10,6 +10,9 @@ Demonstrates:
 import logging
 from datetime import datetime, timedelta, timezone
 
+from fastapi import FastAPI, HTTPException, Request
+
+from dotmac.security.tenant_isolation import TenantSecurityEnforcer
 from dotmac_shared.application.config import (
     DeploymentContext,
     DeploymentMode,
@@ -24,9 +27,6 @@ from dotmac_shared.middleware.api_versioning import (
 from dotmac_shared.middleware.background_operations import (
     BackgroundOperationsMiddleware,
 )
-from fastapi import FastAPI, HTTPException, Request
-
-from dotmac.security.tenant_isolation import TenantSecurityEnforcer
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +44,7 @@ def create_enhanced_app() -> FastAPI:
     # Configure platform settings
     platform_config = PlatformConfig(
         platform_name="example_platform",
-        deployment_context=DeploymentContext(
-            mode=DeploymentMode.TENANT_CONTAINER, tenant_id="example-tenant-123"
-        ),
+        deployment_context=DeploymentContext(mode=DeploymentMode.TENANT_CONTAINER, tenant_id="example-tenant-123"),
     )
 
     # Create enhanced middleware components
@@ -82,15 +80,9 @@ def create_enhanced_app() -> FastAPI:
     # Register operation handlers for saga workflows
     ops_manager = background_ops.operations_manager
     ops_manager.register_operation_handler("create_customer", create_customer_operation)
-    ops_manager.register_operation_handler(
-        "provision_service", provision_service_operation
-    )
-    ops_manager.register_compensation_handler(
-        "create_customer", compensate_create_customer
-    )
-    ops_manager.register_compensation_handler(
-        "provision_service", compensate_provision_service
-    )
+    ops_manager.register_operation_handler("provision_service", provision_service_operation)
+    ops_manager.register_compensation_handler("create_customer", compensate_create_customer)
+    ops_manager.register_compensation_handler("provision_service", compensate_provision_service)
 
     return app
 
@@ -127,9 +119,7 @@ def create_routes(app: FastAPI):
         return {
             "api_version": api_version,
             "status": version_info.status if version_info else "unknown",
-            "sunset_date": version_info.sunset_date.isoformat()
-            if version_info and version_info.sunset_date
-            else None,
+            "sunset_date": version_info.sunset_date.isoformat() if version_info and version_info.sunset_date else None,
         }
 
     @app.post("/api/v1/customers")
@@ -165,9 +155,7 @@ def create_routes(app: FastAPI):
         """Start customer onboarding saga workflow."""
         ops_manager = getattr(request.state, "operations_manager", None)
         if not ops_manager:
-            raise HTTPException(
-                status_code=500, detail="Operations manager not available"
-            )
+            raise HTTPException(status_code=500, detail="Operations manager not available")
 
         tenant_id = getattr(request.state, "tenant_id", "unknown")
 
@@ -183,9 +171,7 @@ def create_routes(app: FastAPI):
             {
                 "name": "Provision Service",
                 "operation": "provision_service",
-                "parameters": {
-                    "service_type": workflow_data.get("service_type", "basic")
-                },
+                "parameters": {"service_type": workflow_data.get("service_type", "basic")},
                 "compensation_operation": "provision_service",
                 "compensation_parameters": {"service_id": "to_be_filled"},
             },
@@ -210,9 +196,7 @@ def create_routes(app: FastAPI):
         """Get saga workflow status."""
         ops_manager = getattr(request.state, "operations_manager", None)
         if not ops_manager:
-            raise HTTPException(
-                status_code=500, detail="Operations manager not available"
-            )
+            raise HTTPException(status_code=500, detail="Operations manager not available")
 
         saga = ops_manager.saga_workflows.get(saga_id)
         if not saga:
@@ -223,10 +207,7 @@ def create_routes(app: FastAPI):
             "status": saga.status,
             "current_step": saga.current_step,
             "total_steps": len(saga.steps),
-            "steps": [
-                {"name": step.name, "status": step.status, "error": step.error}
-                for step in saga.steps
-            ],
+            "steps": [{"name": step.name, "status": step.status, "error": step.error} for step in saga.steps],
         }
 
 
@@ -288,14 +269,10 @@ if __name__ == "__main__":
     logger.info("curl http://localhost:8000/api/v1/health")
     logger.info("")
     logger.info("# Get tenant info (requires X-Tenant-ID header)")
-    logger.info(
-        "curl -H 'X-Tenant-ID: example-tenant-123' http://localhost:8000/api/v1/tenant-info"
-    )
+    logger.info("curl -H 'X-Tenant-ID: example-tenant-123' http://localhost:8000/api/v1/tenant-info")
     logger.info("")
     logger.info("# Create customer with idempotency")
-    logger.info(
-        "curl -X POST -H 'X-Tenant-ID: example-tenant-123' -H 'Idempotency-Key: unique-key-1' \\"
-    )
+    logger.info("curl -X POST -H 'X-Tenant-ID: example-tenant-123' -H 'Idempotency-Key: unique-key-1' \\")
     logger.info("     -H 'Content-Type: application/json' \\")
     logger.info('     -d \'{"name": "John Doe", "email": "john@example.com"}\' \\')
     logger.info("     http://localhost:8000/api/v1/customers")
@@ -303,7 +280,5 @@ if __name__ == "__main__":
     logger.info("# Start saga workflow")
     logger.info("curl -X POST -H 'X-Tenant-ID: example-tenant-123' \\")
     logger.info("     -H 'Content-Type: application/json' \\")
-    logger.info(
-        '     -d \'{"customer": {"name": "Jane Doe"}, "service_type": "premium"}\' \\'
-    )
+    logger.info('     -d \'{"customer": {"name": "Jane Doe"}, "service_type": "premium"}\' \\')
     logger.info("     http://localhost:8000/api/v1/workflows/customer-onboarding")

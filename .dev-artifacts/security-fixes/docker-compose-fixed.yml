@@ -1,0 +1,70 @@
+version: '3.8'
+
+# Fixed Observability Stack - Simple ClickHouse connectivity
+services:
+  # SigNoz Query Service - Fixed Configuration
+  signoz-query:
+    image: signoz/query-service:0.40.0
+    container_name: gate-e0c-signoz-query-fixed
+    ports:
+      - "8081:8080"
+    environment:
+      # Fixed ClickHouse configuration
+      - STORAGE=clickhouse
+      - CLICKHOUSE_DSN=tcp://clickhouse:9000?database=signoz_traces
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - ClickHouseAddr=clickhouse:9000
+      - ClickHouseUsername=default
+      - ClickHousePassword=
+      - ClickHouseDatabase=signoz_traces
+      - ClickHouseDialTimeout=10s
+    networks:
+      - gate-e0c-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # SigNoz Frontend
+  signoz-frontend:
+    image: signoz/frontend:0.40.0
+    container_name: gate-e0c-signoz-frontend-fixed
+    depends_on:
+      - signoz-query
+    ports:
+      - "3302:3301"
+    environment:
+      - FRONTEND_API_ENDPOINT=http://signoz-query:8080
+    networks:
+      - gate-e0c-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3301"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # OTEL Collector - Fixed Configuration
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.88.11
+    container_name: gate-e0c-otel-collector-fixed
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config-fixed.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4319:4317"   # OTLP gRPC receiver
+      - "4320:4318"   # OTLP HTTP receiver
+      - "14251:14250" # Jaeger gRPC receiver
+    networks:
+      - gate-e0c-network
+    depends_on:
+      - signoz-query
+    restart: unless-stopped
+
+networks:
+  gate-e0c-network:
+    external: true
+    name: gate-e0c-network

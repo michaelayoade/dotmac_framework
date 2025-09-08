@@ -876,7 +876,7 @@ class TestContainerMonitoringAndAlerts:
 
         # Monitor health during scaling
         async with performance_monitor("health_monitoring_during_scaling"):
-            for i, health_response in enumerate(health_responses):
+            for _i, health_response in enumerate(health_responses):
                 # Simulate health check
                 type(
                     "MockResponse",

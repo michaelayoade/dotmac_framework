@@ -50,4 +50,4 @@ class AuthToken(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-__all__ = ["User", "SessionData", "AuthToken"]
+__all__ = ["AuthToken", "SessionData", "User"]

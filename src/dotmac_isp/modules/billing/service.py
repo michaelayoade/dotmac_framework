@@ -9,9 +9,8 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from dotmac_shared.services.base import BaseService
-
 from dotmac.application import standard_exception_handler
+from dotmac_shared.services.base import BaseService
 
 from .repository import (
     BillingCustomerRepository,
@@ -42,23 +41,15 @@ class BillingService(BaseService):
         """Get billing dashboard summary data using repository pattern."""
         try:
             # Get current period stats using repositories
-            current_month_start = datetime.now().replace(
-                day=1, hour=0, minute=0, second=0, microsecond=0
-            )
+            current_month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             next_month_start = (current_month_start + timedelta(days=32)).replace(day=1)
 
             # Get revenue and invoice data for current month
-            revenue, invoice_count = self.invoice_repo.get_revenue_by_period(
-                current_month_start, next_month_start
-            )
+            revenue, invoice_count = self.invoice_repo.get_revenue_by_period(current_month_start, next_month_start)
 
             # Get recent invoices and payments
-            recent_invoices = self.invoice_repo.list(
-                sort_by="created_at", sort_order="desc", limit=5
-            )
-            recent_payments = self.payment_repo.list(
-                sort_by="payment_date", sort_order="desc", limit=5
-            )
+            recent_invoices = self.invoice_repo.list(sort_by="created_at", sort_order="desc", limit=5)
+            recent_payments = self.payment_repo.list(sort_by="payment_date", sort_order="desc", limit=5)
 
             # Get outstanding balance from unpaid invoices
             unpaid_invoices = self.invoice_repo.get_unpaid_invoices()
@@ -95,9 +86,7 @@ class BillingService(BaseService):
                 ],
                 "revenue_trend": revenue_trend,
                 "total_customers": self.customer_repo.count(),
-                "active_subscriptions": self.subscription_repo.count(
-                    {"status": "active"}
-                ),
+                "active_subscriptions": self.subscription_repo.count({"status": "active"}),
             }
 
             logger.info(f"Generated billing dashboard for user {user_id}")
@@ -108,9 +97,7 @@ class BillingService(BaseService):
             raise
 
     @standard_exception_handler
-    async def generate_revenue_report(
-        self, filters: dict[str, Any], pagination: Any, user_id: str
-    ) -> dict[str, Any]:
+    async def generate_revenue_report(self, filters: dict[str, Any], pagination: Any, user_id: str) -> dict[str, Any]:
         """Generate revenue report with filters using repository pattern."""
         try:
             period = filters.get("period", "monthly")
@@ -128,17 +115,13 @@ class BillingService(BaseService):
                 end_date = filters.get("end_date", end_date)
 
             # Get revenue data using repository
-            total_revenue, total_invoices = self.invoice_repo.get_revenue_by_period(
-                start_date, end_date
-            )
+            total_revenue, total_invoices = self.invoice_repo.get_revenue_by_period(start_date, end_date)
 
             # Get revenue trend
             revenue_trend = self.invoice_repo.get_monthly_revenue_trend(12)
 
             # Get payment method breakdown
-            payments = self.payment_repo.list(
-                filters={"payment_date": {"gte": start_date, "lte": end_date}}
-            )
+            payments = self.payment_repo.list(filters={"payment_date": {"gte": start_date, "lte": end_date}})
 
             payment_methods = {}
             for payment in payments:
@@ -164,9 +147,7 @@ class BillingService(BaseService):
                 "customer_analysis": {
                     "total_customers": self.customer_repo.count(),
                     "overdue_customers": len(overdue_customers),
-                    "active_subscriptions": self.subscription_repo.count(
-                        {"status": "active"}
-                    ),
+                    "active_subscriptions": self.subscription_repo.count({"status": "active"}),
                 },
                 "payment_methods": [
                     {
@@ -264,18 +245,14 @@ class InvoiceService(BaseService):
             customer = self.customer_repo.get_by_id_or_raise(UUID(data["customer_id"]))
 
             # Generate invoice number
-            invoice_number = (
-                f"INV-{datetime.now().strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
-            )
+            invoice_number = f"INV-{datetime.now().strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
 
             # Prepare invoice data
             invoice_data = {
                 "customer_id": UUID(data["customer_id"]),
                 "invoice_number": invoice_number,
                 "invoice_date": data.get("invoice_date", datetime.now().date()),
-                "due_date": data.get(
-                    "due_date", (datetime.now() + timedelta(days=30)).date()
-                ),
+                "due_date": data.get("due_date", (datetime.now() + timedelta(days=30)).date()),
                 "status": "draft",
                 "currency": data.get("currency", "USD"),
                 "subtotal": Decimal(str(data.get("subtotal", 0))),
@@ -291,9 +268,7 @@ class InvoiceService(BaseService):
             # Create invoice using repository
             invoice = self.invoice_repo.create(invoice_data)
 
-            logger.info(
-                f"Created invoice {invoice.id} for customer {customer.customer_code}"
-            )
+            logger.info(f"Created invoice {invoice.id} for customer {customer.customer_code}")
 
             # Return serialized invoice data
             return {
@@ -400,16 +375,12 @@ class PaymentService(BaseService):
                 self.invoice_repo.get_by_id_or_raise(UUID(data["invoice_id"]))
 
             # Generate payment number
-            payment_number = (
-                f"PAY-{datetime.now().strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
-            )
+            payment_number = f"PAY-{datetime.now().strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
 
             # Prepare payment data
             payment_data = {
                 "customer_id": UUID(data["customer_id"]),
-                "invoice_id": UUID(data["invoice_id"])
-                if data.get("invoice_id")
-                else None,
+                "invoice_id": UUID(data["invoice_id"]) if data.get("invoice_id") else None,
                 "payment_number": payment_number,
                 "amount": Decimal(str(data["amount"])),
                 "currency": data.get("currency", "USD"),
@@ -424,9 +395,7 @@ class PaymentService(BaseService):
             # Create payment using repository
             payment = self.payment_repo.create(payment_data)
 
-            logger.info(
-                f"Created payment {payment.id} for customer {customer.customer_code}"
-            )
+            logger.info(f"Created payment {payment.id} for customer {customer.customer_code}")
 
             # Return serialized payment data
             return {
@@ -499,9 +468,7 @@ class PaymentService(BaseService):
                     "id": str(payment.id),
                     "payment_number": payment.payment_number,
                     "customer_id": str(payment.customer_id),
-                    "invoice_id": str(payment.invoice_id)
-                    if payment.invoice_id
-                    else None,
+                    "invoice_id": str(payment.invoice_id) if payment.invoice_id else None,
                     "amount": float(payment.amount),
                     "currency": payment.currency,
                     "payment_method": payment.payment_method,

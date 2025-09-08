@@ -1,0 +1,613 @@
+[
+  {
+    "cell": null,
+    "code": "W291",
+    "end_location": {
+      "column": 43,
+      "row": 195
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 43,
+            "row": 195
+          },
+          "location": {
+            "column": 42,
+            "row": 195
+          }
+        }
+      ],
+      "message": "Remove trailing whitespace"
+    },
+    "location": {
+      "column": 42,
+      "row": 195
+    },
+    "message": "Trailing whitespace",
+    "noqa_row": 195,
+    "url": "https://docs.astral.sh/ruff/rules/trailing-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W291",
+    "end_location": {
+      "column": 62,
+      "row": 217
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 62,
+            "row": 217
+          },
+          "location": {
+            "column": 60,
+            "row": 217
+          }
+        }
+      ],
+      "message": "Remove trailing whitespace"
+    },
+    "location": {
+      "column": 60,
+      "row": 217
+    },
+    "message": "Trailing whitespace",
+    "noqa_row": 217,
+    "url": "https://docs.astral.sh/ruff/rules/trailing-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W293",
+    "end_location": {
+      "column": 5,
+      "row": 222
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 5,
+            "row": 222
+          },
+          "location": {
+            "column": 1,
+            "row": 222
+          }
+        }
+      ],
+      "message": "Remove whitespace from blank line"
+    },
+    "location": {
+      "column": 1,
+      "row": 222
+    },
+    "message": "Blank line contains whitespace",
+    "noqa_row": 222,
+    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W293",
+    "end_location": {
+      "column": 5,
+      "row": 226
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 5,
+            "row": 226
+          },
+          "location": {
+            "column": 1,
+            "row": 226
+          }
+        }
+      ],
+      "message": "Remove whitespace from blank line"
+    },
+    "location": {
+      "column": 1,
+      "row": 226
+    },
+    "message": "Blank line contains whitespace",
+    "noqa_row": 226,
+    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W291",
+    "end_location": {
+      "column": 22,
+      "row": 228
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 22,
+            "row": 228
+          },
+          "location": {
+            "column": 21,
+            "row": 228
+          }
+        }
+      ],
+      "message": "Remove trailing whitespace"
+    },
+    "location": {
+      "column": 21,
+      "row": 228
+    },
+    "message": "Trailing whitespace",
+    "noqa_row": 228,
+    "url": "https://docs.astral.sh/ruff/rules/trailing-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W293",
+    "end_location": {
+      "column": 5,
+      "row": 233
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 5,
+            "row": 233
+          },
+          "location": {
+            "column": 1,
+            "row": 233
+          }
+        }
+      ],
+      "message": "Remove whitespace from blank line"
+    },
+    "location": {
+      "column": 1,
+      "row": 233
+    },
+    "message": "Blank line contains whitespace",
+    "noqa_row": 233,
+    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W293",
+    "end_location": {
+      "column": 5,
+      "row": 238
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 5,
+            "row": 238
+          },
+          "location": {
+            "column": 1,
+            "row": 238
+          }
+        }
+      ],
+      "message": "Remove whitespace from blank line"
+    },
+    "location": {
+      "column": 1,
+      "row": 238
+    },
+    "message": "Blank line contains whitespace",
+    "noqa_row": 238,
+    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W291",
+    "end_location": {
+      "column": 24,
+      "row": 239
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 24,
+            "row": 239
+          },
+          "location": {
+            "column": 22,
+            "row": 239
+          }
+        }
+      ],
+      "message": "Remove trailing whitespace"
+    },
+    "location": {
+      "column": 22,
+      "row": 239
+    },
+    "message": "Trailing whitespace",
+    "noqa_row": 239,
+    "url": "https://docs.astral.sh/ruff/rules/trailing-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W291",
+    "end_location": {
+      "column": 25,
+      "row": 241
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 25,
+            "row": 241
+          },
+          "location": {
+            "column": 24,
+            "row": 241
+          }
+        }
+      ],
+      "message": "Remove trailing whitespace"
+    },
+    "location": {
+      "column": 24,
+      "row": 241
+    },
+    "message": "Trailing whitespace",
+    "noqa_row": 241,
+    "url": "https://docs.astral.sh/ruff/rules/trailing-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W293",
+    "end_location": {
+      "column": 5,
+      "row": 244
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 5,
+            "row": 244
+          },
+          "location": {
+            "column": 1,
+            "row": 244
+          }
+        }
+      ],
+      "message": "Remove whitespace from blank line"
+    },
+    "location": {
+      "column": 1,
+      "row": 244
+    },
+    "message": "Blank line contains whitespace",
+    "noqa_row": 244,
+    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W293",
+    "end_location": {
+      "column": 5,
+      "row": 249
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 5,
+            "row": 249
+          },
+          "location": {
+            "column": 1,
+            "row": 249
+          }
+        }
+      ],
+      "message": "Remove whitespace from blank line"
+    },
+    "location": {
+      "column": 1,
+      "row": 249
+    },
+    "message": "Blank line contains whitespace",
+    "noqa_row": 249,
+    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W291",
+    "end_location": {
+      "column": 26,
+      "row": 253
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 26,
+            "row": 253
+          },
+          "location": {
+            "column": 25,
+            "row": 253
+          }
+        }
+      ],
+      "message": "Remove trailing whitespace"
+    },
+    "location": {
+      "column": 25,
+      "row": 253
+    },
+    "message": "Trailing whitespace",
+    "noqa_row": 253,
+    "url": "https://docs.astral.sh/ruff/rules/trailing-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W293",
+    "end_location": {
+      "column": 5,
+      "row": 255
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 5,
+            "row": 255
+          },
+          "location": {
+            "column": 1,
+            "row": 255
+          }
+        }
+      ],
+      "message": "Remove whitespace from blank line"
+    },
+    "location": {
+      "column": 1,
+      "row": 255
+    },
+    "message": "Blank line contains whitespace",
+    "noqa_row": 255,
+    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W291",
+    "end_location": {
+      "column": 28,
+      "row": 259
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 28,
+            "row": 259
+          },
+          "location": {
+            "column": 27,
+            "row": 259
+          }
+        }
+      ],
+      "message": "Remove trailing whitespace"
+    },
+    "location": {
+      "column": 27,
+      "row": 259
+    },
+    "message": "Trailing whitespace",
+    "noqa_row": 259,
+    "url": "https://docs.astral.sh/ruff/rules/trailing-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W293",
+    "end_location": {
+      "column": 5,
+      "row": 261
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 5,
+            "row": 261
+          },
+          "location": {
+            "column": 1,
+            "row": 261
+          }
+        }
+      ],
+      "message": "Remove whitespace from blank line"
+    },
+    "location": {
+      "column": 1,
+      "row": 261
+    },
+    "message": "Blank line contains whitespace",
+    "noqa_row": 261,
+    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "W293",
+    "end_location": {
+      "column": 5,
+      "row": 265
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 5,
+            "row": 265
+          },
+          "location": {
+            "column": 1,
+            "row": 265
+          }
+        }
+      ],
+      "message": "Remove whitespace from blank line"
+    },
+    "location": {
+      "column": 1,
+      "row": 265
+    },
+    "message": "Blank line contains whitespace",
+    "noqa_row": 265,
+    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "F811",
+    "end_location": {
+      "column": 30,
+      "row": 350
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 350
+    },
+    "message": "Redefinition of unused `create_networking_service` from line 183",
+    "noqa_row": 350,
+    "url": "https://docs.astral.sh/ruff/rules/redefined-while-unused"
+  },
+  {
+    "cell": null,
+    "code": "W293",
+    "end_location": {
+      "column": 5,
+      "row": 15
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/ipam/sdk/ipam_sdk.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 5,
+            "row": 15
+          },
+          "location": {
+            "column": 1,
+            "row": 15
+          }
+        }
+      ],
+      "message": "Remove whitespace from blank line"
+    },
+    "location": {
+      "column": 1,
+      "row": 15
+    },
+    "message": "Blank line contains whitespace",
+    "noqa_row": 15,
+    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 2,
+      "row": 21
+    },
+    "filename": "/home/dotmac_framework/packages/dotmac-networking/src/dotmac/networking/radius/__init__.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from ..automation.radius import (\n    CoAManager,\n    RADIUSAccounting,\n    RADIUSAttribute,\n    RADIUSAuthenticator,\n    RADIUSClient,\n    RADIUSManager,\n    RADIUSPacket,\n    RADIUSResponse,\n    RADIUSServerConfig,\n    RADIUSSession,\n    RADIUSSessionManager,\n    RADIUSUser,\n)\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 23
+          },
+          "location": {
+            "column": 1,
+            "row": 8
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 8
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "noqa_row": 8,
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  }
+]

@@ -14,6 +14,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..adapters.service_factory import create_full_featured_billing_service
 
+# Management platform imports with graceful fallbacks
+MANAGEMENT_AVAILABLE = True
+MANAGEMENT_IMPORT_ERROR = None
+
 try:
     from dotmac_management.core.database import get_async_session
     from dotmac_management.models.billing import (
@@ -35,7 +39,10 @@ try:
         send_billing_alerts,
         update_resource_limits,
     )
-except ImportError:
+except ImportError as e:
+    MANAGEMENT_AVAILABLE = False
+    MANAGEMENT_IMPORT_ERROR = str(e)
+
     # Fallback types for development/testing
     Tenant = dict[str, Any]
     TenantSubscription = dict[str, Any]
@@ -43,6 +50,36 @@ except ImportError:
     ResourceUsage = dict[str, Any]
     TenantInvoice = dict[str, Any]
     TenantPayment = dict[str, Any]
+    BillingReport = dict[str, Any]
+    PluginLicenseCreate = dict[str, Any]
+    ResourceUsageCreate = dict[str, Any]
+    TenantSubscriptionCreate = dict[str, Any]
+
+    # Fallback functions
+    def get_async_session():
+        """Fallback session factory."""
+        raise NotImplementedError("Management platform not available")
+
+    class StripeService:
+        """Fallback Stripe service."""
+
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError(
+                "Management platform Stripe service not available"
+            )
+
+    # Fallback task functions
+    def process_tenant_billing(*args, **kwargs):
+        """Fallback billing task."""
+        raise NotImplementedError("Management platform billing tasks not available")
+
+    def send_billing_alerts(*args, **kwargs):
+        """Fallback alert task."""
+        raise NotImplementedError("Management platform billing tasks not available")
+
+    def update_resource_limits(*args, **kwargs):
+        """Fallback resource limits task."""
+        raise NotImplementedError("Management platform billing tasks not available")
 
 
 class ManagementPlatformBillingAdapter:
@@ -61,6 +98,12 @@ class ManagementPlatformBillingAdapter:
         notification_config: Optional[dict[str, Any]] = None,
     ):
         """Initialize Management Platform billing adapter."""
+        if not MANAGEMENT_AVAILABLE:
+            raise ImportError(
+                f"Management platform not available: {MANAGEMENT_IMPORT_ERROR}. "
+                "Install with: pip install dotmac-business-logic[management]"
+            )
+
         self.db_session = db_session
         self.tenant_id = tenant_id
 

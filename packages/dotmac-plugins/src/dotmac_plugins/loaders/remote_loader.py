@@ -6,6 +6,7 @@ Loads plugins from remote sources like Git repositories, HTTP URLs, and plugin r
 
 import asyncio
 import logging
+import os
 import tarfile
 import zipfile
 from pathlib import Path
@@ -18,6 +19,45 @@ from ..core.exceptions import PluginConfigError, PluginLoadError
 from ..core.plugin_base import BasePlugin
 from .python_loader import PythonPluginLoader
 from .yaml_loader import YamlPluginLoader
+
+
+def _is_safe_path(path: str, base_path: Path) -> bool:
+    """Check if extracted path is safe (no path traversal)."""
+    try:
+        extracted_path = base_path / path
+        return str(extracted_path.resolve()).startswith(str(base_path.resolve()))
+    except (OSError, ValueError):
+        return False
+
+
+def _safe_extract_zip(zip_ref: zipfile.ZipFile, extract_path: Path) -> None:
+    """Safely extract ZIP file preventing path traversal attacks."""
+    for member in zip_ref.namelist():
+        if not _is_safe_path(member, extract_path):
+            raise ValueError(f"Unsafe path in ZIP archive: {member}")
+        # Additional check for absolute paths
+        if os.path.isabs(member) or ".." in member:
+            raise ValueError(f"Unsafe path in ZIP archive: {member}")
+
+    zip_ref.extractall(extract_path)
+
+
+def _safe_extract_tar(tar_ref: tarfile.TarFile, extract_path: Path) -> None:
+    """Safely extract TAR file preventing path traversal attacks."""
+    for member in tar_ref.getmembers():
+        if not _is_safe_path(member.name, extract_path):
+            raise ValueError(f"Unsafe path in TAR archive: {member.name}")
+        # Additional checks
+        if os.path.isabs(member.name) or ".." in member.name:
+            raise ValueError(f"Unsafe path in TAR archive: {member.name}")
+        if member.isdev():
+            raise ValueError(f"Device file not allowed: {member.name}")
+        if member.issym() or member.islnk():
+            # Check symlink/hardlink targets
+            if not _is_safe_path(member.linkname, extract_path):
+                raise ValueError(f"Unsafe link target: {member.linkname}")
+
+    tar_ref.extractall(extract_path)
 
 
 class RemotePluginLoader:
@@ -236,7 +276,7 @@ class RemotePluginLoader:
             self._logger.debug(f"Extracting ZIP archive: {file_path}")
 
             with zipfile.ZipFile(file_path, "r") as zip_ref:
-                zip_ref.extractall(extract_path)
+                _safe_extract_zip(zip_ref, extract_path)
 
             return extract_path
 
@@ -249,7 +289,7 @@ class RemotePluginLoader:
             self._logger.debug(f"Extracting TAR archive: {file_path}")
 
             with tarfile.open(file_path, "r:*") as tar_ref:
-                tar_ref.extractall(extract_path)
+                _safe_extract_tar(tar_ref, extract_path)
 
             return extract_path
 

@@ -11,17 +11,17 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
-from dotmac_isp.modules.services.service import ServicesService
-from dotmac_shared.device_management.dotmac_device_management.services.device_service import (
-    DeviceService,
-)
-from dotmac_shared.services.base import BaseTenantService
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import EntityNotFoundError, ValidationError
 from dotmac.ipam.services.ipam_service import IPAMService
+from dotmac_isp.modules.services.service import ServicesService
+from dotmac_shared.device_management.dotmac_device_management.services.device_service import (
+    DeviceService,
+)
+from dotmac_shared.services.base import BaseManagementService as BaseTenantService
 
 from ..models.workflows import (
     WorkflowExecution,
@@ -185,9 +185,7 @@ class NetworkOrchestrationService(BaseTenantService):
         return workflow
 
     @standard_exception_handler
-    async def execute_maintenance_window(
-        self, maintenance_plan: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def execute_maintenance_window(self, maintenance_plan: dict[str, Any]) -> dict[str, Any]:
         """Orchestrate maintenance window execution."""
         workflow_data = {
             "workflow_type": "maintenance_execution",
@@ -242,9 +240,7 @@ class NetworkOrchestrationService(BaseTenantService):
         return workflow
 
     @standard_exception_handler
-    async def create_workflow_execution(
-        self, workflow_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def create_workflow_execution(self, workflow_data: dict[str, Any]) -> dict[str, Any]:
         """Create new workflow execution record."""
         workflow_id = workflow_data.get("workflow_id") or str(uuid4())
 
@@ -263,9 +259,7 @@ class NetworkOrchestrationService(BaseTenantService):
             order_id=workflow_data.get("order_id"),
             input_parameters=workflow_data.get("input_parameters", {}),
             scheduled_at=workflow_data.get("scheduled_at", datetime.now(timezone.utc)),
-            estimated_duration_minutes=workflow_data.get(
-                "estimated_duration_minutes", 30
-            ),
+            estimated_duration_minutes=workflow_data.get("estimated_duration_minutes", 30),
             priority=workflow_data.get("priority", "normal"),
             tags=workflow_data.get("tags", []),
             metadata=workflow_data.get("metadata", {}),
@@ -274,16 +268,12 @@ class NetworkOrchestrationService(BaseTenantService):
         self.db.add(workflow)
         self.db.commit()
 
-        logger.info(
-            f"Created workflow execution {workflow_id}: {workflow.workflow_name}"
-        )
+        logger.info(f"Created workflow execution {workflow_id}: {workflow.workflow_name}")
 
         return workflow.to_dict()
 
     @standard_exception_handler
-    async def add_workflow_steps(
-        self, workflow_id: str, steps_data: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    async def add_workflow_steps(self, workflow_id: str, steps_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Add steps to workflow execution."""
         workflow = (
             self.db.query(WorkflowExecution)
@@ -302,9 +292,7 @@ class NetworkOrchestrationService(BaseTenantService):
         created_steps = []
 
         for step_data in steps_data:
-            step_id = (
-                step_data.get("step_id") or f"{workflow_id}-{step_data['step_order']}"
-            )
+            step_id = step_data.get("step_id") or f"{workflow_id}-{step_data['step_order']}"
 
             step = WorkflowStep(
                 step_id=step_id,
@@ -315,9 +303,7 @@ class NetworkOrchestrationService(BaseTenantService):
                 step_order=step_data["step_order"],
                 depends_on_steps=step_data.get("depends_on_steps", []),
                 parallel_group=step_data.get("parallel_group"),
-                service_class=step_data.get(
-                    "service_class", "NetworkOrchestrationService"
-                ),
+                service_class=step_data.get("service_class", "NetworkOrchestrationService"),
                 service_method=step_data["service_method"],
                 input_parameters=step_data.get("input_parameters", {}),
                 timeout_seconds=step_data.get("timeout_seconds", 300),
@@ -358,9 +344,7 @@ class NetworkOrchestrationService(BaseTenantService):
             raise EntityNotFoundError(f"Workflow not found: {workflow_id}")
 
         if workflow.status not in [WorkflowStatus.PENDING, WorkflowStatus.PAUSED]:
-            raise ValidationError(
-                f"Workflow cannot be executed in status: {workflow.status}"
-            )
+            raise ValidationError(f"Workflow cannot be executed in status: {workflow.status}")
 
         # Update workflow status to running
         workflow.status = WorkflowStatus.RUNNING
@@ -454,9 +438,7 @@ class NetworkOrchestrationService(BaseTenantService):
 
     # Private workflow step execution methods
 
-    async def _execute_workflow_step(
-        self, workflow: WorkflowExecution, step: WorkflowStep
-    ) -> None:
+    async def _execute_workflow_step(self, workflow: WorkflowExecution, step: WorkflowStep) -> None:
         """Execute individual workflow step."""
         logger.info(f"Executing step {step.step_id}: {step.step_name}")
 
@@ -519,9 +501,7 @@ class NetworkOrchestrationService(BaseTenantService):
             )
 
             if not dep_step or dep_step.status != WorkflowStepStatus.COMPLETED:
-                logger.warning(
-                    f"Step {step.step_id} waiting for dependency {dep_step_id}"
-                )
+                logger.warning(f"Step {step.step_id} waiting for dependency {dep_step_id}")
                 return False
 
         return True
@@ -556,22 +536,16 @@ class NetworkOrchestrationService(BaseTenantService):
         workflow.failed_steps = failed_steps
 
         if workflow.total_steps > 0:
-            workflow.progress_percentage = int(
-                (completed_steps / workflow.total_steps) * 100
-            )
+            workflow.progress_percentage = int((completed_steps / workflow.total_steps) * 100)
 
         self.db.commit()
 
-    async def _handle_step_failure(
-        self, workflow: WorkflowExecution, step: WorkflowStep, error_message: str
-    ) -> None:
+    async def _handle_step_failure(self, workflow: WorkflowExecution, step: WorkflowStep, error_message: str) -> None:
         """Handle step failure and determine retry strategy."""
         if step.retry_count < step.max_retries:
             step.retry_count += 1
             step.status = WorkflowStepStatus.RETRY
-            logger.info(
-                f"Retrying step {step.step_id} (attempt {step.retry_count}/{step.max_retries})"
-            )
+            logger.info(f"Retrying step {step.step_id} (attempt {step.retry_count}/{step.max_retries})")
 
             # Add delay before retry
             await asyncio.sleep(2**step.retry_count)  # Exponential backoff
@@ -610,15 +584,11 @@ class NetworkOrchestrationService(BaseTenantService):
 
         self.db.commit()
 
-        logger.info(
-            f"Workflow {workflow.workflow_id} finalized with status: {workflow.status}"
-        )
+        logger.info(f"Workflow {workflow.workflow_id} finalized with status: {workflow.status}")
 
     # Step implementation methods (to be implemented based on specific business logic)
 
-    async def _validate_customer_provisioning(
-        self, params: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _validate_customer_provisioning(self, params: dict[str, Any]) -> dict[str, Any]:
         """Validate customer provisioning request."""
         # Implementation would validate customer exists, service plan is valid, etc.
         return {"validation_result": "success", "customer_validated": True}
@@ -643,9 +613,7 @@ class NetworkOrchestrationService(BaseTenantService):
         # Integration with monitoring service
         return {"monitoring_id": "MON-123456", "status": "configured"}
 
-    async def _activate_customer_service(
-        self, params: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _activate_customer_service(self, params: dict[str, Any]) -> dict[str, Any]:
         """Activate customer service."""
         # Final activation step
         return {

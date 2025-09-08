@@ -46,9 +46,7 @@ async def initialize_essential_plugins() -> dict[str, bool]:
 
         # 2. Initialize Webhook Notification Plugin
         webhook_config = {
-            "webhook_url": getattr(
-                settings, "DEFAULT_WEBHOOK_URL", "http://localhost:3000/webhooks"
-            ),
+            "webhook_url": getattr(settings, "DEFAULT_WEBHOOK_URL", "http://localhost:3000/webhooks"),
             "http_method": "POST",
             "headers": {"Content-Type": "application/json"},
             "timeout": 30,
@@ -117,46 +115,27 @@ async def initialize_essential_plugins() -> dict[str, bool]:
                 logger.error("❌ Failed to register SlackNotificationPlugin")
         else:
             results["slack_notification"] = False
-            logger.info(
-                "⚠️ SlackNotificationPlugin skipped - no webhook URL configured"
-            )
+            logger.info("⚠️ SlackNotificationPlugin skipped - no webhook URL configured")
 
-        # 5. Initialize Prometheus Monitoring Plugin
+        # 5. Initialize Prometheus Monitoring Plugin (deprecated)
         prometheus_config = {
             "prometheus_url": getattr(settings, "PROMETHEUS_URL", ""),
             "alertmanager_url": getattr(settings, "PROMETHEUS_ALERTMANAGER_URL", ""),
-            "default_scrape_interval": getattr(
-                settings, "PROMETHEUS_SCRAPE_INTERVAL", "15s"
-            ),
+            "default_scrape_interval": getattr(settings, "PROMETHEUS_SCRAPE_INTERVAL", "15s"),
             "query_timeout": getattr(settings, "PROMETHEUS_QUERY_TIMEOUT", 30),
             "basic_auth_username": getattr(settings, "PROMETHEUS_AUTH_USERNAME", ""),
             "basic_auth_password": getattr(settings, "PROMETHEUS_AUTH_PASSWORD", ""),
         }
 
-        # Only initialize if Prometheus URL is configured
-        if prometheus_config["prometheus_url"]:
-            prometheus_plugin = PrometheusMonitoringPlugin()
-            prometheus_plugin.config = prometheus_config
-            prometheus_result = await plugin_registry.register_plugin(prometheus_plugin)
-            results["prometheus_monitoring"] = prometheus_result
-
-            if prometheus_result:
-                logger.info("✅ PrometheusMonitoringPlugin registered successfully")
-            else:
-                logger.error("❌ Failed to register PrometheusMonitoringPlugin")
-        else:
-            results["prometheus_monitoring"] = False
-            logger.info(
-                "⚠️ PrometheusMonitoringPlugin skipped - no Prometheus URL configured"
-            )
+        # Deprecated: prefer SigNoz/OTLP stack
+        results["prometheus_monitoring"] = False
+        logger.info("ℹ️ PrometheusMonitoringPlugin disabled (SigNoz-only stack)")
 
         # Log summary
         successful_plugins = sum(1 for success in results.values() if success)
         total_plugins = len(results)
 
-        logger.info(
-            f"Plugin initialization complete: {successful_plugins}/{total_plugins} successful"
-        )
+        logger.info(f"Plugin initialization complete: {successful_plugins}/{total_plugins} successful")
 
         return results
 

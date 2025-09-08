@@ -8,7 +8,6 @@ with all required endpoints, middleware, and health checks working correctly.
 import asyncio
 
 import pytest
-
 from tests.utilities.test_helpers import create_unified_test_client
 
 
@@ -96,12 +95,6 @@ class TestUnifiedFactory:
             headers = response.headers
 
             # At least some security headers should be present
-            security_headers = [
-                "x-content-type-options",
-                "x-frame-options",
-                "x-xss-protection",
-                "strict-transport-security",
-            ]
 
             # Not all may be present, but at least check headers exist
             assert len(headers) > 0

@@ -57,9 +57,7 @@ class CustomerPortalAdapter(ABC):
         pass
 
     @abstractmethod
-    async def update_customer_custom_fields(
-        self, customer_id: UUID, custom_fields: dict[str, Any]
-    ) -> bool:
+    async def update_customer_custom_fields(self, customer_id: UUID, custom_fields: dict[str, Any]) -> bool:
         """
         Update platform-specific custom fields for the customer.
         """
@@ -91,9 +89,7 @@ class CustomerPortalAdapter(ABC):
         """
         return None
 
-    async def validate_customer_access(
-        self, customer_id: UUID, requesting_user_id: UUID
-    ) -> bool:
+    async def validate_customer_access(self, customer_id: UUID, requesting_user_id: UUID) -> bool:
         """
         Validate that the requesting user can access this customer's data.
 

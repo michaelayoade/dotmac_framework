@@ -2,8 +2,6 @@ import pytest
 
 from dotmac_management.core.plugins.base import (
     BasePlugin,
-    PluginConfigurationError,
-    PluginExecutionError,
     PluginMeta,
     PluginType,
 )

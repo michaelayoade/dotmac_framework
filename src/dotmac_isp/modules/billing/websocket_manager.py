@@ -10,10 +10,10 @@ from enum import Enum
 from typing import Any, Optional
 
 import websockets
-from dotmac_isp.core.settings import get_settings
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 
 import redis.asyncio as redis
+from dotmac_isp.core.settings import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -68,18 +68,14 @@ class WebSocketConnectionManager:
     async def initialize(self):
         """Initialize Redis connection for event publishing."""
         try:
-            self.redis_client = redis.from_url(
-                settings.redis_url, encoding="utf-8", decode_responses=True
-            )
+            self.redis_client = redis.from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
             await self.redis_client.ping()
             logger.info("WebSocket manager initialized with Redis connection")
         except Exception as e:
             logger.error(f"Failed to initialize Redis connection: {e}")
             raise
 
-    async def connect(
-        self, websocket: websockets.WebSocketServerProtocol, tenant_id: str
-    ):
+    async def connect(self, websocket: websockets.WebSocketServerProtocol, tenant_id: str):
         """Register a new WebSocket connection."""
         if tenant_id not in self.connections:
             self.connections[tenant_id] = []
@@ -98,9 +94,7 @@ class WebSocketConnectionManager:
             },
         )
 
-    async def disconnect(
-        self, websocket: websockets.WebSocketServerProtocol, tenant_id: str
-    ):
+    async def disconnect(self, websocket: websockets.WebSocketServerProtocol, tenant_id: str):
         """Unregister a WebSocket connection."""
         if tenant_id in self.connections:
             try:
@@ -157,20 +151,14 @@ class WebSocketConnectionManager:
 
             except Exception as e:
                 self.retry_counts[connection_key] = attempt + 1
-                logger.warning(
-                    f"Failed to send message to WebSocket (attempt {attempt + 1}): {e}"
-                )
+                logger.warning(f"Failed to send message to WebSocket (attempt {attempt + 1}): {e}")
                 if attempt < self.max_retries:
-                    await asyncio.sleep(
-                        self.retry_delay * (2**attempt)
-                    )  # Exponential backoff
+                    await asyncio.sleep(self.retry_delay * (2**attempt))  # Exponential backoff
                 else:
                     logger.error("Max retries exceeded for WebSocket connection")
                     await self.disconnect(websocket, tenant_id)
 
-    async def _send_to_websocket(
-        self, websocket: websockets.WebSocketServerProtocol, message: dict[str, Any]
-    ):
+    async def _send_to_websocket(self, websocket: websockets.WebSocketServerProtocol, message: dict[str, Any]):
         """Send message to a single WebSocket connection."""
         await websocket.send(json.dumps(message))
 
@@ -182,9 +170,7 @@ class WebSocketConnectionManager:
         except Exception as e:
             logger.error(f"Failed to publish event to Redis: {e}")
 
-    async def subscribe_to_redis_events(
-        self, tenant_id: str, callback: Callable[[BillingEvent], None]
-    ):
+    async def subscribe_to_redis_events(self, tenant_id: str, callback: Callable[[BillingEvent], None]):
         """Subscribe to Redis events for cross-instance communication."""
         if not self.redis_client:
             logger.error("Redis client not initialized")

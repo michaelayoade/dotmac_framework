@@ -212,9 +212,7 @@ class Project(Base):
 
     # Audit fields
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     created_by = Column(String(200), nullable=True)
     updated_by = Column(String(200), nullable=True)
 
@@ -222,18 +220,10 @@ class Project(Base):
     platform_data = Column(JSON, nullable=True)
 
     # Relationships
-    phases = relationship(
-        "ProjectPhase", back_populates="project", cascade="all, delete-orphan"
-    )
-    milestones = relationship(
-        "ProjectMilestone", back_populates="project", cascade="all, delete-orphan"
-    )
-    updates = relationship(
-        "ProjectUpdate", back_populates="project", cascade="all, delete-orphan"
-    )
-    resources = relationship(
-        "ProjectResource", back_populates="project", cascade="all, delete-orphan"
-    )
+    phases = relationship("ProjectPhase", back_populates="project", cascade="all, delete-orphan")
+    milestones = relationship("ProjectMilestone", back_populates="project", cascade="all, delete-orphan")
+    updates = relationship("ProjectUpdate", back_populates="project", cascade="all, delete-orphan")
+    resources = relationship("ProjectResource", back_populates="project", cascade="all, delete-orphan")
 
     @hybrid_property
     def is_overdue(self) -> bool:
@@ -256,9 +246,7 @@ class Project(Base):
     def calculate_completion_percentage(self):
         """Calculate completion based on completed phases."""
         if self.total_phases > 0:
-            self.completion_percentage = int(
-                (self.phases_completed / self.total_phases) * 100
-            )
+            self.completion_percentage = int((self.phases_completed / self.total_phases) * 100)
         else:
             self.completion_percentage = 0
 
@@ -271,9 +259,7 @@ class ProjectPhase(Base):
     # Core identification
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id = Column(String(255), nullable=False, index=True)
-    project_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True
-    )
+    project_id = Column(PGUUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True)
 
     # Phase definition
     phase_name = Column(String(200), nullable=False)
@@ -287,9 +273,7 @@ class ProjectPhase(Base):
     is_milestone = Column(Boolean, default=False, nullable=False)
 
     # Status and progress
-    phase_status = Column(
-        SQLEnum(PhaseStatus), default=PhaseStatus.PENDING, nullable=False, index=True
-    )
+    phase_status = Column(SQLEnum(PhaseStatus), default=PhaseStatus.PENDING, nullable=False, index=True)
     completion_percentage = Column(Integer, default=0, nullable=False)
 
     # Timeline
@@ -324,9 +308,7 @@ class ProjectPhase(Base):
 
     # Audit
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationship
     project = relationship("Project", back_populates="phases")
@@ -350,9 +332,7 @@ class ProjectMilestone(Base):
     # Core identification
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id = Column(String(255), nullable=False, index=True)
-    project_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True
-    )
+    project_id = Column(PGUUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True)
 
     # Milestone definition
     milestone_name = Column(String(200), nullable=False)
@@ -374,9 +354,7 @@ class ProjectMilestone(Base):
 
     # Audit
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationship
     project = relationship("Project", back_populates="milestones")
@@ -397,9 +375,7 @@ class ProjectUpdate(Base):
     # Core identification
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id = Column(String(255), nullable=False, index=True)
-    project_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True
-    )
+    project_id = Column(PGUUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True)
 
     # Update content
     update_title = Column(String(300), nullable=False)
@@ -407,9 +383,7 @@ class ProjectUpdate(Base):
     update_type = Column(String(100), nullable=False)
 
     # Classification
-    priority = Column(
-        SQLEnum(ProjectPriority), default=ProjectPriority.NORMAL, nullable=False
-    )
+    priority = Column(SQLEnum(ProjectPriority), default=ProjectPriority.NORMAL, nullable=False)
     is_client_visible = Column(Boolean, default=True, nullable=False)
 
     # Author
@@ -441,9 +415,7 @@ class ProjectResource(Base):
     # Core identification
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id = Column(String(255), nullable=False, index=True)
-    project_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True
-    )
+    project_id = Column(PGUUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True)
 
     # Resource details
     resource_name = Column(String(200), nullable=False)
@@ -466,9 +438,7 @@ class ProjectResource(Base):
 
     # Audit
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationship
     project = relationship("Project", back_populates="resources")
@@ -482,9 +452,7 @@ class ProjectDocument(Base):
     # Core identification
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id = Column(String(255), nullable=False, index=True)
-    project_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True
-    )
+    project_id = Column(PGUUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True)
 
     # Document details
     document_name = Column(String(300), nullable=False)

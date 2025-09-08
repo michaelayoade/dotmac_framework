@@ -1,0 +1,17 @@
+server:
+  http_port: 8080
+
+storage:
+  primary: clickhouse
+  
+clickhouse:
+  dsn: tcp://clickhouse:9000/
+  username: default
+  password: ""
+  database: signoz_traces
+  
+telemetry:
+  enabled: true
+  
+auth:
+  jwt_secret: "dummy_secret_for_testing"

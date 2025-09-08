@@ -66,9 +66,7 @@ class DeviceService:
             "updated_at": device.updated_at.isoformat(),
         }
 
-    async def update_device(
-        self, device_id: str, updates: dict[str, Any]
-    ) -> Optional[dict[str, Any]]:
+    async def update_device(self, device_id: str, updates: dict[str, Any]) -> Optional[dict[str, Any]]:
         """Update device information."""
         device = await self.inventory.manager.update_device(device_id, updates)
         if not device:
@@ -101,9 +99,7 @@ class DeviceService:
         ]
 
     # Device Monitoring Operations
-    async def setup_device_monitoring(
-        self, device_id: str, monitor_type: str = "snmp", **config
-    ) -> dict[str, Any]:
+    async def setup_device_monitoring(self, device_id: str, monitor_type: str = "snmp", **config) -> dict[str, Any]:
         """Set up monitoring for device."""
         if monitor_type == "snmp":
             result = await self.monitoring.create_snmp_monitor(
@@ -113,9 +109,7 @@ class DeviceService:
                 snmp_community=config.get("community", "public"),
             )
         else:
-            result = await self.monitoring.create_health_check(
-                device_id=device_id, check_type=monitor_type
-            )
+            result = await self.monitoring.create_health_check(device_id=device_id, check_type=monitor_type)
 
         return result
 
@@ -144,9 +138,7 @@ class DeviceService:
         # Create SNMP client
         config = SNMPConfig(
             host=device.management_ip,
-            community=(
-                snmp_config.get("community", "public") if snmp_config else "public"
-            ),
+            community=(snmp_config.get("community", "public") if snmp_config else "public"),
             version=snmp_config.get("version", "2c") if snmp_config else "2c",
         )
 
@@ -171,9 +163,7 @@ class DeviceService:
         }
 
     # MAC Address Registry Operations
-    async def register_device_macs(
-        self, device_id: str, interface_macs: dict[str, str]
-    ) -> dict[str, Any]:
+    async def register_device_macs(self, device_id: str, interface_macs: dict[str, str]) -> dict[str, Any]:
         """Register MAC addresses for device interfaces."""
         return await self.mac_registry.discover_device_macs(device_id, interface_macs)
 
@@ -182,9 +172,7 @@ class DeviceService:
         return await self.mac_registry.get_mac_address_details(mac_address)
 
     # Network Topology Operations
-    async def add_device_to_topology(
-        self, device_id: str, **node_config
-    ) -> dict[str, Any]:
+    async def add_device_to_topology(self, device_id: str, **node_config) -> dict[str, Any]:
         """Add device to network topology."""
         node = await self.topology.manager.create_node(
             node_id=device_id, node_type="device", device_id=device_id, **node_config
@@ -198,9 +186,7 @@ class DeviceService:
             "created_at": node.created_at.isoformat(),
         }
 
-    async def create_device_connection(
-        self, source_device: str, target_device: str, **link_config
-    ) -> dict[str, Any]:
+    async def create_device_connection(self, source_device: str, target_device: str, **link_config) -> dict[str, Any]:
         """Create connection between devices."""
         link = await self.topology.manager.create_link(
             link_id=f"{source_device}_{target_device}",
@@ -218,15 +204,11 @@ class DeviceService:
             "created_at": link.created_at.isoformat(),
         }
 
-    async def find_device_path(
-        self, source_device: str, target_device: str
-    ) -> dict[str, Any]:
+    async def find_device_path(self, source_device: str, target_device: str) -> dict[str, Any]:
         """Find network path between devices."""
         return await self.topology.discover_network_paths(source_device, target_device)
 
-    async def analyze_network_topology(
-        self, site_id: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def analyze_network_topology(self, site_id: Optional[str] = None) -> dict[str, Any]:
         """Analyze network topology."""
         # Get topology data
         if site_id:
@@ -270,15 +252,11 @@ class DeviceService:
     # Lifecycle Management Operations
     async def provision_device(self, device_id: str, **config) -> dict[str, Any]:
         """Provision new device through lifecycle workflow."""
-        return await self.lifecycle.execute_lifecycle_action(
-            device_id=device_id, action="provision", parameters=config
-        )
+        return await self.lifecycle.execute_lifecycle_action(device_id=device_id, action="provision", parameters=config)
 
     async def deploy_device(self, device_id: str, **config) -> dict[str, Any]:
         """Deploy device through lifecycle workflow."""
-        return await self.lifecycle.execute_lifecycle_action(
-            device_id=device_id, action="deploy", parameters=config
-        )
+        return await self.lifecycle.execute_lifecycle_action(device_id=device_id, action="deploy", parameters=config)
 
     async def decommission_device(self, device_id: str, **config) -> dict[str, Any]:
         """Decommission device through lifecycle workflow."""
@@ -301,9 +279,7 @@ class DeviceService:
         connectivity = await self.topology.get_device_connectivity(device_id)
 
         # Get MAC addresses
-        device_macs = await self.mac_registry.manager.get_device_mac_addresses(
-            device_id
-        )
+        device_macs = await self.mac_registry.manager.get_device_mac_addresses(device_id)
 
         # Get interfaces and modules
         interfaces = await self.inventory.manager.get_device_interfaces(device_id)
@@ -343,9 +319,7 @@ class DeviceService:
             ],
         }
 
-    async def bulk_device_operation(
-        self, device_ids: list[str], operation: str, **parameters
-    ) -> dict[str, Any]:
+    async def bulk_device_operation(self, device_ids: list[str], operation: str, **parameters) -> dict[str, Any]:
         """Perform bulk operation on multiple devices."""
         results = {
             "operation": operation,
@@ -359,13 +333,9 @@ class DeviceService:
             if operation == "health_check":
                 result = await self.get_device_health(device_id)
             elif operation == "collect_metrics":
-                result = await self.collect_device_metrics(
-                    device_id, parameters.get("snmp_config")
-                )
+                result = await self.collect_device_metrics(device_id, parameters.get("snmp_config"))
             elif operation == "update_status":
-                result = await self.update_device(
-                    device_id, {"status": parameters["status"]}
-                )
+                result = await self.update_device(device_id, {"status": parameters["status"]})
             else:
                 raise DeviceManagementError(f"Unknown operation: {operation}")
 

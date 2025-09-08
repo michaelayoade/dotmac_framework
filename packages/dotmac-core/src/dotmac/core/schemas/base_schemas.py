@@ -17,7 +17,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from pydantic.config import ConfigDict
 
 
 class TenantModel(BaseModel):
@@ -34,8 +33,6 @@ T = TypeVar("T")
 
 class SchemaValidationError(Exception):
     """Raised when schemas don't follow DRY patterns."""
-
-    pass
 
 
 # === Core Base Schemas ===
@@ -68,10 +65,10 @@ class BaseSchema(BaseModel):
         if cls.__name__ != "BaseSchema" and not any(
             base.__name__.endswith(("Entity", "Schema", "Mixin")) for base in cls.__mro__[1:]
         ):
-            logger.warning(f"Schema {cls.__name__} should inherit from standard base classes")
+            logger.warning("Schema %s should inherit from standard base classes", cls.__name__)
 
         # Log schema registration for audit
-        logger.debug(f"Registered schema: {cls.__name__}")
+        logger.debug("Registered schema: %s", cls.__name__)
 
 
 class TimestampMixin(BaseModel):
@@ -90,10 +87,14 @@ class TimestampMixin(BaseModel):
             try:
                 return datetime.fromisoformat(v.replace("Z", "+00:00"))
             except ValueError as e:
-                raise ValueError(f"Invalid datetime format: {v}") from e
+                msg = f"Invalid datetime format: {v}"
+
+                raise ValueError(msg) from e
         if isinstance(v, datetime):
             return v
-        raise ValueError(f"Datetime must be string or datetime object, got {type(v)}")
+        msg = f"Datetime must be string or datetime object, got {type(v)}"
+
+        raise ValueError(msg)
 
 
 class IdentifiedMixin(BaseModel):
@@ -108,10 +109,12 @@ class NamedMixin(BaseModel):
     name: str = Field(..., min_length=1, max_length=200, description="Name of the entity")
 
     @field_validator("name")
+    @classmethod
     def validate_name(cls, v):
         """Validate name contains valid characters."""
         if not re.match(r"^[a-zA-Z0-9\s\-_\.]+$", v):
-            raise ValueError("Name contains invalid characters")
+            msg = "Name contains invalid characters"
+            raise ValueError(msg)
         return v.strip()
 
 
@@ -144,6 +147,7 @@ class EmailMixin(BaseModel):
     email: EmailStr = Field(description="Email address")
 
     @field_validator("email")
+    @classmethod
     def validate_email(cls, v):
         """Additional email validation."""
         return v.lower().strip()
@@ -152,18 +156,19 @@ class EmailMixin(BaseModel):
 class PhoneMixin(BaseModel):
     """Mixin for entities with phone fields."""
 
-    phone: str | None = Field(
-        None, description="Phone number", pattern=r"^\+?[\d\s\-\(\)]{10,}$"
-    )
+    phone: str | None = Field(None, description="Phone number", pattern=r"^\+?[\d\s\-\(\)]{10,}$")
 
     @field_validator("phone")
+    @classmethod
     def validate_phone(cls, v):
         """Clean and validate phone number."""
         if v:
             # Remove non-digit characters except +
             cleaned = re.sub(r"[^\d+]", "", v)
             if len(cleaned) < 10:
-                raise ValueError("Phone number too short")
+                msg = "Phone number too short"
+
+                raise ValueError(msg)
             return cleaned
         return v
 
@@ -174,13 +179,15 @@ class AddressMixin(BaseModel):
     address: dict[str, Any] | None = Field(None, description="Address information")
 
     @field_validator("address")
+    @classmethod
     def validate_address(cls, v):
         """Validate address structure."""
         if v:
             required_fields = ["street", "city"]
             for field in required_fields:
                 if not v.get(field):
-                    raise ValueError(f"Address must include {field}")
+                    msg = f"Address must include {field}"
+                    raise ValueError(msg)
         return v
 
 
@@ -190,25 +197,17 @@ class AddressMixin(BaseModel):
 class BaseEntity(BaseSchema, IdentifiedMixin, TimestampMixin):
     """Base class for all entities with ID and timestamps."""
 
-    pass
-
 
 class NamedEntity(BaseEntity, NamedMixin, DescriptionMixin):
     """Base class for named entities with descriptions."""
-
-    pass
 
 
 class ActiveEntity(NamedEntity, StatusMixin):
     """Base class for entities with status tracking."""
 
-    pass
-
 
 class TenantEntity(ActiveEntity, TenantMixin):
     """Base class for multi-tenant entities."""
-
-    pass
 
 
 class PersonEntity(BaseEntity, StatusMixin, TenantMixin):
@@ -319,7 +318,8 @@ class DateRangeMixin(BaseModel):
         end = self.end_date
 
         if start and end and end <= start:
-            raise ValueError("End date must be after start date")
+            msg = "End date must be after start date"
+            raise ValueError(msg)
 
         return self
 

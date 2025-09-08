@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from celery import shared_task
+
 from dotmac_shared.exceptions import ExceptionContext
 
 
@@ -15,9 +16,7 @@ def categorize_ticket(self, ticket_data: dict[str, Any]) -> dict[str, Any]:
     """Automatically categorize support tickets"""
 
     try:
-        ticket_content = (
-            f"{ticket_data.get('subject', '')} {ticket_data.get('description', '')}"
-        )
+        ticket_content = f"{ticket_data.get('subject', '')} {ticket_data.get('description', '')}"
 
         # Keyword-based categorization
         categories = {
@@ -62,9 +61,7 @@ def categorize_ticket(self, ticket_data: dict[str, Any]) -> dict[str, Any]:
         category_score = 0
 
         for category, keywords in categories.items():
-            score = sum(
-                1 for keyword in keywords if keyword.lower() in ticket_content.lower()
-            )
+            score = sum(1 for keyword in keywords if keyword.lower() in ticket_content.lower())
             if score > category_score:
                 category_score = score
                 detected_category = category
@@ -74,9 +71,7 @@ def categorize_ticket(self, ticket_data: dict[str, Any]) -> dict[str, Any]:
         priority_score = 0
 
         for priority, keywords in priority_keywords.items():
-            score = sum(
-                1 for keyword in keywords if keyword.lower() in ticket_content.lower()
-            )
+            score = sum(1 for keyword in keywords if keyword.lower() in ticket_content.lower())
             if score > priority_score:
                 priority_score = score
                 detected_priority = priority
@@ -102,9 +97,7 @@ def categorize_ticket(self, ticket_data: dict[str, Any]) -> dict[str, Any]:
         }
 
         estimated_hours = resolution_times.get(detected_priority, 72)
-        estimated_resolution = (
-            datetime.now(timezone.utc) + timedelta(hours=estimated_hours)
-        ).isoformat()
+        estimated_resolution = (datetime.now(timezone.utc) + timedelta(hours=estimated_hours)).isoformat()
 
         categorization_result = {
             "ticket_id": ticket_data.get("ticket_id"),
@@ -162,9 +155,7 @@ def get_auto_responses(category: str, priority: str) -> list[str]:
 
 
 @shared_task(bind=True)
-def auto_respond_to_ticket(
-    self, categorization_result: dict[str, Any]
-) -> dict[str, Any]:
+def auto_respond_to_ticket(self, categorization_result: dict[str, Any]) -> dict[str, Any]:
     """Send automatic response to customer"""
 
     ticket_id = categorization_result["ticket_id"]
@@ -354,9 +345,7 @@ def get_tickets_near_sla_deadline() -> list[dict[str, Any]]:
         {
             "ticket_id": "TKT_001",
             "priority": "high",
-            "sla_deadline": (
-                datetime.now(timezone.utc) + timedelta(hours=1)
-            ).isoformat(),
+            "sla_deadline": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
             "assigned_agent": "AGT_TECH_001",
         }
     ]
@@ -369,9 +358,7 @@ def get_overdue_tickets() -> list[dict[str, Any]]:
         {
             "ticket_id": "TKT_002",
             "priority": "critical",
-            "sla_deadline": (
-                datetime.now(timezone.utc) - timedelta(hours=2)
-            ).isoformat(),
+            "sla_deadline": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
             "assigned_agent": "AGT_TECH_002",
         }
     ]
@@ -489,9 +476,7 @@ def analyze_support_metrics() -> dict[str, Any]:
     metrics["alerts"] = alerts
 
     # Send metrics report to management
-    if (
-        alerts or datetime.now(timezone.utc).hour == 9
-    ):  # Daily report at 9 AM or when alerts
+    if alerts or datetime.now(timezone.utc).hour == 9:  # Daily report at 9 AM or when alerts
         send_support_metrics_report.delay(metrics)
 
     return metrics

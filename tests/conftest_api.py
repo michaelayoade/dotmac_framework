@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from tests.utils.api_test_helpers import (
     APITestClient,
     DatabaseTestHelper,
@@ -25,13 +24,13 @@ def app() -> FastAPI:
     """Create test FastAPI application with all routers."""
     from dotmac_isp.modules.identity.router import identity_router
     from dotmac_isp.modules.services.router import services_router
-    
+
     app = FastAPI(title="DotMac ISP API Test", version="1.0.0")
-    
+
     # Include routers
     app.include_router(identity_router, prefix="/identity")
     app.include_router(services_router, prefix="/services")
-    
+
     return app
 
 
@@ -136,16 +135,16 @@ def mock_dependencies():
                     "email": "testuser@example.com",
                     "tenant_id": "test-tenant-123"
                 }
-                
+
                 # Default tenant
                 mock_get_tenant.return_value = {
                     "tenant_id": "test-tenant-123",
                     "name": "Test Tenant"
                 }
-                
+
                 # Default permissions (allow all)
                 mock_perms.return_value = lambda: None
-                
+
                 yield {
                     "get_current_user": mock_get_user,
                     "get_current_tenant": mock_get_tenant,
@@ -157,7 +156,7 @@ def mock_dependencies():
 def mock_database_session():
     """Mock database session for testing."""
     session_mock = MagicMock()
-    
+
     # Mock common database operations
     session_mock.query.return_value.filter.return_value.first.return_value = None
     session_mock.query.return_value.filter.return_value.all.return_value = []
@@ -167,7 +166,7 @@ def mock_database_session():
     session_mock.refresh.return_value = None
     session_mock.rollback.return_value = None
     session_mock.close.return_value = None
-    
+
     return session_mock
 
 
@@ -272,6 +271,6 @@ def assert_error_response_format(response_data: dict[str, Any]):
 # Export test utilities for use in test files
 __all__ = [
     "assert_api_response_structure",
-    "assert_pagination_response", 
+    "assert_pagination_response",
     "assert_error_response_format"
 ]

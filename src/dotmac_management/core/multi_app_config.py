@@ -84,9 +84,7 @@ class ApplicationDeployment:
 
     def get_deployment_name(self, tenant_id: str) -> str:
         """Get unique deployment name for Kubernetes/Docker."""
-        return f"{self.app_type}-{self.instance_name}-{tenant_id}".lower().replace(
-            "_", "-"
-        )
+        return f"{self.app_type}-{self.instance_name}-{tenant_id}".lower().replace("_", "-")
 
 
 @dataclass
@@ -104,9 +102,7 @@ class NetworkConfiguration:
     # SSL/TLS
     ssl_enabled: bool = True
     ssl_redirect: bool = True
-    custom_certificates: dict[str, str] = field(
-        default_factory=dict
-    )  # domain -> cert_path
+    custom_certificates: dict[str, str] = field(default_factory=dict)  # domain -> cert_path
 
     # Domain Configuration
     base_domain: str = "dotmac.cloud"
@@ -180,9 +176,7 @@ class MultiAppTenantConfig:
         # Validate unique instance name
         existing_names = {app.instance_name for app in self.applications}
         if app_deployment.instance_name in existing_names:
-            raise ValueError(
-                f"Instance name '{app_deployment.instance_name}' already exists"
-            )
+            raise ValueError(f"Instance name '{app_deployment.instance_name}' already exists")
 
         self.applications.append(app_deployment)
         logger.info(
@@ -195,9 +189,7 @@ class MultiAppTenantConfig:
         for i, app in enumerate(self.applications):
             if app.instance_name == instance_name:
                 removed_app = self.applications.pop(i)
-                logger.info(
-                    f"Removed application {removed_app.app_type}:{instance_name} from tenant {self.tenant_id}"
-                )
+                logger.info(f"Removed application {removed_app.app_type}:{instance_name} from tenant {self.tenant_id}")
                 return True
 
         return False
@@ -255,9 +247,7 @@ class MultiAppTenantConfig:
             resource_issues = []
             if tenant_cpu_limit and tenant_cpu_limit.endswith("m"):
                 if total_cpu_request > int(tenant_cpu_limit[:-1]):
-                    resource_issues.append(
-                        f"CPU request ({total_cpu_request}m) exceeds limit ({tenant_cpu_limit})"
-                    )
+                    resource_issues.append(f"CPU request ({total_cpu_request}m) exceeds limit ({tenant_cpu_limit})")
 
             if resource_issues:
                 issues["resources"] = resource_issues

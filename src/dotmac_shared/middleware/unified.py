@@ -122,9 +122,7 @@ class UnifiedMiddlewareProcessor(MiddlewareProcessor, ABC):
         """
         pass
 
-    def get_response_headers(
-        self, request: Request, result: MiddlewareResult | None = None
-    ) -> dict[str, str]:
+    def get_response_headers(self, request: Request, result: MiddlewareResult | None = None) -> dict[str, str]:
         """Generate response headers with processing context.
 
         Args:
@@ -147,9 +145,7 @@ class UnifiedMiddlewareProcessor(MiddlewareProcessor, ABC):
 
         return headers
 
-    def get_custom_response_headers(
-        self, request: Request, result: MiddlewareResult | None = None
-    ) -> dict[str, str]:
+    def get_custom_response_headers(self, request: Request, result: MiddlewareResult | None = None) -> dict[str, str]:
         """Get custom response headers - override in subclasses.
 
         Args:
@@ -163,9 +159,7 @@ class UnifiedMiddlewareProcessor(MiddlewareProcessor, ABC):
 
     def is_exempt_path(self, path: str) -> bool:
         """Check if path is exempt from processing."""
-        return any(
-            path.startswith(exempt_path) for exempt_path in self.config.exempt_paths
-        )
+        return any(path.startswith(exempt_path) for exempt_path in self.config.exempt_paths)
 
     def _update_request_state(self, request: Request, headers: ExtractedHeaders | None):
         """Update request state based on extracted headers."""
@@ -209,9 +203,7 @@ class SimpleUnifiedMiddleware(UnifiedMiddlewareProcessor):
     def __init__(
         self,
         name: str,
-        process_fn: Callable[
-            [Request, ExtractedHeaders | None], MiddlewareResult | None
-        ],
+        process_fn: Callable[[Request, ExtractedHeaders | None], MiddlewareResult | None],
         exempt_paths: set[str] | None = None,
         **config_kwargs,
     ):
@@ -260,9 +252,7 @@ class TenantAwareMiddleware(UnifiedMiddlewareProcessor):
 
         # Validate tenant context
         if self.require_tenant and (not headers or not headers.tenant_id):
-            return MiddlewareResult.early_return(
-                {"detail": "Tenant context required"}, status=400
-            )
+            return MiddlewareResult.early_return({"detail": "Tenant context required"}, status=400)
 
         # Call tenant-specific processing
         return await self.process_tenant_middleware(request, headers)
@@ -353,9 +343,7 @@ class UnifiedMiddlewareManager:
     @staticmethod
     def create_simple_middleware(
         name: str,
-        process_fn: Callable[
-            [Request, ExtractedHeaders | None], MiddlewareResult | None
-        ],
+        process_fn: Callable[[Request, ExtractedHeaders | None], MiddlewareResult | None],
         **kwargs,
     ) -> Callable:
         """Create simple middleware from function.
@@ -394,9 +382,7 @@ class ExampleTenantSecurityMiddleware(TenantAwareMiddleware):
     """Example tenant security middleware using unified base."""
 
     def __init__(self):
-        config = MiddlewareConfig(
-            name="TenantSecurity", exempt_paths={"/docs", "/health", "/api/auth/login"}
-        )
+        config = MiddlewareConfig(name="TenantSecurity", exempt_paths={"/docs", "/health", "/api/auth/login"})
         super().__init__(config, require_tenant=True)
 
     async def process_tenant_middleware(
@@ -409,9 +395,7 @@ class ExampleTenantSecurityMiddleware(TenantAwareMiddleware):
 
         # Validate tenant exists and is active (placeholder)
         if len(headers.tenant_id) < 3:
-            return MiddlewareResult.early_return(
-                {"detail": "Invalid tenant ID format"}, status=403
-            )
+            return MiddlewareResult.early_return({"detail": "Invalid tenant ID format"}, status=403)
 
         # Continue processing
         return None
@@ -421,9 +405,7 @@ class ExampleAPIVersioningMiddleware(UnifiedMiddlewareProcessor):
     """Example API versioning middleware using unified base."""
 
     def __init__(self, supported_versions: Optional[set[str]] = None):
-        config = MiddlewareConfig(
-            name="APIVersioning", exempt_paths={"/docs", "/health"}
-        )
+        config = MiddlewareConfig(name="APIVersioning", exempt_paths={"/docs", "/health"})
         super().__init__(config)
         self.supported_versions = supported_versions or {"v1", "v2"}
 
@@ -448,8 +430,6 @@ class ExampleAPIVersioningMiddleware(UnifiedMiddlewareProcessor):
 
         return None
 
-    def get_custom_response_headers(
-        self, request: Request, result: MiddlewareResult | None = None
-    ) -> dict[str, str]:
+    def get_custom_response_headers(self, request: Request, result: MiddlewareResult | None = None) -> dict[str, str]:
         """Add API versioning headers."""
         return {"X-Supported-Versions": ", ".join(sorted(self.supported_versions))}

@@ -429,7 +429,6 @@ def create_session_manager(backend_type: str = "memory", **config) -> SessionMan
     if backend_type.lower() == "redis":
         redis_url = config.pop("redis_url", "redis://localhost:6379")
         return create_redis_session_manager(redis_url, **config)
-    elif backend_type.lower() == "memory":
+    if backend_type.lower() == "memory":
         return create_memory_session_manager(**config)
-    else:
-        raise ValueError(f"Unknown backend type: {backend_type}")
+    raise ValueError(f"Unknown backend type: {backend_type}")

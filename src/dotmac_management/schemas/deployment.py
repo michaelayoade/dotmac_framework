@@ -18,16 +18,10 @@ class DeploymentTemplateBase(BaseModel):
     description: Optional[str] = Field(None, description="Template description")
     category: str = Field(..., description="Template category")
     cloud_provider: str = Field(..., description="Target cloud provider")
-    template_type: str = Field(
-        ..., description="Template type (terraform, cloudformation, etc.)"
-    )
+    template_type: str = Field(..., description="Template type (terraform, cloudformation, etc.)")
     template_content: dict[str, Any] = Field(..., description="Template definition")
-    variables: dict[str, Any] = Field(
-        default_factory=dict, description="Template variables"
-    )
-    requirements: dict[str, Any] = Field(
-        default_factory=dict, description="Resource requirements"
-    )
+    variables: dict[str, Any] = Field(default_factory=dict, description="Template variables")
+    requirements: dict[str, Any] = Field(default_factory=dict, description="Resource requirements")
     tags: list[str] = Field(default_factory=list, description="Template tags")
     is_active: bool = Field(default=True, description="Whether template is active")
 
@@ -66,18 +60,10 @@ class InfrastructureBase(BaseModel):
     region: str = Field(..., description="Deployment region")
     environment: str = Field(..., description="Environment (dev, staging, prod)")
     status: str = Field(..., description="Infrastructure status")
-    configuration: dict[str, Any] = Field(
-        default_factory=dict, description="Infrastructure configuration"
-    )
-    resources: dict[str, Any] = Field(
-        default_factory=dict, description="Deployed resources"
-    )
-    endpoints: dict[str, str] = Field(
-        default_factory=dict, description="Service endpoints"
-    )
-    metadata: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    configuration: dict[str, Any] = Field(default_factory=dict, description="Infrastructure configuration")
+    resources: dict[str, Any] = Field(default_factory=dict, description="Deployed resources")
+    endpoints: dict[str, str] = Field(default_factory=dict, description="Service endpoints")
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class InfrastructureCreate(InfrastructureBase):
@@ -113,16 +99,10 @@ class DeploymentBase(BaseModel):
     version: str = Field(..., description="Deployment version")
     status: str = Field(..., description="Deployment status")
     environment: str = Field(..., description="Target environment")
-    configuration: dict[str, Any] = Field(
-        default_factory=dict, description="Deployment configuration"
-    )
-    variables: dict[str, Any] = Field(
-        default_factory=dict, description="Deployment variables"
-    )
+    configuration: dict[str, Any] = Field(default_factory=dict, description="Deployment configuration")
+    variables: dict[str, Any] = Field(default_factory=dict, description="Deployment variables")
     deployed_at: Optional[datetime] = Field(None, description="Deployment timestamp")
-    metadata: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class DeploymentCreate(DeploymentBase):
@@ -160,18 +140,10 @@ class ServiceInstanceBase(BaseModel):
     status: str = Field(..., description="Service status")
     health_status: str = Field(..., description="Health status")
     version: str = Field(..., description="Service version")
-    configuration: dict[str, Any] = Field(
-        default_factory=dict, description="Service configuration"
-    )
-    endpoints: dict[str, str] = Field(
-        default_factory=dict, description="Service endpoints"
-    )
-    resource_usage: dict[str, Any] = Field(
-        default_factory=dict, description="Resource usage metrics"
-    )
-    metadata: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    configuration: dict[str, Any] = Field(default_factory=dict, description="Service configuration")
+    endpoints: dict[str, str] = Field(default_factory=dict, description="Service endpoints")
+    resource_usage: dict[str, Any] = Field(default_factory=dict, description="Resource usage metrics")
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class ServiceInstanceCreate(ServiceInstanceBase):
@@ -206,9 +178,7 @@ class DeploymentLogBase(BaseModel):
     message: str = Field(..., description="Log message")
     component: Optional[str] = Field(None, description="Component name")
     timestamp: datetime = Field(..., description="Log timestamp")
-    metadata: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class DeploymentLogCreate(DeploymentLogBase):
@@ -261,12 +231,8 @@ class DeploymentRequest(BaseModel):
     template_id: UUID = Field(..., description="Template to deploy")
     name: str = Field(..., description="Deployment name")
     environment: str = Field(..., description="Target environment")
-    variables: dict[str, Any] = Field(
-        default_factory=dict, description="Deployment variables"
-    )
-    configuration: dict[str, Any] = Field(
-        default_factory=dict, description="Additional configuration"
-    )
+    variables: dict[str, Any] = Field(default_factory=dict, description="Deployment variables")
+    configuration: dict[str, Any] = Field(default_factory=dict, description="Additional configuration")
 
 
 class ScalingRequest(BaseModel):
@@ -274,9 +240,7 @@ class ScalingRequest(BaseModel):
 
     service_name: str = Field(..., description="Service to scale")
     target_instances: int = Field(..., ge=1, description="Target instance count")
-    resource_limits: Optional[dict[str, str]] = Field(
-        None, description="Resource limits"
-    )
+    resource_limits: Optional[dict[str, str]] = Field(None, description="Resource limits")
 
 
 class RollbackRequest(BaseModel):

@@ -117,8 +117,7 @@ class ProbabilitySampleStrategy(SamplingStrategy):
 
         if trace_hash < threshold:
             return SamplingResult(SamplingDecision.RECORD_AND_SAMPLED)
-        else:
-            return SamplingResult(SamplingDecision.NOT_RECORD)
+        return SamplingResult(SamplingDecision.NOT_RECORD)
 
 
 class RateLimitingSampleStrategy(SamplingStrategy):
@@ -241,7 +240,7 @@ class BatchSpanProcessor(SpanProcessor):
         self.max_export_batch_size = max_export_batch_size
         self.export_timeout_millis = export_timeout_millis
 
-        self._queue: list["Span"] = []
+        self._queue: list[Span] = []
         self._lock = threading.Lock()
         self._worker_thread: threading.Thread | None = None
         self._shutdown_event = threading.Event()

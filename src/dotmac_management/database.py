@@ -19,15 +19,11 @@ from sqlalchemy.ext.asyncio import (
 from dotmac.database.base import Base
 
 # Database URL - use environment variable or fallback to default
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://dotmac:dotmac@localhost:5432/dotmac_framework"
-)
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://dotmac:dotmac@localhost:5432/dotmac_framework")
 
 # Convert to async URL if not already
 if DATABASE_URL.startswith("postgresql://"):
-    ASYNC_DATABASE_URL = DATABASE_URL.replace(
-        "postgresql://", "postgresql+asyncpg://", 1
-    )
+    ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 elif DATABASE_URL.startswith("postgresql+asyncpg://"):
     ASYNC_DATABASE_URL = DATABASE_URL
 else:
@@ -82,9 +78,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with _session_maker() as session:
         try:
             yield session
-        except (
-            Exception
-        ):  # noqa: BLE001 - rollback on any consumer error using the session
+        except Exception:  # noqa: BLE001 - rollback on any consumer error using the session
             await session.rollback()
             raise
         finally:

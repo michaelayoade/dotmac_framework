@@ -332,38 +332,22 @@ kubectl logs -f deployment/tenant-provisioner -n dotmac-management
 
 ## 📈 Monitoring & Observability
 
-### Metrics Collection
+### Metrics Collection (SigNoz)
 
-**Prometheus Configuration:**
-```yaml
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+Telemetry is exported via OTLP to the SigNoz collector; scraping `/metrics` is not required.
+Validate the collector and app resource attributes:
 
-rule_files:
-  - "alert_rules.yml"
-
-scrape_configs:
-  - job_name: 'dotmac-api'
-    static_configs:
-      - targets: ['api:8000']
-    metrics_path: /metrics
-    scrape_interval: 10s
-
-  - job_name: 'dotmac-containers'
-    kubernetes_sd_configs:
-      - role: pod
-        namespaces:
-          names: ['dotmac-production']
+```bash
+kubectl get svc -n platform-observability | grep otel-collector
+kubectl logs deployment/dotmac-api -n dotmac-production | grep OTEL
 ```
 
-**Grafana Dashboards:**
+**SigNoz Dashboards:**
 ```bash
-# Import pre-built dashboards
-curl -X POST http://grafana:3000/api/dashboards/import \
-  -H "Authorization: Bearer $GRAFANA_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d @monitoring/grafana/dotmac-overview.json
+# Provision default dashboards via platform provisioning (SigNoz API)
+# Environment variables: SIGNOZ_URL, SIGNOZ_API_KEY
+python -c "from dotmac.platform.observability.dashboards.manager import provision_platform_dashboards;\
+print(provision_platform_dashboards('signoz'))"
 ```
 
 ### Log Management

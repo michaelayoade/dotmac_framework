@@ -4,7 +4,7 @@ Abstract base classes for implementing use cases
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Generic, Optional, TypeVar
 
@@ -36,11 +36,7 @@ class UseCaseResult(Generic[TOutput]):
     data: Optional[TOutput] = None
     error: Optional[str] = None
     error_code: Optional[str] = None
-    metadata: dict[str, Any] = None
-
-    def __post_init__(self):
-        if self.metadata is None:
-            self.metadata = {}
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -71,9 +67,7 @@ class UseCase(ABC, Generic[TInput, TOutput]):
         self.logger = get_logger(self.__class__.__name__)
 
     @abstractmethod
-    async def execute(
-        self, input_data: TInput, context: Optional[UseCaseContext] = None
-    ) -> UseCaseResult[TOutput]:
+    async def execute(self, input_data: TInput, context: Optional[UseCaseContext] = None) -> UseCaseResult[TOutput]:
         """
         Execute the use case with the given input data.
 
@@ -150,23 +144,17 @@ class TransactionalUseCase(UseCase[TInput, TOutput], ABC):
         super().__init__()
         self._rollback_actions = []
 
-    async def execute(
-        self, input_data: TInput, context: Optional[UseCaseContext] = None
-    ) -> UseCaseResult[TOutput]:
+    async def execute(self, input_data: TInput, context: Optional[UseCaseContext] = None) -> UseCaseResult[TOutput]:
         """
         Execute the use case with transaction support.
         Automatically rolls back on failure.
         """
         try:
             if not await self.validate_input(input_data):
-                return self._create_error_result(
-                    "Input validation failed", error_code="INVALID_INPUT"
-                )
+                return self._create_error_result("Input validation failed", error_code="INVALID_INPUT")
 
             if not await self.can_execute(context):
-                return self._create_error_result(
-                    "Execution not allowed", error_code="EXECUTION_DENIED"
-                )
+                return self._create_error_result("Execution not allowed", error_code="EXECUTION_DENIED")
 
             # Clear any previous rollback actions
             self._rollback_actions.clear()
@@ -237,9 +225,7 @@ class CompositeUseCase(UseCase[TInput, TOutput], ABC):
         """
         self._child_use_cases.append({"use_case": use_case, "condition": condition})
 
-    async def _execute_child_use_cases(
-        self, context: Optional[UseCaseContext] = None
-    ) -> dict[str, UseCaseResult]:
+    async def _execute_child_use_cases(self, context: Optional[UseCaseContext] = None) -> dict[str, UseCaseResult]:
         """Execute all child use cases and return their results"""
         results = {}
 
@@ -264,9 +250,7 @@ class CompositeUseCase(UseCase[TInput, TOutput], ABC):
 
             except ExceptionContext.LIFECYCLE_EXCEPTIONS as e:
                 self.logger.error(f"Child use case {child_name} failed: {e}")
-                results[child_name] = UseCaseResult(
-                    success=False, status=UseCaseStatus.FAILED, error=str(e)
-                )
+                results[child_name] = UseCaseResult(success=False, status=UseCaseStatus.FAILED, error=str(e))
 
                 if self._should_stop_on_failure():
                     break

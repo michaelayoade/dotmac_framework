@@ -23,25 +23,19 @@ class CommissionCalculator:
     """Commission calculation engine with multiple structures"""
 
     @staticmethod
-    def calculate_percentage_commission(
-        base_amount: Decimal, commission_rate: Decimal
-    ) -> Decimal:
+    def calculate_percentage_commission(base_amount: Decimal, commission_rate: Decimal) -> Decimal:
         """Calculate percentage-based commission"""
         commission = base_amount * commission_rate / 100
         return commission.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     @staticmethod
-    def calculate_flat_fee_commission(
-        transaction_count: int, flat_fee_amount: Decimal
-    ) -> Decimal:
+    def calculate_flat_fee_commission(transaction_count: int, flat_fee_amount: Decimal) -> Decimal:
         """Calculate flat fee commission"""
         commission = transaction_count * flat_fee_amount
         return commission.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     @staticmethod
-    def calculate_tiered_commission(
-        base_amount: Decimal, tier_rates: dict[str, Any]
-    ) -> Decimal:
+    def calculate_tiered_commission(base_amount: Decimal, tier_rates: dict[str, Any]) -> Decimal:
         """Calculate tiered commission based on volume"""
         # Example tier structure:
         # {
@@ -89,9 +83,7 @@ class CommissionCalculator:
         """Calculate commission based on reseller's structure"""
 
         if reseller.commission_structure == CommissionStructure.PERCENTAGE:
-            commission = cls.calculate_percentage_commission(
-                base_amount, reseller.base_commission_rate or Decimal("0")
-            )
+            commission = cls.calculate_percentage_commission(base_amount, reseller.base_commission_rate or Decimal("0"))
 
         elif reseller.commission_structure == CommissionStructure.FLAT_FEE:
             # For flat fee, base_amount is treated as transaction count
@@ -101,9 +93,7 @@ class CommissionCalculator:
             )
 
         elif reseller.commission_structure == CommissionStructure.TIERED:
-            commission = cls.calculate_tiered_commission(
-                base_amount, reseller.tier_rates or {}
-            )
+            commission = cls.calculate_tiered_commission(base_amount, reseller.tier_rates or {})
 
         else:
             commission = Decimal("0.00")
@@ -147,14 +137,10 @@ class CommissionService:
             raise ValueError(f"Reseller {reseller_id} not found")
 
         # Calculate commission
-        commission_calc = self.calculator.calculate_commission(
-            reseller, base_amount, commission_type
-        )
+        commission_calc = self.calculator.calculate_commission(reseller, base_amount, commission_type)
 
         # Generate commission ID
-        commission_id = (
-            f"COM-{date.today().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
-        )
+        commission_id = f"COM-{date.today().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
 
         # Prepare commission data
         commission_data = {
@@ -189,9 +175,7 @@ class CommissionService:
 
         return commission
 
-    async def process_monthly_commissions(
-        self, reseller_id: str, month: date
-    ) -> list[ResellerCommission]:
+    async def process_monthly_commissions(self, reseller_id: str, month: date) -> list[ResellerCommission]:
         """Process all monthly commissions for a reseller"""
 
         # Get reseller's customers
@@ -294,9 +278,7 @@ class CommissionService:
     ) -> ResellerCommission:
         """Mark commission as paid"""
 
-        commission = await self.commission_repo.mark_paid(
-            commission_id, payment_reference, payment_method
-        )
+        commission = await self.commission_repo.mark_paid(commission_id, payment_reference, payment_method)
 
         if not commission:
             raise ValueError(f"Commission {commission_id} not found")
@@ -334,15 +316,11 @@ class CommissionService:
                 results["total_amount"] += commission.commission_amount
 
             except Exception as e:
-                results["failed"].append(
-                    {"commission_id": commission_id, "error": str(e)}
-                )
+                results["failed"].append({"commission_id": commission_id, "error": str(e)})
 
         return results
 
-    async def get_reseller_commission_summary(
-        self, reseller_id: str, last_n_months: int = 12
-    ) -> dict[str, Any]:
+    async def get_reseller_commission_summary(self, reseller_id: str, last_n_months: int = 12) -> dict[str, Any]:
         """Get reseller commission summary for last N months"""
 
         reseller = await self.reseller_repo.get_by_id(reseller_id)
@@ -396,9 +374,7 @@ class CommissionReportGenerator:
         self.tenant_id = tenant_id
         self.commission_service = CommissionService(db, tenant_id)
 
-    async def generate_monthly_commission_report(
-        self, month: date, tenant_id: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def generate_monthly_commission_report(self, month: date, tenant_id: Optional[str] = None) -> dict[str, Any]:
         """Generate comprehensive monthly commission report"""
 
         report = {
@@ -419,14 +395,10 @@ class CommissionReportGenerator:
 
         return report
 
-    async def generate_reseller_performance_report(
-        self, reseller_id: str, period_months: int = 6
-    ) -> dict[str, Any]:
+    async def generate_reseller_performance_report(self, reseller_id: str, period_months: int = 6) -> dict[str, Any]:
         """Generate detailed reseller performance report"""
 
-        summary = await self.commission_service.get_reseller_commission_summary(
-            reseller_id, period_months
-        )
+        summary = await self.commission_service.get_reseller_commission_summary(reseller_id, period_months)
 
         performance_report = {
             "report_type": "reseller_performance",
@@ -444,32 +416,24 @@ class CommissionReportGenerator:
 
         return performance_report
 
-    def _generate_performance_recommendations(
-        self, summary: dict[str, Any]
-    ) -> list[str]:
+    def _generate_performance_recommendations(self, summary: dict[str, Any]) -> list[str]:
         """Generate performance recommendations based on data"""
 
         recommendations = []
 
         payment_score = summary["payment_status"]["payment_reliability_score"]
         if payment_score < 90:
-            recommendations.append(
-                "Consider implementing automated payment processing to improve payment reliability"
-            )
+            recommendations.append("Consider implementing automated payment processing to improve payment reliability")
 
         avg_monthly = summary["commission_summary"]["average_monthly"]
         if avg_monthly < Decimal("1000"):
-            recommendations.append(
-                "Focus on customer acquisition to increase monthly commission potential"
-            )
+            recommendations.append("Focus on customer acquisition to increase monthly commission potential")
 
         churn_rate = summary["performance_metrics"]["customers_churned"] / max(
             1, summary["performance_metrics"]["customers_added"]
         )
         if churn_rate > 0.15:  # 15% churn
-            recommendations.append(
-                "Implement customer retention strategies to reduce churn rate"
-            )
+            recommendations.append("Implement customer retention strategies to reduce churn rate")
 
         return recommendations
 

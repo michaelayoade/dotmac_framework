@@ -4,9 +4,10 @@ from datetime import date
 from decimal import Decimal
 from typing import Optional
 
-from dotmac_isp.modules.billing.models import Subscription
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac_isp.modules.billing.models import Subscription
 
 
 class SubscriptionService:
@@ -16,9 +17,7 @@ class SubscriptionService:
         """Init   operation."""
         self.db_session = db_session
 
-    async def get_subscription_by_id(
-        self, subscription_id: str
-    ) -> Optional[Subscription]:
+    async def get_subscription_by_id(self, subscription_id: str) -> Optional[Subscription]:
         """Get subscription by ID."""
         return await self.db_session.get(Subscription, subscription_id)
 
@@ -26,18 +25,14 @@ class SubscriptionService:
         self, customer_id: str, tenant_id: str, active_only: bool = True
     ) -> list[Subscription]:
         """Get all subscriptions for a customer."""
-        query = select(Subscription).where(
-            Subscription.customer_id == customer_id, Subscription.tenant_id == tenant_id
-        )
+        query = select(Subscription).where(Subscription.customer_id == customer_id, Subscription.tenant_id == tenant_id)
         if active_only:
             query = query.where(Subscription.is_active is True)
 
         result = await self.db_session.execute(query)
         return result.scalars().all()
 
-    async def cancel_subscription(
-        self, subscription_id: str, end_date: Optional[date] = None
-    ) -> bool:
+    async def cancel_subscription(self, subscription_id: str, end_date: Optional[date] = None) -> bool:
         """Cancel a subscription."""
         subscription = await self.db_session.get(Subscription, subscription_id)
         if subscription:
@@ -47,9 +42,7 @@ class SubscriptionService:
             return True
         return False
 
-    async def update_subscription_amount(
-        self, subscription_id: str, new_amount: Decimal
-    ) -> bool:
+    async def update_subscription_amount(self, subscription_id: str, new_amount: Decimal) -> bool:
         """Update subscription amount."""
         subscription = await self.db_session.get(Subscription, subscription_id)
         if subscription:

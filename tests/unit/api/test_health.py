@@ -3,7 +3,6 @@ Test API endpoints - Clean integration tests.
 """
 
 import pytest
-
 from tests.utilities.test_helpers import assert_valid_response, create_test_client
 
 

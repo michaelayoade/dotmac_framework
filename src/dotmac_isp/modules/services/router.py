@@ -14,13 +14,13 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_isp.core.database import get_db
-from dotmac_shared.api.router_factory import RouterFactory
 from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 
 from dotmac.application import rate_limit, standard_exception_handler
 from dotmac.platform.auth.dependencies import get_current_tenant, get_current_user
+from dotmac_isp.core.database import get_db
+from dotmac_shared.api.router_factory import RouterFactory
 
 from . import schemas
 from .service import ServicesService
@@ -106,9 +106,7 @@ async def provision_service(
     current_user: dict = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Provision a service instance."""
-    return await service.provision_service_instance(
-        instance_id, current_user["user_id"]
-    )
+    return await service.provision_service_instance(instance_id, current_user["user_id"])
 
 
 @custom_router.get("/instances/{instance_id}/usage")

@@ -12,12 +12,12 @@ from .config import (
     DeploymentMode,
     IsolationLevel,
     PlatformConfig,
-    Providers,
     TenantConfig,
 )
 from .endpoints import StandardEndpoints
 from .lifecycle import StandardLifecycleManager
 from .middleware import apply_standard_middleware
+from .providers import Providers
 from .routing import RouterRegistry
 
 logger = logging.getLogger(__name__)
@@ -38,9 +38,18 @@ class DotMacApplicationFactory:
         # Create FastAPI app with platform-specific settings
         app = self._create_fastapi_app(config)
 
+        # Validate and prepare providers
+        if providers is None:
+            providers = Providers.from_env(platform=True)
+
+        try:
+            providers.validate_required_providers()
+        except RuntimeError as e:
+            logger.warning(f"Provider validation failed: {e} - continuing with available providers")
+
         # Apply standard middleware stack with providers
         applied_middleware = apply_standard_middleware(
-            app, config=config, providers=providers or config.middleware_providers
+            app, config=config, providers=providers
         )
 
         # Set up lifecycle management
@@ -59,6 +68,7 @@ class DotMacApplicationFactory:
         app.state.platform_config = config
         app.state.registration_stats = registration_stats
         app.state.applied_middleware = applied_middleware
+        app.state.providers = providers
 
         # Track created app
         self.created_apps[config.platform_name] = app
@@ -67,7 +77,7 @@ class DotMacApplicationFactory:
         logger.info(
             f"   Routers: {registration_stats['successfully_registered']}/{registration_stats['total_attempted']}"
         )
-        logger.info(f"   Middleware: {len(applied_middleware)} components applied")
+        logger.info("   Middleware: Standard middleware applied")
         logger.info("   Health checks: Enabled")
 
         return app

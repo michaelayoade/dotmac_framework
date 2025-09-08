@@ -18,7 +18,7 @@ from sqlalchemy.exc import (
     TimeoutError,
 )
 
-from ...exceptions import DatabaseError, TransactionError
+from dotmac.core.exceptions import DatabaseError, TransactionError
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ class RetryPolicy:
             delay = self.base_delay * (2**attempt)
         elif self.strategy == RetryStrategy.JITTERED:
             delay = self.base_delay * (2**attempt)
-            jitter = delay * self.jitter_ratio * random.uniform(-1, 1)
+            jitter = delay * self.jitter_ratio * random.uniform(-1, 1)  # nosec B311
             delay += jitter
         else:
             delay = self.base_delay
@@ -111,8 +111,7 @@ def with_retry(
     max_attempts: int = 3,
     base_delay: float = 1.0,
     strategy: RetryStrategy = RetryStrategy.EXPONENTIAL,
-) -> Callable[[Callable[..., T]], Callable[..., T]]:
-    ...
+) -> Callable[[Callable[..., T]], Callable[..., T]]: ...
 
 
 @overload
@@ -121,8 +120,7 @@ def with_retry(
     max_attempts: int = 3,
     base_delay: float = 1.0,
     strategy: RetryStrategy = RetryStrategy.EXPONENTIAL,
-) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
-    ...
+) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]: ...
 
 
 def with_retry(
@@ -130,7 +128,10 @@ def with_retry(
     max_attempts: int = 3,
     base_delay: float = 1.0,
     strategy: RetryStrategy = RetryStrategy.EXPONENTIAL,
-) -> Callable[[Callable[..., T]], Callable[..., T]] | Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
+) -> (
+    Callable[[Callable[..., T]], Callable[..., T]]
+    | Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]
+):
     """
     Decorator for adding retry logic to database operations.
 
@@ -198,18 +199,18 @@ def _sync_retry_operation(
         try:
             result = operation(*args, **kwargs)
             if attempt > 0:
-                logger.info(f"Operation succeeded on attempt {attempt + 1}")
+                logger.info("Operation succeeded on attempt %s", attempt + 1)
             return result
 
         except Exception as e:
             last_exception = e
 
             if not policy.should_retry(e, attempt):
-                logger.error(f"Operation failed with non-retryable exception: {e}")
+                logger.error("Operation failed with non-retryable exception: %s", e)
                 raise
 
             if attempt == policy.max_attempts - 1:
-                logger.error(f"Operation failed after {policy.max_attempts} attempts: {e}")
+                logger.error("Operation failed after {policy.max_attempts} attempts: %s", e)
                 raise
 
             delay = policy.calculate_delay(attempt)
@@ -222,7 +223,9 @@ def _sync_retry_operation(
     # This should never be reached, but just in case
     if last_exception:
         raise last_exception
-    raise RuntimeError("Retry operation completed without result or exception")
+    msg = "Retry operation completed without result or exception"
+
+    raise RuntimeError(msg)
 
 
 async def _async_retry_operation(
@@ -252,18 +255,18 @@ async def _async_retry_operation(
         try:
             result = await operation(*args, **kwargs)
             if attempt > 0:
-                logger.info(f"Async operation succeeded on attempt {attempt + 1}")
+                logger.info("Async operation succeeded on attempt %s", attempt + 1)
             return result
 
         except Exception as e:
             last_exception = e
 
             if not policy.should_retry(e, attempt):
-                logger.error(f"Async operation failed with non-retryable exception: {e}")
+                logger.error("Async operation failed with non-retryable exception: %s", e)
                 raise
 
             if attempt == policy.max_attempts - 1:
-                logger.error(f"Async operation failed after {policy.max_attempts} attempts: {e}")
+                logger.error("Async operation failed after {policy.max_attempts} attempts: %s", e)
                 raise
 
             delay = policy.calculate_delay(attempt)
@@ -276,7 +279,9 @@ async def _async_retry_operation(
     # This should never be reached, but just in case
     if last_exception:
         raise last_exception
-    raise RuntimeError("Async retry operation completed without result or exception")
+    msg = "Async retry operation completed without result or exception"
+
+    raise RuntimeError(msg)
 
 
 class CircuitBreaker:
@@ -334,7 +339,9 @@ class CircuitBreaker:
             if self._should_attempt_reset():
                 self._state = "half-open"
             else:
-                raise DatabaseError("Circuit breaker is open")
+                msg = "Circuit breaker is open"
+
+                raise DatabaseError(msg)
 
         try:
             result = func(*args, **kwargs)
@@ -350,7 +357,9 @@ class CircuitBreaker:
             if self._should_attempt_reset():
                 self._state = "half-open"
             else:
-                raise DatabaseError("Circuit breaker is open")
+                msg = "Circuit breaker is open"
+
+                raise DatabaseError(msg)
 
         try:
             result = await func(*args, **kwargs)
@@ -378,7 +387,7 @@ class CircuitBreaker:
 
         if self._failure_count >= self.failure_threshold:
             self._state = "open"
-            logger.warning(f"Circuit breaker opened after {self._failure_count} failures")
+            logger.warning("Circuit breaker opened after %s failures", self._failure_count)
 
     @property
     def state(self) -> str:

@@ -4,7 +4,6 @@ import io
 import logging
 from typing import Any, Optional
 
-from dotmac_isp.modules.billing.models import Invoice, InvoiceLineItem, Payment, Receipt
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import letter
@@ -12,6 +11,8 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from reportlab.platypus.flowables import HRFlowable
+
+from dotmac_isp.modules.billing.models import Invoice, InvoiceLineItem, Payment, Receipt
 
 logger = logging.getLogger(__name__)
 
@@ -97,9 +98,7 @@ class InvoicePDFGenerator:
             )
         )
 
-    async def generate_invoice_pdf(
-        self, invoice: Invoice, customer_data: dict[str, Any]
-    ) -> bytes:
+    async def generate_invoice_pdf(self, invoice: Invoice, customer_data: dict[str, Any]) -> bytes:
         """Generate PDF for an invoice."""
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
@@ -178,15 +177,11 @@ class InvoicePDFGenerator:
         )
 
         elements.append(header_table)
-        elements.append(
-            HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e5e7eb"))
-        )
+        elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e5e7eb")))
 
         return elements
 
-    def _build_invoice_info(
-        self, invoice: Invoice, customer_data: dict[str, Any]
-    ) -> list[Any]:
+    def _build_invoice_info(self, invoice: Invoice, customer_data: dict[str, Any]) -> list[Any]:
         """Build invoice and customer information section."""
         elements = []
 
@@ -238,9 +233,7 @@ class InvoicePDFGenerator:
                 ]
             )
 
-        table = Table(
-            data, colWidths=[2.5 * inch, 0.8 * inch, 1 * inch, 0.8 * inch, 1 * inch]
-        )
+        table = Table(data, colWidths=[2.5 * inch, 0.8 * inch, 1 * inch, 0.8 * inch, 1 * inch])
         table.setStyle(
             TableStyle(
                 [
@@ -341,9 +334,7 @@ class InvoicePDFGenerator:
                 ]
             )
 
-        payment_table = Table(
-            data, colWidths=[1 * inch, 1.2 * inch, 1 * inch, 1 * inch, 1.5 * inch]
-        )
+        payment_table = Table(data, colWidths=[1 * inch, 1.2 * inch, 1 * inch, 1 * inch, 1.5 * inch])
         payment_table.setStyle(
             TableStyle(
                 [
@@ -373,9 +364,7 @@ class InvoicePDFGenerator:
         elements = []
 
         elements.append(Spacer(1, 40))
-        elements.append(
-            HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e5e7eb"))
-        )
+        elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e5e7eb")))
         elements.append(Spacer(1, 12))
 
         footer_text = f"""
@@ -412,9 +401,7 @@ class ReceiptPDFGenerator:
             "tax_id": "TAX123456789",
         }
 
-    async def generate_receipt_pdf(
-        self, receipt: Receipt, customer_data: dict[str, Any]
-    ) -> bytes:
+    async def generate_receipt_pdf(self, receipt: Receipt, customer_data: dict[str, Any]) -> bytes:
         """Generate PDF receipt for a payment."""
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -475,15 +462,11 @@ class PDFBatchProcessor:
         for invoice in invoices:
             try:
                 customer_data = customer_data_map.get(str(invoice.customer_id), {})
-                pdf_data = await self.invoice_generator.generate_invoice_pdf(
-                    invoice, customer_data
-                )
+                pdf_data = await self.invoice_generator.generate_invoice_pdf(invoice, customer_data)
                 results[invoice.invoice_number] = pdf_data
                 logger.info(f"Generated PDF for invoice {invoice.invoice_number}")
             except Exception as e:
-                logger.error(
-                    f"Failed to generate PDF for invoice {invoice.invoice_number}: {e}"
-                )
+                logger.error(f"Failed to generate PDF for invoice {invoice.invoice_number}: {e}")
                 results[invoice.invoice_number] = None
 
         return results
@@ -497,15 +480,11 @@ class PDFBatchProcessor:
         for receipt in receipts:
             try:
                 customer_data = customer_data_map.get(receipt.customer_name, {})
-                pdf_data = await self.receipt_generator.generate_receipt_pdf(
-                    receipt, customer_data
-                )
+                pdf_data = await self.receipt_generator.generate_receipt_pdf(receipt, customer_data)
                 results[receipt.receipt_number] = pdf_data
                 logger.info(f"Generated PDF for receipt {receipt.receipt_number}")
             except Exception as e:
-                logger.error(
-                    f"Failed to generate PDF for receipt {receipt.receipt_number}: {e}"
-                )
+                logger.error(f"Failed to generate PDF for receipt {receipt.receipt_number}: {e}")
                 results[receipt.receipt_number] = None
 
         return results

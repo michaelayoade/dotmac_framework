@@ -1,0 +1,21 @@
+[Unit]
+Description=DotMac Workflow Health Monitor
+After=dotmac-management.service
+Wants=dotmac-management.service
+
+[Service]
+Type=exec
+User=dotmac
+Group=dotmac
+WorkingDirectory=/opt/dotmac
+Environment=PYTHONPATH=/opt/dotmac/src
+EnvironmentFile=/opt/dotmac/.env.production
+ExecStart=/opt/dotmac/.venv/bin/python /opt/dotmac/.dev-artifacts/workflow_health_monitor.py
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dotmac-workflow-monitor
+
+[Install]
+WantedBy=multi-user.target

@@ -143,18 +143,17 @@ class BaseProvider(BaseSecretsProvider):
         """
         if response.status_code == 404:
             raise SecretNotFoundError(f"Secret not found: {path}")
-        elif response.status_code == 401:
+        if response.status_code == 401:
             raise ProviderAuthenticationError(f"Authentication failed for secret: {path}")
-        elif response.status_code == 403:
+        if response.status_code == 403:
             raise ProviderAuthorizationError(f"Access denied for secret: {path}")
-        elif response.status_code >= 500:
+        if response.status_code >= 500:
             raise ProviderConnectionError(
                 f"Provider server error {response.status_code} for secret: {path}"
             )
-        else:
-            raise SecretsProviderError(
-                f"HTTP {response.status_code} error for secret {path}: " f"{response.text}"
-            )
+        raise SecretsProviderError(
+            f"HTTP {response.status_code} error for secret {path}: " f"{response.text}"
+        )
 
     def _validate_secret_data(self, data: Any, path: str) -> SecretData:
         """

@@ -4,9 +4,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.db.repositories import BaseRepository
 from sqlalchemy import and_, desc, func, or_
 from sqlalchemy.orm import Session, joinedload
+
+from dotmac_shared.db.repositories import BaseRepository
 
 from .models import (
     AlertEvent,
@@ -81,9 +82,7 @@ class ServiceComponentRepository(BaseRepository[ServiceComponent]):
             .all()
         )
 
-    async def get_components_with_health_checks(
-        self, limit: int = 100
-    ) -> list[ServiceComponent]:
+    async def get_components_with_health_checks(self, limit: int = 100) -> list[ServiceComponent]:
         """Get components with their latest health checks."""
         return (
             self.db.query(ServiceComponent)
@@ -144,9 +143,7 @@ class HealthCheckRepository(BaseRepository[HealthCheck]):
         self.db.refresh(health_check)
         return health_check
 
-    async def get_latest_check_for_component(
-        self, component_id: UUID
-    ) -> Optional[HealthCheck]:
+    async def get_latest_check_for_component(self, component_id: UUID) -> Optional[HealthCheck]:
         """Get the latest health check for a component."""
         return (
             self.db.query(HealthCheck)
@@ -195,9 +192,7 @@ class HealthCheckRepository(BaseRepository[HealthCheck]):
             .all()
         )
 
-    async def get_component_uptime(
-        self, component_id: UUID, hours: int = 24
-    ) -> dict[str, Any]:
+    async def get_component_uptime(self, component_id: UUID, hours: int = 24) -> dict[str, Any]:
         """Calculate uptime percentage for a component."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
 
@@ -226,9 +221,7 @@ class HealthCheckRepository(BaseRepository[HealthCheck]):
             .count()
         )
 
-        uptime_percentage = (
-            (healthy_checks / total_checks * 100) if total_checks > 0 else 0
-        )
+        uptime_percentage = (healthy_checks / total_checks * 100) if total_checks > 0 else 0
 
         return {
             "uptime_percentage": uptime_percentage,
@@ -238,9 +231,7 @@ class HealthCheckRepository(BaseRepository[HealthCheck]):
             "period_hours": hours,
         }
 
-    async def get_response_time_statistics(
-        self, component_id: UUID, hours: int = 24
-    ) -> dict[str, float]:
+    async def get_response_time_statistics(self, component_id: UUID, hours: int = 24) -> dict[str, float]:
         """Get response time statistics for a component."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
 
@@ -306,9 +297,7 @@ class SystemMetricRepository(BaseRepository[SystemMetric]):
         self.db.refresh(metric)
         return metric
 
-    async def get_metrics_by_name(
-        self, metric_name: str, hours: int = 24, limit: int = 1000
-    ) -> list[SystemMetric]:
+    async def get_metrics_by_name(self, metric_name: str, hours: int = 24, limit: int = 1000) -> list[SystemMetric]:
         """Get metrics by name within time range."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return (
@@ -325,9 +314,7 @@ class SystemMetricRepository(BaseRepository[SystemMetric]):
             .all()
         )
 
-    async def get_metrics_by_source(
-        self, source: str, hours: int = 24
-    ) -> list[SystemMetric]:
+    async def get_metrics_by_source(self, source: str, hours: int = 24) -> list[SystemMetric]:
         """Get metrics by source within time range."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return (
@@ -343,9 +330,7 @@ class SystemMetricRepository(BaseRepository[SystemMetric]):
             .all()
         )
 
-    async def get_metric_statistics(
-        self, metric_name: str, hours: int = 24
-    ) -> dict[str, float]:
+    async def get_metric_statistics(self, metric_name: str, hours: int = 24) -> dict[str, float]:
         """Get statistical summary for a metric."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
 
@@ -377,11 +362,7 @@ class SystemMetricRepository(BaseRepository[SystemMetric]):
         """Get latest metrics for a specific host."""
         return (
             self.db.query(SystemMetric)
-            .filter(
-                and_(
-                    SystemMetric.tenant_id == self.tenant_id, SystemMetric.host == host
-                )
-            )
+            .filter(and_(SystemMetric.tenant_id == self.tenant_id, SystemMetric.host == host))
             .order_by(desc(SystemMetric.timestamp))
             .all()
         )
@@ -435,9 +416,7 @@ class PerformanceMetricRepository(BaseRepository[PerformanceMetric]):
         self.db.refresh(metric)
         return metric
 
-    async def get_endpoint_metrics(
-        self, endpoint: str, hours: int = 24, limit: int = 1000
-    ) -> list[PerformanceMetric]:
+    async def get_endpoint_metrics(self, endpoint: str, hours: int = 24, limit: int = 1000) -> list[PerformanceMetric]:
         """Get performance metrics for a specific endpoint."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return (
@@ -454,9 +433,7 @@ class PerformanceMetricRepository(BaseRepository[PerformanceMetric]):
             .all()
         )
 
-    async def get_endpoint_statistics(
-        self, endpoint: str, hours: int = 24
-    ) -> dict[str, Any]:
+    async def get_endpoint_statistics(self, endpoint: str, hours: int = 24) -> dict[str, Any]:
         """Get performance statistics for an endpoint."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
 
@@ -466,9 +443,7 @@ class PerformanceMetricRepository(BaseRepository[PerformanceMetric]):
                 func.min(PerformanceMetric.response_time_ms).label("min_response_time"),
                 func.max(PerformanceMetric.response_time_ms).label("max_response_time"),
                 func.count(PerformanceMetric.id).label("total_requests"),
-                func.count(
-                    func.nullif(PerformanceMetric.status_code >= 400, False)
-                ).label("error_count"),
+                func.count(func.nullif(PerformanceMetric.status_code >= 400, False)).label("error_count"),
                 func.avg(PerformanceMetric.database_query_time_ms).label("avg_db_time"),
                 func.sum(PerformanceMetric.cache_hits).label("total_cache_hits"),
                 func.sum(PerformanceMetric.cache_misses).label("total_cache_misses"),
@@ -493,9 +468,7 @@ class PerformanceMetricRepository(BaseRepository[PerformanceMetric]):
             "min_response_time_ms": float(result.min_response_time or 0),
             "max_response_time_ms": float(result.max_response_time or 0),
             "total_requests": total_requests,
-            "error_rate_percentage": (error_count / total_requests * 100)
-            if total_requests > 0
-            else 0,
+            "error_rate_percentage": (error_count / total_requests * 100) if total_requests > 0 else 0,
             "requests_per_hour": total_requests / hours if hours > 0 else 0,
             "average_db_time_ms": float(result.avg_db_time or 0),
             "cache_hit_rate": (cache_hits / (cache_hits + cache_misses) * 100)
@@ -503,9 +476,7 @@ class PerformanceMetricRepository(BaseRepository[PerformanceMetric]):
             else 0,
         }
 
-    async def get_slow_requests(
-        self, threshold_ms: float = 1000, hours: int = 24
-    ) -> list[PerformanceMetric]:
+    async def get_slow_requests(self, threshold_ms: float = 1000, hours: int = 24) -> list[PerformanceMetric]:
         """Get slow requests exceeding threshold."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return (
@@ -587,9 +558,7 @@ class MonitoringAlertRepository(BaseRepository[MonitoringAlert]):
             .all()
         )
 
-    async def resolve_alert(
-        self, alert_id: UUID, resolution_notes: Optional[str] = None
-    ) -> bool:
+    async def resolve_alert(self, alert_id: UUID, resolution_notes: Optional[str] = None) -> bool:
         """Mark an alert as resolved."""
         result = (
             self.db.query(MonitoringAlert)
@@ -668,9 +637,7 @@ class MonitoringAlertRepository(BaseRepository[MonitoringAlert]):
             "active_alerts": active_alerts,
             "resolved_alerts": resolved_alerts,
             "critical_alerts": critical_alerts,
-            "resolution_rate": (resolved_alerts / total_alerts * 100)
-            if total_alerts > 0
-            else 0,
+            "resolution_rate": (resolved_alerts / total_alerts * 100) if total_alerts > 0 else 0,
             "period_days": days,
         }
 
@@ -713,9 +680,7 @@ class AlertEventRepository(BaseRepository[AlertEvent]):
         self.db.refresh(event)
         return event
 
-    async def get_events_for_alert(
-        self, alert_id: UUID, limit: int = 100
-    ) -> list[AlertEvent]:
+    async def get_events_for_alert(self, alert_id: UUID, limit: int = 100) -> list[AlertEvent]:
         """Get events for a specific alert."""
         return (
             self.db.query(AlertEvent)
@@ -730,9 +695,7 @@ class AlertEventRepository(BaseRepository[AlertEvent]):
             .all()
         )
 
-    async def get_recent_events(
-        self, hours: int = 24, limit: int = 100
-    ) -> list[AlertEvent]:
+    async def get_recent_events(self, hours: int = 24, limit: int = 100) -> list[AlertEvent]:
         """Get recent alert events."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return (
@@ -867,9 +830,7 @@ class MetricThresholdRepository(BaseRepository[MetricThreshold]):
             .all()
         )
 
-    async def evaluate_threshold(
-        self, threshold: MetricThreshold, current_value: float
-    ) -> tuple[bool, str]:
+    async def evaluate_threshold(self, threshold: MetricThreshold, current_value: float) -> tuple[bool, str]:
         """Evaluate if a threshold is breached."""
         operator = threshold.comparison_operator
         warning_threshold = threshold.warning_threshold

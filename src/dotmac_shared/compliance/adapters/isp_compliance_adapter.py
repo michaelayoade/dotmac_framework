@@ -65,9 +65,7 @@ class ISPComplianceAdapter:
             if self.cache_service:
                 await self.cache_service.initialize()
 
-            logger.info(
-                f"✅ ISP Compliance Adapter initialized for tenant {self.tenant_id}"
-            )
+            logger.info(f"✅ ISP Compliance Adapter initialized for tenant {self.tenant_id}")
             return True
 
         except Exception as e:
@@ -237,9 +235,7 @@ class ISPComplianceAdapter:
     ) -> dict[str, Any]:
         """Get ISP compliance dashboard data."""
 
-        dashboard = await self.compliance_service.get_compliance_dashboard(
-            period_days=period_days
-        )
+        dashboard = await self.compliance_service.get_compliance_dashboard(period_days=period_days)
 
         # Add ISP-specific formatting
         dashboard["tenant_id"] = self.tenant_id
@@ -267,9 +263,7 @@ class ISPComplianceAdapter:
         # Simulate access log
         access_log = [
             {
-                "timestamp": (
-                    datetime.now(timezone.utc) - timedelta(hours=i)
-                ).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) - timedelta(hours=i)).isoformat(),
                 "event_type": "data_access",
                 "resource": f"customer_{customer_id}",
                 "user": f"user_{i % 3 + 1}",
@@ -302,9 +296,7 @@ class ISPComplianceAdapter:
             "system_id": payment_system_id,
             "framework": "PCI_DSS",
             "checks": results,
-            "overall_status": "compliant"
-            if all(r["status"] == "compliant" for r in results)
-            else "non_compliant",
+            "overall_status": "compliant" if all(r["status"] == "compliant" for r in results) else "non_compliant",
             "checked_at": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -351,9 +343,7 @@ class ISPComplianceAdapter:
     async def health_check(self) -> dict[str, Any]:
         """Health check for the ISP compliance adapter."""
         try:
-            compliance_health = (
-                await self.compliance_service._health_check_stateful_service()
-            )
+            compliance_health = await self.compliance_service._health_check_stateful_service()
 
             return {
                 "adapter": "healthy",

@@ -255,20 +255,7 @@ monitoring:
     max_files: 7
     compress: true
 
-  prometheus:
-    enabled: true
-    port: 9090
-    scrape_interval: 20s
-    retention: 15d
-    external_labels:
-      environment: staging
-      cluster: dotmac-staging
-
-  grafana:
-    enabled: true
-    port: 3000
-    admin_password: ${STAGING_GRAFANA_ADMIN_PASSWORD}
-    auto_provisioning: true
+  # Monitoring is provided by SigNoz (OTLP)
 
   alerting:
     enabled: true

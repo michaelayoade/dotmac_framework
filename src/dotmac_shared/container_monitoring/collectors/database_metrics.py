@@ -103,12 +103,8 @@ class DatabaseMetricsSnapshot:
     server_uptime_seconds: float = 0.0
 
     # Core metrics
-    connection_metrics: ConnectionPoolMetrics = field(
-        default_factory=ConnectionPoolMetrics
-    )
-    query_metrics: QueryPerformanceMetrics = field(
-        default_factory=QueryPerformanceMetrics
-    )
+    connection_metrics: ConnectionPoolMetrics = field(default_factory=ConnectionPoolMetrics)
+    query_metrics: QueryPerformanceMetrics = field(default_factory=QueryPerformanceMetrics)
     cache_metrics: CacheMetrics = field(default_factory=CacheMetrics)
     replication_metrics: ReplicationMetrics = field(default_factory=ReplicationMetrics)
 
@@ -256,17 +252,13 @@ class DatabaseMetricsCollector:
                 database_configs = self._auto_detect_databases(container)
 
             if not database_configs:
-                self.logger.warning(
-                    f"No database configurations found for container {container_id}"
-                )
+                self.logger.warning(f"No database configurations found for container {container_id}")
                 return snapshots
 
             # Collect metrics for each database
             for db_name, db_config in database_configs.items():
                 try:
-                    snapshot = await self._collect_single_database_metrics(
-                        container, db_name, db_config
-                    )
+                    snapshot = await self._collect_single_database_metrics(container, db_name, db_config)
 
                     # Calculate rates if we have previous data
                     cache_key = f"{container_id}:{db_name}"
@@ -285,9 +277,7 @@ class DatabaseMetricsCollector:
         except docker.errors.NotFound:
             self.logger.error(f"Container {container_id} not found")
         except Exception as e:
-            self.logger.error(
-                f"Database metrics collection failed for {container_id}: {e}"
-            )
+            self.logger.error(f"Database metrics collection failed for {container_id}: {e}")
 
         return snapshots
 
@@ -295,9 +285,7 @@ class DatabaseMetricsCollector:
         self, container: Container, db_name: str, db_config: dict[str, str]
     ) -> DatabaseMetricsSnapshot:
         """Collect metrics for a single database"""
-        snapshot = DatabaseMetricsSnapshot(
-            database_type=db_name, database_name=db_config.get("database", db_name)
-        )
+        snapshot = DatabaseMetricsSnapshot(database_type=db_name, database_name=db_config.get("database", db_name))
 
         start_time = time.time()
 
@@ -315,9 +303,7 @@ class DatabaseMetricsCollector:
                 await self._collect_sqlite_metrics(container, db_config, snapshot)
             else:
                 # Generic database metrics
-                await self._collect_generic_database_metrics(
-                    container, db_config, snapshot
-                )
+                await self._collect_generic_database_metrics(container, db_config, snapshot)
 
             # Calculate response time
             snapshot.response_time_ms = (time.time() - start_time) * 1000
@@ -363,16 +349,12 @@ class DatabaseMetricsCollector:
             snapshot.cache_metrics.cache_hit_ratio = 95.5
             snapshot.cache_metrics.buffer_pool_hit_ratio = 98.2
             snapshot.cache_metrics.cache_size_bytes = 256 * 1024 * 1024  # 256MB
-            snapshot.cache_metrics.cache_used_bytes = int(
-                snapshot.cache_metrics.cache_size_bytes * 0.75
-            )
+            snapshot.cache_metrics.cache_used_bytes = int(snapshot.cache_metrics.cache_size_bytes * 0.75)
 
             # Storage metrics (simulated)
             snapshot.data_size_bytes = 2 * 1024 * 1024 * 1024  # 2GB
             snapshot.index_size_bytes = 512 * 1024 * 1024  # 512MB
-            snapshot.total_size_bytes = (
-                snapshot.data_size_bytes + snapshot.index_size_bytes
-            )
+            snapshot.total_size_bytes = snapshot.data_size_bytes + snapshot.index_size_bytes
             snapshot.table_count = 25
 
             # Version and uptime (simulated)
@@ -480,18 +462,14 @@ class DatabaseMetricsCollector:
 
             # Cache metrics (InnoDB buffer pool)
             snapshot.cache_metrics.buffer_pool_size = 512 * 1024 * 1024  # 512MB
-            snapshot.cache_metrics.buffer_pool_used = int(
-                snapshot.cache_metrics.buffer_pool_size * 0.8
-            )
+            snapshot.cache_metrics.buffer_pool_used = int(snapshot.cache_metrics.buffer_pool_size * 0.8)
             snapshot.cache_metrics.buffer_pool_hit_ratio = 97.8
             snapshot.cache_metrics.cache_hit_ratio = 97.8
 
             # Storage metrics
             snapshot.data_size_bytes = 1024 * 1024 * 1024  # 1GB
             snapshot.index_size_bytes = 256 * 1024 * 1024  # 256MB
-            snapshot.total_size_bytes = (
-                snapshot.data_size_bytes + snapshot.index_size_bytes
-            )
+            snapshot.total_size_bytes = snapshot.data_size_bytes + snapshot.index_size_bytes
             snapshot.table_count = 18
 
             # Version and uptime
@@ -538,16 +516,12 @@ class DatabaseMetricsCollector:
             # Storage metrics
             snapshot.data_size_bytes = 750 * 1024 * 1024  # 750MB
             snapshot.index_size_bytes = 150 * 1024 * 1024  # 150MB
-            snapshot.total_size_bytes = (
-                snapshot.data_size_bytes + snapshot.index_size_bytes
-            )
+            snapshot.total_size_bytes = snapshot.data_size_bytes + snapshot.index_size_bytes
             snapshot.table_count = 12  # Collections
 
             # Cache metrics (WiredTiger cache)
             snapshot.cache_metrics.cache_size_bytes = 256 * 1024 * 1024  # 256MB
-            snapshot.cache_metrics.cache_used_bytes = int(
-                snapshot.cache_metrics.cache_size_bytes * 0.6
-            )
+            snapshot.cache_metrics.cache_used_bytes = int(snapshot.cache_metrics.cache_size_bytes * 0.6)
             snapshot.cache_metrics.cache_hit_ratio = 94.5
 
             # Version and uptime
@@ -727,20 +701,13 @@ class DatabaseMetricsCollector:
                 return
 
             # Calculate queries per second
-            query_delta = (
-                current_snapshot.query_metrics.total_queries
-                - previous_snapshot.query_metrics.total_queries
-            )
-            current_snapshot.query_metrics.queries_per_second = max(
-                0, query_delta / time_delta
-            )
+            query_delta = current_snapshot.query_metrics.total_queries - previous_snapshot.query_metrics.total_queries
+            current_snapshot.query_metrics.queries_per_second = max(0, query_delta / time_delta)
 
         except Exception as e:
             self.logger.error(f"Failed to calculate database rates: {e}")
 
-    def clear_cache(
-        self, container_id: Optional[str] = None, db_name: Optional[str] = None
-    ) -> None:
+    def clear_cache(self, container_id: Optional[str] = None, db_name: Optional[str] = None) -> None:
         """Clear cached data for rate calculations"""
         if container_id and db_name:
             cache_key = f"{container_id}:{db_name}"
@@ -748,11 +715,7 @@ class DatabaseMetricsCollector:
             self._collection_timestamps.pop(cache_key, None)
         elif container_id:
             # Clear all entries for the container
-            keys_to_remove = [
-                k
-                for k in self._previous_snapshots.keys()
-                if k.startswith(f"{container_id}:")
-            ]
+            keys_to_remove = [k for k in self._previous_snapshots.keys() if k.startswith(f"{container_id}:")]
             for key in keys_to_remove:
                 self._previous_snapshots.pop(key, None)
                 self._collection_timestamps.pop(key, None)

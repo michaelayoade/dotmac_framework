@@ -682,28 +682,19 @@ graph LR
 graph LR
     subgraph "Application"
         APP[FastAPI App]
-        METRICS[/metrics endpoint]
     end
 
-    subgraph "Collection"
-        PROM[Prometheus]
-        LOKI[Loki]
-        TEMPO[Tempo]
+    subgraph "SigNoz"
+        COLLECTOR[OTEL Collector]
+        QUERY[SigNoz Query Service]
+        UI[SigNoz Frontend]
+        CLICK[ClickHouse]
     end
 
-    subgraph "Visualization"
-        GRAF[Grafana]
-        ALERT[AlertManager]
-    end
-
-    APP --> METRICS
-    METRICS --> PROM
-    APP --> LOKI
-    APP --> TEMPO
-    PROM --> GRAF
-    LOKI --> GRAF
-    TEMPO --> GRAF
-    PROM --> ALERT
+    APP --> COLLECTOR
+    COLLECTOR --> CLICK
+    CLICK --> QUERY
+    QUERY --> UI
 ```
 
 ### Key Metrics

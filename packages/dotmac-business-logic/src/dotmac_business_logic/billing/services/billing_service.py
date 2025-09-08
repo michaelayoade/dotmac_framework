@@ -7,21 +7,48 @@ invoice generation, payment processing, and usage tracking.
 
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Any, Optional
+
+# NOTE: Model classes (Invoice, Payment, Subscription, etc.) should be imported
+# from the actual implementation packages (e.g., dotmac_isp.modules.billing.models)
+# This service is designed to work with any model implementation that follows
+# the expected interface. For now, we'll use type hints from protocols.
+from typing import TYPE_CHECKING, Any, Optional
 from uuid import UUID, uuid4
 
+from dateutil.relativedelta import relativedelta
+
+# Import enums from core models
 from ..core.models import (
     BillingCycle,
     BillingPeriod,
-    Invoice,
-    InvoiceLineItem,
     InvoiceStatus,
-    Payment,
     PaymentStatus,
-    Subscription,
     SubscriptionStatus,
-    UsageRecord,
 )
+
+if TYPE_CHECKING:
+    # These would normally come from the consuming package's models
+    class Invoice:
+        pass
+
+    class InvoiceLineItem:
+        pass
+
+    class Payment:
+        pass
+
+    class Subscription:
+        pass
+
+    class UsageRecord:
+        pass
+else:
+    # Runtime type aliases - use Any for runtime
+    Invoice = Any
+    InvoiceLineItem = Any
+    Payment = Any
+    Subscription = Any
+    UsageRecord = Any
 from ..schemas.billing_schemas import SubscriptionCreate, UsageRecordCreate
 from ..services.protocols import (
     BillingPlanRepositoryProtocol,
@@ -40,6 +67,11 @@ from ..services.protocols import (
 
 class BillingService:
     """Main billing service implementation."""
+
+    @staticmethod
+    def _quantize_currency(amount: Decimal) -> Decimal:
+        """Quantize decimal amounts to 2 decimal places for currency precision."""
+        return amount.quantize(Decimal('0.01'))
 
     def __init__(
         self,
@@ -94,15 +126,17 @@ class BillingService:
 
         # Set defaults
 
-        # Calculate next billing date based on plan cycle
-        next_billing_date = self._calculate_next_billing_date(
-            start_date, plan.billing_cycle
-        )
-
         # Calculate trial end date if plan has trial period
         trial_end_date = None
         if plan.trial_days > 0:
             trial_end_date = start_date + timedelta(days=plan.trial_days)
+
+        # Calculate next billing date based on plan cycle
+        # If there's a trial, billing starts after trial ends
+        billing_start_date = trial_end_date if trial_end_date else start_date
+        next_billing_date = self._calculate_next_billing_date(
+            billing_start_date, plan.billing_cycle
+        )
 
         # Create subscription data
         subscription_data = SubscriptionCreate(
@@ -237,21 +271,30 @@ class BillingService:
         for line_item in line_items:
             self.db.add(line_item)
 
-        # Calculate totals
+        # Calculate totals and line-level taxes
         invoice.subtotal = billing_period.total_amount
+        total_tax_amount = Decimal("0")
 
-        # Calculate tax if service is available
-        tax_amount = Decimal("0")
+        # Calculate tax per line item respecting taxable flag
         if self.tax_service:
-            tax_result = await self.tax_service.calculate_tax(
-                invoice.subtotal, customer
-            )
-            tax_amount = Decimal(str(tax_result.get("amount", 0)))
-            invoice.tax_type = tax_result.get("tax_type", "none")
-            invoice.tax_rate = Decimal(str(tax_result.get("rate", 0)))
+            for line_item in line_items:
+                if line_item.taxable:
+                    tax_result = await self.tax_service.calculate_tax(
+                        line_item.line_total, customer
+                    )
+                    line_tax = Decimal(str(tax_result.get("amount", 0)))
+                    line_item.tax_amount = line_tax.quantize(Decimal('0.01'))
+                    total_tax_amount += line_item.tax_amount
 
-        invoice.tax_amount = tax_amount
-        invoice.total_amount = invoice.subtotal + tax_amount
+                    # Set tax type and rate on invoice from first taxable line
+                    if not hasattr(invoice, 'tax_type') or not invoice.tax_type:
+                        invoice.tax_type = tax_result.get("tax_type", "none")
+                        invoice.tax_rate = Decimal(str(tax_result.get("rate", 0)))
+                else:
+                    line_item.tax_amount = Decimal("0")
+
+        invoice.tax_amount = total_tax_amount.quantize(Decimal('0.01'))
+        invoice.total_amount = (invoice.subtotal + invoice.tax_amount).quantize(Decimal('0.01'))
         invoice.amount_due = invoice.total_amount
 
         await self.db.commit()
@@ -260,9 +303,22 @@ class BillingService:
         return invoice
 
     async def process_payment(
-        self, invoice_id: UUID, payment_method_id: str, amount: Optional[Decimal] = None
+        self, invoice_id: UUID, payment_method_id: str, amount: Optional[Decimal] = None,
+        idempotency_key: Optional[str] = None
     ) -> Payment:
         """Process payment for an invoice."""
+
+        # Generate idempotency key if not provided
+        if idempotency_key is None:
+            idempotency_key = f"pay_{invoice_id}_{payment_method_id}_{int(datetime.now(timezone.utc).timestamp())}"
+
+        # Check for existing payment with same idempotency key
+        if hasattr(self.payment_repo, 'get_by_idempotency_key'):
+            existing_payment = await self.payment_repo.get_by_idempotency_key(
+                idempotency_key, self.default_tenant_id
+            )
+            if existing_payment:
+                return existing_payment
 
         invoice = await self.invoice_repo.get(
             invoice_id, self.default_tenant_id, load_relationships=["customer"]
@@ -272,7 +328,9 @@ class BillingService:
             raise ValueError(f"Invoice {invoice_id} not found")
 
         if amount is None:
-            amount = invoice.amount_due
+            amount = invoice.amount_due.quantize(Decimal('0.01'))
+        else:
+            amount = amount.quantize(Decimal('0.01'))
 
         customer = invoice.customer
 
@@ -286,6 +344,7 @@ class BillingService:
             status=PaymentStatus.PENDING,
             payment_date=datetime.now(timezone.utc),
             tenant_id=self.default_tenant_id,
+            idempotency_key=idempotency_key,
         )
 
         payment.payment_number = f"PAY-{uuid4().hex[:8].upper()}"
@@ -295,36 +354,51 @@ class BillingService:
 
         # Process through gateway if available
         if self.payment_gateway:
-            gateway_result = await self.payment_gateway.process_payment(
-                amount=amount,
-                currency=invoice.currency,
-                payment_method_id=payment_method_id,
-                customer_id=str(customer.id),
-                metadata={"invoice_id": str(invoice.id), "payment_id": str(payment.id)},
-            )
-
-            payment.gateway_transaction_id = gateway_result.get("transaction_id")
-            payment.authorization_code = gateway_result.get("authorization_code")
-
-            if gateway_result.get("status") == "completed":
-                payment.status = PaymentStatus.COMPLETED
-                payment.processed_date = datetime.now(timezone.utc)
-
-                # Update invoice
-                invoice.amount_paid += amount
-                invoice.amount_due = max(
-                    Decimal("0"), invoice.total_amount - invoice.amount_paid
+            try:
+                gateway_result = await self.payment_gateway.process_payment(
+                    amount=amount,
+                    currency=invoice.currency,
+                    payment_method_id=payment_method_id,
+                    customer_id=str(customer.id),
+                    idempotency_key=idempotency_key,
+                    metadata={"invoice_id": str(invoice.id), "payment_id": str(payment.id)},
                 )
 
-                if invoice.amount_due <= 0:
-                    invoice.status = InvoiceStatus.PAID
+                payment.gateway_transaction_id = gateway_result.get("transaction_id")
+                payment.authorization_code = gateway_result.get("authorization_code")
+
+                if gateway_result.get("status") == "completed":
+                    payment.status = PaymentStatus.SUCCESS
+                    payment.processed_date = datetime.now(timezone.utc)
+
+                    # Update invoice amounts with quantization
+                    invoice.amount_paid = (invoice.amount_paid + amount).quantize(Decimal('0.01'))
+                    invoice.amount_due = max(
+                        Decimal("0"), (invoice.total_amount - invoice.amount_paid).quantize(Decimal('0.01'))
+                    )
+
+                    if invoice.amount_due <= 0:
+                        invoice.status = InvoiceStatus.PAID
+                elif gateway_result.get("status") == "failed":
+                    payment.status = PaymentStatus.FAILED
+                    payment.failure_reason = gateway_result.get("error_message", "Payment failed")
+
+            except Exception as e:
+                # Handle gateway errors
+                payment.status = PaymentStatus.FAILED
+                payment.failure_reason = str(e)
+                # Don't re-raise to allow payment record to be saved with failure status
 
         await self.db.commit()
 
         # Send notification
-        if self.notification_service and payment.status == PaymentStatus.COMPLETED:
+        if self.notification_service and payment.status == PaymentStatus.SUCCESS:
             await self.notification_service.send_payment_notification(
                 customer, payment, "payment_received"
+            )
+        elif self.notification_service and payment.status == PaymentStatus.FAILED:
+            await self.notification_service.send_payment_notification(
+                customer, payment, "payment_failed"
             )
 
         return payment
@@ -404,29 +478,13 @@ class BillingService:
         if billing_cycle == BillingCycle.WEEKLY:
             return current_date + timedelta(weeks=1)
         elif billing_cycle == BillingCycle.MONTHLY:
-            # Add one month
-            if current_date.month == 12:
-                return current_date.replace(year=current_date.year + 1, month=1)
-            else:
-                return current_date.replace(month=current_date.month + 1)
+            return current_date + relativedelta(months=1)
         elif billing_cycle == BillingCycle.QUARTERLY:
-            # Add 3 months
-            new_month = current_date.month + 3
-            new_year = current_date.year
-            if new_month > 12:
-                new_month -= 12
-                new_year += 1
-            return current_date.replace(year=new_year, month=new_month)
+            return current_date + relativedelta(months=3)
         elif billing_cycle == BillingCycle.SEMI_ANNUALLY:
-            # Add 6 months
-            new_month = current_date.month + 6
-            new_year = current_date.year
-            if new_month > 12:
-                new_month -= 12
-                new_year += 1
-            return current_date.replace(year=new_year, month=new_month)
+            return current_date + relativedelta(months=6)
         elif billing_cycle == BillingCycle.ANNUALLY:
-            return current_date.replace(year=current_date.year + 1)
+            return current_date + relativedelta(years=1)
         else:
             # ONE_TIME - no next billing date
             return current_date

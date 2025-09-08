@@ -45,9 +45,7 @@ class ServiceRegistry(IServiceRegistry):
         self._instances: dict[str, Any] = {}  # For singleton services
         self._singleton_types: set = set()
 
-    def register(
-        self, service_type: type[T], factory: ServiceFactory, singleton: bool = False
-    ) -> None:
+    def register(self, service_type: type[T], factory: ServiceFactory, singleton: bool = False) -> None:
         """Register a service factory.
 
         Args:
@@ -109,9 +107,7 @@ class ServiceRegistry(IServiceRegistry):
         """
         if tenant_id:
             # Clear only for specific tenant
-            keys_to_remove = [
-                key for key in self._instances.keys() if key.endswith(f"_{tenant_id}")
-            ]
+            keys_to_remove = [key for key in self._instances.keys() if key.endswith(f"_{tenant_id}")]
             for key in keys_to_remove:
                 del self._instances[key]
         else:
@@ -132,9 +128,7 @@ def get_service_registry() -> IServiceRegistry:
     return _service_registry
 
 
-def register_service(
-    service_type: type[T], factory: ServiceFactory, singleton: bool = False
-):
+def register_service(service_type: type[T], factory: ServiceFactory, singleton: bool = False):
     """Decorator to register a service factory.
 
     Args:
@@ -192,9 +186,7 @@ class ServiceBoundary:
 class ServiceContext:
     """Context manager for service lifecycle management."""
 
-    def __init__(
-        self, db, tenant_id: str, registry: Optional["ServiceRegistry"] = None
-    ):
+    def __init__(self, db, tenant_id: str, registry: Optional["ServiceRegistry"] = None):
         """Initialize service context."""
         self.db = db
         self.tenant_id = tenant_id
@@ -204,9 +196,7 @@ class ServiceContext:
     def get_service(self, service_type: type[T], **kwargs) -> T:
         """Get service instance within this context."""
         if service_type not in self._services:
-            self._services[service_type] = self.registry.get(
-                service_type, self.db, self.tenant_id, **kwargs
-            )
+            self._services[service_type] = self.registry.get(service_type, self.db, self.tenant_id, **kwargs)
         return self._services[service_type]
 
     def __enter__(self):
@@ -235,9 +225,7 @@ class DomainService:
     def validate_tenant_access(self, resource_tenant_id: UUID) -> None:
         """Validate tenant access to resource."""
         if resource_tenant_id != self.tenant_id:
-            raise PermissionError(
-                f"Service {self.service_name} cannot access resource from different tenant"
-            )
+            raise PermissionError(f"Service {self.service_name} cannot access resource from different tenant")
 
 
 # Service health check
@@ -248,9 +236,7 @@ class ServiceHealthCheck:
         """Init   operation."""
         self.registry = registry
 
-    def check_service_health(
-        self, service_type: type, db: Session, tenant_id: UUID
-    ) -> dict[str, Any]:
+    def check_service_health(self, service_type: type, db: Session, tenant_id: UUID) -> dict[str, Any]:
         """Check health of a specific service."""
         # Try to create service instance
         service = self.registry.get(service_type, db, tenant_id)
@@ -272,13 +258,9 @@ class ServiceHealthCheck:
 
         for service_type in registered_services:
             service_name = service_type.__name__
-            results[service_name] = self.check_service_health(
-                service_type, db, tenant_id
-            )
+            results[service_name] = self.check_service_health(service_type, db, tenant_id)
         # Calculate overall health
-        unhealthy_count = sum(
-            1 for result in results.values() if result["status"] == "unhealthy"
-        )
+        unhealthy_count = sum(1 for result in results.values() if result["status"] == "unhealthy")
         overall_status = "healthy" if unhealthy_count == 0 else "unhealthy"
 
         return {

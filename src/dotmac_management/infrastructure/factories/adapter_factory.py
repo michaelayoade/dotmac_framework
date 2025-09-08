@@ -6,10 +6,9 @@ Factory for creating and managing infrastructure adapters
 from dataclasses import dataclass
 from typing import Any, Optional
 
+from dotmac.application import standard_exception_handler
 from dotmac_shared.core.logging import get_logger
 from dotmac_shared.exceptions import ExceptionContext
-
-from dotmac.application import standard_exception_handler
 
 from ..deployment.coolify_adapter import CoolifyDeploymentAdapter
 from ..dns.dns_validation_adapter import DNSValidationAdapter
@@ -69,13 +68,9 @@ class AdapterFactory:
         """Initialize factory with adapter configurations"""
         try:
             for config in adapter_configs:
-                self._configurations[
-                    f"{config.adapter_type}_{config.provider_name}"
-                ] = config
+                self._configurations[f"{config.adapter_type}_{config.provider_name}"] = config
 
-            logger.info(
-                f"✅ Adapter factory initialized with {len(adapter_configs)} configurations"
-            )
+            logger.info(f"✅ Adapter factory initialized with {len(adapter_configs)} configurations")
             return True
 
         except ExceptionContext.LIFECYCLE_EXCEPTIONS as e:
@@ -83,9 +78,7 @@ class AdapterFactory:
             return False
 
     @standard_exception_handler
-    async def get_deployment_adapter(
-        self, provider_name: Optional[str] = None
-    ) -> Optional[IDeploymentProvider]:
+    async def get_deployment_adapter(self, provider_name: Optional[str] = None) -> Optional[IDeploymentProvider]:
         """Get or create deployment adapter"""
         provider_name = provider_name or "coolify"
         instance_key = f"deployment_{provider_name}"
@@ -111,9 +104,7 @@ class AdapterFactory:
                 logger.info(f"✅ Created deployment adapter: {provider_name}")
                 return adapter
             else:
-                logger.error(
-                    f"Failed to initialize deployment adapter: {provider_name}"
-                )
+                logger.error(f"Failed to initialize deployment adapter: {provider_name}")
                 return None
 
         except ExceptionContext.LIFECYCLE_EXCEPTIONS as e:
@@ -121,9 +112,7 @@ class AdapterFactory:
             return None
 
     @standard_exception_handler
-    async def get_dns_adapter(
-        self, provider_name: Optional[str] = None
-    ) -> Optional[IDNSProvider]:
+    async def get_dns_adapter(self, provider_name: Optional[str] = None) -> Optional[IDNSProvider]:
         """Get or create DNS adapter"""
         provider_name = provider_name or "dns_validation"
         instance_key = f"dns_{provider_name}"
@@ -190,9 +179,7 @@ class AdapterFactory:
             return None
 
     @standard_exception_handler
-    async def get_storage_adapter(
-        self, provider_name: str
-    ) -> Optional[IStorageProvider]:
+    async def get_storage_adapter(self, provider_name: str) -> Optional[IStorageProvider]:
         """Get or create storage adapter"""
         instance_key = f"storage_{provider_name}"
 
@@ -337,12 +324,8 @@ async def get_adapter_factory() -> AdapterFactory:
 
         # Initialize with default configurations
         default_configs = [
-            AdapterConfig(
-                adapter_type="deployment", provider_name="coolify", config={}
-            ),
-            AdapterConfig(
-                adapter_type="dns", provider_name="dns_validation", config={}
-            ),
+            AdapterConfig(adapter_type="deployment", provider_name="coolify", config={}),
+            AdapterConfig(adapter_type="dns", provider_name="dns_validation", config={}),
         ]
 
         await _adapter_factory.initialize(default_configs)

@@ -7,10 +7,11 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from fastapi import APIRouter, Body, Depends, Path, Query
+
 from dotmac_shared.api import StandardDependencies, standard_exception_handler
 from dotmac_shared.api.dependencies import get_standard_deps
 from dotmac_shared.schemas import BaseResponseSchema
-from fastapi import APIRouter, Body, Depends, Path, Query
 
 from ..schemas import NetworkDeviceResponse, NOCAlertResponse, NOCDashboardResponse
 from ..services import NOCService, get_noc_service
@@ -64,10 +65,7 @@ def create_noc_router_dry() -> APIRouter:
     @router.get("/alerts", response_model=list[NOCAlertResponse])
     @standard_exception_handler
     async def list_network_alerts(
-        severity: str
-        | None = Query(
-            None, description="Filter by severity (low, medium, high, critical)"
-        ),
+        severity: str | None = Query(None, description="Filter by severity (low, medium, high, critical)"),
         status: str | None = Query(None, description="Filter by alert status"),
         device_type: str | None = Query(None, description="Filter by device type"),
         location: str | None = Query(None, description="Filter by network location"),
@@ -145,8 +143,7 @@ def create_noc_router_dry() -> APIRouter:
     @standard_exception_handler
     async def acknowledge_alert(
         alert_id: UUID = Path(..., description="Alert ID"),
-        acknowledgment_note: str
-        | None = Body(None, description="Acknowledgment notes"),
+        acknowledgment_note: str | None = Body(None, description="Acknowledgment notes"),
         deps: StandardDependencies = Depends(get_standard_deps),
         service: NOCService = Depends(get_noc_mgmt_service),
     ) -> dict[str, str]:
@@ -170,12 +167,8 @@ def create_noc_router_dry() -> APIRouter:
     @standard_exception_handler
     async def get_network_topology(
         location: str | None = Query(None, description="Filter by location"),
-        include_status: bool = Query(
-            True, description="Include device status in topology"
-        ),
-        detail_level: str = Query(
-            "medium", description="Topology detail level (low, medium, high)"
-        ),
+        include_status: bool = Query(True, description="Include device status in topology"),
+        detail_level: str = Query("medium", description="Topology detail level (low, medium, high)"),
         deps: StandardDependencies = Depends(get_standard_deps),
         service: NOCService = Depends(get_noc_mgmt_service),
     ) -> dict[str, any]:
@@ -199,9 +192,7 @@ def create_noc_router_dry() -> APIRouter:
     @router.get("/capacity", response_model=dict[str, any])
     @standard_exception_handler
     async def get_network_capacity(
-        resource_type: str = Query(
-            "bandwidth", description="Resource type (bandwidth, ports, cpu, memory)"
-        ),
+        resource_type: str = Query("bandwidth", description="Resource type (bandwidth, ports, cpu, memory)"),
         location: str | None = Query(None, description="Filter by location"),
         threshold: float = Query(80.0, description="Utilization threshold percentage"),
         deps: StandardDependencies = Depends(get_standard_deps),

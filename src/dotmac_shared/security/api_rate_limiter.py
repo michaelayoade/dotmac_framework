@@ -90,9 +90,7 @@ class RedisRateLimiter:
         key_prefix: str = "dotmac_rate_limit:",
         enable_metrics: bool = True,
     ):
-        self.redis_client = redis_client or redis.from_url(
-            redis_url, decode_responses=True
-        )
+        self.redis_client = redis_client or redis.from_url(redis_url, decode_responses=True)
         self.key_prefix = key_prefix
         self.enable_metrics = enable_metrics
 
@@ -130,9 +128,7 @@ class RedisRateLimiter:
             ),
         }
 
-    def _get_redis_key(
-        self, limit_type: RateLimitType, identifier: str, period: QuotaPeriod
-    ) -> str:
+    def _get_redis_key(self, limit_type: RateLimitType, identifier: str, period: QuotaPeriod) -> str:
         """Generate Redis key for rate limit tracking"""
         timestamp = self._get_period_timestamp(period)
         return f"{self.key_prefix}{limit_type.value}:{identifier}:{period.value}:{timestamp}"
@@ -148,15 +144,9 @@ class RedisRateLimiter:
         elif period == QuotaPeriod.HOUR:
             return int(now.replace(minute=0, second=0, microsecond=0).timestamp())
         elif period == QuotaPeriod.DAY:
-            return int(
-                now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
-            )
+            return int(now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
         elif period == QuotaPeriod.MONTH:
-            return int(
-                now.replace(
-                    day=1, hour=0, minute=0, second=0, microsecond=0
-                ).timestamp()
-            )
+            return int(now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).timestamp())
 
         return int(now.timestamp())
 
@@ -247,9 +237,7 @@ class RedisRateLimiter:
             pipe.execute()
 
             # Calculate reset time
-            reset_time = datetime.now() + timedelta(
-                seconds=ttl if ttl > 0 else period_duration
-            )
+            reset_time = datetime.now() + timedelta(seconds=ttl if ttl > 0 else period_duration)
 
             return RateLimitResult(
                 allowed=True,
@@ -277,9 +265,7 @@ class RedisRateLimiter:
         tasks = []
 
         for limit_type, identifier, rate_limit, cost in checks:
-            task = self.check_rate_limit(
-                limit_type, identifier, rate_limit, cost, tenant_quota
-            )
+            task = self.check_rate_limit(limit_type, identifier, rate_limit, cost, tenant_quota)
             tasks.append(task)
 
         return await asyncio.gather(*tasks)
@@ -319,9 +305,7 @@ class RedisRateLimiter:
         # For now, return basic
         return "basic"
 
-    async def record_metrics(
-        self, result: RateLimitResult, limit_type: RateLimitType, identifier: str
-    ):
+    async def record_metrics(self, result: RateLimitResult, limit_type: RateLimitType, identifier: str):
         """Record rate limiting metrics for monitoring"""
         if not self.enable_metrics:
             return
@@ -487,10 +471,7 @@ class APIRateLimitMiddleware:
                     )
 
                 # Per-endpoint limit
-                if (
-                    self.enable_per_endpoint_limits
-                    and "per_endpoint" in self.default_rate_limits
-                ):
+                if self.enable_per_endpoint_limits and "per_endpoint" in self.default_rate_limits:
                     endpoint_key = f"{request.method}:{request.url.path}"
                     checks.append(
                         (
@@ -503,9 +484,7 @@ class APIRateLimitMiddleware:
 
                 # Check all rate limits
                 if checks:
-                    results = await self.rate_limiter.check_multiple_limits(
-                        checks, tenant_quota
-                    )
+                    results = await self.rate_limiter.check_multiple_limits(checks, tenant_quota)
 
                     # Find any failed checks
                     failed_check = next((r for r in results if not r.allowed), None)
@@ -529,13 +508,9 @@ class APIRateLimitMiddleware:
                                 "remaining": failed_check.remaining,
                             },
                             headers={
-                                "Retry-After": str(
-                                    failed_check.retry_after_seconds or 60
-                                ),
+                                "Retry-After": str(failed_check.retry_after_seconds or 60),
                                 "X-RateLimit-Remaining": str(failed_check.remaining),
-                                "X-RateLimit-Reset": str(
-                                    int(failed_check.reset_time.timestamp())
-                                ),
+                                "X-RateLimit-Reset": str(int(failed_check.reset_time.timestamp())),
                             },
                         )
                         await error_response(scope, receive, send)
@@ -549,12 +524,8 @@ class APIRateLimitMiddleware:
                             headers = dict(message.get("headers", []))
                             headers.update(
                                 {
-                                    b"x-ratelimit-remaining": str(
-                                        best_result.remaining
-                                    ).encode(),
-                                    b"x-ratelimit-reset": str(
-                                        int(best_result.reset_time.timestamp())
-                                    ).encode(),
+                                    b"x-ratelimit-remaining": str(best_result.remaining).encode(),
+                                    b"x-ratelimit-reset": str(int(best_result.reset_time.timestamp())).encode(),
                                 }
                             )
                             message["headers"] = list(headers.items())
@@ -574,9 +545,7 @@ class APIRateLimitMiddleware:
 
 
 # Factory functions
-def create_rate_limiter(
-    redis_url: str = "redis://localhost:6379/1", **kwargs
-) -> RedisRateLimiter:
+def create_rate_limiter(redis_url: str = "redis://localhost:6379/1", **kwargs) -> RedisRateLimiter:
     """Create a Redis rate limiter instance"""
     return RedisRateLimiter(redis_url=redis_url, **kwargs)
 
@@ -608,10 +577,6 @@ def create_rate_limit_middleware(
 DEFAULT_RATE_LIMITS = {
     "per_ip": RateLimit(requests=1000, period=QuotaPeriod.HOUR, burst_requests=1500),
     "per_user": RateLimit(requests=500, period=QuotaPeriod.HOUR, burst_requests=750),
-    "per_tenant": RateLimit(
-        requests=10000, period=QuotaPeriod.HOUR, burst_requests=15000
-    ),
-    "per_endpoint": RateLimit(
-        requests=100, period=QuotaPeriod.MINUTE, burst_requests=150
-    ),
+    "per_tenant": RateLimit(requests=10000, period=QuotaPeriod.HOUR, burst_requests=15000),
+    "per_endpoint": RateLimit(requests=100, period=QuotaPeriod.MINUTE, burst_requests=150),
 }

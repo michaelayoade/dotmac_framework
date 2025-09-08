@@ -95,9 +95,7 @@ class WorkflowExecution(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    steps = relationship(
-        "WorkflowStep", back_populates="workflow", cascade="all, delete-orphan"
-    )
+    steps = relationship("WorkflowStep", back_populates="workflow", cascade="all, delete-orphan")
 
     def to_dict(self) -> dict[str, Any]:
         """Convert workflow to dictionary representation."""
@@ -121,13 +119,9 @@ class WorkflowExecution(Base):
             "completed_steps": self.completed_steps,
             "failed_steps": self.failed_steps,
             "progress_percentage": self.progress_percentage,
-            "scheduled_at": self.scheduled_at.isoformat()
-            if self.scheduled_at
-            else None,
+            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat()
-            if self.completed_at
-            else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "estimated_duration_minutes": self.estimated_duration_minutes,
             "actual_duration_seconds": self.actual_duration_seconds,
             "error_message": self.error_message,
@@ -149,9 +143,7 @@ class WorkflowStep(Base):
 
     id = Column(Integer, primary_key=True)
     step_id = Column(String(255), unique=True, nullable=False, index=True)
-    workflow_id = Column(
-        String(255), ForeignKey("orchestration_workflows.workflow_id"), nullable=False
-    )
+    workflow_id = Column(String(255), ForeignKey("orchestration_workflows.workflow_id"), nullable=False)
     tenant_id = Column(String(255), nullable=False, index=True)
 
     # Step definition
@@ -183,12 +175,8 @@ class WorkflowStep(Base):
     max_retries = Column(Integer, default=2)
 
     # Conditional execution
-    condition_expression = Column(
-        Text
-    )  # Expression to evaluate for conditional execution
-    skip_on_failure = Column(
-        String(10), default="false"
-    )  # Skip if previous steps failed
+    condition_expression = Column(Text)  # Expression to evaluate for conditional execution
+    skip_on_failure = Column(String(10), default="false")  # Skip if previous steps failed
 
     # Rollback information
     rollback_method = Column(String(100))  # Method to call for rollback
@@ -222,9 +210,7 @@ class WorkflowStep(Base):
             "input_parameters": self.input_parameters,
             "output_results": self.output_results,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat()
-            if self.completed_at
-            else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "duration_seconds": self.duration_seconds,
             "timeout_seconds": self.timeout_seconds,
             "error_message": self.error_message,

@@ -108,9 +108,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
     def _extract_token(self, request: Request) -> str | None:
         """Extract JWT token from request."""
         # Priority: Bearer token -> Query parameter
-        return self._extract_token_from_header(
-            request
-        ) or self._extract_token_from_query(request)
+        return self._extract_token_from_header(request) or self._extract_token_from_query(request)
 
     def _validate_token(self, token: str) -> dict[str, Any]:
         """Validate JWT token and return payload."""
@@ -127,16 +125,8 @@ class JWTMiddleware(BaseHTTPMiddleware):
                 token,
                 self.config.jwt_secret_key,
                 algorithms=[self.config.jwt_algorithm],
-                issuer=(
-                    self.config.jwt_issuer
-                    if self.config.validate_token_issuer
-                    else None
-                ),
-                audience=(
-                    self.config.jwt_audience
-                    if self.config.validate_token_audience
-                    else None
-                ),
+                issuer=(self.config.jwt_issuer if self.config.validate_token_issuer else None),
+                audience=(self.config.jwt_audience if self.config.validate_token_audience else None),
             )
 
             # Cache valid payload
@@ -144,17 +134,13 @@ class JWTMiddleware(BaseHTTPMiddleware):
                 token_hash = hashlib.sha256(token.encode()).hexdigest()
                 self._token_cache[token_hash] = {
                     "payload": payload,
-                    "exp": payload.get(
-                        "exp", time.time() + self.config.token_cache_ttl
-                    ),
+                    "exp": payload.get("exp", time.time() + self.config.token_cache_ttl),
                 }
 
             return payload
 
         except jwt.ExpiredSignatureError as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
-            ) from e
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired") from e
         except jwt.InvalidTokenError as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -163,10 +149,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
 
     def _is_path_allowed(self, path: str) -> bool:
         """Check if path is allowed without authentication."""
-        return any(
-            path.startswith(allowed_path)
-            for allowed_path in self.config.allow_anonymous_paths
-        )
+        return any(path.startswith(allowed_path) for allowed_path in self.config.allow_anonymous_paths)
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with JWT validation."""
@@ -214,9 +197,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
             raise
         except Exception as e:
             logger.error("JWT validation error", error=str(e))
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed"
-            ) from e
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed") from e
 
 
 class SessionMiddleware(BaseHTTPMiddleware):
@@ -267,10 +248,7 @@ class SessionMiddleware(BaseHTTPMiddleware):
 
     def _is_path_allowed(self, path: str) -> bool:
         """Check if path is allowed without authentication."""
-        return any(
-            path.startswith(allowed_path)
-            for allowed_path in self.config.allow_anonymous_paths
-        )
+        return any(path.startswith(allowed_path) for allowed_path in self.config.allow_anonymous_paths)
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with session validation."""
@@ -350,15 +328,11 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
 
         return False
 
-    def _has_permission(
-        self, user_permissions: list[str], required_permission: str
-    ) -> bool:
+    def _has_permission(self, user_permissions: list[str], required_permission: str) -> bool:
         """Check if user has required permission."""
         return required_permission in user_permissions
 
-    def _check_tenant_access(
-        self, user_tenant_id: str | None, resource_tenant_id: str | None
-    ) -> bool:
+    def _check_tenant_access(self, user_tenant_id: str | None, resource_tenant_id: str | None) -> bool:
         """Check if user can access resource in specified tenant."""
         if not self.config.enable_tenant_isolation:
             return True
@@ -396,9 +370,7 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
             requirements["roles"] = ["manager"]
 
         # Extract tenant context from path or headers
-        tenant_id = request.headers.get("X-Tenant-ID") or getattr(
-            request.state, "tenant_id", None
-        )
+        tenant_id = request.headers.get("X-Tenant-ID") or getattr(request.state, "tenant_id", None)
 
         if tenant_id:
             requirements["tenant_id"] = tenant_id
@@ -425,9 +397,7 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
         # Check role requirements
         required_roles = requirements.get("roles", [])
         if required_roles:
-            has_required_role = any(
-                self._has_role(user_roles, role) for role in required_roles
-            )
+            has_required_role = any(self._has_role(user_roles, role) for role in required_roles)
             if not has_required_role:
                 logger.warning(
                     "Access denied - insufficient roles",
@@ -445,10 +415,7 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
         # Check permission requirements
         required_permissions = requirements.get("permissions", [])
         if required_permissions:
-            has_required_permission = any(
-                self._has_permission(user_permissions, perm)
-                for perm in required_permissions
-            )
+            has_required_permission = any(self._has_permission(user_permissions, perm) for perm in required_permissions)
             if not has_required_permission:
                 logger.warning(
                     "Access denied - insufficient permissions",
@@ -515,9 +482,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             # If JWT fails and sessions are enabled, try session authentication
             if self.config.session_enabled:
                 try:
-                    return await self.session_middleware.dispatch(
-                        request, authz_handler
-                    )
+                    return await self.session_middleware.dispatch(request, authz_handler)
                 except HTTPException as session_error:
                     # If both fail, return the JWT error (primary auth method)
                     raise jwt_error from session_error
@@ -546,9 +511,7 @@ def require_authentication(request: Request) -> dict[str, Any]:
     """Dependency that requires authentication."""
     user = get_current_user(request)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
     return user
 
 

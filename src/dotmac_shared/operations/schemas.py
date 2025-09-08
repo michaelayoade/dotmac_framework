@@ -66,14 +66,10 @@ class NetworkEndpointCreate(BaseCreateSchema):
     port: int = Field(..., ge=1, le=65535, description="Endpoint port")
     service_type: str = Field(..., description="Service type")
     tenant_id: Optional[UUID] = Field(None, description="Tenant ID")
-    check_interval: int = Field(
-        30, ge=5, le=3600, description="Check interval in seconds"
-    )
+    check_interval: int = Field(30, ge=5, le=3600, description="Check interval in seconds")
     timeout: int = Field(5, ge=1, le=60, description="Timeout in seconds")
     retry_count: int = Field(3, ge=1, le=10, description="Retry count")
-    expected_response_time: float = Field(
-        1.0, ge=0.1, le=30.0, description="Expected response time"
-    )
+    expected_response_time: float = Field(1.0, ge=0.1, le=30.0, description="Expected response time")
 
 
 class NetworkEndpointUpdate(BaseUpdateSchema):
@@ -83,14 +79,10 @@ class NetworkEndpointUpdate(BaseUpdateSchema):
     host: Optional[str] = Field(None, description="Endpoint host")
     port: Optional[int] = Field(None, ge=1, le=65535, description="Endpoint port")
     service_type: Optional[str] = Field(None, description="Service type")
-    check_interval: Optional[int] = Field(
-        None, ge=5, le=3600, description="Check interval in seconds"
-    )
+    check_interval: Optional[int] = Field(None, ge=5, le=3600, description="Check interval in seconds")
     timeout: Optional[int] = Field(None, ge=1, le=60, description="Timeout in seconds")
     retry_count: Optional[int] = Field(None, ge=1, le=10, description="Retry count")
-    expected_response_time: Optional[float] = Field(
-        None, ge=0.1, le=30.0, description="Expected response time"
-    )
+    expected_response_time: Optional[float] = Field(None, ge=0.1, le=30.0, description="Expected response time")
 
 
 class NetworkEndpointResponse(BaseResponseSchema):
@@ -157,18 +149,14 @@ class CustomerVerificationRequest(BaseModel):
 
     verification_token: str = Field(..., description="Verification token")
     verification_type: str = Field("email", description="Verification type")
-    additional_data: Optional[dict[str, Any]] = Field(
-        None, description="Additional verification data"
-    )
+    additional_data: Optional[dict[str, Any]] = Field(None, description="Additional verification data")
 
 
 class CustomerLifecycleAction(BaseModel):
     """Schema for customer lifecycle action"""
 
     action_type: str = Field(..., description="Action type")
-    parameters: dict[str, Any] = Field(
-        default_factory=dict, description="Action parameters"
-    )
+    parameters: dict[str, Any] = Field(default_factory=dict, description="Action parameters")
     reason: Optional[str] = Field(None, description="Action reason")
 
 
@@ -188,9 +176,7 @@ class ServiceProvisioningRequest(BaseCreateSchema):
 
     customer_id: UUID = Field(..., description="Customer ID")
     service_name: str = Field(..., description="Service name")
-    custom_config: Optional[dict[str, Any]] = Field(
-        None, description="Custom configuration"
-    )
+    custom_config: Optional[dict[str, Any]] = Field(None, description="Custom configuration")
 
 
 class ServiceProvisioningResponse(BaseResponseSchema):
@@ -224,9 +210,7 @@ class MaintenanceTaskUpdate(BaseUpdateSchema):
     task_name: Optional[str] = Field(None, description="Task name")
     schedule_cron: Optional[str] = Field(None, description="Cron schedule")
     enabled: Optional[bool] = Field(None, description="Task enabled")
-    timeout_minutes: Optional[int] = Field(
-        None, ge=1, le=1440, description="Timeout in minutes"
-    )
+    timeout_minutes: Optional[int] = Field(None, ge=1, le=1440, description="Timeout in minutes")
     retry_count: Optional[int] = Field(None, ge=1, le=10, description="Retry count")
     parameters: Optional[dict[str, Any]] = Field(None, description="Task parameters")
 
@@ -266,9 +250,7 @@ class MaintenanceExecutionRequest(BaseModel):
     """Schema for manual maintenance execution request"""
 
     maintenance_type: MaintenanceType = Field(..., description="Maintenance type")
-    parameters: Optional[dict[str, Any]] = Field(
-        None, description="Execution parameters"
-    )
+    parameters: Optional[dict[str, Any]] = Field(None, description="Execution parameters")
 
 
 # Operations Status Schemas
@@ -286,9 +268,7 @@ class OperationsStatus(BaseModel):
 class ServiceHealthCheckRequest(BaseModel):
     """Schema for service health check request"""
 
-    service_type: str = Field(
-        ..., description="Service type (database, redis, container)"
-    )
+    service_type: str = Field(..., description="Service type (database, redis, container)")
     connection_string: Optional[str] = Field(None, description="Connection string")
     container_id: Optional[str] = Field(None, description="Container ID")
     timeout: int = Field(5, ge=1, le=60, description="Timeout in seconds")

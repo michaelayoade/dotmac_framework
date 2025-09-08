@@ -50,9 +50,7 @@ class FieldOperationsService:
     # Technician Management
 
     @standard_exception_handler
-    def create_technician(
-        self, tenant_id: str, technician_data: TechnicianCreate
-    ) -> TechnicianResponse:
+    def create_technician(self, tenant_id: str, technician_data: TechnicianCreate) -> TechnicianResponse:
         """Create a new technician."""
         # Check if employee_id already exists
         existing = (
@@ -67,14 +65,10 @@ class FieldOperationsService:
         )
 
         if existing:
-            raise ValidationError(
-                f"Employee ID {technician_data.employee_id} already exists"
-            )
+            raise ValidationError(f"Employee ID {technician_data.employee_id} already exists")
 
         # Create technician
-        technician = Technician(
-            tenant_id=tenant_id, **technician_data.model_dump(exclude_unset=True)
-        )
+        technician = Technician(tenant_id=tenant_id, **technician_data.model_dump(exclude_unset=True))
 
         self.db.add(technician)
         self.db.commit()
@@ -87,9 +81,7 @@ class FieldOperationsService:
         """Get technician by ID."""
         technician = (
             self.db.query(Technician)
-            .filter(
-                and_(Technician.tenant_id == tenant_id, Technician.id == technician_id)
-            )
+            .filter(and_(Technician.tenant_id == tenant_id, Technician.id == technician_id))
             .first()
         )
 
@@ -105,9 +97,7 @@ class FieldOperationsService:
         """Update technician information."""
         technician = (
             self.db.query(Technician)
-            .filter(
-                and_(Technician.tenant_id == tenant_id, Technician.id == technician_id)
-            )
+            .filter(and_(Technician.tenant_id == tenant_id, Technician.id == technician_id))
             .first()
         )
 
@@ -142,9 +132,7 @@ class FieldOperationsService:
         query = self.db.query(Technician).filter(
             and_(
                 Technician.tenant_id == tenant_id,
-                Technician.current_status.in_(
-                    [TechnicianStatus.AVAILABLE, TechnicianStatus.TRAVELING]
-                ),
+                Technician.current_status.in_([TechnicianStatus.AVAILABLE, TechnicianStatus.TRAVELING]),
             )
         )
 
@@ -182,9 +170,7 @@ class FieldOperationsService:
                         latitude=tech.current_location.get("latitude", 0),
                         longitude=tech.current_location.get("longitude", 0),
                     )
-                    distance = self.location_service.calculate_distance(
-                        location, tech_coords
-                    )
+                    distance = self.location_service.calculate_distance(location, tech_coords)
                     if distance <= radius_km:
                         nearby_technicians.append(tech)
             technicians = nearby_technicians
@@ -194,9 +180,7 @@ class FieldOperationsService:
     # Work Order Management
 
     @standard_exception_handler
-    def create_work_order(
-        self, tenant_id: str, work_order_data: WorkOrderCreate
-    ) -> WorkOrderResponse:
+    def create_work_order(self, tenant_id: str, work_order_data: WorkOrderCreate) -> WorkOrderResponse:
         """Create a new work order."""
         # Generate work order number
         work_order_number = self._generate_work_order_number(tenant_id)
@@ -212,9 +196,7 @@ class FieldOperationsService:
         self.db.refresh(work_order)
 
         # Create initial status history entry
-        self._create_status_history(
-            work_order, None, WorkOrderStatus.DRAFT, "Work order created"
-        )
+        self._create_status_history(work_order, None, WorkOrderStatus.DRAFT, "Work order created")
 
         return WorkOrderResponse.model_validate(work_order)
 
@@ -226,9 +208,7 @@ class FieldOperationsService:
         # Get work order
         work_order = (
             self.db.query(WorkOrder)
-            .filter(
-                and_(WorkOrder.tenant_id == tenant_id, WorkOrder.id == work_order_id)
-            )
+            .filter(and_(WorkOrder.tenant_id == tenant_id, WorkOrder.id == work_order_id))
             .first()
         )
 
@@ -238,9 +218,7 @@ class FieldOperationsService:
         # Get technician
         technician = (
             self.db.query(Technician)
-            .filter(
-                and_(Technician.tenant_id == tenant_id, Technician.id == technician_id)
-            )
+            .filter(and_(Technician.tenant_id == tenant_id, Technician.id == technician_id))
             .first()
         )
 
@@ -249,9 +227,7 @@ class FieldOperationsService:
 
         # Check technician availability
         if not technician.is_available:
-            raise BusinessLogicError(
-                f"Technician {technician.full_name} is not available"
-            )
+            raise BusinessLogicError(f"Technician {technician.full_name} is not available")
 
         # Assign technician
         old_status = work_order.status
@@ -285,9 +261,7 @@ class FieldOperationsService:
         """Update work order status with tracking."""
         work_order = (
             self.db.query(WorkOrder)
-            .filter(
-                and_(WorkOrder.tenant_id == tenant_id, WorkOrder.id == work_order_id)
-            )
+            .filter(and_(WorkOrder.tenant_id == tenant_id, WorkOrder.id == work_order_id))
             .first()
         )
 
@@ -301,15 +275,9 @@ class FieldOperationsService:
         work_order.updated_by = updated_by
 
         # Handle status-specific logic
-        if (
-            new_status == WorkOrderStatus.IN_PROGRESS
-            and not work_order.actual_start_time
-        ):
+        if new_status == WorkOrderStatus.IN_PROGRESS and not work_order.actual_start_time:
             work_order.actual_start_time = datetime.now(timezone.utc)
-        elif (
-            new_status == WorkOrderStatus.ON_SITE
-            and not work_order.on_site_arrival_time
-        ):
+        elif new_status == WorkOrderStatus.ON_SITE and not work_order.on_site_arrival_time:
             work_order.on_site_arrival_time = datetime.now(timezone.utc)
         elif new_status == WorkOrderStatus.COMPLETED:
             if not work_order.actual_end_time:
@@ -330,15 +298,11 @@ class FieldOperationsService:
         return WorkOrderResponse.model_validate(work_order)
 
     @standard_exception_handler
-    def get_work_order_detail(
-        self, tenant_id: str, work_order_id: UUID
-    ) -> WorkOrderDetailResponse:
+    def get_work_order_detail(self, tenant_id: str, work_order_id: UUID) -> WorkOrderDetailResponse:
         """Get detailed work order information."""
         work_order = (
             self.db.query(WorkOrder)
-            .filter(
-                and_(WorkOrder.tenant_id == tenant_id, WorkOrder.id == work_order_id)
-            )
+            .filter(and_(WorkOrder.tenant_id == tenant_id, WorkOrder.id == work_order_id))
             .first()
         )
 
@@ -373,24 +337,18 @@ class FieldOperationsService:
         if date_to:
             query = query.filter(WorkOrder.scheduled_date <= date_to)
 
-        work_orders = query.order_by(
-            WorkOrder.scheduled_date, WorkOrder.scheduled_time_start
-        ).all()
+        work_orders = query.order_by(WorkOrder.scheduled_date, WorkOrder.scheduled_time_start).all()
 
         return [WorkOrderResponse.model_validate(wo) for wo in work_orders]
 
     # Smart Dispatch System
 
     @standard_exception_handler
-    def intelligent_dispatch(
-        self, tenant_id: str, work_order_id: UUID
-    ) -> TechnicianResponse:
+    def intelligent_dispatch(self, tenant_id: str, work_order_id: UUID) -> TechnicianResponse:
         """Intelligently assign the best technician for a work order."""
         work_order = (
             self.db.query(WorkOrder)
-            .filter(
-                and_(WorkOrder.tenant_id == tenant_id, WorkOrder.id == work_order_id)
-            )
+            .filter(and_(WorkOrder.tenant_id == tenant_id, WorkOrder.id == work_order_id))
             .first()
         )
 
@@ -414,14 +372,10 @@ class FieldOperationsService:
         )
 
         if not available_techs:
-            raise BusinessLogicError(
-                "No available technicians found for this work order"
-            )
+            raise BusinessLogicError("No available technicians found for this work order")
 
         # Score technicians based on multiple factors
-        best_technician = self._score_technicians_for_work_order(
-            work_order, available_techs, work_location
-        )
+        best_technician = self._score_technicians_for_work_order(work_order, available_techs, work_location)
 
         # Assign the best technician
         self.assign_technician(
@@ -451,9 +405,7 @@ class FieldOperationsService:
                     latitude=tech.current_location["latitude"],
                     longitude=tech.current_location["longitude"],
                 )
-                distance = self.location_service.calculate_distance(
-                    work_location, tech_coords
-                )
+                distance = self.location_service.calculate_distance(work_location, tech_coords)
                 distance_score = max(0, 100 - (distance * 2))  # Lose 2 points per km
                 score += distance_score * 0.3
 
@@ -478,9 +430,7 @@ class FieldOperationsService:
             score += performance_score * 0.15
 
             # Customer rating factor - 10% weight
-            rating_score = (
-                tech.average_job_rating or 4.0
-            ) * 20  # Convert 5-star to 100 scale
+            rating_score = (tech.average_job_rating or 4.0) * 20  # Convert 5-star to 100 scale
             score += rating_score * 0.10
 
             scored_technicians.append((tech, score))
@@ -512,16 +462,10 @@ class FieldOperationsService:
 
         # Calculate metrics
         jobs_assigned = len(work_orders)
-        jobs_completed = len(
-            [wo for wo in work_orders if wo.status == WorkOrderStatus.COMPLETED]
-        )
-        jobs_cancelled = len(
-            [wo for wo in work_orders if wo.status == WorkOrderStatus.CANCELLED]
-        )
+        jobs_completed = len([wo for wo in work_orders if wo.status == WorkOrderStatus.COMPLETED])
+        jobs_cancelled = len([wo for wo in work_orders if wo.status == WorkOrderStatus.CANCELLED])
 
-        completion_rate = (
-            (jobs_completed / jobs_assigned * 100) if jobs_assigned > 0 else 0
-        )
+        completion_rate = (jobs_completed / jobs_assigned * 100) if jobs_assigned > 0 else 0
 
         # Time metrics
         time_entries = (
@@ -530,35 +474,25 @@ class FieldOperationsService:
                 and_(
                     TechnicianTimeEntry.tenant_id == tenant_id,
                     TechnicianTimeEntry.technician_id == technician_id,
-                    TechnicianTimeEntry.start_time
-                    >= datetime.combine(period_start, datetime.min.time()),
-                    TechnicianTimeEntry.start_time
-                    <= datetime.combine(period_end, datetime.max.time()),
+                    TechnicianTimeEntry.start_time >= datetime.combine(period_start, datetime.min.time()),
+                    TechnicianTimeEntry.start_time <= datetime.combine(period_end, datetime.max.time()),
                 )
             )
             .all()
         )
 
-        total_work_hours = (
-            sum(entry.duration_minutes or 0 for entry in time_entries) / 60
-        )
-        billable_hours = (
-            sum(entry.duration_minutes or 0 for entry in time_entries if entry.billable)
-            / 60
-        )
+        total_work_hours = sum(entry.duration_minutes or 0 for entry in time_entries) / 60
+        billable_hours = sum(entry.duration_minutes or 0 for entry in time_entries if entry.billable) / 60
 
         # Quality metrics
         completed_with_rating = [
-            wo
-            for wo in work_orders
-            if wo.status == WorkOrderStatus.COMPLETED
-            and wo.customer_satisfaction_rating
+            wo for wo in work_orders if wo.status == WorkOrderStatus.COMPLETED and wo.customer_satisfaction_rating
         ]
         average_customer_rating = None
         if completed_with_rating:
-            average_customer_rating = sum(
-                wo.customer_satisfaction_rating for wo in completed_with_rating
-            ) / len(completed_with_rating)
+            average_customer_rating = sum(wo.customer_satisfaction_rating for wo in completed_with_rating) / len(
+                completed_with_rating
+            )
 
         # SLA metrics
         sla_met = len([wo for wo in work_orders if wo.sla_met is True])
@@ -642,9 +576,7 @@ class FieldOperationsService:
                     WorkOrder.tenant_id == tenant_id,
                     WorkOrder.technician_id == technician_id,
                     WorkOrder.scheduled_date == target_date,
-                    WorkOrder.status.in_(
-                        [WorkOrderStatus.SCHEDULED, WorkOrderStatus.DISPATCHED]
-                    ),
+                    WorkOrder.status.in_([WorkOrderStatus.SCHEDULED, WorkOrderStatus.DISPATCHED]),
                 )
             )
             .all()
@@ -654,9 +586,7 @@ class FieldOperationsService:
             return [WorkOrderResponse.model_validate(wo) for wo in work_orders]
 
         # Get technician's starting location
-        technician = (
-            self.db.query(Technician).filter(Technician.id == technician_id).first()
-        )
+        technician = self.db.query(Technician).filter(Technician.id == technician_id).first()
 
         if not technician or not technician.current_location:
             # Return orders sorted by priority if no location data
@@ -670,9 +600,7 @@ class FieldOperationsService:
 
         # Use simple nearest-neighbor optimization for now
         # In production, integrate with advanced routing algorithms
-        optimized_orders = self._optimize_route_nearest_neighbor(
-            work_orders, technician.current_location
-        )
+        optimized_orders = self._optimize_route_nearest_neighbor(work_orders, technician.current_location)
 
         return [WorkOrderResponse.model_validate(wo) for wo in optimized_orders]
 
@@ -683,9 +611,7 @@ class FieldOperationsService:
         if not work_orders:
             return []
 
-        current_location = Coordinates(
-            latitude=start_location["latitude"], longitude=start_location["longitude"]
-        )
+        current_location = Coordinates(latitude=start_location["latitude"], longitude=start_location["longitude"])
 
         unvisited = work_orders.copy()
         route = []
@@ -700,9 +626,7 @@ class FieldOperationsService:
                         latitude=order.service_coordinates["latitude"],
                         longitude=order.service_coordinates["longitude"],
                     )
-                    distance = self.location_service.calculate_distance(
-                        current_location, order_location
-                    )
+                    distance = self.location_service.calculate_distance(current_location, order_location)
 
                     # Factor in priority (higher priority reduces effective distance)
                     priority_multiplier = {
@@ -713,9 +637,7 @@ class FieldOperationsService:
                         WorkOrderPriority.LOW: 1.3,
                     }
 
-                    effective_distance = distance * priority_multiplier.get(
-                        order.priority, 1.0
-                    )
+                    effective_distance = distance * priority_multiplier.get(order.priority, 1.0)
 
                     if effective_distance < min_distance:
                         min_distance = effective_distance
@@ -785,15 +707,11 @@ class DispatchService:
         self.field_service = FieldOperationsService(db_session)
 
     @standard_exception_handler
-    def emergency_dispatch(
-        self, tenant_id: str, work_order_id: UUID
-    ) -> TechnicianResponse:
+    def emergency_dispatch(self, tenant_id: str, work_order_id: UUID) -> TechnicianResponse:
         """Emergency dispatch - find nearest available technician immediately."""
         work_order = (
             self.db.query(WorkOrder)
-            .filter(
-                and_(WorkOrder.tenant_id == tenant_id, WorkOrder.id == work_order_id)
-            )
+            .filter(and_(WorkOrder.tenant_id == tenant_id, WorkOrder.id == work_order_id))
             .first()
         )
 
@@ -820,9 +738,7 @@ class DispatchService:
             raise BusinessLogicError("No technicians available for emergency dispatch")
 
         # Select closest technician
-        best_tech = available_techs[
-            0
-        ]  # Already sorted by distance in get_available_technicians
+        best_tech = available_techs[0]  # Already sorted by distance in get_available_technicians
 
         # Assign immediately
         self.field_service.assign_technician(

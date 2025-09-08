@@ -10,8 +10,6 @@ portals_router = APIRouter()
 portals_router = APIRouter()
 
 # Include portal routers
-portals_router.include_router(
-    master_admin_router, prefix="/master-admin", tags=["Master Admin Portal"]
-)
+portals_router.include_router(master_admin_router, prefix="/master-admin", tags=["Master Admin Portal"])
 
 __all__ = ["portals_router"]

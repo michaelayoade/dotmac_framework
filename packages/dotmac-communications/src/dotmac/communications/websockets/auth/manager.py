@@ -106,7 +106,7 @@ class AuthManager:
                     return AuthResult.failure_result(f"Missing permissions: {missing_perms}")
 
             result = AuthResult.success_result(
-                user_info, token_type="jwt", expires_at=payload.get("exp"), auth_method="jwt"
+                user_info, token_type="jwt", expires_at=payload.get("exp"), auth_method="jwt"  # nosec B106
             )
 
             # Cache result
@@ -227,7 +227,8 @@ class AuthManager:
                 query_params = {k: v[0] for k, v in parse_qs(parsed_url.query).items()}
                 token = self.extract_token_from_query(query_params)
             except Exception:
-                pass
+                # Ignore query parsing errors and continue with fallback auth methods
+                pass  # nosec B110
 
         if not token:
             if self.config.require_token:

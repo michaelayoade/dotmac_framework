@@ -111,7 +111,7 @@ class DatabaseHealthChecker:
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            logger.error(f"Health check failed: {e}")
+            logger.error("Health check failed: %s", e)
 
             return HealthCheckResult(
                 status=HealthStatus.UNHEALTHY,
@@ -168,7 +168,7 @@ class DatabaseHealthChecker:
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            logger.error(f"Async health check failed: {e}")
+            logger.error("Async health check failed: %s", e)
 
             return HealthCheckResult(
                 status=HealthStatus.UNHEALTHY,
@@ -429,7 +429,7 @@ class DatabaseHealthChecker:
                 metrics["database_size"] = "unavailable"
 
         except SQLAlchemyError as e:
-            logger.warning(f"Failed to collect some metrics: {e}")
+            logger.warning("Failed to collect some metrics: %s", e)
             metrics["collection_error"] = str(e)
 
         return metrics
@@ -473,7 +473,7 @@ class DatabaseHealthChecker:
                 metrics["database_size"] = "unavailable"
 
         except SQLAlchemyError as e:
-            logger.warning(f"Failed to collect some metrics: {e}")
+            logger.warning("Failed to collect some metrics: %s", e)
             metrics["collection_error"] = str(e)
 
         return metrics
@@ -532,7 +532,7 @@ class AdvancedHealthChecker(DatabaseHealthChecker):
             return basic_result
 
         except Exception as e:
-            logger.warning(f"Deep health checks failed: {e}")
+            logger.warning("Deep health checks failed: %s", e)
             basic_result.details["deep_checks"] = {"error": str(e)}
             return basic_result
 

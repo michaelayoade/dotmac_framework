@@ -113,9 +113,7 @@ async def generate_invoice_pdf(
     return StreamingResponse(
         io.BytesIO(pdf_content),
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f"attachment; filename = invoice-{invoice_id}.pdf"
-        },
+        headers={"Content-Disposition": f"attachment; filename = invoice-{invoice_id}.pdf"},
     )
 
 

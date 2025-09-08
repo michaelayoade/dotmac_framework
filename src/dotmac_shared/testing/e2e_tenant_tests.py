@@ -19,13 +19,13 @@ from uuid import uuid4
 
 import pytest
 import requests
-from dotmac_shared.container_monitoring.core.metrics_collector import (
-    ContainerMetricsCollector,
-)
 from playwright.async_api import Page, async_playwright
 
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import BusinessRuleError
+from dotmac_shared.container_monitoring.core.metrics_collector import (
+    ContainerMetricsCollector,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -76,9 +76,7 @@ class TenantProvisioningE2E:
             )
 
             if not container_result["success"]:
-                raise BusinessRuleError(
-                    f"Container creation failed: {container_result.get('error')}"
-                )
+                raise BusinessRuleError(f"Container creation failed: {container_result.get('error')}")
 
             self.container_id = container_result["container_id"]
 
@@ -197,9 +195,7 @@ class TenantProvisioningE2E:
                 results["steps"].append(
                     {
                         "name": "branding_setup",
-                        "status": "completed"
-                        if branding_result["success"]
-                        else "failed",
+                        "status": "completed" if branding_result["success"] else "failed",
                         "duration": branding_result.get("duration", 0),
                         "details": branding_result,
                     }
@@ -339,18 +335,14 @@ class TenantProvisioningE2E:
 
             # Generate summary
             total_tests = len(suite_results["tests"])
-            passed_tests = sum(
-                1 for t in suite_results["tests"] if t.get("success", False)
-            )
+            passed_tests = sum(1 for t in suite_results["tests"] if t.get("success", False))
             failed_tests = total_tests - passed_tests
 
             suite_results["summary"] = {
                 "total": total_tests,
                 "passed": passed_tests,
                 "failed": failed_tests,
-                "success_rate": (passed_tests / total_tests) * 100
-                if total_tests > 0
-                else 0,
+                "success_rate": (passed_tests / total_tests) * 100 if total_tests > 0 else 0,
             }
 
             suite_results["status"] = "completed" if failed_tests == 0 else "failed"
@@ -597,13 +589,9 @@ class TenantProvisioningE2E:
             await page.goto(f"{self.frontend_url}/admin/settings/branding")
 
             # Configure branding
-            await page.fill(
-                '[data-testid="company-name"]', f"Test Company {self.test_tenant_id}"
-            )
+            await page.fill('[data-testid="company-name"]', f"Test Company {self.test_tenant_id}")
             await page.fill('[data-testid="primary-color"]', "#007bff")
-            await page.fill(
-                '[data-testid="custom-domain"]', f"{self.test_tenant_id}.example.com"
-            )
+            await page.fill('[data-testid="custom-domain"]', f"{self.test_tenant_id}.example.com")
 
             # Save branding
             await page.click('[data-testid="save-branding"]')
@@ -633,9 +621,7 @@ class TenantProvisioningE2E:
             cert_data = {
                 "domain": f"{self.test_tenant_id}.example.com",
                 "cert_authority": "Let's Encrypt",
-                "expiry_date": (
-                    datetime.now(timezone.utc) + timedelta(days=90)
-                ).isoformat(),
+                "expiry_date": (datetime.now(timezone.utc) + timedelta(days=90)).isoformat(),
                 "status": "active",
             }
 
@@ -786,9 +772,7 @@ async def test_tenant_provisioning_e2e():
 
     # Assert overall success
     assert results["status"] == "completed", f"Test suite failed: {results}"
-    assert (
-        results["summary"]["success_rate"] >= 80
-    ), f"Success rate too low: {results['summary']}"
+    assert results["summary"]["success_rate"] >= 80, f"Success rate too low: {results['summary']}"
 
     # Log results for debugging
     logger.info("\nTest Results Summary:")

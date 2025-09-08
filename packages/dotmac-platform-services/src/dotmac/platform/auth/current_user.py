@@ -241,14 +241,13 @@ def require_scopes(required_scopes: list[str], require_all: bool = False):
                         required_scopes=required_scopes, user_scopes=current_user.scopes
                     ).to_dict(),
                 )
-        else:
-            if not current_user.has_any_scope(required_scopes):
-                raise HTTPException(
-                    status_code=403,
-                    detail=InsufficientScope(
-                        required_scopes=required_scopes, user_scopes=current_user.scopes
-                    ).to_dict(),
-                )
+        elif not current_user.has_any_scope(required_scopes):
+            raise HTTPException(
+                status_code=403,
+                detail=InsufficientScope(
+                    required_scopes=required_scopes, user_scopes=current_user.scopes
+                ).to_dict(),
+            )
 
         return current_user
 
@@ -276,14 +275,13 @@ def require_roles(required_roles: list[str], require_all: bool = False):
                         required_roles=required_roles, user_roles=current_user.roles
                     ).to_dict(),
                 )
-        else:
-            if not current_user.has_any_role(required_roles):
-                raise HTTPException(
-                    status_code=403,
-                    detail=InsufficientRole(
-                        required_roles=required_roles, user_roles=current_user.roles
-                    ).to_dict(),
-                )
+        elif not current_user.has_any_role(required_roles):
+            raise HTTPException(
+                status_code=403,
+                detail=InsufficientRole(
+                    required_roles=required_roles, user_roles=current_user.roles
+                ).to_dict(),
+            )
 
         return current_user
 

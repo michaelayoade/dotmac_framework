@@ -1,0 +1,1 @@
+{{ with secret "dotmac/clickhouse" }}tcp://{{ .Data.data.username }}:{{ .Data.data.password }}@clickhouse:9000?database=signoz_traces{{ end }}

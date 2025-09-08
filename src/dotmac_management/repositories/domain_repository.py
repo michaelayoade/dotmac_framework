@@ -5,10 +5,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
 
-from dotmac_isp.shared.base_repository import BaseRepository
-from dotmac_shared.exceptions import NotFoundError, ValidationError
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
+
+from dotmac_isp.shared.base_repository import BaseRepository
+from dotmac_shared.exceptions import NotFoundError, ValidationError
 
 from ..models.domain_management import (
     DNSRecord,
@@ -35,9 +36,7 @@ class DomainRepository(BaseRepository):
 
     # Domain Operations
 
-    async def create_domain(
-        self, tenant_id: str, domain_data: dict, user_id: str
-    ) -> Domain:
+    async def create_domain(self, tenant_id: str, domain_data: dict, user_id: str) -> Domain:
         """Create a new domain."""
         try:
             domain_id = str(uuid4())
@@ -62,9 +61,7 @@ class DomainRepository(BaseRepository):
             logger.error(f"Failed to create domain: {e}")
             raise ValidationError(f"Failed to create domain: {str(e)}") from e
 
-    async def get_domain_by_id(
-        self, domain_id: str, tenant_id: str
-    ) -> Optional[Domain]:
+    async def get_domain_by_id(self, domain_id: str, tenant_id: str) -> Optional[Domain]:
         """Get domain by ID."""
         return (
             await self.session.query(Domain)
@@ -72,15 +69,11 @@ class DomainRepository(BaseRepository):
             .first()
         )
 
-    async def get_domain_by_name(
-        self, full_domain: str, tenant_id: str
-    ) -> Optional[Domain]:
+    async def get_domain_by_name(self, full_domain: str, tenant_id: str) -> Optional[Domain]:
         """Get domain by full domain name."""
         return (
             await self.session.query(Domain)
-            .filter(
-                and_(Domain.full_domain == full_domain, Domain.tenant_id == tenant_id)
-            )
+            .filter(and_(Domain.full_domain == full_domain, Domain.tenant_id == tenant_id))
             .first()
         )
 
@@ -104,9 +97,7 @@ class DomainRepository(BaseRepository):
 
         return domains, total
 
-    async def get_expiring_domains(
-        self, tenant_id: Optional[str] = None, days_ahead: int = 30
-    ) -> list[Domain]:
+    async def get_expiring_domains(self, tenant_id: Optional[str] = None, days_ahead: int = 30) -> list[Domain]:
         """Get domains expiring within specified days."""
         cutoff_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
 
@@ -124,9 +115,7 @@ class DomainRepository(BaseRepository):
 
         return await query.order_by(Domain.expiration_date.asc()).all()
 
-    async def update_domain(
-        self, domain_id: str, tenant_id: str, updates: dict, user_id: str
-    ) -> Domain:
+    async def update_domain(self, domain_id: str, tenant_id: str, updates: dict, user_id: str) -> Domain:
         """Update domain information."""
         domain = await self.get_domain_by_id(domain_id, tenant_id)
         if not domain:
@@ -205,9 +194,7 @@ class DomainRepository(BaseRepository):
 
     # DNS Record Operations
 
-    async def create_dns_record(
-        self, tenant_id: str, record_data: dict, user_id: str
-    ) -> DNSRecord:
+    async def create_dns_record(self, tenant_id: str, record_data: dict, user_id: str) -> DNSRecord:
         """Create a new DNS record."""
         try:
             record_id = str(uuid4())
@@ -244,21 +231,15 @@ class DomainRepository(BaseRepository):
 
         return await query.order_by(DNSRecord.record_type, DNSRecord.name).all()
 
-    async def get_dns_record_by_id(
-        self, record_id: str, tenant_id: str
-    ) -> Optional[DNSRecord]:
+    async def get_dns_record_by_id(self, record_id: str, tenant_id: str) -> Optional[DNSRecord]:
         """Get DNS record by ID."""
         return (
             await self.session.query(DNSRecord)
-            .filter(
-                and_(DNSRecord.record_id == record_id, DNSRecord.tenant_id == tenant_id)
-            )
+            .filter(and_(DNSRecord.record_id == record_id, DNSRecord.tenant_id == tenant_id))
             .first()
         )
 
-    async def update_dns_record(
-        self, record_id: str, tenant_id: str, updates: dict, user_id: str
-    ) -> DNSRecord:
+    async def update_dns_record(self, record_id: str, tenant_id: str, updates: dict, user_id: str) -> DNSRecord:
         """Update DNS record."""
         dns_record = await self.get_dns_record_by_id(record_id, tenant_id)
         if not dns_record:
@@ -284,9 +265,7 @@ class DomainRepository(BaseRepository):
             logger.error(f"Failed to update DNS record: {e}")
             raise ValidationError(f"Failed to update DNS record: {str(e)}") from e
 
-    async def delete_dns_record(
-        self, record_id: str, tenant_id: str, user_id: str
-    ) -> bool:
+    async def delete_dns_record(self, record_id: str, tenant_id: str, user_id: str) -> bool:
         """Delete DNS record."""
         dns_record = await self.get_dns_record_by_id(record_id, tenant_id)
         if not dns_record:
@@ -306,9 +285,7 @@ class DomainRepository(BaseRepository):
 
     # SSL Certificate Operations
 
-    async def create_ssl_certificate(
-        self, tenant_id: str, certificate_data: dict, user_id: str
-    ) -> SSLCertificate:
+    async def create_ssl_certificate(self, tenant_id: str, certificate_data: dict, user_id: str) -> SSLCertificate:
         """Create a new SSL certificate."""
         try:
             certificate_id = str(uuid4())
@@ -332,9 +309,7 @@ class DomainRepository(BaseRepository):
             logger.error(f"Failed to create SSL certificate: {e}")
             raise ValidationError(f"Failed to create SSL certificate: {str(e)}") from e
 
-    async def get_domain_ssl_certificates(
-        self, domain_id: str, tenant_id: str
-    ) -> list[SSLCertificate]:
+    async def get_domain_ssl_certificates(self, domain_id: str, tenant_id: str) -> list[SSLCertificate]:
         """Get SSL certificates for a domain."""
         return (
             await self.session.query(SSLCertificate)
@@ -393,13 +368,9 @@ class DomainRepository(BaseRepository):
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Failed to create domain verification: {e}")
-            raise ValidationError(
-                f"Failed to create domain verification: {str(e)}"
-            ) from e
+            raise ValidationError(f"Failed to create domain verification: {str(e)}") from e
 
-    async def get_pending_verifications(
-        self, tenant_id: Optional[str] = None
-    ) -> list[DomainVerification]:
+    async def get_pending_verifications(self, tenant_id: Optional[str] = None) -> list[DomainVerification]:
         """Get pending domain verifications."""
         query = self.session.query(DomainVerification).filter(
             and_(
@@ -450,9 +421,7 @@ class DomainRepository(BaseRepository):
                 verification.error_details = error_details
                 # Schedule next attempt (exponential backoff)
                 delay_minutes = min(5 * (2**verification.attempts), 60)  # Max 1 hour
-                verification.next_check = datetime.now(timezone.utc) + timedelta(
-                    minutes=delay_minutes
-                )
+                verification.next_check = datetime.now(timezone.utc) + timedelta(minutes=delay_minutes)
 
             if verification_response:
                 verification.verification_response = verification_response
@@ -465,9 +434,7 @@ class DomainRepository(BaseRepository):
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Failed to update verification status: {e}")
-            raise ValidationError(
-                f"Failed to update verification status: {str(e)}"
-            ) from e
+            raise ValidationError(f"Failed to update verification status: {str(e)}") from e
 
     # Domain Logging
 
@@ -512,15 +479,11 @@ class DomainRepository(BaseRepository):
             logger.error(f"Failed to log domain action: {e}")
             raise ValidationError(f"Failed to log domain action: {str(e)}") from e
 
-    async def get_domain_logs(
-        self, domain_id: str, tenant_id: str, limit: int = 100
-    ) -> list[DomainLog]:
+    async def get_domain_logs(self, domain_id: str, tenant_id: str, limit: int = 100) -> list[DomainLog]:
         """Get domain action logs."""
         return (
             await self.session.query(DomainLog)
-            .filter(
-                and_(DomainLog.domain_id == domain_id, DomainLog.tenant_id == tenant_id)
-            )
+            .filter(and_(DomainLog.domain_id == domain_id, DomainLog.tenant_id == tenant_id))
             .order_by(DomainLog.log_timestamp.desc())
             .limit(limit)
             .all()
@@ -528,16 +491,12 @@ class DomainRepository(BaseRepository):
 
     # DNS Zone Operations
 
-    async def create_dns_zone(
-        self, tenant_id: str, zone_data: dict, user_id: str
-    ) -> DNSZone:
+    async def create_dns_zone(self, tenant_id: str, zone_data: dict, user_id: str) -> DNSZone:
         """Create a new DNS zone."""
         try:
             zone_id = str(uuid4())
 
-            dns_zone = DNSZone(
-                zone_id=zone_id, tenant_id=tenant_id, created_by=user_id, **zone_data
-            )
+            dns_zone = DNSZone(zone_id=zone_id, tenant_id=tenant_id, created_by=user_id, **zone_data)
 
             self.session.add(dns_zone)
             await self.session.commit()
@@ -551,13 +510,9 @@ class DomainRepository(BaseRepository):
             logger.error(f"Failed to create DNS zone: {e}")
             raise ValidationError(f"Failed to create DNS zone: {str(e)}") from e
 
-    async def get_zones_needing_sync(
-        self, tenant_id: Optional[str] = None
-    ) -> list[DNSZone]:
+    async def get_zones_needing_sync(self, tenant_id: Optional[str] = None) -> list[DNSZone]:
         """Get DNS zones that need synchronization."""
-        query = self.session.query(DNSZone).filter(
-            DNSZone.sync_status.in_(["pending", "failed"])
-        )
+        query = self.session.query(DNSZone).filter(DNSZone.sync_status.in_(["pending", "failed"]))
 
         if tenant_id:
             query = query.filter(DNSZone.tenant_id == tenant_id)
@@ -571,9 +526,7 @@ class DomainRepository(BaseRepository):
         try:
             # Total domains
             total_domains = (
-                await self.session.query(func.count(Domain.id))
-                .filter(Domain.tenant_id == tenant_id)
-                .scalar()
+                await self.session.query(func.count(Domain.id)).filter(Domain.tenant_id == tenant_id).scalar()
             )
 
             # Domains by status
@@ -586,9 +539,7 @@ class DomainRepository(BaseRepository):
 
             # SSL certificates by status
             ssl_stats = (
-                await self.session.query(
-                    SSLCertificate.ssl_status, func.count(SSLCertificate.id)
-                )
+                await self.session.query(SSLCertificate.ssl_status, func.count(SSLCertificate.id))
                 .join(Domain)
                 .filter(Domain.tenant_id == tenant_id)
                 .group_by(SSLCertificate.ssl_status)
@@ -680,21 +631,13 @@ class DomainRepository(BaseRepository):
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Failed to cleanup expired verifications: {e}")
-            raise ValidationError(
-                f"Failed to cleanup expired verifications: {str(e)}"
-            ) from e
+            raise ValidationError(f"Failed to cleanup expired verifications: {str(e)}") from e
 
-    async def get_records_needing_sync(
-        self, tenant_id: Optional[str] = None
-    ) -> list[DNSRecord]:
+    async def get_records_needing_sync(self, tenant_id: Optional[str] = None) -> list[DNSRecord]:
         """Get DNS records that need synchronization."""
-        query = self.session.query(DNSRecord).filter(
-            DNSRecord.sync_status.in_(["pending", "failed"])
-        )
+        query = self.session.query(DNSRecord).filter(DNSRecord.sync_status.in_(["pending", "failed"]))
 
         if tenant_id:
             query = query.filter(DNSRecord.tenant_id == tenant_id)
 
-        return await query.order_by(
-            DNSRecord.last_sync_attempt.asc().nullsfirst()
-        ).all()
+        return await query.order_by(DNSRecord.last_sync_attempt.asc().nullsfirst()).all()

@@ -11,7 +11,7 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import uuid4
 
-from ...standard_exception_handler import standard_exception_handler
+from dotmac.application import standard_exception_handler
 from ..exceptions import BillingRunError, ErrorContext
 from ..idempotency import IdempotentOperation
 from ..sagas import CompensationHandler, SagaContext, SagaDefinition, SagaStep
@@ -111,9 +111,7 @@ class GenerateInvoicesStep(SagaStep):
         is_dry_run = validation_result["dry_run"]
 
         # Get customers eligible for billing
-        eligible_customers = await self._get_eligible_customers(
-            tenant_id, validation_result
-        )
+        eligible_customers = await self._get_eligible_customers(tenant_id, validation_result)
 
         generated_invoices = []
         failed_customers = []
@@ -121,9 +119,7 @@ class GenerateInvoicesStep(SagaStep):
 
         for customer in eligible_customers:
             try:
-                invoice = await self._generate_customer_invoice(
-                    customer, validation_result, is_dry_run
-                )
+                invoice = await self._generate_customer_invoice(customer, validation_result, is_dry_run)
                 generated_invoices.append(invoice)
                 total_amount += Decimal(str(invoice["total_amount"]))
 
@@ -188,11 +184,7 @@ class GenerateInvoicesStep(SagaStep):
 
         # Filter by tenant if specified
         if tenant_id:
-            return [
-                c
-                for c in base_customers
-                if c["customer_id"].endswith("1") or c["customer_id"].endswith("5")
-            ]
+            return [c for c in base_customers if c["customer_id"].endswith("1") or c["customer_id"].endswith("5")]
 
         return base_customers
 
@@ -326,13 +318,9 @@ class ProcessPaymentsStep(SagaStep):
 
         payment_processing_result = {
             "total_invoices": len(invoices),
-            "successful_payments": len(
-                [p for p in payment_results if p["status"] == "completed"]
-            ),
+            "successful_payments": len([p for p in payment_results if p["status"] == "completed"]),
             "failed_payments_count": len(failed_payments),
-            "pending_payments": len(
-                [p for p in payment_results if p["status"] == "pending"]
-            ),
+            "pending_payments": len([p for p in payment_results if p["status"] == "pending"]),
             "total_amount_processed": float(total_processed),
             "payment_results": payment_results,
             "failed_payments": failed_payments,
@@ -395,9 +383,7 @@ class ProcessPaymentsStep(SagaStep):
 
         if payment_processing_result and not payment_processing_result.get("dry_run"):
             successful_payments = [
-                p
-                for p in payment_processing_result.get("payment_results", [])
-                if p["status"] == "completed"
+                p for p in payment_processing_result.get("payment_results", []) if p["status"] == "completed"
             ]
 
             refunded_payments = []
@@ -456,12 +442,8 @@ class SendNotificationsStep(SagaStep):
 
         for invoice in invoices:
             try:
-                payment_status = payment_status_map.get(
-                    invoice["invoice_id"], "pending"
-                )
-                notification_result = await self._send_customer_notification(
-                    invoice, payment_status
-                )
+                payment_status = payment_status_map.get(invoice["invoice_id"], "pending")
+                notification_result = await self._send_customer_notification(invoice, payment_status)
                 notifications_sent.append(notification_result)
 
             except Exception as e:
@@ -489,9 +471,7 @@ class SendNotificationsStep(SagaStep):
 
         return notification_result
 
-    async def _send_customer_notification(
-        self, invoice: dict[str, Any], payment_status: str
-    ) -> dict[str, Any]:
+    async def _send_customer_notification(self, invoice: dict[str, Any], payment_status: str) -> dict[str, Any]:
         """Send notification for a single invoice"""
 
         if payment_status == "completed":
@@ -556,40 +536,26 @@ class FinalizeBillingStep(SagaStep):
             "billing_period": billing_period,
             "tenant_id": tenant_id,
             "run_type": "dry_run" if is_dry_run else "live",
-            "started_at": context.get_shared_data("operation_context", {}).get(
-                "started_at"
-            ),
+            "started_at": context.get_shared_data("operation_context", {}).get("started_at"),
             "completed_at": datetime.utcnow().isoformat(),
             "summary": {
                 "total_customers": invoice_generation_result.get("total_customers", 0),
-                "invoices_generated": invoice_generation_result.get(
-                    "successful_invoices", 0
-                ),
+                "invoices_generated": invoice_generation_result.get("successful_invoices", 0),
                 "invoice_failures": invoice_generation_result.get("failed_invoices", 0),
-                "total_invoice_amount": invoice_generation_result.get(
-                    "total_amount", 0.0
-                ),
-                "payments_processed": payment_processing_result.get(
-                    "successful_payments", 0
-                )
+                "total_invoice_amount": invoice_generation_result.get("total_amount", 0.0),
+                "payments_processed": payment_processing_result.get("successful_payments", 0)
                 if payment_processing_result
                 else 0,
                 "payment_failures": payment_processing_result.get("failed_payments", 0)
                 if payment_processing_result
                 else 0,
-                "total_payment_amount": payment_processing_result.get(
-                    "total_amount_processed", 0.0
-                )
+                "total_payment_amount": payment_processing_result.get("total_amount_processed", 0.0)
                 if payment_processing_result
                 else 0.0,
-                "notifications_sent": notification_result.get(
-                    "successful_notifications", 0
-                )
+                "notifications_sent": notification_result.get("successful_notifications", 0)
                 if notification_result
                 else 0,
-                "notification_failures": notification_result.get(
-                    "failed_notifications", 0
-                )
+                "notification_failures": notification_result.get("failed_notifications", 0)
                 if notification_result
                 else 0,
             },
@@ -620,9 +586,7 @@ class FinalizeBillingStep(SagaStep):
 
         return f"{next_year:04d}-{next_month:02d}"
 
-    async def _update_billing_run_status(
-        self, billing_run_summary: dict[str, Any]
-    ) -> None:
+    async def _update_billing_run_status(self, billing_run_summary: dict[str, Any]) -> None:
         """Update billing run status in database"""
         # Simulate database update
         await asyncio.sleep(0.05)
@@ -650,9 +614,7 @@ class BillingRunCompensationHandler(CompensationHandler):
     """Custom compensation handler for billing runs"""
 
     @standard_exception_handler
-    async def compensate(
-        self, context: SagaContext, failed_step: str, completed_steps: list[str]
-    ) -> None:
+    async def compensate(self, context: SagaContext, failed_step: str, completed_steps: list[str]) -> None:
         """Execute custom compensation logic"""
 
         billing_request = context.get_shared_data("billing_request")
@@ -669,17 +631,11 @@ class BillingRunCompensationHandler(CompensationHandler):
 
         # Send admin notification about billing run failure
         if "process_payments" in completed_steps:
-            await self._send_admin_notification(
-                context, billing_request, "payments_refunded"
-            )
+            await self._send_admin_notification(context, billing_request, "payments_refunded")
         elif "generate_invoices" in completed_steps:
-            await self._send_admin_notification(
-                context, billing_request, "invoices_cancelled"
-            )
+            await self._send_admin_notification(context, billing_request, "invoices_cancelled")
         else:
-            await self._send_admin_notification(
-                context, billing_request, "billing_run_failed"
-            )
+            await self._send_admin_notification(context, billing_request, "billing_run_failed")
 
         context.set_shared_data("custom_compensation_completed", True)
 
@@ -754,9 +710,7 @@ class BillingRunOperation(IdempotentOperation[dict[str, Any]]):
                 raise ValueError("Estimated customers must be a non-negative integer")
 
     @standard_exception_handler
-    async def execute(
-        self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None
-    ) -> dict[str, Any]:
+    async def execute(self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         """Execute billing run via saga orchestration"""
 
         context = context or {}

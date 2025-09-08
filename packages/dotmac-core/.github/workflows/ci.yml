@@ -1,0 +1,424 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Code Quality Checks
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+
+    - name: Install project
+      run: poetry install --no-interaction
+
+    - name: Run ruff linting
+      run: |
+        poetry run ruff check src tests --output-format=github
+        poetry run ruff format --check src tests
+
+    - name: Run isort
+      run: poetry run isort --check-only --diff src tests
+
+    - name: Run black
+      run: poetry run black --check --diff src tests
+
+    - name: Run mypy type checking
+      run: poetry run mypy src
+
+  # Security Scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Install dependencies
+      run: poetry install --no-interaction
+
+    - name: Run bandit security linter
+      run: |
+        poetry run bandit -r src/ -f json -o bandit-report.json
+        poetry run bandit -r src/ -f txt
+      continue-on-error: true
+
+    - name: Run safety dependency scanner
+      run: |
+        poetry run safety check --json --output safety-report.json
+        poetry run safety check
+      continue-on-error: true
+
+    - name: Run pip-audit
+      run: |
+        poetry run pip-audit --format=json --output=pip-audit-report.json
+        poetry run pip-audit
+      continue-on-error: true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports-${{ github.run_id }}
+        path: |
+          bandit-report.json
+          safety-report.json
+          pip-audit-report.json
+        retention-days: 30
+
+  # Dependency Scanning
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Dependency Review
+      uses: actions/dependency-review-action@v3
+      with:
+        base-ref: ${{ github.event.pull_request.base.sha }}
+        head-ref: ${{ github.event.pull_request.head.sha }}
+
+  # Testing
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: venv-test-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root --extras="all"
+
+    - name: Install project
+      run: poetry install --no-interaction --extras="all"
+
+    - name: Wait for services
+      run: |
+        timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
+        timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
+
+    - name: Run unit tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+        REDIS_URL: redis://localhost:6379/0
+      run: |
+        poetry run pytest tests/ \
+          --cov=src/dotmac/core \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing \
+          --junit-xml=pytest-results.xml \
+          -v \
+          --tb=short \
+          -m "not slow"
+
+    - name: Run integration tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+        REDIS_URL: redis://localhost:6379/0
+      run: |
+        poetry run pytest tests/ \
+          -m "integration" \
+          -v \
+          --tb=short
+      continue-on-error: true
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}-${{ github.run_id }}
+        path: |
+          pytest-results.xml
+          htmlcov/
+          coverage.xml
+        retention-days: 30
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      if: matrix.python-version == '3.11'
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+        verbose: true
+
+  # Performance Tests
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    services:
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Install dependencies
+      run: poetry install --no-interaction --extras="all"
+
+    - name: Run performance tests
+      env:
+        REDIS_URL: redis://localhost:6379/0
+      run: |
+        poetry run pytest tests/ \
+          -m "slow" \
+          -v \
+          --tb=short \
+          --durations=10
+      continue-on-error: true
+
+  # Build Package
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: [quality, security, test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Build package
+      run: poetry build
+
+    - name: Check package
+      run: |
+        poetry run pip install twine
+        poetry run twine check dist/*
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-${{ github.run_id }}
+        path: dist/
+        retention-days: 90
+
+  # Documentation
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Install dependencies
+      run: poetry install --no-interaction
+
+    - name: Build documentation
+      run: |
+        # Generate API docs
+        mkdir -p docs/api
+        poetry run python -c "
+        import pkgutil
+        import dotmac.core
+        for importer, modname, ispkg in pkgutil.walk_packages(dotmac.core.__path__, dotmac.core.__name__ + '.'):
+            print(f'Found module: {modname}')
+        "
+      continue-on-error: true
+
+    - name: Validate README
+      run: |
+        poetry run python -c "
+        import pathlib
+        readme = pathlib.Path('README.md').read_text()
+        assert len(readme) > 1000, 'README too short'
+        assert '## Installation' in readme, 'Missing installation section'
+        assert '## Quick Start' in readme, 'Missing quick start section'
+        print('README validation passed')
+        "
+
+  # Release
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [quality, security, test, build]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Build package
+      run: poetry build
+
+    - name: Publish to PyPI
+      env:
+        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+      run: poetry publish
+
+    - name: Create GitHub release assets
+      run: |
+        tar -czf dotmac-core-${{ github.event.release.tag_name }}-source.tar.gz \
+          src/ tests/ README.md LICENSE CHANGELOG.md pyproject.toml
+
+    - name: Upload release assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./dotmac-core-${{ github.event.release.tag_name }}-source.tar.gz
+        asset_name: dotmac-core-${{ github.event.release.tag_name }}-source.tar.gz
+        asset_content_type: application/gzip

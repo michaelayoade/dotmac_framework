@@ -81,19 +81,13 @@ class SecretRotationMonitor:
                 "info": [self._secret_to_dict(s) for s in info],
                 "expired": [self._secret_to_dict(s) for s in expired],
             },
-            "recommendations": self._generate_recommendations(
-                critical, warnings, expired
-            ),
+            "recommendations": self._generate_recommendations(critical, warnings, expired),
         }
 
         if critical or expired:
-            logger.error(
-                f"Critical secret issues found: {len(critical)} critical, {len(expired)} expired"
-            )
+            logger.error(f"Critical secret issues found: {len(critical)} critical, {len(expired)} expired")
         elif warnings:
-            logger.warning(
-                f"Secret rotation warnings: {len(warnings)} secrets need attention"
-            )
+            logger.warning(f"Secret rotation warnings: {len(warnings)} secrets need attention")
 
         return result
 
@@ -205,9 +199,7 @@ class SecretRotationMonitor:
 
         # For now, we'll simulate based on environment detection
         last_rotation = self._estimate_last_rotation(current_value, env_var)
-        expiry_date = (
-            last_rotation + timedelta(days=rotation_days) if last_rotation else None
-        )
+        expiry_date = last_rotation + timedelta(days=rotation_days) if last_rotation else None
 
         if expiry_date:
             now = datetime.now(timezone.utc)
@@ -237,9 +229,7 @@ class SecretRotationMonitor:
             description=description,
         )
 
-    def _estimate_last_rotation(
-        self, secret_value: str, env_var: str
-    ) -> Optional[datetime]:
+    def _estimate_last_rotation(self, secret_value: str, env_var: str) -> Optional[datetime]:
         """
         Estimate when a secret was last rotated.
         This is a simplified implementation - in production, you'd query OpenBao/Vault.
@@ -288,13 +278,9 @@ class SecretRotationMonitor:
 
         # Log based on severity
         if severity == "critical" or is_expired:
-            logger.error(
-                f"CRITICAL: Secret {path} needs immediate rotation - {description}"
-            )
+            logger.error(f"CRITICAL: Secret {path} needs immediate rotation - {description}")
         elif severity == "warning":
-            logger.warning(
-                f"WARNING: Secret {path} needs rotation soon - {description}"
-            )
+            logger.warning(f"WARNING: Secret {path} needs rotation soon - {description}")
 
     def _secret_to_dict(self, secret: SecretMetadata) -> dict[str, Any]:
         """Convert secret metadata to dictionary"""
@@ -317,23 +303,15 @@ class SecretRotationMonitor:
         recommendations = []
 
         if critical or expired:
-            recommendations.append(
-                "🚨 IMMEDIATE ACTION REQUIRED: Rotate critical secrets immediately"
-            )
+            recommendations.append("🚨 IMMEDIATE ACTION REQUIRED: Rotate critical secrets immediately")
 
         if warnings:
-            recommendations.append(
-                f"⚠️ Rotate {len(warnings)} secrets within the next 30 days"
-            )
+            recommendations.append(f"⚠️ Rotate {len(warnings)} secrets within the next 30 days")
 
         if len(self.monitoring_results) > 0:
-            recommendations.append(
-                "📅 Set up automated secret rotation alerts in your monitoring system"
-            )
+            recommendations.append("📅 Set up automated secret rotation alerts in your monitoring system")
 
-        recommendations.append(
-            "🔄 Implement automatic secret rotation in your CI/CD pipeline"
-        )
+        recommendations.append("🔄 Implement automatic secret rotation in your CI/CD pipeline")
 
         return recommendations
 
@@ -353,8 +331,7 @@ async def check_secret_expiry() -> list[SecretMetadata]:
     needs_rotation = [
         secret
         for secret in monitor.monitoring_results
-        if secret.is_expired
-        or (secret.days_until_expiry and secret.days_until_expiry <= 30)
+        if secret.is_expired or (secret.days_until_expiry and secret.days_until_expiry <= 30)
     ]
 
     return needs_rotation

@@ -59,9 +59,7 @@ class RouterFactory:
         custom_endpoints: Optional[list[Callable]] = None,
     ) -> APIRouter:
         """Create a basic CRUD router for a service."""
-        cls._validate_router_params(
-            service_class, create_schema, update_schema, response_schema, prefix, tags
-        )
+        cls._validate_router_params(service_class, create_schema, update_schema, response_schema, prefix, tags)
 
         router = APIRouter(
             prefix=prefix,
@@ -159,11 +157,19 @@ class RouterFactory:
         # Optionally attach any custom endpoints
         if custom_endpoints:
             for ep in custom_endpoints:
-                router.add_api_route(
-                    **ep()
-                )  # custom factory returns kwargs for add_api_route
+                router.add_api_route(**ep())  # custom factory returns kwargs for add_api_route
 
         return router
+
+    @classmethod
+    def create_standard_router(
+        cls,
+        prefix: str = "",
+        tags: Optional[list[str]] = None,
+        dependencies: Optional[list] = None,
+    ) -> APIRouter:
+        """Create a standard router with common configuration."""
+        return APIRouter(prefix=prefix, tags=tags or [], dependencies=dependencies or [])
 
     @staticmethod
     def _validate_router_params(
@@ -181,6 +187,4 @@ class RouterFactory:
         # Basic sanity checks for provided classes
         for cls in (service_class, create_schema, update_schema, response_schema):
             if not isinstance(cls, type):
-                raise RouterValidationError(
-                    "service and schema arguments must be types"
-                )
+                raise RouterValidationError("service and schema arguments must be types")

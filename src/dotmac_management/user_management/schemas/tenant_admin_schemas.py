@@ -8,8 +8,9 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.common.schemas import BaseCreateSchema, BaseResponseSchema
 from pydantic import BaseModel, Field, field_validator
+
+from dotmac_shared.common.schemas import BaseCreateSchema, BaseResponseSchema
 
 
 class ApplicationType(str, Enum):
@@ -41,15 +42,9 @@ class TenantSubscriptionSchema(BaseModel):
     """Schema for tenant application subscriptions."""
 
     app: ApplicationType
-    plan: str = Field(
-        ..., description="Subscription plan (basic, standard, professional, enterprise)"
-    )
-    features: list[str] = Field(
-        default_factory=list, description="Enabled features for this app"
-    )
-    usage_limits: dict[str, int] = Field(
-        default_factory=dict, description="Usage limits (users, API calls, storage)"
-    )
+    plan: str = Field(..., description="Subscription plan (basic, standard, professional, enterprise)")
+    features: list[str] = Field(default_factory=list, description="Enabled features for this app")
+    usage_limits: dict[str, int] = Field(default_factory=dict, description="Usage limits (users, API calls, storage)")
     is_active: bool = True
     expires_at: Optional[datetime] = None
 
@@ -78,9 +73,7 @@ class CrossAppRoleCreateSchema(BaseCreateSchema):
 
     @field_validator("app_permissions")
     @classmethod
-    def validate_app_permissions(
-        cls, v: dict[ApplicationType, list[str]]
-    ) -> dict[ApplicationType, list[str]]:
+    def validate_app_permissions(cls, v: dict[ApplicationType, list[str]]) -> dict[ApplicationType, list[str]]:
         """Validate app permissions format."""
         for app, permissions in v.items():
             if not isinstance(permissions, list):
@@ -88,9 +81,7 @@ class CrossAppRoleCreateSchema(BaseCreateSchema):
 
             for perm in permissions:
                 if not isinstance(perm, str) or ":" not in perm:
-                    raise ValueError(
-                        f"Permission '{perm}' must be in format 'resource:action'"
-                    )
+                    raise ValueError(f"Permission '{perm}' must be in format 'resource:action'")
 
         return v
 
@@ -117,9 +108,7 @@ class CrossAppUserCreateSchema(BaseCreateSchema):
     )
 
     # User preferences
-    preferred_app: Optional[ApplicationType] = Field(
-        None, description="Default app to show after login"
-    )
+    preferred_app: Optional[ApplicationType] = Field(None, description="Default app to show after login")
 
     # Security settings
     require_mfa: bool = Field(default=False)
@@ -173,12 +162,8 @@ class CrossAppSearchSchema(BaseModel):
     """Schema for cross-app search functionality."""
 
     query: str = Field(..., min_length=1, max_length=500)
-    apps: list[ApplicationType] = Field(
-        default_factory=list, description="Apps to search in"
-    )
-    resource_types: list[str] = Field(
-        default_factory=list, description="Resource types to search for"
-    )
+    apps: list[ApplicationType] = Field(default_factory=list, description="Apps to search in")
+    resource_types: list[str] = Field(default_factory=list, description="Resource types to search for")
     limit: int = Field(default=20, ge=1, le=100)
     include_archived: bool = Field(default=False)
 
@@ -206,9 +191,7 @@ class TenantAnalyticsSchema(BaseModel):
     period_end: datetime
 
     # User activity across apps
-    app_usage: dict[ApplicationType, dict[str, Any]] = Field(
-        default_factory=dict, description="Usage metrics per app"
-    )
+    app_usage: dict[ApplicationType, dict[str, Any]] = Field(default_factory=dict, description="Usage metrics per app")
 
     # Cross-app workflows
     cross_app_activities: list[dict[str, Any]] = Field(
@@ -216,9 +199,7 @@ class TenantAnalyticsSchema(BaseModel):
     )
 
     # Feature utilization
-    feature_usage: dict[str, int] = Field(
-        default_factory=dict, description="Feature usage counts across all apps"
-    )
+    feature_usage: dict[str, int] = Field(default_factory=dict, description="Feature usage counts across all apps")
 
 
 class BulkUserOperationSchema(BaseModel):
@@ -231,14 +212,10 @@ class BulkUserOperationSchema(BaseModel):
     )
 
     # Operation parameters
-    parameters: dict[str, Any] = Field(
-        default_factory=dict, description="Parameters for the operation"
-    )
+    parameters: dict[str, Any] = Field(default_factory=dict, description="Parameters for the operation")
 
     # Scope
-    target_apps: list[ApplicationType] = Field(
-        default_factory=list, description="Apps to apply the operation to"
-    )
+    target_apps: list[ApplicationType] = Field(default_factory=list, description="Apps to apply the operation to")
 
     # Options
     send_notifications: bool = Field(default=True)
@@ -258,9 +235,7 @@ class TenantSecurityPolicySchema(BaseModel):
 
     # MFA policies
     require_mfa: bool = Field(default=False)
-    mfa_apps: list[ApplicationType] = Field(
-        default_factory=list, description="Apps that require MFA"
-    )
+    mfa_apps: list[ApplicationType] = Field(default_factory=list, description="Apps that require MFA")
 
     # Session policies
     session_timeout_minutes: int = Field(default=480, ge=15, le=1440)  # 8 hours default

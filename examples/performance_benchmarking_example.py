@@ -27,27 +27,30 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import the benchmarking suite
-from dotmac_shared.benchmarking import (
-    # Profilers
-    ApiEndpointBenchmarker,
-    ApiLoadTestConfig,
-    BenchmarkComparator,
-    BenchmarkComparisonConfig,
-    BenchmarkConfig,
-    DatabaseBenchmarkConfig,
-    DatabaseQueryBenchmarker,
-    # Core components
-    PerformanceBenchmarkManager,
-    # CI/CD
-    PerformancePipelineRunner,
-    PipelineConfig,
-    RegressionDetectionConfig,
-    # Analysis
-    RegressionDetector,
-    SystemMetricsCollector,
-    create_benchmark_suite,
-    run_comprehensive_benchmark,
+from dotmac_benchmarking import (
+    BenchmarkRunner,
+    summarize,
+    to_json,
 )
+
+# Optional imports for extended functionality
+try:
+    from dotmac_benchmarking.http import benchmark_http_request, benchmark_http_batch
+    HTTP_AVAILABLE = True
+except ImportError:
+    HTTP_AVAILABLE = False
+
+try:
+    from dotmac_benchmarking.db import benchmark_query, benchmark_query_batch
+    DB_AVAILABLE = True
+except ImportError:
+    DB_AVAILABLE = False
+
+try:
+    from dotmac_benchmarking.system import snapshot, SystemMonitor
+    SYSTEM_AVAILABLE = True
+except ImportError:
+    SYSTEM_AVAILABLE = False
 
 
 async def example_1_basic_benchmarking():
@@ -176,7 +179,7 @@ async def example_4_database_benchmarking():
     print("=" * 60)
 
     # Use SQLite for this example
-    database_url = "sqlite:///./example_benchmark.db"
+    database_url = "sqlite:///:memory:"
 
     # Create database benchmarker
     config = DatabaseBenchmarkConfig(

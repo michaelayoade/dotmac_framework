@@ -122,7 +122,7 @@ def create_simple_app() -> FastAPI:
 app = create_simple_app()
 
 if __name__ == "__main__":
-    host = os.getenv("HOST", "0.0.0.0")
+    host = os.getenv("HOST", "127.0.0.1")  # Default to localhost for security
     port = int(os.getenv("PORT", "8001"))
 
     logger.info("NOT_YET_IMPLEMENTED_ExprJoinedStr")

@@ -1,0 +1,33 @@
+version: '3.8'
+
+# Gate E-0a: Core Infrastructure Only (OpenBao/Vault)
+# This is the foundation secrets management that other services depend on
+
+services:
+  # OpenBao (Vault) for Secrets Management - using latest available image
+  openbao:
+    image: openbao/openbao:latest
+    container_name: gate-e0a-openbao
+    ports:
+      - "8200:8200"
+    networks:
+      - gate-e0a-network
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: ${OPENBAO_ROOT_TOKEN:-gate-e0a-root-token}
+      BAO_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      BAO_ADDR: http://127.0.0.1:8200
+    cap_add:
+      - IPC_LOCK
+    command: ["bao", "server", "-dev", "-dev-root-token-id=${OPENBAO_ROOT_TOKEN:-gate-e0a-root-token}"]
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8200/v1/sys/health >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+networks:
+  gate-e0a-network:
+    driver: bridge
+    name: gate-e0a-network

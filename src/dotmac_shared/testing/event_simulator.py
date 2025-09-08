@@ -21,9 +21,7 @@ class EventSimulator:
         self._event_store = []
         self._failure_injections = {}
 
-    async def publish_event(
-        self, event_type: str, payload: dict[str, Any], correlation_id: str
-    ) -> str:
+    async def publish_event(self, event_type: str, payload: dict[str, Any], correlation_id: str) -> str:
         """Publish an event for testing"""
         event_id = str(uuid.uuid4())
         event = {
@@ -104,9 +102,7 @@ class EventSimulator:
                 await self._execute_compensation(saga_id, step)
                 return
 
-            saga["steps_completed"].append(
-                {"step": step, "completed_at": datetime.utcnow().isoformat()}
-            )
+            saga["steps_completed"].append({"step": step, "completed_at": datetime.utcnow().isoformat()})
 
         saga["status"] = "completed"
         saga["completed_at"] = datetime.utcnow().isoformat()
@@ -152,9 +148,7 @@ class EventSimulator:
         self._saga_states.clear()
         await asyncio.sleep(0.1)
 
-    async def replay_events_from_store(
-        self, correlation_id: str, from_timestamp: datetime
-    ) -> list[dict]:
+    async def replay_events_from_store(self, correlation_id: str, from_timestamp: datetime) -> list[dict]:
         """Replay events from event store"""
         replayed_events = []
 

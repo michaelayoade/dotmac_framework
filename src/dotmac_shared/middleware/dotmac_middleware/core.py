@@ -77,9 +77,7 @@ class MiddlewareConfig:
 
     # Advanced configuration
     middleware_order: list[MiddlewareType] | None = None
-    custom_middlewares: dict[str, type[BaseHTTPMiddleware]] = field(
-        default_factory=dict
-    )
+    custom_middlewares: dict[str, type[BaseHTTPMiddleware]] = field(default_factory=dict)
     excluded_paths: list[str] = field(default_factory=list)
 
     # Environment-specific overrides
@@ -160,9 +158,7 @@ class MiddlewareManager:
                 middleware.initialize()
 
         self._initialized = True
-        logger.info(
-            "Middleware manager initialized", middleware_count=len(self._middlewares)
-        )
+        logger.info("Middleware manager initialized", middleware_count=len(self._middlewares))
 
     def get_ordered_middlewares(self) -> list[BaseHTTPMiddleware]:
         """Get middlewares in proper execution order."""
@@ -170,9 +166,7 @@ class MiddlewareManager:
             self.initialize()
 
         order = self.get_middleware_order()
-        return [
-            self._middlewares[mtype] for mtype in order if mtype in self._middlewares
-        ]
+        return [self._middlewares[mtype] for mtype in order if mtype in self._middlewares]
 
 
 class MiddlewareStack:
@@ -213,23 +207,17 @@ class MiddlewareStack:
             )
 
         if self.config.rate_limiting_enabled:
-            self.manager.register_middleware(
-                MiddlewareType.RATE_LIMITING, RateLimitingMiddleware
-            )
+            self.manager.register_middleware(MiddlewareType.RATE_LIMITING, RateLimitingMiddleware)
 
         if self.config.input_validation_enabled:
-            self.manager.register_middleware(
-                MiddlewareType.INPUT_VALIDATION, InputValidationMiddleware
-            )
+            self.manager.register_middleware(MiddlewareType.INPUT_VALIDATION, InputValidationMiddleware)
 
     def register_auth_middlewares(self) -> None:
         """Register authentication middleware components."""
         from .auth import AuthenticationMiddleware, JWTMiddleware, SessionMiddleware
 
         if self.config.auth_enabled:
-            self.manager.register_middleware(
-                MiddlewareType.AUTHENTICATION, AuthenticationMiddleware
-            )
+            self.manager.register_middleware(MiddlewareType.AUTHENTICATION, AuthenticationMiddleware)
 
         if self.config.jwt_enabled:
             self.manager.register_middleware(
@@ -246,9 +234,7 @@ class MiddlewareStack:
         from .tenant import DatabaseIsolationMiddleware, TenantContextMiddleware
 
         if self.config.tenant_isolation_enabled:
-            self.manager.register_middleware(
-                MiddlewareType.TENANT_CONTEXT, TenantContextMiddleware
-            )
+            self.manager.register_middleware(MiddlewareType.TENANT_CONTEXT, TenantContextMiddleware)
 
         if self.config.database_isolation_enabled:
             self.manager.register_middleware(
@@ -267,9 +253,7 @@ class MiddlewareStack:
         )
 
         if self.config.logging_enabled:
-            self.manager.register_middleware(
-                MiddlewareType.REQUEST_LOGGING, RequestLoggingMiddleware
-            )
+            self.manager.register_middleware(MiddlewareType.REQUEST_LOGGING, RequestLoggingMiddleware)
 
         if self.config.metrics_enabled:
             self.manager.register_middleware(MiddlewareType.METRICS, MetricsMiddleware)
@@ -278,9 +262,7 @@ class MiddlewareStack:
             self.manager.register_middleware(MiddlewareType.TRACING, TracingMiddleware)
 
         if self.config.performance_monitoring_enabled:
-            self.manager.register_middleware(
-                MiddlewareType.PERFORMANCE, PerformanceMiddleware
-            )
+            self.manager.register_middleware(MiddlewareType.PERFORMANCE, PerformanceMiddleware)
 
     def register_custom_middlewares(self) -> None:
         """Register custom middleware components."""

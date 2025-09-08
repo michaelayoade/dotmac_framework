@@ -226,9 +226,7 @@ class ConfigQueryMatcher:
     def remove_filter_strategy(self, strategy_class: type) -> bool:
         """Remove a filter strategy by class type."""
         original_count = len(self.strategies)
-        self.strategies = [
-            s for s in self.strategies if not isinstance(s, strategy_class)
-        ]
+        self.strategies = [s for s in self.strategies if not isinstance(s, strategy_class)]
         return len(self.strategies) < original_count
 
     def get_active_strategies(self) -> list[str]:

@@ -229,11 +229,11 @@ curl http://localhost:8000/api/v1/dns/status
 curl http://localhost:8000/api/v1/dns/health/tenant-123
 ```
 
-### Prometheus Metrics
+### Observability (SigNoz)
 
 ```env
 DNS_METRICS_ENABLED=true
-# Exports metrics on :9153/metrics
+# Metrics are exported via OTLP to SigNoz (no /metrics scraping)
 ```
 
 ### Logging and Debugging

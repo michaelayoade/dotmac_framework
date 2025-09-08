@@ -32,9 +32,7 @@ class SecurityValidator:
 
         # Length check
         if len(secret) < min_length:
-            issues.append(
-                f"Secret too short: {len(secret)} characters (minimum: {min_length})"
-            )
+            issues.append(f"Secret too short: {len(secret)} characters (minimum: {min_length})")
             recommendations.append(f"Use secrets with at least {min_length} characters")
 
         # Pattern checks for common insecure values
@@ -69,9 +67,7 @@ class SecurityValidator:
 
         return {
             "is_secure": len(issues) == 0,
-            "strength_score": max(
-                0, 100 - (len(issues) * 20) - (len(missing_types) * 5)
-            ),
+            "strength_score": max(0, 100 - (len(issues) * 20) - (len(missing_types) * 5)),
             "issues": issues,
             "recommendations": recommendations,
         }
@@ -88,28 +84,16 @@ class SecurityValidator:
             warnings.append("Not running in production mode")
 
         # Secret validation
-        secret_validation = SecurityValidator.validate_secret_strength(
-            settings.secret_key
-        )
-        jwt_validation = SecurityValidator.validate_secret_strength(
-            settings.jwt_secret_key
-        )
+        secret_validation = SecurityValidator.validate_secret_strength(settings.secret_key)
+        jwt_validation = SecurityValidator.validate_secret_strength(settings.jwt_secret_key)
 
         if not secret_validation["is_secure"]:
-            issues.extend(
-                [f"Secret key: {issue}" for issue in secret_validation["issues"]]
-            )
-            recommendations.extend(
-                [f"Secret key: {rec}" for rec in secret_validation["recommendations"]]
-            )
+            issues.extend([f"Secret key: {issue}" for issue in secret_validation["issues"]])
+            recommendations.extend([f"Secret key: {rec}" for rec in secret_validation["recommendations"]])
 
         if not jwt_validation["is_secure"]:
-            issues.extend(
-                [f"JWT secret: {issue}" for issue in jwt_validation["issues"]]
-            )
-            recommendations.extend(
-                [f"JWT secret: {rec}" for rec in jwt_validation["recommendations"]]
-            )
+            issues.extend([f"JWT secret: {issue}" for issue in jwt_validation["issues"]])
+            recommendations.extend([f"JWT secret: {rec}" for rec in jwt_validation["recommendations"]])
 
         # Same secrets check
         if settings.secret_key == settings.jwt_secret_key:
@@ -118,10 +102,7 @@ class SecurityValidator:
         # Network configuration checks
         if settings.is_production:
             # Database URL checks
-            if (
-                "localhost" in settings.database_url
-                or "127.0.0.1" in settings.database_url
-            ):
+            if "localhost" in settings.database_url or "127.0.0.1" in settings.database_url:
                 issues.append("Production database should not use localhost")
 
             # Redis URL checks
@@ -130,9 +111,7 @@ class SecurityValidator:
 
             # CORS checks
             localhost_origins = [
-                origin
-                for origin in settings.cors_origins
-                if "localhost" in origin or "127.0.0.1" in origin
+                origin for origin in settings.cors_origins if "localhost" in origin or "127.0.0.1" in origin
             ]
             if localhost_origins:
                 warnings.append(f"CORS includes localhost origins: {localhost_origins}")
@@ -161,22 +140,15 @@ class SecurityValidator:
             if not key:
                 missing_services.append(service)
             elif key and (
-                "placeholder" in key.lower()
-                or "example" in key.lower()
-                or "test" in key.lower()
-                or len(key) < 10
+                "placeholder" in key.lower() or "example" in key.lower() or "test" in key.lower() or len(key) < 10
             ):
                 placeholder_services.append(service)
 
         if missing_services:
-            warnings.append(
-                f"Missing external service keys: {', '.join(missing_services)}"
-            )
+            warnings.append(f"Missing external service keys: {', '.join(missing_services)}")
 
         if placeholder_services:
-            issues.append(
-                f"Placeholder/test keys found for: {', '.join(placeholder_services)}"
-            )
+            issues.append(f"Placeholder/test keys found for: {', '.join(placeholder_services)}")
 
         return {
             "is_secure": len(issues) == 0,
@@ -309,9 +281,7 @@ KUBERNETES_NAMESPACE_PREFIX=dotmac-tenant
                         stat = env_path.stat()
                         # Check if file is readable by others (security risk)
                         if stat.st_mode & 0o044:  # World or group readable
-                            warnings.append(
-                                f"Environment file {env_file} has overly permissive permissions"
-                            )
+                            warnings.append(f"Environment file {env_file} has overly permissive permissions")
 
         except ExceptionContext.FILE_EXCEPTIONS + (ValueError, AttributeError) as e:
             issues.append(f"Runtime security validation error: {str(e)}")
@@ -359,9 +329,7 @@ def startup_security_check():
         ]
         if critical_issues:
             logger.error("💥 Critical security issues prevent production startup")
-            raise RuntimeError(
-                f"Production startup blocked by security issues: {critical_issues}"
-            )
+            raise RuntimeError(f"Production startup blocked by security issues: {critical_issues}")
 
     return {
         "config_validation": validation_result,

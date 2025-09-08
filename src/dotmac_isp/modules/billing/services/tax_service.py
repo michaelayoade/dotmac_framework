@@ -3,9 +3,10 @@
 from decimal import Decimal
 from typing import Optional
 
-from dotmac_isp.modules.billing.models import TaxRate, TaxType
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac_isp.modules.billing.models import TaxRate, TaxType
 
 
 class TaxService:
@@ -23,9 +24,7 @@ class TaxService:
         tax_type: Optional[TaxType] = None,
     ) -> Decimal:
         """Calculate tax for an amount based on customer location."""
-        tax_rate = await self.get_applicable_tax_rate(
-            customer_location, tenant_id, tax_type
-        )
+        tax_rate = await self.get_applicable_tax_rate(customer_location, tenant_id, tax_type)
         if tax_rate:
             return amount * tax_rate.rate
 
@@ -35,9 +34,7 @@ class TaxService:
         self, location: dict, tenant_id: str, tax_type: Optional[TaxType] = None
     ) -> Optional[TaxRate]:
         """Get the applicable tax rate for a location."""
-        query = select(TaxRate).where(
-            TaxRate.tenant_id == tenant_id, TaxRate.is_active is True
-        )
+        query = select(TaxRate).where(TaxRate.tenant_id == tenant_id, TaxRate.is_active is True)
         # Add location filters if provided
         if location.get("country_code"):
             query = query.where(TaxRate.country_code == location["country_code"])
@@ -90,9 +87,7 @@ class TaxService:
         state_province: Optional[str] = None,
     ) -> list[TaxRate]:
         """Get all tax rates for a specific location."""
-        query = select(TaxRate).where(
-            TaxRate.tenant_id == tenant_id, TaxRate.is_active is True
-        )
+        query = select(TaxRate).where(TaxRate.tenant_id == tenant_id, TaxRate.is_active is True)
         if country_code:
             query = query.where(TaxRate.country_code == country_code)
 

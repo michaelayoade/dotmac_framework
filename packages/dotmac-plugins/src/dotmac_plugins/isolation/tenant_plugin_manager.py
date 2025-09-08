@@ -10,8 +10,8 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
-from ...cache import get_cache_service
-from ...monitoring import get_monitoring
+from .._internal.cache import get_cache_service
+from .._internal.monitoring import get_monitoring
 from ..core.exceptions import PluginError, PluginNotFoundError
 from ..core.manager import PluginManager
 from ..core.plugin_base import BasePlugin, PluginStatus
@@ -81,7 +81,7 @@ class TenantPluginRegistry(PluginRegistry):
         if cache_manager:
             await cache_manager.set(
                 self._tenant_cache_key,
-                self.get_registry_status(),
+                await self.get_registry_status(),
                 ttl=300,  # 5 minutes
             )
 

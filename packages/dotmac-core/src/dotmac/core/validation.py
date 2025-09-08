@@ -36,7 +36,9 @@ class CommonValidators:
             validated = validate_email(email)
             return validated.email
         except EmailNotValidError as e:
-            raise ValidationError(f"Invalid email address: {e}") from e
+            msg = f"Invalid email address: {e}"
+
+            raise ValidationError(msg) from e
 
     @staticmethod
     def validate_subdomain(subdomain: str) -> str:
@@ -53,7 +55,8 @@ class CommonValidators:
             ValidationError: If subdomain is invalid
         """
         if not subdomain:
-            raise ValidationError("Subdomain cannot be empty")
+            msg = "Subdomain cannot be empty"
+            raise ValidationError(msg)
 
         subdomain = subdomain.lower().strip()
 
@@ -64,12 +67,15 @@ class CommonValidators:
             )
 
         if len(subdomain) > 63:
-            raise ValidationError("Subdomain cannot exceed 63 characters")
+            msg = "Subdomain cannot exceed 63 characters"
+            raise ValidationError(msg)
 
         # Check for reserved subdomains
         reserved = ["www", "api", "admin", "mail", "ftp", "localhost"]
         if subdomain in reserved:
-            raise ValidationError(f"Subdomain '{subdomain}' is reserved")
+            msg = f"Subdomain '{subdomain}' is reserved"
+
+            raise ValidationError(msg)
 
         return subdomain
 
@@ -88,7 +94,8 @@ class CommonValidators:
             ValidationError: If tenant ID is invalid
         """
         if not tenant_id:
-            raise ValidationError("Tenant ID cannot be empty")
+            msg = "Tenant ID cannot be empty"
+            raise ValidationError(msg)
 
         tenant_id = tenant_id.lower().strip()
 
@@ -115,7 +122,9 @@ class CommonValidators:
             ValidationError: If phone number is invalid
         """
         if not phone:
-            raise ValidationError("Phone number cannot be empty")
+            msg = "Phone number cannot be empty"
+
+            raise ValidationError(msg)
 
         # Remove all non-digit characters except +
         cleaned = re.sub(r"[^\d+]", "", phone)
@@ -177,7 +186,11 @@ class CommonValidators:
             ValidationError: If length constraints are violated
         """
         if min_length is not None and len(value) < min_length:
-            raise ValidationError(f"{field_name} must be at least {min_length} characters long")
+            msg = f"{field_name} must be at least {min_length} characters long"
+
+            raise ValidationError(msg)
 
         if max_length is not None and len(value) > max_length:
-            raise ValidationError(f"{field_name} cannot exceed {max_length} characters")
+            msg = f"{field_name} cannot exceed {max_length} characters"
+
+            raise ValidationError(msg)

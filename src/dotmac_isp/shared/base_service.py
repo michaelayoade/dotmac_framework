@@ -30,9 +30,7 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 ResponseSchemaType = TypeVar("ResponseSchemaType", bound=BaseModel)
 
 
-class BaseService(
-    Generic[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType], ABC
-):
+class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType], ABC):
     """Service layer - exceptions bubble up to router @standard_exception_handler."""
 
     """
@@ -86,9 +84,7 @@ class BaseService(
         # Set up logging
         self._logger = logging.getLogger(f"{__name__}.{model_class.__name__}Service")
 
-    async def create(
-        self, data: CreateSchemaType, commit: bool = True
-    ) -> ResponseSchemaType:
+    async def create(self, data: CreateSchemaType, commit: bool = True) -> ResponseSchemaType:
         """
         Create new entity with business logic validation.
 
@@ -116,9 +112,7 @@ class BaseService(
 
         # Convert to dict for repository
         create_data = (
-            data.model_dump()
-            if hasattr(data, "model_dump")
-            else (data.model_dump() if hasattr(data, "dict") else data)
+            data.model_dump() if hasattr(data, "model_dump") else (data.model_dump() if hasattr(data, "dict") else data)
         )
 
         # Create entity via repository
@@ -163,14 +157,10 @@ class BaseService(
         """
         entity = await self.get_by_id(entity_id)
         if not entity:
-            raise EntityNotFoundError(
-                f"{self.model_class.__name__} not found with ID: {entity_id}"
-            )
+            raise EntityNotFoundError(f"{self.model_class.__name__} not found with ID: {entity_id}")
         return entity
 
-    async def update(
-        self, entity_id: UUID, data: UpdateSchemaType, commit: bool = True
-    ) -> ResponseSchemaType:
+    async def update(self, entity_id: UUID, data: UpdateSchemaType, commit: bool = True) -> ResponseSchemaType:
         """
         Update entity with business logic validation.
 
@@ -330,9 +320,7 @@ class BaseService(
         """Hook called before entity creation."""
         pass
 
-    async def _post_create_hook(
-        self, entity: ModelType, data: CreateSchemaType
-    ) -> None:
+    async def _post_create_hook(self, entity: ModelType, data: CreateSchemaType) -> None:
         """Hook called after entity creation."""
         pass
 
@@ -340,9 +328,7 @@ class BaseService(
         """Hook called before entity update."""
         pass
 
-    async def _post_update_hook(
-        self, entity: ModelType, data: UpdateSchemaType
-    ) -> None:
+    async def _post_update_hook(self, entity: ModelType, data: UpdateSchemaType) -> None:
         """Hook called after entity update."""
         pass
 
@@ -358,9 +344,7 @@ class BaseService(
         """Validate business rules for creation. Override in subclasses."""
         pass
 
-    async def _validate_update_rules(
-        self, entity: ModelType, data: UpdateSchemaType
-    ) -> None:
+    async def _validate_update_rules(self, entity: ModelType, data: UpdateSchemaType) -> None:
         """Validate business rules for updates. Override in subclasses."""
         pass
 
@@ -368,22 +352,16 @@ class BaseService(
         """Validate business rules for deletion. Override in subclasses."""
         pass
 
-    async def _apply_access_control_filters(
-        self, filters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _apply_access_control_filters(self, filters: dict[str, Any]) -> dict[str, Any]:
         """Apply access control filters. Override in subclasses."""
         return filters
 
-    def _add_relationship_data(
-        self, entity: ModelType, entity_dict: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _add_relationship_data(self, entity: ModelType, entity_dict: dict[str, Any]) -> dict[str, Any]:
         """Add relationship data to entity dict. Override in subclasses."""
         return entity_dict
 
 
-class BaseTenantService(
-    BaseService[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType]
-):
+class BaseTenantService(BaseService[ModelType, CreateSchemaType, UpdateSchemaType, ResponseSchemaType]):
     """
     Base service for tenant-aware entities.
 
@@ -414,13 +392,9 @@ class BaseTenantService(
             raise ValidationError("tenant_id is required for tenant services")
 
         if not hasattr(model_class, "tenant_id"):
-            raise ValidationError(
-                f"Model {model_class.__name__} must inherit from TenantMixin"
-            )
+            raise ValidationError(f"Model {model_class.__name__} must inherit from TenantMixin")
 
-        super().__init__(
-            db, model_class, create_schema, update_schema, response_schema, tenant_id
-        )
+        super().__init__(db, model_class, create_schema, update_schema, response_schema, tenant_id)
 
     async def get_tenant_stats(self) -> dict[str, Any]:
         """
@@ -439,9 +413,7 @@ class BaseTenantService(
                 "total_entities": await self.count(),
             }
 
-    async def _apply_access_control_filters(
-        self, filters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _apply_access_control_filters(self, filters: dict[str, Any]) -> dict[str, Any]:
         """Apply tenant isolation filters."""
         # Tenant filtering is handled by the repository, but we can add additional filters here
         return filters
@@ -479,9 +451,7 @@ class BaseReadOnlyService(Generic[ModelType, ResponseSchemaType], ABC):
         self.repository = create_repository(db, model_class, tenant_id)
 
         # Set up logging
-        self._logger = logging.getLogger(
-            f"{__name__}.{model_class.__name__}ReadOnlyService"
-        )
+        self._logger = logging.getLogger(f"{__name__}.{model_class.__name__}ReadOnlyService")
 
     async def get_by_id(self, entity_id: UUID) -> Optional[ResponseSchemaType]:
         """Get entity by ID."""

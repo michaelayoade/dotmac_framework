@@ -309,7 +309,7 @@ class RADIUSServerConfig:
     auth_port: int = 1812
     acct_port: int = 1813
     coa_port: int = 3799
-    bind_address: str = "0.0.0.0"
+    bind_address: str = "0.0.0.0"  # nosec B104 - RADIUS servers need to bind to all interfaces
     max_packet_size: int = 4096
     timeout: int = 5
     retries: int = 3

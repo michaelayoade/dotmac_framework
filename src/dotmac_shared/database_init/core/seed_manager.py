@@ -20,13 +20,9 @@ logger = structlog.get_logger(__name__)
 class SeedManager:
     """Manages initial data seeding for ISP databases."""
 
-    def __init__(
-        self, db_instance: DatabaseInstance, templates_path: Optional[str] = None
-    ):
+    def __init__(self, db_instance: DatabaseInstance, templates_path: Optional[str] = None):
         self.db_instance = db_instance
-        self.logger = logger.bind(
-            component="seed_manager", database=db_instance.database_name
-        )
+        self.logger = logger.bind(component="seed_manager", database=db_instance.database_name)
 
         # Set up templates path
         self.templates_path = templates_path or self._get_default_templates_path()
@@ -42,12 +38,8 @@ class SeedManager:
         package_dir = Path(__file__).parent.parent
         return str(package_dir / "templates")
 
-    @retry(
-        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
-    async def seed_initial_data(
-        self, custom_data: Optional[dict[str, Any]] = None
-    ) -> bool:
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    async def seed_initial_data(self, custom_data: Optional[dict[str, Any]] = None) -> bool:
         """
         Seed the database with initial data.
 
@@ -81,9 +73,7 @@ class SeedManager:
                 raise RuntimeError("Data verification failed")
 
         except Exception as e:
-            self.logger.error(
-                "Initial data seeding failed", error=str(e), exc_info=True
-            )
+            self.logger.error("Initial data seeding failed", error=str(e), exc_info=True)
             return False
 
     async def _validate_database_connection(self) -> bool:
@@ -97,9 +87,7 @@ class SeedManager:
             self.logger.error("Database connection failed", error=str(e))
             return False
 
-    async def _generate_seed_context(
-        self, custom_data: Optional[dict[str, Any]] = None
-    ) -> dict[str, Any]:
+    async def _generate_seed_context(self, custom_data: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         """Generate context data for seeding templates."""
         context = {
             "isp_id": str(self.db_instance.isp_id),
@@ -245,9 +233,7 @@ class SeedManager:
                         admin["created_at"],
                     )
 
-                    self.logger.info(
-                        "Default admin user created", username=admin["username"]
-                    )
+                    self.logger.info("Default admin user created", username=admin["username"])
                 else:
                     self.logger.info("Admin user already exists")
             else:
@@ -382,9 +368,7 @@ class SeedManager:
         finally:
             await conn.close()
 
-    async def _load_template(
-        self, template_name: str, context: dict[str, Any]
-    ) -> Optional[str]:
+    async def _load_template(self, template_name: str, context: dict[str, Any]) -> Optional[str]:
         """Load and render a SQL template."""
         try:
             template = self.jinja_env.get_template(template_name)
@@ -393,9 +377,7 @@ class SeedManager:
             self.logger.debug("Template not found", template=template_name)
             raise
         except Exception as e:
-            self.logger.error(
-                "Failed to render template", template=template_name, error=str(e)
-            )
+            self.logger.error("Failed to render template", template=template_name, error=str(e))
             raise
 
     async def _execute_sql(self, sql_content: str, description: str) -> None:
@@ -405,9 +387,7 @@ class SeedManager:
         try:
             async with conn.transaction():
                 # Split SQL by semicolon and execute each statement
-                statements = [
-                    stmt.strip() for stmt in sql_content.split(";") if stmt.strip()
-                ]
+                statements = [stmt.strip() for stmt in sql_content.split(";") if stmt.strip()]
 
                 for stmt in statements:
                     if stmt:
@@ -480,11 +460,7 @@ class SeedManager:
                         status[key] = None  # Table doesn't exist
 
                 return {
-                    "status": (
-                        "seeded"
-                        if any(v and v > 0 for v in status.values())
-                        else "empty"
-                    ),
+                    "status": ("seeded" if any(v and v > 0 for v in status.values()) else "empty"),
                     "details": status,
                 }
 

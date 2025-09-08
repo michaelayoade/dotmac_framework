@@ -69,9 +69,7 @@ def parse_datetime(dt_string: str) -> Optional[datetime]:
         return None
 
 
-def format_datetime(
-    dt: Union[datetime, None], fmt: Optional[str] = None
-) -> Optional[str]:
+def format_datetime(dt: Union[datetime, None], fmt: Optional[str] = None) -> Optional[str]:
     """Format datetime to string."""
     if dt is None:
         return None

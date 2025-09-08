@@ -37,18 +37,12 @@ class HealthChecker:
 
         # Process results
         results["database"] = (
-            checks[0]
-            if not isinstance(checks[0], Exception)
-            else {"status": "error", "error": str(checks[0])}
+            checks[0] if not isinstance(checks[0], Exception) else {"status": "error", "error": str(checks[0])}
         )
         results["redis"] = (
-            checks[1]
-            if not isinstance(checks[1], Exception)
-            else {"status": "error", "error": str(checks[1])}
+            checks[1] if not isinstance(checks[1], Exception) else {"status": "error", "error": str(checks[1])}
         )
-        results["external_services"] = (
-            checks[2] if not isinstance(checks[2], Exception) else []
-        )
+        results["external_services"] = checks[2] if not isinstance(checks[2], Exception) else []
 
         # Determine overall status
         results["overall_status"] = self._determine_overall_status(results)
@@ -111,9 +105,7 @@ class HealthChecker:
         if not external_services:
             return []
 
-        tasks = [
-            self.check_external_service(service["url"]) for service in external_services
-        ]
+        tasks = [self.check_external_service(service["url"]) for service in external_services]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -190,9 +182,7 @@ class HealthChecker:
 
         # Check external services
         external_services = results.get("external_services", [])
-        unhealthy_external = sum(
-            1 for svc in external_services if svc.get("status") == "unhealthy"
-        )
+        unhealthy_external = sum(1 for svc in external_services if svc.get("status") == "unhealthy")
 
         if unhealthy_external > len(external_services) / 2:  # More than half unhealthy
             return "degraded"
@@ -226,9 +216,7 @@ class DatabaseHealthCheck:
         try:
             async with self._get_connection() as conn:
                 # Test query performance
-                result = await conn.fetchval(
-                    "SELECT COUNT(*) FROM information_schema.tables"
-                )
+                result = await conn.fetchval("SELECT COUNT(*) FROM information_schema.tables")
 
                 query_time = time.time() - start_time
                 return {"query_time": round(query_time, 3), "row_count": result}
@@ -298,12 +286,8 @@ class RedisHealthCheck:
             return {
                 "used_memory_mb": round(used_memory / (1024 * 1024), 2),
                 "peak_memory_mb": round(used_memory_peak / (1024 * 1024), 2),
-                "max_memory_mb": (
-                    round(maxmemory / (1024 * 1024), 2) if maxmemory else None
-                ),
-                "memory_usage_percentage": (
-                    round((used_memory / maxmemory) * 100, 2) if maxmemory else None
-                ),
+                "max_memory_mb": (round(maxmemory / (1024 * 1024), 2) if maxmemory else None),
+                "memory_usage_percentage": (round((used_memory / maxmemory) * 100, 2) if maxmemory else None),
             }
 
         except Exception as e:
@@ -443,9 +427,7 @@ class ExternalServiceHealthCheck:
             }
 
 
-async def perform_health_check(
-    config: Optional[dict[str, Any]] = None
-) -> dict[str, Any]:
+async def perform_health_check(config: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """Perform comprehensive health check."""
     try:
         health_checker = HealthChecker(config)

@@ -64,9 +64,7 @@ class SNMPTrapParser:
                     oid_match = re.search(r"Trap OID:\s*([0-9.]+)", line)
                     if oid_match:
                         trap_data["trap_oid"] = oid_match.group(1)
-                        trap_data["trap_name"] = self.get_trap_name(
-                            trap_data["trap_oid"]
-                        )
+                        trap_data["trap_name"] = self.get_trap_name(trap_data["trap_oid"])
 
                 # Parse agent address
                 elif "Agent Address:" in line:
@@ -79,9 +77,7 @@ class SNMPTrapParser:
                     ent_match = re.search(r"Enterprise:\s*([0-9.]+)", line)
                     if ent_match:
                         trap_data["enterprise_oid"] = ent_match.group(1)
-                        trap_data["enterprise_name"] = self.get_enterprise_name(
-                            trap_data["enterprise_oid"]
-                        )
+                        trap_data["enterprise_name"] = self.get_enterprise_name(trap_data["enterprise_oid"])
 
                 # Parse generic trap type
                 elif "Generic Trap:" in line:
@@ -286,12 +282,8 @@ class SyslogParser:
                 priority = int(priority_match.group(1))
                 syslog_data["facility"] = priority >> 3
                 syslog_data["severity"] = priority & 7
-                syslog_data["facility_name"] = self.FACILITIES.get(
-                    syslog_data["facility"], "unknown"
-                )
-                syslog_data["severity_name"] = self.SEVERITIES.get(
-                    syslog_data["severity"], "unknown"
-                )
+                syslog_data["facility_name"] = self.FACILITIES.get(syslog_data["facility"], "unknown")
+                syslog_data["severity_name"] = self.SEVERITIES.get(syslog_data["severity"], "unknown")
 
                 message = message[priority_match.end() :].strip()
 
@@ -362,7 +354,9 @@ class SyslogParser:
             return True
         except ValueError:
             # Check if it looks like a hostname
-            hostname_pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$"
+            hostname_pattern = (
+                r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$"
+            )
             return bool(re.match(hostname_pattern, text)) and len(text) <= 253
 
     def analyze_message_content(self, message: str) -> dict[str, Any]:
@@ -431,9 +425,7 @@ class EventNormalizer:
         self.snmp_parser = SNMPTrapParser()
         self.syslog_parser = SyslogParser()
 
-    def normalize_snmp_trap(
-        self, raw_trap: str, source_ip: str, source_device: Optional[str] = None
-    ) -> dict[str, Any]:
+    def normalize_snmp_trap(self, raw_trap: str, source_ip: str, source_device: Optional[str] = None) -> dict[str, Any]:
         """Normalize SNMP trap to common event format."""
         parsed_trap = self.snmp_parser.parse_trap_data(raw_trap)
 
@@ -506,34 +498,21 @@ class EventNormalizer:
         for event in events:
             # Count sources
             source_key = event.get("source", {}).get("device", "unknown")
-            patterns["common_sources"][source_key] = (
-                patterns["common_sources"].get(source_key, 0) + 1
-            )
+            patterns["common_sources"][source_key] = patterns["common_sources"].get(source_key, 0) + 1
 
             # Count severities
             severity = event.get("severity", "unknown")
-            patterns["severity_distribution"][severity] = (
-                patterns["severity_distribution"].get(severity, 0) + 1
-            )
+            patterns["severity_distribution"][severity] = patterns["severity_distribution"].get(severity, 0) + 1
 
             # Look for error patterns
             description = event.get("description", "").lower()
-            if any(
-                term in description
-                for term in ["error", "fail", "exception", "timeout"]
-            ):
-                patterns["frequent_errors"][description[:50]] = (
-                    patterns["frequent_errors"].get(description[:50], 0) + 1
-                )
+            if any(term in description for term in ["error", "fail", "exception", "timeout"]):
+                patterns["frequent_errors"][description[:50]] = patterns["frequent_errors"].get(description[:50], 0) + 1
 
         # Sort by frequency
-        patterns["common_sources"] = dict(
-            sorted(patterns["common_sources"].items(), key=lambda x: x[1], reverse=True)
-        )
+        patterns["common_sources"] = dict(sorted(patterns["common_sources"].items(), key=lambda x: x[1], reverse=True))
         patterns["frequent_errors"] = dict(
-            sorted(
-                patterns["frequent_errors"].items(), key=lambda x: x[1], reverse=True
-            )
+            sorted(patterns["frequent_errors"].items(), key=lambda x: x[1], reverse=True)
         )
 
         return patterns

@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
-from dotmac_shared.auth.services import AuthService
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPBearer
 from jose import JWTError, jwt
@@ -15,6 +14,7 @@ from starlette.responses import JSONResponse
 
 from dotmac.database.session import get_db_session
 from dotmac.platform.observability.logging import get_logger
+from dotmac_shared.auth.services import AuthService
 
 from ..schemas.user_schemas import UserResponseSchema
 from ..services.user_service import UserService
@@ -29,9 +29,7 @@ class JWTAuthenticationMiddleware(BaseHTTPMiddleware):
     Validates JWT tokens and injects user context into request state.
     """
 
-    def __init__(
-        self, app, jwt_secret: str = "your-jwt-secret-key", jwt_algorithm: str = "HS256"
-    ):
+    def __init__(self, app, jwt_secret: str = "your-jwt-secret-key", jwt_algorithm: str = "HS256"):
         super().__init__(app)
         self.jwt_secret = jwt_secret
         self.jwt_algorithm = jwt_algorithm
@@ -73,9 +71,7 @@ class JWTAuthenticationMiddleware(BaseHTTPMiddleware):
                 request.state.session_id = session_id
                 request.state.tenant_id = user.tenant_id
 
-                logger.debug(
-                    f"Authenticated user {user.id} for path {request.url.path}"
-                )
+                logger.debug(f"Authenticated user {user.id} for path {request.url.path}")
 
             elif not is_optional_auth:
                 # Authentication required but not provided
@@ -86,9 +82,7 @@ class JWTAuthenticationMiddleware(BaseHTTPMiddleware):
 
         except HTTPException as e:
             if not is_optional_auth:
-                return JSONResponse(
-                    status_code=e.status_code, content={"detail": e.detail}
-                )
+                return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
             else:
                 # Continue without authentication for optional auth paths
                 logger.debug(f"Optional auth failed for {request.url.path}: {e.detail}")
@@ -101,13 +95,9 @@ class JWTAuthenticationMiddleware(BaseHTTPMiddleware):
 
     def _is_optional_auth_path(self, path: str) -> bool:
         """Check if path supports optional authentication."""
-        return any(
-            path.startswith(optional_path) for optional_path in self.optional_auth_paths
-        )
+        return any(path.startswith(optional_path) for optional_path in self.optional_auth_paths)
 
-    async def _authenticate_request(
-        self, request: Request
-    ) -> tuple[Optional[UserResponseSchema], Optional[UUID]]:
+    async def _authenticate_request(self, request: Request) -> tuple[Optional[UserResponseSchema], Optional[UUID]]:
         """
         Authenticate request and return user information.
 
@@ -126,15 +116,11 @@ class JWTAuthenticationMiddleware(BaseHTTPMiddleware):
 
         try:
             # Decode JWT token
-            payload = jwt.decode(
-                token, self.jwt_secret, algorithms=[self.jwt_algorithm]
-            )
+            payload = jwt.decode(token, self.jwt_secret, algorithms=[self.jwt_algorithm])
 
             user_id = payload.get("user_id")
             session_id = payload.get("session_id")
-            token_type = payload.get(
-                "type"
-            )  # noqa: S105 - token classification, not a secret
+            token_type = payload.get("type")  # noqa: S105 - token classification, not a secret
 
             if not user_id or not session_id or token_type != "access":
                 raise HTTPException(
@@ -185,9 +171,7 @@ class JWTAuthenticationMiddleware(BaseHTTPMiddleware):
             ) from e
         except ValueError as e:
             logger.debug(f"UUID parse error: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token format"
-            ) from e
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token format") from e
         except Exception as e:
             logger.error(f"Authentication error: {e}")
             raise HTTPException(
@@ -245,9 +229,7 @@ class APIKeyAuthenticationMiddleware(BaseHTTPMiddleware):
         """Check if path supports API key authentication."""
         return any(path.startswith(api_path) for api_path in self.api_key_paths)
 
-    async def _authenticate_api_key(
-        self, request: Request
-    ) -> Optional[UserResponseSchema]:
+    async def _authenticate_api_key(self, request: Request) -> Optional[UserResponseSchema]:
         """
         Authenticate request using API key.
 
@@ -266,9 +248,7 @@ class APIKeyAuthenticationMiddleware(BaseHTTPMiddleware):
                 auth_service = AuthService(db, None)
 
                 # Validate API key
-                api_key_record = await auth_service.api_key_repo.get_by_key_hash(
-                    api_key
-                )
+                api_key_record = await auth_service.api_key_repo.get_by_key_hash(api_key)
 
                 if not api_key_record or not api_key_record.is_active:
                     raise HTTPException(
@@ -277,10 +257,7 @@ class APIKeyAuthenticationMiddleware(BaseHTTPMiddleware):
                     )
 
                 # Check expiry
-                if (
-                    api_key_record.expires_at
-                    and api_key_record.expires_at < datetime.now(timezone.utc)
-                ):
+                if api_key_record.expires_at and api_key_record.expires_at < datetime.now(timezone.utc):
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
                         detail="API key has expired",
@@ -306,9 +283,7 @@ class APIKeyAuthenticationMiddleware(BaseHTTPMiddleware):
             return None
 
 
-def add_jwt_authentication_middleware(
-    app, jwt_secret: Optional[str] = None, jwt_algorithm: str = "HS256"
-):
+def add_jwt_authentication_middleware(app, jwt_secret: Optional[str] = None, jwt_algorithm: str = "HS256"):
     """
     Add JWT authentication middleware to FastAPI application.
 
@@ -338,8 +313,6 @@ def add_jwt_authentication_middleware(
     app.add_middleware(APIKeyAuthenticationMiddleware)
 
     # Add JWT middleware (primary authentication)
-    app.add_middleware(
-        JWTAuthenticationMiddleware, jwt_secret=jwt_secret, jwt_algorithm=jwt_algorithm
-    )
+    app.add_middleware(JWTAuthenticationMiddleware, jwt_secret=jwt_secret, jwt_algorithm=jwt_algorithm)
 
     logger.info("Added JWT and API key authentication middleware")

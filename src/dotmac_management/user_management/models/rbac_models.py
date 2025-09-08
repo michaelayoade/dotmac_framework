@@ -6,7 +6,6 @@ Implements comprehensive role and permission management with multi-tenant suppor
 import enum
 from datetime import datetime
 
-from dotmac_management.models.base import BaseModel
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -22,6 +21,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import relationship
+
+from dotmac_management.models.base import BaseModel
 
 
 class PermissionType(enum.Enum):
@@ -58,27 +59,19 @@ class RoleModel(BaseModel):
     description = Column(Text, nullable=True)
 
     # Role hierarchy and categorization
-    parent_role_id = Column(
-        PostgreSQLUUID(as_uuid=True), ForeignKey("roles_v2.id"), nullable=True
-    )
-    role_category = Column(
-        String(50), nullable=False, default="custom"
-    )  # system, admin, user, custom
+    parent_role_id = Column(PostgreSQLUUID(as_uuid=True), ForeignKey("roles_v2.id"), nullable=True)
+    role_category = Column(String(50), nullable=False, default="custom")  # system, admin, user, custom
 
     # Status and configuration
     is_active = Column(Boolean, default=True, nullable=False)
     is_system_role = Column(Boolean, default=False, nullable=False)  # Cannot be deleted
-    is_default = Column(
-        Boolean, default=False, nullable=False
-    )  # Default role for new users
+    is_default = Column(Boolean, default=False, nullable=False)  # Default role for new users
 
     # Tenant isolation
     tenant_id = Column(PostgreSQLUUID(as_uuid=True), nullable=True, index=True)
 
     # Multi-app support
-    app_scope = Column(
-        String(50), nullable=True, index=True
-    )  # Application scope (e.g., 'isp', 'crm', 'ecommerce')
+    app_scope = Column(String(50), nullable=True, index=True)  # Application scope (e.g., 'isp', 'crm', 'ecommerce')
     cross_app_permissions = Column(
         JSON, nullable=True
     )  # Cross-app permissions: {'isp': ['customers:read'], 'crm': ['leads:write']}
@@ -87,18 +80,10 @@ class RoleModel(BaseModel):
     custom_metadata = Column(JSON, nullable=True)  # Additional role configuration
 
     # Relationships
-    parent_role = relationship(
-        "RoleModel", remote_side="RoleModel.id", back_populates="child_roles"
-    )
-    child_roles = relationship(
-        "RoleModel", back_populates="parent_role", cascade="all, delete-orphan"
-    )
-    permissions = relationship(
-        "RolePermissionModel", back_populates="role", cascade="all, delete-orphan"
-    )
-    user_roles = relationship(
-        "UserRoleModel", back_populates="role", cascade="all, delete-orphan"
-    )
+    parent_role = relationship("RoleModel", remote_side="RoleModel.id", back_populates="child_roles")
+    child_roles = relationship("RoleModel", back_populates="parent_role", cascade="all, delete-orphan")
+    permissions = relationship("RolePermissionModel", back_populates="role", cascade="all, delete-orphan")
+    user_roles = relationship("UserRoleModel", back_populates="role", cascade="all, delete-orphan")
 
     # Constraints and indexes
     __table_args__ = (
@@ -128,25 +113,17 @@ class PermissionModel(BaseModel):
     # Permission categorization
     permission_type = Column(ENUM(PermissionType), nullable=False, index=True)
     scope = Column(ENUM(PermissionScope), nullable=False, index=True)
-    resource = Column(
-        String(100), nullable=False, index=True
-    )  # Specific resource (users, invoices, etc.)
+    resource = Column(String(100), nullable=False, index=True)  # Specific resource (users, invoices, etc.)
 
     # Permission hierarchy and dependencies
-    parent_permission_id = Column(
-        PostgreSQLUUID(as_uuid=True), ForeignKey("permissions_v2.id"), nullable=True
-    )
+    parent_permission_id = Column(PostgreSQLUUID(as_uuid=True), ForeignKey("permissions_v2.id"), nullable=True)
 
     # Status and system flags
     is_active = Column(Boolean, default=True, nullable=False)
-    is_system_permission = Column(
-        Boolean, default=False, nullable=False
-    )  # Cannot be deleted
+    is_system_permission = Column(Boolean, default=False, nullable=False)  # Cannot be deleted
 
     # Multi-app support
-    app_scope = Column(
-        String(50), nullable=True, index=True
-    )  # Application scope for this permission
+    app_scope = Column(String(50), nullable=True, index=True)  # Application scope for this permission
 
     # Metadata for complex permissions
     conditions = Column(JSON, nullable=True)  # Conditional permission logic
@@ -163,9 +140,7 @@ class PermissionModel(BaseModel):
         back_populates="parent_permission",
         cascade="all, delete-orphan",
     )
-    role_permissions = relationship(
-        "RolePermissionModel", back_populates="permission", cascade="all, delete-orphan"
-    )
+    role_permissions = relationship("RolePermissionModel", back_populates="permission", cascade="all, delete-orphan")
 
     # Indexes for performance
     __table_args__ = (
@@ -198,15 +173,11 @@ class RolePermissionModel(BaseModel):
     )
 
     # Permission customization
-    is_granted = Column(
-        Boolean, default=True, nullable=False
-    )  # Permission can be explicitly denied
+    is_granted = Column(Boolean, default=True, nullable=False)  # Permission can be explicitly denied
     conditions = Column(JSON, nullable=True)  # Role-specific permission conditions
 
     # Grant information
-    granted_by = Column(
-        PostgreSQLUUID(as_uuid=True), ForeignKey("users_v2.id"), nullable=True
-    )
+    granted_by = Column(PostgreSQLUUID(as_uuid=True), ForeignKey("users_v2.id"), nullable=True)
     granted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Expiry and status
@@ -220,18 +191,16 @@ class RolePermissionModel(BaseModel):
 
     # Constraints and indexes
     __table_args__ = (
-        UniqueConstraint(
-            "role_id", "permission_id", name="uq_role_permissions_v2_role_permission"
-        ),
+        UniqueConstraint("role_id", "permission_id", name="uq_role_permissions_v2_role_permission"),
         Index("idx_role_permissions_v2_role_active", "role_id", "is_active"),
-        Index(
-            "idx_role_permissions_v2_permission_granted", "permission_id", "is_granted"
-        ),
+        Index("idx_role_permissions_v2_permission_granted", "permission_id", "is_granted"),
         Index("idx_role_permissions_v2_expires", "expires_at"),
     )
 
     def __repr__(self):
-        return f"<RolePermission(role_id={self.role_id}, permission_id={self.permission_id}, granted={self.is_granted})>"
+        return (
+            f"<RolePermission(role_id={self.role_id}, permission_id={self.permission_id}, granted={self.is_granted})>"
+        )
 
 
 class UserRoleModel(BaseModel):
@@ -255,9 +224,7 @@ class UserRoleModel(BaseModel):
     )
 
     # Assignment context
-    assigned_by = Column(
-        PostgreSQLUUID(as_uuid=True), ForeignKey("users_v2.id"), nullable=True
-    )
+    assigned_by = Column(PostgreSQLUUID(as_uuid=True), ForeignKey("users_v2.id"), nullable=True)
     assigned_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     assignment_reason = Column(String(255), nullable=True)  # Why role was assigned
 
@@ -270,9 +237,7 @@ class UserRoleModel(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False)
 
     # Relationships
-    user = relationship(
-        "UserModel", foreign_keys=[user_id], back_populates="user_roles"
-    )
+    user = relationship("UserModel", foreign_keys=[user_id], back_populates="user_roles")
     role = relationship("RoleModel", back_populates="user_roles")
     assigned_by_user = relationship("UserModel", foreign_keys=[assigned_by])
 
@@ -313,13 +278,9 @@ class PermissionGroupModel(BaseModel):
     custom_metadata = Column(JSON, nullable=True)
 
     # Relationships
-    permissions = relationship(
-        "PermissionGroupItemModel", back_populates="group", cascade="all, delete-orphan"
-    )
+    permissions = relationship("PermissionGroupItemModel", back_populates="group", cascade="all, delete-orphan")
 
-    __table_args__ = (
-        Index("idx_permission_groups_v2_category_active", "category", "is_active"),
-    )
+    __table_args__ = (Index("idx_permission_groups_v2_category_active", "category", "is_active"),)
 
     def __repr__(self):
         return f"<PermissionGroup(id={self.id}, name='{self.name}')>"

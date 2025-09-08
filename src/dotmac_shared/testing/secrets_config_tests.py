@@ -91,9 +91,7 @@ class SecretsConfigE2E:
             results["steps"].append(
                 {
                     "name": "initial_token_validation",
-                    "status": "completed"
-                    if validation_result["all_valid"]
-                    else "failed",
+                    "status": "completed" if validation_result["all_valid"] else "failed",
                     "duration": validation_result.get("duration", 0),
                     "details": validation_result,
                 }
@@ -104,9 +102,7 @@ class SecretsConfigE2E:
 
             # Step 3: Generate new JWT secret (rotation begins)
             new_secret = await self._generate_jwt_secret()
-            rotation_result = await self._initiate_secret_rotation(
-                initial_secret["secret"], new_secret["secret"]
-            )
+            rotation_result = await self._initiate_secret_rotation(initial_secret["secret"], new_secret["secret"])
 
             results["steps"].append(
                 {
@@ -125,9 +121,7 @@ class SecretsConfigE2E:
             results["steps"].append(
                 {
                     "name": "dual_key_validation",
-                    "status": "completed"
-                    if dual_validation_result["success"]
-                    else "failed",
+                    "status": "completed" if dual_validation_result["success"] else "failed",
                     "duration": dual_validation_result.get("duration", 0),
                     "details": dual_validation_result,
                 }
@@ -150,9 +144,7 @@ class SecretsConfigE2E:
             )
 
             # Step 6: Complete rotation (invalidate old secret)
-            completion_result = await self._complete_secret_rotation(
-                initial_secret["secret"]
-            )
+            completion_result = await self._complete_secret_rotation(initial_secret["secret"])
 
             results["steps"].append(
                 {
@@ -168,9 +160,7 @@ class SecretsConfigE2E:
             results["steps"].append(
                 {
                     "name": "old_token_invalidation",
-                    "status": "completed"
-                    if not old_token_validation["all_valid"]
-                    else "failed",
+                    "status": "completed" if not old_token_validation["all_valid"] else "failed",
                     "duration": old_token_validation.get("duration", 0),
                     "details": old_token_validation,
                 }
@@ -212,9 +202,7 @@ class SecretsConfigE2E:
         try:
             # Step 1: Generate initial cookie secret
             initial_cookie_secret = await self._generate_cookie_secret()
-            test_sessions = await self._create_test_sessions(
-                initial_cookie_secret["secret"]
-            )
+            test_sessions = await self._create_test_sessions(initial_cookie_secret["secret"])
 
             results["steps"].append(
                 {
@@ -253,18 +241,14 @@ class SecretsConfigE2E:
             results["steps"].append(
                 {
                     "name": "session_validation_transition",
-                    "status": "completed"
-                    if session_validation["success"]
-                    else "failed",
+                    "status": "completed" if session_validation["success"] else "failed",
                     "duration": session_validation.get("duration", 0),
                     "details": session_validation,
                 }
             )
 
             # Step 4: Complete cookie rotation
-            cookie_completion = await self._complete_cookie_rotation(
-                initial_cookie_secret["secret"]
-            )
+            cookie_completion = await self._complete_cookie_rotation(initial_cookie_secret["secret"])
 
             results["steps"].append(
                 {
@@ -326,9 +310,7 @@ class SecretsConfigE2E:
             )
 
             # Step 2: Generate tenant-specific configuration
-            tenant_config = await self._generate_tenant_config(
-                base_template["template"]
-            )
+            tenant_config = await self._generate_tenant_config(base_template["template"])
             results["steps"].append(
                 {
                     "name": "tenant_config_generation",
@@ -339,9 +321,7 @@ class SecretsConfigE2E:
             )
 
             # Step 3: Inject secrets into configuration
-            secret_injection = await self._inject_secrets_into_config(
-                tenant_config["config"]
-            )
+            secret_injection = await self._inject_secrets_into_config(tenant_config["config"])
             results["steps"].append(
                 {
                     "name": "secret_injection",
@@ -352,9 +332,7 @@ class SecretsConfigE2E:
             )
 
             # Step 4: Validate final configuration
-            config_validation = await self._validate_final_configuration(
-                secret_injection["final_config"]
-            )
+            config_validation = await self._validate_final_configuration(secret_injection["final_config"])
             results["steps"].append(
                 {
                     "name": "configuration_validation",
@@ -365,9 +343,7 @@ class SecretsConfigE2E:
             )
 
             # Step 5: Deploy configuration to environment
-            deployment_result = await self._deploy_configuration(
-                secret_injection["final_config"]
-            )
+            deployment_result = await self._deploy_configuration(secret_injection["final_config"])
             results["steps"].append(
                 {
                     "name": "configuration_deployment",
@@ -428,9 +404,7 @@ class SecretsConfigE2E:
             )
 
             # Step 2: Simulate configuration changes (drift)
-            drift_simulation = await self._simulate_config_drift(
-                baseline_snapshot["config_items"]
-            )
+            drift_simulation = await self._simulate_config_drift(baseline_snapshot["config_items"])
             results["steps"].append(
                 {
                     "name": "drift_simulation",
@@ -451,18 +425,14 @@ class SecretsConfigE2E:
             results["steps"].append(
                 {
                     "name": "drift_detection",
-                    "status": "completed"
-                    if drift_detection["drift_found"]
-                    else "failed",
+                    "status": "completed" if drift_detection["drift_found"] else "failed",
                     "duration": drift_detection.get("duration", 0),
                     "details": drift_detection,
                 }
             )
 
             # Step 4: Generate drift report
-            drift_report = await self._generate_drift_report(
-                drift_detection["drift_items"]
-            )
+            drift_report = await self._generate_drift_report(drift_detection["drift_items"])
             results["steps"].append(
                 {
                     "name": "drift_reporting",
@@ -477,9 +447,7 @@ class SecretsConfigE2E:
             )
 
             # Step 5: Test automatic remediation suggestions
-            remediation = await self._generate_remediation_plan(
-                drift_detection["drift_items"]
-            )
+            remediation = await self._generate_remediation_plan(drift_detection["drift_items"])
             results["steps"].append(
                 {
                     "name": "remediation_planning",
@@ -534,18 +502,14 @@ class SecretsConfigE2E:
 
             # Generate summary
             total_tests = len(suite_results["tests"])
-            passed_tests = sum(
-                1 for t in suite_results["tests"] if t.get("success", False)
-            )
+            passed_tests = sum(1 for t in suite_results["tests"] if t.get("success", False))
             failed_tests = total_tests - passed_tests
 
             suite_results["summary"] = {
                 "total": total_tests,
                 "passed": passed_tests,
                 "failed": failed_tests,
-                "success_rate": (passed_tests / total_tests) * 100
-                if total_tests > 0
-                else 0,
+                "success_rate": (passed_tests / total_tests) * 100 if total_tests > 0 else 0,
             }
 
             suite_results["status"] = "completed" if failed_tests == 0 else "failed"
@@ -604,9 +568,7 @@ class SecretsConfigE2E:
                     "tenant_id": self.test_tenant_id,
                     "type": token_type,
                     "issued_at": datetime.now(timezone.utc).isoformat(),
-                    "expires_at": (
-                        datetime.now(timezone.utc) + timedelta(hours=24)
-                    ).isoformat(),
+                    "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
                 }
 
                 # Generate token using JWT service
@@ -671,9 +633,7 @@ class SecretsConfigE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _initiate_secret_rotation(
-        self, old_secret: str, new_secret: str
-    ) -> dict[str, Any]:
+    async def _initiate_secret_rotation(self, old_secret: str, new_secret: str) -> dict[str, Any]:
         """Initiate JWT secret rotation process."""
         start_time = time.time()
 
@@ -703,9 +663,7 @@ class SecretsConfigE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _test_dual_key_validation(
-        self, tokens: list[dict], old_secret: str, new_secret: str
-    ) -> dict[str, Any]:
+    async def _test_dual_key_validation(self, tokens: list[dict], old_secret: str, new_secret: str) -> dict[str, Any]:
         """Test dual-key validation during rotation period."""
         start_time = time.time()
 
@@ -812,15 +770,11 @@ class SecretsConfigE2E:
                     "user_id": str(uuid4()),
                     "tenant_id": self.test_tenant_id,
                     "created_at": datetime.now(timezone.utc).isoformat(),
-                    "expires_at": (
-                        datetime.now(timezone.utc) + timedelta(hours=8)
-                    ).isoformat(),
+                    "expires_at": (datetime.now(timezone.utc) + timedelta(hours=8)).isoformat(),
                 }
 
                 # Sign session data (mock implementation)
-                session_signature = hashlib.sha256(
-                    (json.dumps(session_data) + cookie_secret).encode()
-                ).hexdigest()
+                session_signature = hashlib.sha256((json.dumps(session_data) + cookie_secret).encode()).hexdigest()
 
                 sessions.append({"data": session_data, "signature": session_signature})
 
@@ -838,9 +792,7 @@ class SecretsConfigE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _initiate_cookie_rotation(
-        self, old_secret: str, new_secret: str
-    ) -> dict[str, Any]:
+    async def _initiate_cookie_rotation(self, old_secret: str, new_secret: str) -> dict[str, Any]:
         """Initiate cookie secret rotation."""
         start_time = time.time()
 
@@ -873,9 +825,7 @@ class SecretsConfigE2E:
 
             for session in sessions:
                 # Validate with old secret
-                expected_sig_old = hashlib.sha256(
-                    (json.dumps(session["data"]) + old_secret).encode()
-                ).hexdigest()
+                expected_sig_old = hashlib.sha256((json.dumps(session["data"]) + old_secret).encode()).hexdigest()
 
                 old_valid = session["signature"] == expected_sig_old
 
@@ -1022,9 +972,7 @@ class SecretsConfigE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _inject_secrets_into_config(
-        self, config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _inject_secrets_into_config(self, config: dict[str, Any]) -> dict[str, Any]:
         """Inject secrets into configuration."""
         start_time = time.time()
 
@@ -1060,9 +1008,7 @@ class SecretsConfigE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _validate_final_configuration(
-        self, config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _validate_final_configuration(self, config: dict[str, Any]) -> dict[str, Any]:
         """Validate final configuration."""
         start_time = time.time()
 
@@ -1078,9 +1024,7 @@ class SecretsConfigE2E:
             # Check for remaining placeholders
             config_str = json.dumps(config)
             if "{{" in config_str:
-                validation_errors.append(
-                    "Configuration contains unresolved placeholders"
-                )
+                validation_errors.append("Configuration contains unresolved placeholders")
 
             # Validate database configuration
             db_config = config.get("database", {})
@@ -1176,9 +1120,7 @@ class SecretsConfigE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _simulate_config_drift(
-        self, baseline_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _simulate_config_drift(self, baseline_config: dict[str, Any]) -> dict[str, Any]:
         """Simulate configuration drift."""
         start_time = time.time()
 
@@ -1214,9 +1156,7 @@ class SecretsConfigE2E:
 
             # 3. Field removal
             del modified_config["redis"]["timeout"]
-            changes.append(
-                {"type": "field_removed", "path": "redis.timeout", "old_value": 5}
-            )
+            changes.append({"type": "field_removed", "path": "redis.timeout", "old_value": 5})
             change_types.add("field_removed")
 
             # 4. Section addition
@@ -1247,9 +1187,7 @@ class SecretsConfigE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _detect_config_drift(
-        self, baseline: dict[str, Any], current: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _detect_config_drift(self, baseline: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
         """Detect configuration drift between baseline and current."""
         start_time = time.time()
 
@@ -1284,9 +1222,7 @@ class SecretsConfigE2E:
                                 }
                             )
                         elif base_obj[key] != curr_obj[key]:
-                            if isinstance(base_obj[key], dict) or isinstance(
-                                curr_obj[key], dict
-                            ):
+                            if isinstance(base_obj[key], dict) or isinstance(curr_obj[key], dict):
                                 compare_configs(base_obj[key], curr_obj[key], new_path)
                             else:
                                 drift_items.append(
@@ -1304,11 +1240,7 @@ class SecretsConfigE2E:
                 "drift_found": len(drift_items) > 0,
                 "drift_items": drift_items,
                 "drift_count": len(drift_items),
-                "severity": "high"
-                if len(drift_items) > 5
-                else "medium"
-                if len(drift_items) > 2
-                else "low",
+                "severity": "high" if len(drift_items) > 5 else "medium" if len(drift_items) > 2 else "low",
                 "duration": time.time() - start_time,
             }
 
@@ -1319,9 +1251,7 @@ class SecretsConfigE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _generate_drift_report(
-        self, drift_items: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    async def _generate_drift_report(self, drift_items: list[dict[str, Any]]) -> dict[str, Any]:
         """Generate configuration drift report."""
         start_time = time.time()
 
@@ -1338,9 +1268,7 @@ class SecretsConfigE2E:
                     categories["critical"].append(item)
                 elif drift_type == "removed" and "database" in path:
                     categories["critical"].append(item)
-                elif drift_type == "changed" and any(
-                    x in path for x in ["port", "host", "timeout"]
-                ):
+                elif drift_type == "changed" and any(x in path for x in ["port", "host", "timeout"]):
                     categories["warning"].append(item)
                 else:
                     categories["info"].append(item)
@@ -1348,25 +1276,13 @@ class SecretsConfigE2E:
             # Generate recommendations
             recommendations = []
             if categories["critical"]:
-                recommendations.append(
-                    "Immediate attention required for security-related changes"
-                )
+                recommendations.append("Immediate attention required for security-related changes")
             if categories["warning"]:
-                recommendations.append(
-                    "Review configuration changes that may impact connectivity"
-                )
+                recommendations.append("Review configuration changes that may impact connectivity")
             if categories["info"]:
-                recommendations.append(
-                    "Monitor informational changes for unexpected modifications"
-                )
+                recommendations.append("Monitor informational changes for unexpected modifications")
 
-            severity = (
-                "critical"
-                if categories["critical"]
-                else "warning"
-                if categories["warning"]
-                else "info"
-            )
+            severity = "critical" if categories["critical"] else "warning" if categories["warning"] else "info"
 
             return {
                 "report_id": str(uuid4()),
@@ -1385,9 +1301,7 @@ class SecretsConfigE2E:
                 "duration": time.time() - start_time,
             }
 
-    async def _generate_remediation_plan(
-        self, drift_items: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    async def _generate_remediation_plan(self, drift_items: list[dict[str, Any]]) -> dict[str, Any]:
         """Generate automated remediation plan for drift items."""
         start_time = time.time()
 
@@ -1399,9 +1313,7 @@ class SecretsConfigE2E:
             for item in drift_items:
                 if item["type"] == "added":
                     # New configuration items - may be auto-removable
-                    if not any(
-                        x in item["path"] for x in ["password", "secret", "key"]
-                    ):
+                    if not any(x in item["path"] for x in ["password", "secret", "key"]):
                         remediation_steps.append(
                             {
                                 "action": "remove_config",
@@ -1486,9 +1398,7 @@ async def test_secrets_config_management_e2e():
 
     # Assert overall success
     assert results["status"] == "completed", f"Test suite failed: {results}"
-    assert (
-        results["summary"]["success_rate"] >= 75
-    ), f"Success rate too low: {results['summary']}"
+    assert results["summary"]["success_rate"] >= 75, f"Success rate too low: {results['summary']}"
 
     # Log results
     logger.info("\nSecrets/Config Test Results:")

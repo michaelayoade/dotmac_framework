@@ -205,9 +205,7 @@ class SecuritySanitizer:
         return sanitized
 
     @classmethod
-    def sanitize_dict(
-        cls, data: dict[str, Any], context_map: Optional[dict[str, str]] = None
-    ) -> dict[str, Any]:
+    def sanitize_dict(cls, data: dict[str, Any], context_map: Optional[dict[str, str]] = None) -> dict[str, Any]:
         """
         Sanitize all string values in a dictionary
 
@@ -250,9 +248,7 @@ class SecuritySanitizer:
         return sanitized
 
     @classmethod
-    def sanitize_list(
-        cls, data: list[Any], context_map: Optional[dict[str, str]] = None
-    ) -> list[Any]:
+    def sanitize_list(cls, data: list[Any], context_map: Optional[dict[str, str]] = None) -> list[Any]:
         """Sanitize all values in a list"""
         if not isinstance(data, list):
             return data
@@ -359,16 +355,8 @@ def is_input_safe(data: Any) -> bool:
     if isinstance(data, str):
         return SecuritySanitizer.is_safe_input(data)
     elif isinstance(data, dict):
-        return all(
-            SecuritySanitizer.is_safe_input(str(v))
-            for v in data.values()
-            if isinstance(v, str)
-        )
+        return all(SecuritySanitizer.is_safe_input(str(v)) for v in data.values() if isinstance(v, str))
     elif isinstance(data, list):
-        return all(
-            SecuritySanitizer.is_safe_input(str(item))
-            for item in data
-            if isinstance(item, str)
-        )
+        return all(SecuritySanitizer.is_safe_input(str(item)) for item in data if isinstance(item, str))
     else:
         return True

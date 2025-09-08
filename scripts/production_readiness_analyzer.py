@@ -255,7 +255,7 @@ class ProductionReadinessAnalyzer:
             ).exists()
 
         # Monitoring setup
-        monitoring_indicators = ["prometheus", "grafana", "signoz", "opentelemetry"]
+        monitoring_indicators = ["signoz", "opentelemetry"]
         monitoring_files = []
 
         for indicator in monitoring_indicators:

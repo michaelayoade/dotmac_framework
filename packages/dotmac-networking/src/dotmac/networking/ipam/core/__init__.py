@@ -1,6 +1,7 @@
 """
 IPAM core components.
 """
+
 try:
     from .models import (
         AllocationStatus,
@@ -13,7 +14,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM models not available: {e}")
+    warnings.warn(f"IPAM models not available: {e}", stacklevel=2)
     NetworkType = AllocationStatus = ReservationStatus = None
     IPNetwork = IPAllocation = IPReservation = None
 
@@ -33,7 +34,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM schemas not available: {e}")
+    warnings.warn(f"IPAM schemas not available: {e}", stacklevel=2)
     NetworkCreate = NetworkResponse = AllocationResponse = None
 
 try:
@@ -47,7 +48,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM exceptions not available: {e}")
+    warnings.warn(f"IPAM exceptions not available: {e}", stacklevel=2)
     IPAMError = IPAddressConflictError = NetworkNotFoundError = None
 
 __all__ = [

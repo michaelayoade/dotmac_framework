@@ -2,6 +2,11 @@
 Tenant security enforcer for request-level tenant isolation.
 """
 
+import base64
+import hashlib
+import hmac
+import json
+import time
 from typing import Optional
 from uuid import UUID
 
@@ -17,13 +22,16 @@ logger = structlog.get_logger(__name__)
 class TenantSecurityEnforcer:
     """Enhanced tenant security enforcer with multi-source validation."""
 
-    def __init__(self, tenant_security_manager: Optional[TenantSecurityManager] = None):
+    def __init__(self, tenant_security_manager: Optional[TenantSecurityManager] = None, 
+                 jwt_secret_key: Optional[str] = None):
         """Initialize tenant security enforcer.
 
         Args:
             tenant_security_manager: Tenant security manager for validation
+            jwt_secret_key: Secret key for JWT validation
         """
         self.tenant_security = tenant_security_manager or TenantSecurityManager()
+        self.jwt_secret_key = jwt_secret_key or "your-secret-key"  # Should come from config
         self.exempt_paths: set[str] = {
             "/docs",
             "/redoc",
@@ -56,6 +64,18 @@ class TenantSecurityEnforcer:
 
         # Validate consistency across sources
         primary_context = await self._validate_context_consistency(contexts)
+
+        # Store original JWT payload if available for additional context
+        jwt_context = next((ctx for ctx in contexts if ctx.source == "jwt_token"), None)
+        if jwt_context:
+            try:
+                auth_header = request.headers.get("Authorization", "")
+                if auth_header.startswith("Bearer "):
+                    token = auth_header[7:]
+                    payload = self._decode_and_validate_jwt(token)
+                    primary_context.jwt_payload = payload
+            except Exception as e:
+                logger.debug("Failed to store JWT payload context", error=str(e))
 
         # Validate against tenant manager
         if not await self.tenant_security.validate_tenant(primary_context.tenant_id):
@@ -128,13 +148,114 @@ class TenantSecurityEnforcer:
             if not authorization or not authorization.startswith("Bearer "):
                 return None
 
-            # This would decode JWT and extract tenant_id
-            # For now, return None - JWT extraction would be implemented based on your JWT structure
+            token = authorization[7:]  # Remove "Bearer " prefix
+
+            # Decode and validate JWT
+            payload = self._decode_and_validate_jwt(token)
+
+            # Extract tenant_id from payload
+            tenant_id = payload.get("tenant_id")
+
+            if tenant_id:
+                logger.debug("Successfully extracted tenant from JWT", tenant_id=tenant_id)
+                return str(tenant_id)
+
+            logger.debug("No tenant_id found in JWT payload")
             return None
 
         except Exception as e:
             logger.warning("Failed to extract tenant from JWT", error=str(e))
             return None
+
+    def _decode_and_validate_jwt(self, token: str) -> dict:
+        """Decode and validate JWT token."""
+        try:
+            # Split token into parts
+            parts = token.split('.')
+            if len(parts) != 3:
+                raise ValueError("Invalid JWT format - must have 3 parts")
+
+            header, payload, signature = parts
+
+            # Decode header
+            header_data = self._decode_base64_json(header)
+            algorithm = header_data.get("alg")
+
+            # Validate algorithm
+            if algorithm not in ["HS256", "HS512"]:
+                raise ValueError(f"Unsupported algorithm: {algorithm}")
+
+            # Verify signature
+            if not self._verify_jwt_signature(f"{header}.{payload}", signature, algorithm):
+                raise ValueError("Invalid JWT signature")
+
+            # Decode payload
+            payload_data = self._decode_base64_json(payload)
+
+            # Validate expiration
+            if not self._is_token_valid(payload_data):
+                raise ValueError("Token has expired")
+
+            return payload_data
+
+        except Exception as e:
+            raise ValueError(f"JWT validation failed: {e}") from e
+
+    def _decode_base64_json(self, data: str) -> dict:
+        """Decode base64-encoded JSON data."""
+        # Add padding if needed
+        missing_padding = len(data) % 4
+        if missing_padding:
+            data += '=' * (4 - missing_padding)
+
+        decoded_bytes = base64.urlsafe_b64decode(data)
+        return json.loads(decoded_bytes.decode('utf-8'))
+
+    def _verify_jwt_signature(self, message: str, signature: str, algorithm: str) -> bool:
+        """Verify JWT signature."""
+        try:
+            if algorithm == "HS256":
+                expected_signature = base64.urlsafe_b64encode(
+                    hmac.new(
+                        self.jwt_secret_key.encode('utf-8'),
+                        message.encode('utf-8'),
+                        hashlib.sha256
+                    ).digest()
+                ).decode('utf-8').rstrip('=')
+
+            elif algorithm == "HS512":
+                expected_signature = base64.urlsafe_b64encode(
+                    hmac.new(
+                        self.jwt_secret_key.encode('utf-8'),
+                        message.encode('utf-8'),
+                        hashlib.sha512
+                    ).digest()
+                ).decode('utf-8').rstrip('=')
+            else:
+                return False
+
+            return hmac.compare_digest(signature, expected_signature)
+
+        except Exception as e:
+            logger.debug("JWT signature verification failed", error=str(e))
+            return False
+
+    def _is_token_valid(self, payload: dict) -> bool:
+        """Check if token is still valid (not expired)."""
+        exp = payload.get("exp")
+        if not exp:
+            return True  # No expiration claim
+
+        try:
+            exp_timestamp = int(exp)
+            current_timestamp = int(time.time())
+
+            # Add small buffer (30 seconds) for clock skew
+            return current_timestamp <= (exp_timestamp + 30)
+
+        except (ValueError, TypeError):
+            logger.debug("Invalid exp claim format")
+            return False
 
     def _extract_from_subdomain(self, request: Request) -> Optional[str]:
         """Extract tenant ID from subdomain."""

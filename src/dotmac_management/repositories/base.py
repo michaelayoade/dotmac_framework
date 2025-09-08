@@ -22,9 +22,7 @@ class BaseRepository(Generic[ModelType]):
         self.db = db
         self.model = model
 
-    async def create(
-        self, obj_data: dict[str, Any], user_id: Optional[str] = None
-    ) -> ModelType:
+    async def create(self, obj_data: dict[str, Any], user_id: Optional[str] = None) -> ModelType:
         """Create a new record."""
         if user_id:
             obj_data["created_by"] = user_id
@@ -55,9 +53,7 @@ class BaseRepository(Generic[ModelType]):
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_field(
-        self, field_name: str, value: Any, include_deleted: bool = False
-    ) -> Optional[ModelType]:
+    async def get_by_field(self, field_name: str, value: Any, include_deleted: bool = False) -> Optional[ModelType]:
         """Get record by any field."""
         field = getattr(self.model, field_name)
         query = select(self.model).where(field == value)
@@ -226,9 +222,7 @@ class BaseRepository(Generic[ModelType]):
 
         return items, next_cursor, has_next
 
-    async def count(
-        self, filters: Optional[dict[str, Any]] = None, include_deleted: bool = False
-    ) -> int:
+    async def count(self, filters: Optional[dict[str, Any]] = None, include_deleted: bool = False) -> int:
         """Count records with filtering."""
         query = select(func.count(self.model.id))
 
@@ -247,9 +241,7 @@ class BaseRepository(Generic[ModelType]):
         result = await self.db.execute(query)
         return result.scalar()
 
-    async def update(
-        self, id: UUID, obj_data: dict[str, Any], user_id: Optional[str] = None
-    ) -> Optional[ModelType]:
+    async def update(self, id: UUID, obj_data: dict[str, Any], user_id: Optional[str] = None) -> Optional[ModelType]:
         """Update a record."""
         # Set audit fields
         obj_data["updated_at"] = datetime.now(timezone.utc)
@@ -270,9 +262,7 @@ class BaseRepository(Generic[ModelType]):
 
         return await self.get_by_id(id)
 
-    async def delete(
-        self, id: UUID, soft_delete: bool = True, user_id: Optional[str] = None
-    ) -> bool:
+    async def delete(self, id: UUID, soft_delete: bool = True, user_id: Optional[str] = None) -> bool:
         """Delete a record (soft or hard delete)."""
         if soft_delete:
             obj_data = {"is_deleted": True, "deleted_at": func.now()}
@@ -280,19 +270,14 @@ class BaseRepository(Generic[ModelType]):
                 obj_data["updated_by"] = user_id
 
             query = (
-                update(self.model)
-                .where(self.model.id == id)
-                .where(self.model.is_deleted is False)
-                .values(**obj_data)
+                update(self.model).where(self.model.id == id).where(self.model.is_deleted is False).values(**obj_data)
             )
         else:
             query = delete(self.model).where(self.model.id == id)
         result = await self.db.execute(query)
         return result.rowcount > 0
 
-    async def bulk_create(
-        self, objects_data: list[dict[str, Any]], user_id: Optional[str] = None
-    ) -> list[ModelType]:
+    async def bulk_create(self, objects_data: list[dict[str, Any]], user_id: Optional[str] = None) -> list[ModelType]:
         """Create multiple records."""
         if user_id:
             for obj_data in objects_data:
@@ -310,9 +295,7 @@ class BaseRepository(Generic[ModelType]):
 
     async def exists(self, id: UUID) -> bool:
         """Check if record exists."""
-        query = select(func.count(self.model.id)).where(
-            self.model.id == id, self.model.is_deleted is False
-        )
+        query = select(func.count(self.model.id)).where(self.model.id == id, self.model.is_deleted is False)
         result = await self.db.execute(query)
         return result.scalar() > 0
 

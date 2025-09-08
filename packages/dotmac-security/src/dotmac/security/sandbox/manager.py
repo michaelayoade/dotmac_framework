@@ -3,9 +3,11 @@ Plugin security scanner and manager.
 """
 
 import ast
+import base64
 import hashlib
+import hmac
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Set
 from uuid import UUID
 
 import structlog
@@ -19,9 +21,15 @@ logger = structlog.get_logger(__name__)
 class SecurityScanner:
     """Central plugin security scanner."""
 
-    def __init__(self):
+    def __init__(self, trusted_keys_file: Optional[Path] = None):
         self._code_validators: list[callable] = []
-        self._trusted_signatures: set[str] = set()
+        self.trusted_signatures: set[str] = set()
+        self.trusted_hashes: dict[str, str] = {}
+        self.hmac_keys: dict[str, bytes] = {}
+
+        # Load trusted keys if provided
+        if trusted_keys_file and trusted_keys_file.exists():
+            self._load_trusted_keys(trusted_keys_file)
 
         # Initialize default validators
         self._setup_default_validators()
@@ -56,6 +64,8 @@ class SecurityScanner:
             signature = plugin_metadata.get("signature")
             if signature and not self._verify_signature(plugin_code, signature):
                 raise PluginSecurityError("Invalid plugin signature")
+            elif signature is None:
+                logger.warning("No signature provided for plugin validation", plugin_name=plugin_metadata.get("name", "unknown"))
 
             logger.info("Plugin code validation passed")
             return True
@@ -116,11 +126,102 @@ class SecurityScanner:
         # This would validate network access patterns
         return True
 
+    def _load_trusted_keys(self, keys_file: Path) -> None:
+        """Load trusted keys and signatures from file."""
+        try:
+            with open(keys_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+
+                    if ':' in line:
+                        key_type, value = line.split(':', 1)
+                        if key_type == "signature":
+                            self.trusted_signatures.add(value)
+                        elif key_type == "hash":
+                            parts = value.split(',', 1)
+                            if len(parts) == 2:
+                                self.trusted_hashes[parts[0]] = parts[1]
+                        elif key_type == "hmac_key":
+                            parts = value.split(',', 1)
+                            if len(parts) == 2:
+                                self.hmac_keys[parts[0]] = base64.b64decode(parts[1])
+
+            logger.info("Loaded trusted keys", 
+                       signatures_count=len(self.trusted_signatures),
+                       hashes_count=len(self.trusted_hashes),
+                       hmac_keys_count=len(self.hmac_keys))
+
+        except Exception as e:
+            logger.error("Failed to load trusted keys", error=str(e))
+            raise PluginSecurityError(f"Failed to load trusted keys: {e}") from e
+
     def _verify_signature(self, code: str, signature: str) -> bool:
-        """Verify plugin code signature."""
-        # Implementation would verify cryptographic signature
-        hashlib.sha256(code.encode()).hexdigest()
-        return signature in self._trusted_signatures or len(signature) > 0
+        """Verify plugin code signature using multiple methods."""
+        if not signature:
+            logger.warning("No signature provided for verification")
+            return False
+
+        # Try different verification methods
+        verification_methods = [
+            self._verify_trusted_signature,
+            self._verify_hash_signature, 
+            self._verify_hmac_signature
+        ]
+
+        for method in verification_methods:
+            try:
+                if method(code, signature, {}):
+                    logger.info("Signature verification successful", method=method.__name__)
+                    return True
+            except Exception as e:
+                logger.debug("Signature verification method failed", method=method.__name__, error=str(e))
+                continue
+
+        logger.warning("All signature verification methods failed")
+        return False
+
+    def _verify_trusted_signature(self, code: str, signature: str, metadata: dict) -> bool:
+        """Verify against pre-trusted signatures."""
+        return signature in self.trusted_signatures
+
+    def _verify_hash_signature(self, code: str, signature: str, metadata: dict) -> bool:
+        """Verify using SHA-256 hash whitelist."""
+        # Calculate code hash
+        code_hash = hashlib.sha256(code.encode('utf-8')).hexdigest()
+
+        # Check if signature matches expected hash for this plugin
+        plugin_name = metadata.get("name", "")
+        expected_hash = self.trusted_hashes.get(plugin_name)
+
+        if expected_hash and expected_hash == code_hash:
+            return signature == code_hash
+
+        return False
+
+    def _verify_hmac_signature(self, code: str, signature: str, metadata: dict) -> bool:
+        """Verify HMAC signature."""
+        plugin_name = metadata.get("name", "")
+        hmac_key = self.hmac_keys.get(plugin_name)
+
+        if not hmac_key:
+            return False
+
+        try:
+            # Calculate expected HMAC
+            expected_hmac = hmac.new(
+                hmac_key, 
+                code.encode('utf-8'), 
+                hashlib.sha256
+            ).hexdigest()
+
+            # Compare with provided signature
+            return hmac.compare_digest(expected_hmac, signature)
+
+        except Exception as e:
+            logger.debug("HMAC verification failed", error=str(e))
+            return False
 
     def create_sandbox(
         self,

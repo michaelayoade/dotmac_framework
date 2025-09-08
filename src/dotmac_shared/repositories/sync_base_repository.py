@@ -56,17 +56,13 @@ class SyncBaseRepository(Generic[ModelType]):
     - Consistent error handling
     """
 
-    def __init__(
-        self, db: Session, model_class: type[ModelType], tenant_id: str | None = None
-    ):
+    def __init__(self, db: Session, model_class: type[ModelType], tenant_id: str | None = None):
         self.db = db
         self.model_class = model_class
         self.tenant_id = tenant_id
         self._logger = logging.getLogger(f"{__name__}.{model_class.__name__}")
 
-    def create(
-        self, data: dict[str, Any], commit: bool = True, user_id: str | None = None
-    ) -> ModelType:
+    def create(self, data: dict[str, Any], commit: bool = True, user_id: str | None = None) -> ModelType:
         """Create a new entity with audit fields."""
         try:
             # Add audit fields
@@ -86,69 +82,47 @@ class SyncBaseRepository(Generic[ModelType]):
                 self.db.commit()
                 self.db.refresh(entity)
 
-            self._logger.info(
-                f"Created {self.model_class.__name__} with ID: {entity.id}"
-            )
+            self._logger.info(f"Created {self.model_class.__name__} with ID: {entity.id}")
             return entity
 
         except IntegrityError as e:
             self.db.rollback()
-            self._logger.error(
-                f"Integrity error creating {self.model_class.__name__}: {e}"
-            )
+            self._logger.error(f"Integrity error creating {self.model_class.__name__}: {e}")
             raise DuplicateEntityError(f"Entity already exists: {e.orig}") from e
         except SQLAlchemyError as e:
             self.db.rollback()
             self._logger.exception(f"Error creating {self.model_class.__name__}")
             raise DatabaseError(f"Failed to create entity: {e}") from e
 
-    def get_by_id(
-        self, entity_id: UUID, include_deleted: bool = False
-    ) -> ModelType | None:
+    def get_by_id(self, entity_id: UUID, include_deleted: bool = False) -> ModelType | None:
         """Get entity by ID with tenant and soft delete filtering."""
         try:
-            query = self._build_base_query(include_deleted).filter(
-                self.model_class.id == entity_id
-            )
+            query = self._build_base_query(include_deleted).filter(self.model_class.id == entity_id)
             return query.first()
         except SQLAlchemyError as e:
-            self._logger.exception(
-                f"Error getting {self.model_class.__name__} by ID {entity_id}"
-            )
+            self._logger.exception(f"Error getting {self.model_class.__name__} by ID {entity_id}")
             raise DatabaseError(f"Failed to retrieve entity: {e}") from e
 
-    def get_by_id_or_raise(
-        self, entity_id: UUID, include_deleted: bool = False
-    ) -> ModelType:
+    def get_by_id_or_raise(self, entity_id: UUID, include_deleted: bool = False) -> ModelType:
         """Get entity by ID or raise exception."""
         entity = self.get_by_id(entity_id, include_deleted)
         if not entity:
-            raise EntityNotFoundError(
-                f"{self.model_class.__name__} not found with ID: {entity_id}"
-            )
+            raise EntityNotFoundError(f"{self.model_class.__name__} not found with ID: {entity_id}")
         return entity
 
-    def get_by_field(
-        self, field_name: str, value: Any, include_deleted: bool = False
-    ) -> ModelType | None:
+    def get_by_field(self, field_name: str, value: Any, include_deleted: bool = False) -> ModelType | None:
         """Get entity by any field."""
         try:
             if not hasattr(self.model_class, field_name):
-                raise ValidationError(
-                    f"Field {field_name} does not exist on {self.model_class.__name__}"
-                )
+                raise ValidationError(f"Field {field_name} does not exist on {self.model_class.__name__}")
 
             field = getattr(self.model_class, field_name)
             query = self._build_base_query(include_deleted).filter(field == value)
             return query.first()
 
         except SQLAlchemyError as e:
-            self._logger.exception(
-                f"Error getting {self.model_class.__name__} by {field_name}"
-            )
-            raise DatabaseError(
-                f"Failed to retrieve entity by {field_name}: {e}"
-            ) from e
+            self._logger.exception(f"Error getting {self.model_class.__name__} by {field_name}")
+            raise DatabaseError(f"Failed to retrieve entity by {field_name}: {e}") from e
 
     def list(
         self,
@@ -231,9 +205,7 @@ class SyncBaseRepository(Generic[ModelType]):
             self._logger.exception(f"Error paginating {self.model_class.__name__}")
             raise DatabaseError(f"Failed to paginate entities: {e}") from e
 
-    def count(
-        self, filters: dict[str, Any] | None = None, include_deleted: bool = False
-    ) -> int:
+    def count(self, filters: dict[str, Any] | None = None, include_deleted: bool = False) -> int:
         """Count entities with optional filtering."""
         try:
             query = self._build_base_query(include_deleted)
@@ -273,18 +245,14 @@ class SyncBaseRepository(Generic[ModelType]):
                 self.db.commit()
                 self.db.refresh(entity)
 
-            self._logger.info(
-                f"Updated {self.model_class.__name__} with ID: {entity_id}"
-            )
+            self._logger.info(f"Updated {self.model_class.__name__} with ID: {entity_id}")
             return entity
 
         except EntityNotFoundError:
             raise
         except SQLAlchemyError as e:
             self.db.rollback()
-            self._logger.exception(
-                f"Error updating {self.model_class.__name__} {entity_id}"
-            )
+            self._logger.exception(f"Error updating {self.model_class.__name__} {entity_id}")
             raise DatabaseError(f"Failed to update entity: {e}") from e
 
     def delete(
@@ -312,18 +280,14 @@ class SyncBaseRepository(Generic[ModelType]):
             if commit:
                 self.db.commit()
 
-            self._logger.info(
-                f"Deleted {self.model_class.__name__} with ID: {entity_id} (soft: {soft_delete})"
-            )
+            self._logger.info(f"Deleted {self.model_class.__name__} with ID: {entity_id} (soft: {soft_delete})")
             return True
 
         except EntityNotFoundError:
             raise
         except SQLAlchemyError as e:
             self.db.rollback()
-            self._logger.exception(
-                f"Error deleting {self.model_class.__name__} {entity_id}"
-            )
+            self._logger.exception(f"Error deleting {self.model_class.__name__} {entity_id}")
             raise DatabaseError(f"Failed to delete entity: {e}") from e
 
     def bulk_create(
@@ -354,9 +318,7 @@ class SyncBaseRepository(Generic[ModelType]):
                 for entity in entities:
                     self.db.refresh(entity)
 
-            self._logger.info(
-                f"Bulk created {len(entities)} {self.model_class.__name__} entities"
-            )
+            self._logger.info(f"Bulk created {len(entities)} {self.model_class.__name__} entities")
             return entities
 
         except SQLAlchemyError as e:
@@ -393,9 +355,7 @@ class SyncBaseRepository(Generic[ModelType]):
             if commit:
                 self.db.commit()
 
-            self._logger.info(
-                f"Bulk updated {updated_count} {self.model_class.__name__} entities"
-            )
+            self._logger.info(f"Bulk updated {updated_count} {self.model_class.__name__} entities")
             return updated_count
 
         except SQLAlchemyError as e:
@@ -411,9 +371,7 @@ class SyncBaseRepository(Generic[ModelType]):
             return query.first() is not None
 
         except SQLAlchemyError as e:
-            self._logger.exception(
-                f"Error checking existence of {self.model_class.__name__}"
-            )
+            self._logger.exception(f"Error checking existence of {self.model_class.__name__}")
             raise DatabaseError(f"Failed to check entity existence: {e}") from e
 
     def search(
@@ -526,9 +484,7 @@ class SyncTenantRepository(SyncBaseRepository[ModelType]):
             raise ValidationError("tenant_id is required for tenant repositories")
 
         if not issubclass(model_class, BaseModel):
-            raise ValidationError(
-                f"Model {model_class.__name__} must inherit from BaseModel"
-            )
+            raise ValidationError(f"Model {model_class.__name__} must inherit from BaseModel")
 
         super().__init__(db, model_class, tenant_id)
 
@@ -546,9 +502,7 @@ class SyncTenantRepository(SyncBaseRepository[ModelType]):
             # Add timestamp-based stats if supported
             if hasattr(self.model_class, "created_at"):
                 # Entities created today
-                today_start = datetime.now(timezone.utc).replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
+                today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
                 today_count = self.count({"created_at": {"gte": today_start}})
                 stats["created_today"] = today_count
 
@@ -560,7 +514,5 @@ class SyncTenantRepository(SyncBaseRepository[ModelType]):
             return stats
 
         except SQLAlchemyError as e:
-            self._logger.exception(
-                f"Error getting tenant stats for {self.model_class.__name__}"
-            )
+            self._logger.exception(f"Error getting tenant stats for {self.model_class.__name__}")
             raise DatabaseError(f"Failed to get tenant statistics: {e}") from e

@@ -13,7 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Query, Session
 
-from ..types import (
+from dotmac.core.db_toolkit.types import (
     DatabaseError,
 )
 
@@ -67,8 +67,10 @@ class DatabasePaginator:
             return items, total
 
         except Exception as e:
-            logger.error(f"Error in query pagination: {e}")
-            raise DatabaseError(f"Pagination failed: {e}") from e
+            logger.error("Error in query pagination: %s", e)
+            msg = f"Pagination failed: {e}"
+
+            raise DatabaseError(msg) from e
 
     @staticmethod
     async def async_paginate_query(
@@ -113,8 +115,10 @@ class DatabasePaginator:
             return items, total
 
         except Exception as e:
-            logger.error(f"Error in async query pagination: {e}")
-            raise DatabaseError(f"Async pagination failed: {e}") from e
+            logger.error("Error in async query pagination: %s", e)
+            msg = f"Async pagination failed: {e}"
+
+            raise DatabaseError(msg) from e
 
     @staticmethod
     def cursor_paginate_query(
@@ -176,8 +180,10 @@ class DatabasePaginator:
             return items, next_cursor, has_next
 
         except Exception as e:
-            logger.error(f"Error in cursor pagination: {e}")
-            raise DatabaseError(f"Cursor pagination failed: {e}") from e
+            logger.error("Error in cursor pagination: %s", e)
+            msg = f"Cursor pagination failed: {e}"
+
+            raise DatabaseError(msg) from e
 
     @staticmethod
     async def async_cursor_paginate_query(
@@ -241,8 +247,10 @@ class DatabasePaginator:
             return items, next_cursor, has_next
 
         except Exception as e:
-            logger.error(f"Error in async cursor pagination: {e}")
-            raise DatabaseError(f"Async cursor pagination failed: {e}") from e
+            logger.error("Error in async cursor pagination: %s", e)
+            msg = f"Async cursor pagination failed: {e}"
+
+            raise DatabaseError(msg) from e
 
 
 class PerformancePaginator:
@@ -285,8 +293,10 @@ class PerformancePaginator:
                 return items, f"{count_threshold}+"
 
         except Exception as e:
-            logger.error(f"Error in performance pagination: {e}")
-            raise DatabaseError(f"Performance pagination failed: {e}") from e
+            logger.error("Error in performance pagination: %s", e)
+            msg = f"Performance pagination failed: {e}"
+
+            raise DatabaseError(msg) from e
 
     @staticmethod
     def deep_pagination_optimize(
@@ -347,8 +357,10 @@ class PerformancePaginator:
                 return items, total
 
         except Exception as e:
-            logger.error(f"Error in deep pagination optimization: {e}")
-            raise DatabaseError(f"Deep pagination optimization failed: {e}") from e
+            logger.error("Error in deep pagination optimization: %s", e)
+            msg = f"Deep pagination optimization failed: {e}"
+
+            raise DatabaseError(msg) from e
 
 
 class PaginationHelper:
@@ -383,8 +395,10 @@ class PaginationHelper:
             return base64.b64encode(json_str.encode()).decode()
 
         except Exception as e:
-            logger.error(f"Error encoding cursor: {e}")
-            raise DatabaseError(f"Failed to encode cursor: {e}") from e
+            logger.error("Error encoding cursor: %s", e)
+            msg = f"Failed to encode cursor: {e}"
+
+            raise DatabaseError(msg) from e
 
     @staticmethod
     def decode_cursor(cursor: str) -> Any:
@@ -418,8 +432,10 @@ class PaginationHelper:
                 return value
 
         except Exception as e:
-            logger.error(f"Error decoding cursor: {e}")
-            raise DatabaseError(f"Failed to decode cursor: {e}") from e
+            logger.error("Error decoding cursor: %s", e)
+            msg = f"Failed to decode cursor: {e}"
+
+            raise DatabaseError(msg) from e
 
     @staticmethod
     def create_cursor_from_item(item: Any, field_name: str) -> str:
@@ -437,8 +453,10 @@ class PaginationHelper:
             field_value = getattr(item, field_name)
             return PaginationHelper.encode_cursor(field_value)
         except Exception as e:
-            logger.error(f"Error creating cursor from item: {e}")
-            raise DatabaseError(f"Failed to create cursor: {e}") from e
+            logger.error("Error creating cursor from item: %s", e)
+            msg = f"Failed to create cursor: {e}"
+
+            raise DatabaseError(msg) from e
 
     @staticmethod
     def calculate_pagination_info(total: int, page: int, per_page: int) -> dict[str, Any]:

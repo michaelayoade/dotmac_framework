@@ -116,12 +116,8 @@ class BaseIntegration(ABC):
         self.metrics.requests_success += 1
         if response_time > 0:
             # Simple moving average
-            total_time = self.metrics.avg_response_time * (
-                self.metrics.requests_total - 1
-            )
-            self.metrics.avg_response_time = (
-                total_time + response_time
-            ) / self.metrics.requests_total
+            total_time = self.metrics.avg_response_time * (self.metrics.requests_total - 1)
+            self.metrics.avg_response_time = (total_time + response_time) / self.metrics.requests_total
         self.metrics.last_success = "now"  # In production, use actual timestamp
 
     def _record_error(self, error: str):
@@ -180,18 +176,14 @@ class ApiIntegration(BaseIntegration):
         start_time = time.time()
 
         try:
-            async with aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=30)
-            ) as session:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
                 async with session.request(
                     method=method,
                     url=url,
                     json=data,
                     params=params,
                     headers=headers,
-                    timeout=aiohttp.ClientTimeout(
-                        total=self.config.retry_config["timeout"]
-                    ),
+                    timeout=aiohttp.ClientTimeout(total=self.config.retry_config["timeout"]),
                 ) as response:
                     response_time = time.time() - start_time
 
@@ -227,9 +219,7 @@ class WebhookIntegration(BaseIntegration):
         pass
 
     @abstractmethod
-    async def process_webhook_event(
-        self, event_type: str, payload: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def process_webhook_event(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Process incoming webhook event."""
         pass
 

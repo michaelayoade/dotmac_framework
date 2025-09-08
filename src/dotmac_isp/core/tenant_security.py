@@ -48,9 +48,7 @@ def add_tenant_security_middleware(app: FastAPI):
                 return response
 
         tenant_security_service = get_tenant_security_service()
-        app.add_middleware(
-            ISPTenantSecurityMiddleware, tenant_security_service=tenant_security_service
-        )
+        app.add_middleware(ISPTenantSecurityMiddleware, tenant_security_service=tenant_security_service)
 
         logger.info("ISP tenant security middleware added")
 

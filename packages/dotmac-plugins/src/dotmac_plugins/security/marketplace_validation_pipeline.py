@@ -617,9 +617,9 @@ class MarketplaceValidationPipeline:
         required_fields = ["name", "version", "description", "author"]
         missing_fields = []
 
-        for field in required_fields:
-            if not getattr(submission, field, None):
-                missing_fields.append(field)
+        for field_name in required_fields:
+            if not getattr(submission, field_name, None):
+                missing_fields.append(field_name)
 
         if missing_fields:
             return ValidationResult(

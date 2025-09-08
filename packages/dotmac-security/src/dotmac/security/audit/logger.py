@@ -109,8 +109,8 @@ class AuditLogger:
         resource_id: str,
         actor_id: str,
         outcome: AuditOutcome = AuditOutcome.SUCCESS,
-        before_state: Optional[Dict] = None,
-        after_state: Optional[Dict] = None,
+        before_state: Optional[dict] = None,
+        after_state: Optional[dict] = None,
         **kwargs,
     ) -> AuditEvent:
         """Log data access audit event."""
@@ -264,8 +264,12 @@ class AuditLogger:
 _global_audit_logger: Optional[AuditLogger] = None
 
 
-def get_audit_logger() -> Optional[AuditLogger]:
+def get_audit_logger() -> AuditLogger:
     """Get the global audit logger instance."""
+    if _global_audit_logger is None:
+        raise RuntimeError(
+            "Audit logger not initialized. Call init_audit_logger() first or provide an audit logger instance."
+        )
     return _global_audit_logger
 
 

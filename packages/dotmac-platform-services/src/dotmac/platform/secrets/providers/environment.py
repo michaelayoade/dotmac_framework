@@ -52,8 +52,7 @@ class EnvironmentProvider(SecretsProvider):
             parsed_value = json.loads(value)
             if isinstance(parsed_value, dict):
                 return parsed_value
-            else:
-                return {"value": parsed_value}
+            return {"value": parsed_value}
         except json.JSONDecodeError:
             return {"value": value}
 

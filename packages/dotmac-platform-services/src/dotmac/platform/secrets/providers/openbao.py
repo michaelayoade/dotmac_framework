@@ -127,15 +127,14 @@ class OpenBaoProvider(BaseProvider, HTTPProviderMixin):
                 logger.debug(f"Detected KV version {detected_version} for mount {mount_path}")
                 return detected_version
 
-            elif response.status_code == 403:
+            if response.status_code == 403:
                 # If we can't read mount info, assume configured version
                 logger.warning(
                     f"Cannot detect KV version for {mount_path}, using configured version"
                 )
                 return self.api_version
 
-            else:
-                self._handle_http_error(response, f"sys/mounts/{mount_path}")
+            self._handle_http_error(response, f"sys/mounts/{mount_path}")
 
         except Exception as e:
             logger.warning(
@@ -160,8 +159,7 @@ class OpenBaoProvider(BaseProvider, HTTPProviderMixin):
 
         if kv_version == "v2":
             return f"v1/{self.mount_path}/data/{normalized_path}"
-        else:
-            return f"v1/{self.mount_path}/{normalized_path}"
+        return f"v1/{self.mount_path}/{normalized_path}"
 
     async def get_secret(self, path: str) -> SecretData:
         """
@@ -206,8 +204,7 @@ class OpenBaoProvider(BaseProvider, HTTPProviderMixin):
 
                 return self._validate_secret_data(secret_data, path)
 
-            else:
-                self._handle_http_error(response, path)
+            self._handle_http_error(response, path)
 
         except (SecretNotFoundError, ProviderAuthenticationError, ProviderAuthorizationError):
             raise
@@ -249,9 +246,8 @@ class OpenBaoProvider(BaseProvider, HTTPProviderMixin):
             if response.status_code in (200, 204):
                 logger.info(f"Successfully stored secret: {path}")
                 return True
-            else:
-                self._handle_http_error(response, path)
-                return False
+            self._handle_http_error(response, path)
+            return False
 
         except (ProviderAuthenticationError, ProviderAuthorizationError):
             raise
@@ -291,9 +287,8 @@ class OpenBaoProvider(BaseProvider, HTTPProviderMixin):
             if response.status_code in (200, 204, 404):
                 logger.info(f"Successfully deleted secret: {path}")
                 return True
-            else:
-                self._handle_http_error(response, path)
-                return False
+            self._handle_http_error(response, path)
+            return False
 
         except SecretNotFoundError:
             # Secret not found is considered successful deletion
@@ -350,13 +345,12 @@ class OpenBaoProvider(BaseProvider, HTTPProviderMixin):
 
                 return sorted(secrets)
 
-            elif response.status_code == 404:
+            if response.status_code == 404:
                 # No secrets found
                 return []
 
-            else:
-                self._handle_http_error(response, f"list:{path_prefix}")
-                return []
+            self._handle_http_error(response, f"list:{path_prefix}")
+            return []
 
         except (ProviderAuthenticationError, ProviderAuthorizationError):
             raise
@@ -388,10 +382,9 @@ class OpenBaoProvider(BaseProvider, HTTPProviderMixin):
                 self._healthy = True
                 logger.debug("OpenBao health check passed")
                 return True
-            else:
-                self._healthy = False
-                logger.warning(f"OpenBao health check failed: HTTP {response.status_code}")
-                return False
+            self._healthy = False
+            logger.warning(f"OpenBao health check failed: HTTP {response.status_code}")
+            return False
 
         except Exception as e:
             self._healthy = False
@@ -416,9 +409,8 @@ class OpenBaoProvider(BaseProvider, HTTPProviderMixin):
 
             if response.status_code == 200:
                 return response.json().get("data", {})
-            else:
-                self._handle_http_error(response, "auth/token/lookup-self")
-                return {}
+            self._handle_http_error(response, "auth/token/lookup-self")
+            return {}
 
         except Exception as e:
             logger.warning(f"Failed to get auth info: {e}")

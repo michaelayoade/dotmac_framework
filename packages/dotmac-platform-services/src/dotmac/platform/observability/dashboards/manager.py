@@ -18,7 +18,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-PlatformType = Literal["signoz", "grafana"]
+PlatformType = Literal["signoz"]
 
 
 @dataclass
@@ -35,18 +35,10 @@ class DashboardConfig:
 
     def get_auth_headers(self) -> dict[str, str]:
         """Get authentication headers for the platform."""
-        if self.platform_type == "signoz":
+        if self.platform_type in {"signoz", "grafana"}:
             if self.api_key:
                 return {"Authorization": f"Bearer {self.api_key}"}
-            elif self.username and self.password:
-                import base64
-
-                credentials = base64.b64encode(f"{self.username}:{self.password}".encode()).decode()
-                return {"Authorization": f"Basic {credentials}"}
-        elif self.platform_type == "grafana":
-            if self.api_key:
-                return {"Authorization": f"Bearer {self.api_key}"}
-            elif self.username and self.password:
+            if self.username and self.password:
                 import base64
 
                 credentials = base64.b64encode(f"{self.username}:{self.password}".encode()).decode()
@@ -123,7 +115,7 @@ class DashboardManager:
 
     def __init__(self, config: DashboardConfig) -> None:
         self.config = config
-        self._client: "httpx.Client" | None = None
+        self._client: httpx.Client | None = None
 
         if not HTTPX_AVAILABLE:
             warnings.warn(
@@ -219,8 +211,6 @@ class DashboardManager:
 
         if self.config.platform_type == "signoz":
             self._provision_signoz_dashboard(template, dashboard_config, result)
-        elif self.config.platform_type == "grafana":
-            self._provision_grafana_dashboard(template, dashboard_config, result)
         else:
             raise ValueError(f"Unsupported platform type: {self.config.platform_type}")
 
@@ -285,48 +275,7 @@ class DashboardManager:
             result.add_error(f"SigNoz dashboard provisioning failed for {template.name}: {e}")
             result.dashboards_failed.append(template.name)
 
-    def _provision_grafana_dashboard(
-        self,
-        template: DashboardTemplate,
-        dashboard_config: dict[str, Any],
-        result: DashboardProvisioningResult,
-    ) -> None:
-        """Provision dashboard in Grafana."""
-        if not self._client:
-            raise RuntimeError("HTTP client not available")
-
-        # Grafana dashboard API format
-        payload = {
-            "dashboard": {
-                "title": template.title,
-                "description": template.description,
-                "tags": template.tags,
-                **dashboard_config,
-            },
-            "overwrite": True,
-            "message": "Provisioned by dotmac-observability",
-        }
-
-        try:
-            response = self._client.post("/api/dashboards/db", json=payload)
-
-            if response.status_code == 200:
-                response_data = response.json()
-                if response_data.get("status") == "success":
-                    if response_data.get("version") == 1:
-                        result.dashboards_created.append(template.name)
-                        logger.info(f"Created Grafana dashboard: {template.title}")
-                    else:
-                        result.dashboards_updated.append(template.name)
-                        logger.info(f"Updated Grafana dashboard: {template.title}")
-                else:
-                    raise Exception(f"Grafana API returned error: {response_data}")
-            else:
-                raise Exception(f"Failed to provision dashboard: {response.text}")
-
-        except Exception as e:
-            result.add_error(f"Grafana dashboard provisioning failed for {template.name}: {e}")
-            result.dashboards_failed.append(template.name)
+    # Grafana provisioning removed (SigNoz-only stack)
 
     def _create_default_datasources(self, result: DashboardProvisioningResult) -> None:
         """Create default datasources for the platform."""
@@ -336,8 +285,6 @@ class DashboardManager:
         try:
             if self.config.platform_type == "signoz":
                 self._create_signoz_datasources(result)
-            elif self.config.platform_type == "grafana":
-                self._create_grafana_datasources(result)
         except Exception as e:
             result.add_warning(f"Failed to create datasources: {e}")
 
@@ -345,69 +292,66 @@ class DashboardManager:
         """Create default datasources for SigNoz."""
         # SigNoz typically has built-in datasources, so this might be a no-op
 
-    def _create_grafana_datasources(self, result: DashboardProvisioningResult) -> None:
-        """Create default datasources for Grafana."""
-        if not self._client:
-            return
-
-        # Create Prometheus datasource
-        prometheus_ds = {
-            "name": "DotMac-Prometheus",
-            "type": "prometheus",
-            "url": os.getenv("PROMETHEUS_URL", "http://localhost:9090"),
-            "access": "proxy",
-            "basicAuth": False,
-            "isDefault": True,
-        }
-
-        try:
-            response = self._client.post("/api/datasources", json=prometheus_ds)
-            if response.status_code == 200:
-                result.datasources_created.append("DotMac-Prometheus")
-                logger.info("Created Grafana Prometheus datasource")
-        except Exception as e:
-            result.add_warning(f"Failed to create Prometheus datasource: {e}")
+    # Grafana datasource creation removed
 
 
 def get_default_dashboard_templates() -> list[DashboardTemplate]:
     """Get default dashboard templates for DotMac services."""
+    # SigNoz-compatible template placeholders. SigNoz will interpret
+    # metric names via its query builder; these fields act as hints.
     return [
         DashboardTemplate(
             name="dotmac_service_overview",
             title="DotMac Service Overview",
-            description="Overview dashboard for DotMac services",
+            description="Overview dashboard for DotMac services (SigNoz)",
             tags=["dotmac", "overview"],
             template_content={
                 "panels": [
                     {
-                        "title": "HTTP Requests",
-                        "type": "graph",
-                        "targets": [
+                        "title": "HTTP Requests (rate)",
+                        "type": "timeseries",
+                        "queries": [
                             {
-                                "expr": f"rate(http_requests_total{{service=\"{'{service}'}\"}}[5m])",
-                                "legendFormat": "{{method}} {{endpoint}}",
+                                "metricName": "http_requests_total",
+                                "operation": "RATE",
+                                "legend": "{method} {endpoint}",
+                                "filters": {"service": "${service}"},
+                                "groupBy": ["method", "endpoint"],
                             }
                         ],
                     },
                     {
-                        "title": "HTTP Request Duration",
-                        "type": "graph",
-                        "targets": [
+                        "title": "HTTP Request Duration P95",
+                        "type": "timeseries",
+                        "queries": [
                             {
-                                "expr": f"histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{{service=\"{'{service}'}\"}}[5m]))",
-                                "legendFormat": "95th percentile",
+                                "metricName": "http_request_duration_seconds",
+                                "operation": "P95",
+                                "legend": "p95",
+                                "filters": {"service": "${service}"},
+                                "groupBy": [],
                             }
                         ],
                     },
                     {
-                        "title": "Business Metrics - Success Rate",
-                        "type": "graph",
-                        "targets": [
+                        "title": "Login Success Rate",
+                        "type": "timeseries",
+                        "queries": [
                             {
-                                "expr": f"rate(login_success_rate_success{{tenant_id=\"{'{tenant_id}'}\"}}[5m]) / rate(login_success_rate_total{{tenant_id=\"{'{tenant_id}'}\"}}[5m])",
-                                "legendFormat": "Login Success Rate",
-                            }
+                                "metricName": "login_success_rate_success",
+                                "operation": "RATE",
+                                "as": "success",
+                                "filters": {"tenant_id": "${tenant_id}"},
+                            },
+                            {
+                                "metricName": "login_success_rate_total",
+                                "operation": "RATE",
+                                "as": "total",
+                                "filters": {"tenant_id": "${tenant_id}"},
+                            },
                         ],
+                        "formula": "success / total",
+                        "legend": "Login Success Rate",
                     },
                 ],
             },
@@ -416,21 +360,21 @@ def get_default_dashboard_templates() -> list[DashboardTemplate]:
         DashboardTemplate(
             name="dotmac_slo_overview",
             title="DotMac SLO Overview",
-            description="SLO monitoring dashboard",
+            description="SLO monitoring dashboard (SigNoz)",
             tags=["dotmac", "slo"],
             template_content={
                 "panels": [
                     {
-                        "title": "SLO Status",
+                        "title": "API Success Rate",
                         "type": "stat",
-                        "targets": [
-                            {
-                                "expr": f"avg(rate(api_request_success_rate_success{{tenant_id=\"{'{tenant_id}'}\"}}[5m]) / rate(api_request_success_rate_total{{tenant_id=\"{'{tenant_id}'}\"}}[5m]))",
-                                "legendFormat": "API Success Rate",
-                            }
+                        "queries": [
+                            {"metricName": "api_request_success_rate_success", "operation": "RATE", "as": "s"},
+                            {"metricName": "api_request_success_rate_total", "operation": "RATE", "as": "t"},
                         ],
-                    },
-                ],
+                        "formula": "avg(s / t)",
+                        "legend": "API Success Rate",
+                    }
+                ]
             },
             variables={"tenant_id": "${tenant_id}"},
         ),
@@ -448,7 +392,7 @@ def provision_platform_dashboards(
     Provision platform dashboards for DotMac observability.
 
     Args:
-        platform_type: Target platform ("signoz" or "grafana")
+        platform_type: Target platform ("signoz")
         tenant_id: Optional tenant ID for scoping
         custom_variables: Custom template variables
         base_url: Platform base URL (from env if not provided)
@@ -459,16 +403,10 @@ def provision_platform_dashboards(
     """
     # Get configuration from environment if not provided
     if base_url is None:
-        if platform_type == "signoz":
-            base_url = os.getenv("SIGNOZ_URL", "http://localhost:3301")
-        else:  # grafana
-            base_url = os.getenv("GRAFANA_URL", "http://localhost:3000")
+        base_url = os.getenv("SIGNOZ_URL", "http://localhost:3301")
 
     if api_key is None:
-        if platform_type == "signoz":
-            api_key = os.getenv("SIGNOZ_API_KEY")
-        else:  # grafana
-            api_key = os.getenv("GRAFANA_API_KEY")
+        api_key = os.getenv("SIGNOZ_API_KEY")
 
     # Create dashboard config
     config = DashboardConfig(
@@ -487,4 +425,3 @@ def provision_platform_dashboards(
             tenant_id=tenant_id,
             custom_variables=custom_variables,
         )
-

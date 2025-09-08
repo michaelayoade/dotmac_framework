@@ -1,4 +1,4 @@
-.PHONY: help install lint type test run-isp run-mgmt run-db run-redis compose-start compose-stop compose-logs compose-status compose-health clean
+.PHONY: help install lint type test run-isp run-mgmt run-db run-redis compose-start compose-stop compose-logs compose-status compose-health clean docker-verify docker-export docker-build docker-build-management docker-build-isp docker-clean docker-full
 
 # Detect poetry; prefer it for running tools
 POETRY := $(shell command -v poetry 2>/dev/null)
@@ -38,6 +38,15 @@ help:
 	@echo "  compose-logs    Tail logs from services"
 	@echo "  compose-status  Show compose status"
 	@echo "  compose-health  Quick health checks"
+	@echo ""
+	@echo "Docker Build Automation:"
+	@echo "  docker-verify        Verify Poetry dependencies only"
+	@echo "  docker-export        Export dependencies to service-specific requirements"
+	@echo "  docker-build         Build all Docker images"
+	@echo "  docker-build-management  Build management service only"
+	@echo "  docker-build-isp     Build ISP service only"
+	@echo "  docker-full          Full automation (verify + export + build all)"
+	@echo "  docker-clean         Clean Docker images and build cache"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  clean           Remove compose resources (volumes may remain)"
@@ -83,4 +92,50 @@ compose-health:
 
 clean:
 	bash $(LEGACY_COMPOSE) clean || true
+
+# Docker Build Automation
+docker-verify:
+	@echo "🔍 Verifying Poetry dependencies..."
+	./scripts/build-docker.sh --verify-only
+
+docker-export:
+	@echo "📦 Exporting dependencies..."
+	./scripts/build-docker.sh --export-only
+
+docker-build:
+	@echo "🏗️ Building all Docker images..."
+	./scripts/build-docker.sh --build-only
+
+docker-build-management:
+	@echo "🏢 Building management service..."
+	./scripts/build-docker.sh --build-management
+
+docker-build-isp:
+	@echo "🌐 Building ISP service..."
+	./scripts/build-docker.sh --build-isp
+
+docker-full:
+	@echo "🚀 Running full Docker build automation..."
+	./scripts/build-docker.sh
+
+docker-clean:
+	@echo "🧹 Cleaning Docker resources..."
+	docker image prune -f
+	docker builder prune -f
+	@echo "Removing DotMac images..."
+	-docker rmi dotmac-management:automated 2>/dev/null || true
+	-docker rmi dotmac-isp:automated 2>/dev/null || true
+	-docker rmi dotmac-management:latest 2>/dev/null || true
+	-docker rmi dotmac-isp:latest 2>/dev/null || true
+## Database / Migrations
+.PHONY: db-scan-all db-up db-verify
+
+db-scan-all:
+	bash scripts/db/scan_all.sh
+
+db-up:
+	bash scripts/db/upgrade.sh
+
+db-verify:
+	bash scripts/db/verify_cycle.sh
 

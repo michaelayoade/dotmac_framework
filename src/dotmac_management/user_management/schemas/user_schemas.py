@@ -81,9 +81,7 @@ class UserCreateSchema(BaseCreateSchema, EmailMixin, PhoneMixin, TenantMixin):
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
     user_type: UserType = Field(description="Type of user account")
-    password: str = Field(
-        ..., min_length=8, max_length=128, description="Password (will be hashed)"
-    )
+    password: str = Field(..., min_length=8, max_length=128, description="Password (will be hashed)")
 
     # Optional fields
     middle_name: Optional[str] = Field(None, max_length=100)
@@ -98,9 +96,7 @@ class UserCreateSchema(BaseCreateSchema, EmailMixin, PhoneMixin, TenantMixin):
 
     # Initial role assignments
     roles: list[str] = Field(default_factory=list, description="Initial roles")
-    permissions: list[str] = Field(
-        default_factory=list, description="Initial permissions"
-    )
+    permissions: list[str] = Field(default_factory=list, description="Initial permissions")
 
     # Platform-specific data
     platform_metadata: dict[str, Any] = Field(default_factory=dict)
@@ -108,18 +104,14 @@ class UserCreateSchema(BaseCreateSchema, EmailMixin, PhoneMixin, TenantMixin):
     # Terms and privacy
     terms_accepted: bool = Field(False, description="Terms of service accepted")
     privacy_accepted: bool = Field(False, description="Privacy policy accepted")
-    marketing_consent: bool = Field(
-        False, description="Marketing communications consent"
-    )
+    marketing_consent: bool = Field(False, description="Marketing communications consent")
 
     @field_validator("username")
     @classmethod
     def validate_username(cls, v: str) -> str:
         """Validate username format."""
         if not v.replace("_", "").replace("-", "").replace(".", "").isalnum():
-            raise ValueError(
-                "Username can only contain letters, numbers, hyphens, underscores, and periods"
-            )
+            raise ValueError("Username can only contain letters, numbers, hyphens, underscores, and periods")
         return v.lower()
 
     @field_validator("password")
@@ -137,8 +129,7 @@ class UserCreateSchema(BaseCreateSchema, EmailMixin, PhoneMixin, TenantMixin):
 
         if not all([has_upper, has_lower, has_digit, has_special]):
             raise ValueError(
-                "Password must contain at least one uppercase letter, "
-                "lowercase letter, digit, and special character"
+                "Password must contain at least one uppercase letter, " "lowercase letter, digit, and special character"
             )
 
         # Check for common weak patterns
@@ -196,9 +187,7 @@ class UserUpdateSchema(BaseUpdateSchema, PhoneMixin):
         return v
 
 
-class UserResponseSchema(
-    BaseResponseSchema, EmailMixin, PhoneMixin, StatusMixin, TenantMixin
-):
+class UserResponseSchema(BaseResponseSchema, EmailMixin, PhoneMixin, StatusMixin, TenantMixin):
     """Schema for user API responses - leverages DRY mixins."""
 
     # Core identification
@@ -223,12 +212,8 @@ class UserResponseSchema(
 
     # Security information
     mfa_enabled: bool = Field(False, description="MFA enabled status")
-    mfa_methods: list[MFAMethod] = Field(
-        default_factory=list, description="Enabled MFA methods"
-    )
-    password_changed_at: Optional[datetime] = Field(
-        None, description="Last password change"
-    )
+    mfa_methods: list[MFAMethod] = Field(default_factory=list, description="Enabled MFA methods")
+    password_changed_at: Optional[datetime] = Field(None, description="Last password change")
 
     # Activity information
     last_login: Optional[datetime] = Field(None, description="Last login timestamp")
@@ -243,14 +228,10 @@ class UserResponseSchema(
 
     # Role and permission information
     roles: list[str] = Field(default_factory=list, description="Assigned roles")
-    permissions: list[str] = Field(
-        default_factory=list, description="Effective permissions"
-    )
+    permissions: list[str] = Field(default_factory=list, description="Effective permissions")
 
     # Platform-specific data
-    platform_metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Platform-specific data"
-    )
+    platform_metadata: dict[str, Any] = Field(default_factory=dict, description="Platform-specific data")
 
     @property
     def full_name(self) -> str:
@@ -276,12 +257,7 @@ class UserResponseSchema(
     @property
     def can_login(self) -> bool:
         """Check if user can currently login."""
-        return (
-            self.is_active
-            and self.status == UserStatus.ACTIVE
-            and not self.is_locked
-            and self.email_verified
-        )
+        return self.is_active and self.status == UserStatus.ACTIVE and not self.is_locked and self.email_verified
 
 
 class UserSummarySchema(BaseResponseSchema):
@@ -310,20 +286,14 @@ class UserSearchSchema(SearchSchema):
     user_type: Optional[UserType] = Field(None, description="Filter by user type")
     status: Optional[UserStatus] = Field(None, description="Filter by status")
     is_active: Optional[bool] = Field(None, description="Filter by active status")
-    email_verified: Optional[bool] = Field(
-        None, description="Filter by email verification"
-    )
+    email_verified: Optional[bool] = Field(None, description="Filter by email verification")
     tenant_id: Optional[UUID] = Field(None, description="Filter by tenant")
 
     # Date range filters
     created_after: Optional[datetime] = Field(None, description="Created after date")
     created_before: Optional[datetime] = Field(None, description="Created before date")
-    last_login_after: Optional[datetime] = Field(
-        None, description="Last login after date"
-    )
-    last_login_before: Optional[datetime] = Field(
-        None, description="Last login before date"
-    )
+    last_login_after: Optional[datetime] = Field(None, description="Last login after date")
+    last_login_before: Optional[datetime] = Field(None, description="Last login before date")
 
     # Role and permission filters
     has_role: Optional[str] = Field(None, description="Filter by role")
@@ -338,13 +308,9 @@ class UserSearchSchema(SearchSchema):
 class UserBulkOperationSchema(BaseCreateSchema):
     """Schema for bulk user operations."""
 
-    user_ids: list[UUID] = Field(
-        ..., min_items=1, max_items=100, description="User IDs to operate on"
-    )
+    user_ids: list[UUID] = Field(..., min_items=1, max_items=100, description="User IDs to operate on")
     operation: str = Field(..., description="Bulk operation to perform")
-    parameters: Optional[dict[str, Any]] = Field(
-        None, description="Operation parameters"
-    )
+    parameters: Optional[dict[str, Any]] = Field(None, description="Operation parameters")
 
     @field_validator("operation")
     @classmethod
@@ -376,18 +342,12 @@ class UserInvitationSchema(BaseCreateSchema, EmailMixin, TenantMixin):
 
     # Role assignments
     roles: list[str] = Field(default_factory=list, description="Initial roles")
-    permissions: list[str] = Field(
-        default_factory=list, description="Initial permissions"
-    )
+    permissions: list[str] = Field(default_factory=list, description="Initial permissions")
 
     # Invitation settings
-    expires_in_days: int = Field(
-        7, ge=1, le=30, description="Invitation expiry in days"
-    )
+    expires_in_days: int = Field(7, ge=1, le=30, description="Invitation expiry in days")
     send_email: bool = Field(True, description="Send invitation email")
-    custom_message: Optional[str] = Field(
-        None, max_length=500, description="Custom invitation message"
-    )
+    custom_message: Optional[str] = Field(None, max_length=500, description="Custom invitation message")
 
     # Inviter information
     invited_by: Optional[UUID] = Field(None, description="User who sent the invitation")
@@ -397,12 +357,8 @@ class UserActivationSchema(BaseCreateSchema):
     """Schema for user account activation."""
 
     user_id: UUID = Field(description="User ID to activate")
-    activation_token: str = Field(
-        description="Activation token from invitation/registration"
-    )
-    password: Optional[str] = Field(
-        None, min_length=8, description="Password for new accounts"
-    )
+    activation_token: str = Field(description="Activation token from invitation/registration")
+    password: Optional[str] = Field(None, min_length=8, description="Password for new accounts")
 
     @field_validator("password")
     @classmethod

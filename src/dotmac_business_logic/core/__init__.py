@@ -2,7 +2,7 @@
 Core utilities for DotMac Business Logic package.
 """
 
-from .exceptions import (  # Base exceptions; Utilities; File exceptions; Integration exceptions; Task exceptions; Validation exceptions
+from .exceptions import (  # Base, Utilities, File, Integration, Task, Validation exceptions
     BillingError,
     BusinessLogicError,
     DatabaseConnectionError,

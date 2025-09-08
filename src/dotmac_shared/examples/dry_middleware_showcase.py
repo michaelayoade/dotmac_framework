@@ -36,9 +36,7 @@ class CustomBusinessLogicMiddleware(TenantAwareMiddleware):
     """Example of custom business logic middleware using DRY base."""
 
     def __init__(self):
-        config = MiddlewareConfig(
-            name="BusinessLogic", exempt_paths={"/docs", "/health", "/api/public/*"}
-        )
+        config = MiddlewareConfig(name="BusinessLogic", exempt_paths={"/docs", "/health", "/api/public/*"})
         super().__init__(config, require_tenant=True)
 
     async def process_tenant_middleware(
@@ -101,9 +99,7 @@ class AuditLoggingMiddleware(UnifiedMiddlewareProcessor):
         logger.info(f"AUDIT: {audit_entry}")
 
         # Add audit ID to request state for correlation
-        RequestStateManager.update_operation_context(
-            request, audit_id=f"audit_{utc_now().timestamp()}"
-        )
+        RequestStateManager.update_operation_context(request, audit_id=f"audit_{utc_now().timestamp()}")
 
         return None
 
@@ -121,9 +117,7 @@ def create_showcase_application() -> FastAPI:
     middleware_stack = [
         AuditLoggingMiddleware(),  # Audit all requests
         DRYBackgroundOperationsMiddleware(),  # Handle idempotency
-        DRYAPIVersioningMiddleware(
-            supported_versions={"v1", "v2", "v3"}, default_version="v1"
-        ),
+        DRYAPIVersioningMiddleware(supported_versions={"v1", "v2", "v3"}, default_version="v1"),
         CustomBusinessLogicMiddleware(),  # Custom business rules
         DRYTenantSecurityEnforcer(),  # Tenant boundary enforcement
     ]
@@ -154,17 +148,11 @@ def add_example_routes(app: FastAPI):
         return create_success_response(
             {
                 "tenant_id": state.tenant_id,
-                "tenant_source": state.tenant_context.source
-                if state.tenant_context
-                else None,
-                "gateway_validated": state.tenant_context.gateway_validated
-                if state.tenant_context
-                else False,
+                "tenant_source": state.tenant_context.source if state.tenant_context else None,
+                "gateway_validated": state.tenant_context.gateway_validated if state.tenant_context else False,
                 "api_version": state.api_version,
                 "processing_stages": state.metadata.processing_stages,
-                "rate_limit_tier": getattr(
-                    state.operation_context, "rate_limit_tier", None
-                )
+                "rate_limit_tier": getattr(state.operation_context, "rate_limit_tier", None)
                 if state.operation_context
                 else None,
             },
@@ -183,9 +171,7 @@ def add_example_routes(app: FastAPI):
                 "features": ["enhanced_security", "rate_limiting", "audit_logging"],
                 "tenant_context": {
                     "id": state.tenant_id,
-                    "validated": state.tenant_context.validated
-                    if state.tenant_context
-                    else False,
+                    "validated": state.tenant_context.validated if state.tenant_context else False,
                 },
             }
         else:
@@ -207,9 +193,7 @@ def add_example_routes(app: FastAPI):
             "tenant_id": state.tenant_id,
             "data": operation_data,
             "processed_at": utc_now().isoformat(),
-            "idempotency_key": state.operation_context.idempotency_key
-            if state.operation_context
-            else None,
+            "idempotency_key": state.operation_context.idempotency_key if state.operation_context else None,
         }
 
         return create_success_response(result, request)

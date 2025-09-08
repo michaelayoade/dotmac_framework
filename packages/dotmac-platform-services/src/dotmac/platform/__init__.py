@@ -237,16 +237,16 @@ def create_observability_manager(**kwargs):
 
 # Export main components
 __all__ = [
+    "PlatformConfig",
     "__version__",
     "config",
-    "PlatformConfig",
-    "initialize_platform_services",
-    "register_service",
-    "get_service",
-    "is_service_available",
+    "create_jwt_service",
+    "create_observability_manager",
+    "create_secrets_manager",
     "get_available_services",
     "get_initialized_services",
-    "create_jwt_service",
-    "create_secrets_manager",
-    "create_observability_manager",
+    "get_service",
+    "initialize_platform_services",
+    "is_service_available",
+    "register_service",
 ]

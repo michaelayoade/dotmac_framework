@@ -6,8 +6,9 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_isp.shared.schemas import TenantModelSchema
 from pydantic import BaseModel, Field
+
+from dotmac_isp.shared.schemas import TenantModelSchema
 
 
 class ServiceType(str, Enum):
@@ -344,9 +345,7 @@ class ServicePerformanceMetrics(BaseModel):
     total_data_usage: Decimal = Field(..., ge=0, decimal_places=2)
     recent_alerts: int = Field(..., ge=0)
     last_outage: Optional[datetime] = None
-    customer_satisfaction: Optional[Decimal] = Field(
-        None, ge=0, le=10, decimal_places=1
-    )
+    customer_satisfaction: Optional[Decimal] = Field(None, ge=0, le=10, decimal_places=1)
 
 
 class BulkServiceOperation(BaseModel):

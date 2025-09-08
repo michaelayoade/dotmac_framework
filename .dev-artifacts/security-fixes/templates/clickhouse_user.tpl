@@ -1,0 +1,1 @@
+{{ with secret "dotmac/clickhouse" }}{{ .Data.data.username }}{{ end }}

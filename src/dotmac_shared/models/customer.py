@@ -36,15 +36,9 @@ class Customer(BaseModel):
     last_name: str = Field(..., description="Customer last name")
     phone: Optional[str] = Field(None, description="Customer phone number")
     tier: CustomerTier = Field(CustomerTier.BASIC, description="Customer service tier")
-    status: CustomerStatus = Field(
-        CustomerStatus.PENDING_VERIFICATION, description="Customer account status"
-    )
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Additional customer metadata"
-    )
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Customer creation timestamp"
-    )
+    status: CustomerStatus = Field(CustomerStatus.PENDING_VERIFICATION, description="Customer account status")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional customer metadata")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Customer creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     model_config = ConfigDict(use_enum_values=True)

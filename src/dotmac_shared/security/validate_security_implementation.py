@@ -232,12 +232,8 @@ def test_csrf_strategy():
         logger.info("   ✅ Invalid CSRF token rejection works")
 
         # Test token binding
-        session_token = token_generator.generate(
-            session_id="session123", user_id="user456"
-        )
-        is_valid = token_generator.validate(
-            session_token, session_id="session123", user_id="user456"
-        )
+        session_token = token_generator.generate(session_id="session123", user_id="user456")
+        is_valid = token_generator.validate(session_token, session_id="session123", user_id="user456")
         assert is_valid is True
         logger.info("   ✅ CSRF token binding works")
 
@@ -348,9 +344,7 @@ async def test_portal_integration():
         portal_types = ["admin", "customer", "management", "reseller", "technician"]
 
         for portal_type in portal_types:
-            result = await validate_portal_security(
-                portal_type=portal_type, environment=Environment.DEVELOPMENT
-            )
+            result = await validate_portal_security(portal_type=portal_type, environment=Environment.DEVELOPMENT)
 
             assert result.environment == Environment.DEVELOPMENT
             assert isinstance(result.security_score, float)

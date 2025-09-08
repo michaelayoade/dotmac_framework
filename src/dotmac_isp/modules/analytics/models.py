@@ -29,9 +29,7 @@ class Metric(Base, ISPModelMixin):
 
     __tablename__ = "metrics"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     name = Column(String(255), nullable=False)
     display_name = Column(String(255), nullable=False)
     description = Column(Text)
@@ -45,12 +43,8 @@ class Metric(Base, ISPModelMixin):
     refresh_interval = Column(Integer, default=300)
     retention_days = Column(Integer, default=90)
 
-    metric_values = relationship(
-        "MetricValue", back_populates="metric", cascade="all, delete-orphan"
-    )
-    alerts = relationship(
-        "Alert", back_populates="metric", cascade="all, delete-orphan"
-    )
+    metric_values = relationship("MetricValue", back_populates="metric", cascade="all, delete-orphan")
+    alerts = relationship("Alert", back_populates="metric", cascade="all, delete-orphan")
 
     __table_args__ = (
         UniqueConstraint("tenant_id", "name", name="uq_metric_tenant_name"),
@@ -67,9 +61,7 @@ class MetricValue(Base, ISPModelMixin):
 
     __tablename__ = "metric_values"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     metric_id = Column(UUID(as_uuid=True), ForeignKey("metrics.id"), nullable=False)
     value = Column(Float, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=func.now())
@@ -84,7 +76,9 @@ class MetricValue(Base, ISPModelMixin):
     )
 
     def __repr__(self):
-        return f"<MetricValue(id={self.id}, metric_id={self.metric_id}, value={self.value}, timestamp={self.timestamp})>"
+        return (
+            f"<MetricValue(id={self.id}, metric_id={self.metric_id}, value={self.value}, timestamp={self.timestamp})>"
+        )
 
 
 class Report(Base, ISPModelMixin):
@@ -92,9 +86,7 @@ class Report(Base, ISPModelMixin):
 
     __tablename__ = "reports"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     title = Column(String(200), nullable=False)
     description = Column(Text)
     report_type = Column(Enum(ReportType), nullable=False)
@@ -125,9 +117,7 @@ class Dashboard(Base, ISPModelMixin):
 
     __tablename__ = "dashboards"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     name = Column(String(100), nullable=False)
     description = Column(Text)
     layout = Column(JSON, default=dict)
@@ -137,9 +127,7 @@ class Dashboard(Base, ISPModelMixin):
     access_permissions = Column(JSON, default=list)
     widget_count = Column(Integer, nullable=False, default=0)
 
-    widgets = relationship(
-        "Widget", back_populates="dashboard", cascade="all, delete-orphan"
-    )
+    widgets = relationship("Widget", back_populates="dashboard", cascade="all, delete-orphan")
 
     __table_args__ = (
         UniqueConstraint("tenant_id", "name", name="uq_dashboard_tenant_name"),
@@ -155,12 +143,8 @@ class Widget(Base, ISPModelMixin):
 
     __tablename__ = "widgets"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
-    dashboard_id = Column(
-        UUID(as_uuid=True), ForeignKey("dashboards.id"), nullable=False
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    dashboard_id = Column(UUID(as_uuid=True), ForeignKey("dashboards.id"), nullable=False)
     widget_type = Column(String(50), nullable=False)
     title = Column(String(100), nullable=False)
     position = Column(Integer, nullable=False, default=0)
@@ -187,9 +171,7 @@ class Alert(Base, ISPModelMixin):
 
     __tablename__ = "alerts"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     metric_id = Column(UUID(as_uuid=True), ForeignKey("metrics.id"), nullable=False)
     name = Column(String(100), nullable=False)
     condition = Column(String(20), nullable=False)
@@ -203,9 +185,7 @@ class Alert(Base, ISPModelMixin):
     priority_score = Column(Integer, nullable=False, default=0)
 
     metric = relationship("Metric", back_populates="alerts")
-    alert_events = relationship(
-        "AlertEvent", back_populates="alert", cascade="all, delete-orphan"
-    )
+    alert_events = relationship("AlertEvent", back_populates="alert", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("idx_alert_metric", "metric_id"),
@@ -222,9 +202,7 @@ class AlertEvent(Base, ISPModelMixin):
 
     __tablename__ = "alert_events"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     alert_id = Column(UUID(as_uuid=True), ForeignKey("alerts.id"), nullable=False)
     triggered_at = Column(DateTime, nullable=False, default=func.now())
     metric_value = Column(Float, nullable=False)
@@ -251,9 +229,7 @@ class DataSource(Base, ISPModelMixin):
 
     __tablename__ = "data_sources"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     name = Column(String(100), nullable=False)
     source_type = Column(String(50), nullable=False)
     connection_config = Column(JSON, default=dict)
@@ -280,9 +256,7 @@ class AnalyticsSession(Base, ISPModelMixin):
 
     __tablename__ = "analytics_sessions"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     user_id = Column(UUID(as_uuid=True), nullable=False)
     dashboard_id = Column(UUID(as_uuid=True), ForeignKey("dashboards.id"))
     session_start = Column(DateTime, nullable=False, default=func.now())
@@ -308,9 +282,7 @@ class MetricAggregation(Base, ISPModelMixin):
 
     __tablename__ = "metric_aggregations"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     metric_id = Column(UUID(as_uuid=True), ForeignKey("metrics.id"), nullable=False)
     aggregation_type = Column(String(10), nullable=False)
     period = Column(String(10), nullable=False)

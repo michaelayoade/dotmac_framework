@@ -105,34 +105,20 @@ class ConfigurationGenerator:
         Returns:
             Complete ISP configuration with all components
         """
-        logger.info(
-            f"Generating ISP configuration for tenant {isp_id}, plan {plan}, env {environment}"
-        )
+        logger.info(f"Generating ISP configuration for tenant {isp_id}, plan {plan}, env {environment}")
 
         try:
             # Generate base configuration components
-            database_config = await self._generate_database_config(
-                isp_id, plan, environment
-            )
+            database_config = await self._generate_database_config(isp_id, plan, environment)
             redis_config = await self._generate_redis_config(isp_id, plan, environment)
-            security_config = await self._generate_security_config(
-                isp_id, plan, environment
-            )
-            monitoring_config = await self._generate_monitoring_config(
-                isp_id, plan, environment
-            )
-            logging_config = await self._generate_logging_config(
-                isp_id, plan, environment
-            )
-            network_config = await self._generate_network_config(
-                isp_id, plan, environment
-            )
+            security_config = await self._generate_security_config(isp_id, plan, environment)
+            monitoring_config = await self._generate_monitoring_config(isp_id, plan, environment)
+            logging_config = await self._generate_logging_config(isp_id, plan, environment)
+            network_config = await self._generate_network_config(isp_id, plan, environment)
 
             # Generate service configurations
             services = await self._generate_service_configs(isp_id, plan, environment)
-            external_services = await self._generate_external_service_configs(
-                isp_id, plan, environment
-            )
+            external_services = await self._generate_external_service_configs(isp_id, plan, environment)
 
             # Create base configuration
             config = ISPConfiguration(
@@ -156,23 +142,17 @@ class ConfigurationGenerator:
 
             # Apply feature flags
             if tenant_info:
-                config = await self.feature_manager.apply_feature_flags(
-                    config, tenant_info
-                )
+                config = await self.feature_manager.apply_feature_flags(config, tenant_info)
             else:
                 # Generate basic feature flags based on plan
-                feature_flags = await self.feature_manager.generate_plan_features(
-                    isp_id, plan
-                )
+                feature_flags = await self.feature_manager.generate_plan_features(isp_id, plan)
                 config.feature_flags = feature_flags
 
             logger.info(f"Successfully generated configuration for tenant {isp_id}")
             return config
 
         except Exception as e:
-            logger.error(
-                f"Failed to generate configuration for tenant {isp_id}: {str(e)}"
-            )
+            logger.error(f"Failed to generate configuration for tenant {isp_id}: {str(e)}")
             raise
 
     async def inject_secrets(self, config: ISPConfiguration) -> ISPConfiguration:
@@ -190,14 +170,10 @@ class ConfigurationGenerator:
         try:
             return await self.secret_manager.inject_secrets(config)
         except Exception as e:
-            logger.error(
-                f"Failed to inject secrets for tenant {config.tenant_id}: {str(e)}"
-            )
+            logger.error(f"Failed to inject secrets for tenant {config.tenant_id}: {str(e)}")
             raise
 
-    async def validate_configuration(
-        self, config: ISPConfiguration
-    ) -> ValidationResult:
+    async def validate_configuration(self, config: ISPConfiguration) -> ValidationResult:
         """
         Comprehensive configuration validation.
 
@@ -212,9 +188,7 @@ class ConfigurationGenerator:
         try:
             return await self.validator.validate_configuration(config)
         except Exception as e:
-            logger.error(
-                f"Configuration validation failed for tenant {config.tenant_id}: {str(e)}"
-            )
+            logger.error(f"Configuration validation failed for tenant {config.tenant_id}: {str(e)}")
             raise
 
     async def apply_feature_flags(self, config: ISPConfiguration) -> ISPConfiguration:
@@ -234,9 +208,7 @@ class ConfigurationGenerator:
             tenant_info = await self._get_tenant_info(config.tenant_id)
             return await self.feature_manager.apply_feature_flags(config, tenant_info)
         except Exception as e:
-            logger.error(
-                f"Failed to apply feature flags for tenant {config.tenant_id}: {str(e)}"
-            )
+            logger.error(f"Failed to apply feature flags for tenant {config.tenant_id}: {str(e)}")
             raise
 
     async def _generate_database_config(
@@ -258,20 +230,14 @@ class ConfigurationGenerator:
             host=f"db-{tenant_id}.{environment}.dotmac.io",
             port=5432,
             name=f"isp_{tenant_id}_{environment}".replace("-", "_"),
-            username=f"isp_user_{tenant_id}".replace("-", "_")[
-                :63
-            ],  # PostgreSQL username limit
+            username=f"isp_user_{tenant_id}".replace("-", "_")[:63],  # PostgreSQL username limit
             password="${SECRET:database_password}",  # noqa: S106 - secret placeholder resolved by secret manager
             **base_config,
         )
 
-    async def _generate_redis_config(
-        self, tenant_id: UUID, plan: SubscriptionPlan, environment: str
-    ) -> RedisConfig:
+    async def _generate_redis_config(self, tenant_id: UUID, plan: SubscriptionPlan, environment: str) -> RedisConfig:
         """Generate Redis configuration based on plan and environment."""
-        base_config = self._default_configs["redis"].get(
-            plan, self._default_configs["redis"][SubscriptionPlan.BASIC]
-        )
+        base_config = self._default_configs["redis"].get(plan, self._default_configs["redis"][SubscriptionPlan.BASIC])
 
         return RedisConfig(
             host=f"redis-{tenant_id}.{environment}.dotmac.io",
@@ -296,9 +262,7 @@ class ConfigurationGenerator:
             encryption_key="${SECRET:encryption_key}",  # noqa: S106 - secret placeholder resolved by secret manager
             password_hash_rounds=12 if enhanced_security else 10,
             rate_limit_enabled=True,
-            rate_limit_requests_per_minute=(
-                1000 if plan == SubscriptionPlan.ENTERPRISE else 100
-            ),
+            rate_limit_requests_per_minute=(1000 if plan == SubscriptionPlan.ENTERPRISE else 100),
             cors_enabled=True,
             cors_origins=[f"https://{tenant_id}.dotmac.io"],
             enable_security_headers=True,
@@ -355,13 +319,9 @@ class ConfigurationGenerator:
             "port": 8000,
             "workers": worker_counts.get(plan, 2),
             "request_timeout": 60 if plan == SubscriptionPlan.ENTERPRISE else 30,
-            "max_concurrent_requests": (
-                2000 if plan == SubscriptionPlan.ENTERPRISE else 1000
-            ),
+            "max_concurrent_requests": (2000 if plan == SubscriptionPlan.ENTERPRISE else 1000),
             "websocket_enabled": True,
-            "websocket_max_connections": (
-                500 if plan == SubscriptionPlan.ENTERPRISE else 100
-            ),
+            "websocket_max_connections": (500 if plan == SubscriptionPlan.ENTERPRISE else 100),
         }
 
     async def _generate_service_configs(
@@ -469,20 +429,14 @@ class ConfigurationGenerator:
 
         return configs
 
-    async def _apply_custom_overrides(
-        self, config: ISPConfiguration, overrides: dict[str, Any]
-    ) -> ISPConfiguration:
+    async def _apply_custom_overrides(self, config: ISPConfiguration, overrides: dict[str, Any]) -> ISPConfiguration:
         """Apply custom configuration overrides."""
 
         # Deep merge overrides into configuration
         def deep_merge(base_dict: dict, override_dict: dict) -> dict:
             result = base_dict.copy()
             for key, value in override_dict.items():
-                if (
-                    key in result
-                    and isinstance(result[key], dict)
-                    and isinstance(value, dict)
-                ):
+                if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                     result[key] = deep_merge(result[key], value)
                 else:
                     result[key] = value

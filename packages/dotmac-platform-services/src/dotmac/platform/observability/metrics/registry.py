@@ -24,15 +24,9 @@ try:
         CollectorRegistry,
         generate_latest,
     )
-    from prometheus_client import (
-        Counter as PrometheusCounter,
-    )
-    from prometheus_client import (
-        Gauge as PrometheusGauge,
-    )
-    from prometheus_client import (
-        Histogram as PrometheusHistogram,
-    )
+    from prometheus_client import Counter as PrometheusCounter
+    from prometheus_client import Gauge as PrometheusGauge
+    from prometheus_client import Histogram as PrometheusHistogram
 
     PROMETHEUS_AVAILABLE = True
 except ImportError:
@@ -113,16 +107,13 @@ class MetricInstrument:
                         self.prometheus_instrument.labels(*label_values).set(value)
                     elif self.definition.type == MetricType.HISTOGRAM:
                         self.prometheus_instrument.labels(*label_values).observe(value)
-                else:
-                    # No labels
-                    if self.definition.type == MetricType.COUNTER:
-                        self.prometheus_instrument.inc(value)
-                    elif self.definition.type == MetricType.UP_DOWN_COUNTER:
-                        self.prometheus_instrument.inc(value)
-                    elif self.definition.type == MetricType.GAUGE:
-                        self.prometheus_instrument.set(value)
-                    elif self.definition.type == MetricType.HISTOGRAM:
-                        self.prometheus_instrument.observe(value)
+                # No labels
+                elif self.definition.type in (MetricType.COUNTER, MetricType.UP_DOWN_COUNTER):
+                    self.prometheus_instrument.inc(value)
+                elif self.definition.type == MetricType.GAUGE:
+                    self.prometheus_instrument.set(value)
+                elif self.definition.type == MetricType.HISTOGRAM:
+                    self.prometheus_instrument.observe(value)
 
         except Exception as e:
             logger.error(f"Failed to record metric {self.definition.name}: {e}")
@@ -300,14 +291,13 @@ class MetricsRegistry:
 
         if definition.type == MetricType.COUNTER:
             return meter.create_counter(**kwargs)
-        elif definition.type == MetricType.UP_DOWN_COUNTER:
+        if definition.type == MetricType.UP_DOWN_COUNTER:
             return meter.create_up_down_counter(**kwargs)
-        elif definition.type == MetricType.GAUGE:
+        if definition.type == MetricType.GAUGE:
             return meter.create_gauge(**kwargs)
-        elif definition.type == MetricType.HISTOGRAM:
+        if definition.type == MetricType.HISTOGRAM:
             return meter.create_histogram(**kwargs)
-        else:
-            raise ValueError(f"Unsupported OTEL metric type: {definition.type}")
+        raise ValueError(f"Unsupported OTEL metric type: {definition.type}")
 
     def _create_prometheus_instrument(self, definition: MetricDefinition) -> Any:
         """Create Prometheus instrument."""
@@ -323,17 +313,16 @@ class MetricsRegistry:
 
         if definition.type == MetricType.COUNTER:
             return PrometheusCounter(**kwargs)
-        elif definition.type == MetricType.UP_DOWN_COUNTER:
+        if definition.type == MetricType.UP_DOWN_COUNTER:
             # Use Gauge for up-down counter in Prometheus
             return PrometheusGauge(**kwargs)
-        elif definition.type == MetricType.GAUGE:
+        if definition.type == MetricType.GAUGE:
             return PrometheusGauge(**kwargs)
-        elif definition.type == MetricType.HISTOGRAM:
+        if definition.type == MetricType.HISTOGRAM:
             if definition.buckets:
                 kwargs["buckets"] = definition.buckets
             return PrometheusHistogram(**kwargs)
-        else:
-            raise ValueError(f"Unsupported Prometheus metric type: {definition.type}")
+        raise ValueError(f"Unsupported Prometheus metric type: {definition.type}")
 
 
 def initialize_metrics_registry(

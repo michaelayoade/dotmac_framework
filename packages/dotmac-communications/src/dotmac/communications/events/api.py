@@ -58,7 +58,7 @@ from .observability import (
 
 # Optional Redis adapter
 try:
-    from .adapters import RedisConfig, RedisEventBus, create_redis_bus
+    from .adapters import RedisConfig, RedisEventBus, create_redis_bus  # noqa: F401
 
     _redis_available = True
     __redis_exports = ["RedisConfig", "RedisEventBus", "create_redis_bus"]
@@ -68,7 +68,7 @@ except ImportError:
 
 # Optional Kafka adapter
 try:
-    from .adapters import KafkaConfig, KafkaEventBus, create_kafka_bus
+    from .adapters import KafkaConfig, KafkaEventBus, create_kafka_bus  # noqa: F401
 
     _kafka_available = True
     __kafka_exports = ["KafkaConfig", "KafkaEventBus", "create_kafka_bus"]

@@ -8,6 +8,8 @@ state changes, and device lifecycle events.
 import logging
 from typing import Any
 
+from sqlalchemy.orm import Session
+
 from dotmac_isp.modules.noc.services.alarm_management_service import (
     AlarmManagementService,
 )
@@ -17,7 +19,6 @@ from dotmac_isp.modules.noc.services.event_correlation_service import (
 from dotmac_shared.device_management.dotmac_device_management.services.device_service import (
     DeviceService,
 )
-from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +44,7 @@ class DeviceEventHandlers:
             health_score = data["health_score"]
             metrics = data.get("metrics", {})
 
-            logger.info(
-                f"Processing device health change for {device_id}: {health_status} (score: {health_score})"
-            )
+            logger.info(f"Processing device health change for {device_id}: {health_status} (score: {health_score})")
 
             # Create correlation event
             await self.correlation_service.process_incoming_event(
@@ -67,20 +66,14 @@ class DeviceEventHandlers:
 
             # Generate alarms based on health status
             if health_status in ["critical", "degraded"]:
-                await self._create_device_health_alarm(
-                    device_id, health_status, health_score, metrics
-                )
+                await self._create_device_health_alarm(device_id, health_status, health_score, metrics)
 
             # Evaluate alarm rules against metrics
             if metrics:
-                generated_alarms = await self.alarm_service.evaluate_alarm_rules(
-                    {"device_id": device_id, **metrics}
-                )
+                generated_alarms = await self.alarm_service.evaluate_alarm_rules({"device_id": device_id, **metrics})
 
                 if generated_alarms:
-                    logger.info(
-                        f"Generated {len(generated_alarms)} alarms from device metrics for {device_id}"
-                    )
+                    logger.info(f"Generated {len(generated_alarms)} alarms from device metrics for {device_id}")
 
         except Exception as e:
             logger.error(f"Error handling device health change event: {str(e)}")
@@ -93,9 +86,7 @@ class DeviceEventHandlers:
             current_state = data["current_state"]
             previous_state = data.get("previous_state")
 
-            logger.info(
-                f"Processing device state change for {device_id}: {previous_state} -> {current_state}"
-            )
+            logger.info(f"Processing device state change for {device_id}: {previous_state} -> {current_state}")
 
             # Create correlation event
             await self.correlation_service.process_incoming_event(
@@ -212,9 +203,7 @@ class DeviceEventHandlers:
             change_type = data.get("change_type", "unknown")
             change_summary = data.get("change_summary", "Configuration changed")
 
-            logger.info(
-                f"Processing configuration change for {device_id}: {change_type}"
-            )
+            logger.info(f"Processing configuration change for {device_id}: {change_type}")
 
             # Create correlation event
             await self.correlation_service.process_incoming_event(
@@ -260,14 +249,10 @@ class DeviceEventHandlers:
             cpu_usage = data["cpu_usage"]
             threshold = data.get("threshold", 90)
 
-            logger.info(
-                f"Processing high CPU utilization for {device_id}: {cpu_usage}%"
-            )
+            logger.info(f"Processing high CPU utilization for {device_id}: {cpu_usage}%")
 
             # Create alarm for high CPU
-            severity = (
-                "critical" if cpu_usage > 95 else "major" if cpu_usage > 90 else "minor"
-            )
+            severity = "critical" if cpu_usage > 95 else "major" if cpu_usage > 90 else "minor"
 
             await self.alarm_service.create_alarm(
                 {
@@ -297,18 +282,10 @@ class DeviceEventHandlers:
             memory_usage = data["memory_usage"]
             threshold = data.get("threshold", 85)
 
-            logger.info(
-                f"Processing high memory utilization for {device_id}: {memory_usage}%"
-            )
+            logger.info(f"Processing high memory utilization for {device_id}: {memory_usage}%")
 
             # Create alarm for high memory
-            severity = (
-                "critical"
-                if memory_usage > 95
-                else "major"
-                if memory_usage > 85
-                else "minor"
-            )
+            severity = "critical" if memory_usage > 95 else "major" if memory_usage > 85 else "minor"
 
             await self.alarm_service.create_alarm(
                 {

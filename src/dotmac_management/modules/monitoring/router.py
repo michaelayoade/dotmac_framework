@@ -6,16 +6,16 @@ Comprehensive monitoring endpoints using RouterFactory patterns.
 from typing import Any
 from uuid import UUID
 
+from fastapi import Depends, Query
+from pydantic import BaseModel, Field
+
+from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
     StandardDependencies,
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import Depends, Query
-from pydantic import BaseModel, Field
-
-from dotmac.application import RouterFactory, standard_exception_handler
 
 from .schemas import (
     MonitoringCreateSchema,
@@ -168,9 +168,7 @@ async def create_health_check(
     )
 
 
-@monitoring_router.get(
-    "/health-checks/{check_id}/status", response_model=dict[str, Any]
-)
+@monitoring_router.get("/health-checks/{check_id}/status", response_model=dict[str, Any])
 @standard_exception_handler
 async def get_health_check_status(
     check_id: UUID,

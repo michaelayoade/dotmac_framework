@@ -6,6 +6,7 @@ Extends existing tenant isolation with advanced security features.
 import asyncio
 import logging
 import resource
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -106,7 +107,7 @@ class EnterpriseTenantIsolationManager:
         self._tenant_namespaces: dict[UUID, dict[str, Any]] = {}
 
         # Enhanced tenant managers with enterprise features
-        self._enterprise_managers: dict[UUID, "EnterpriseTenantPluginManager"] = {}
+        self._enterprise_managers: dict[UUID, EnterpriseTenantPluginManager] = {}
 
         # Monitoring and alerting
         self._monitoring_tasks: dict[UUID, asyncio.Task] = {}
@@ -155,7 +156,7 @@ class EnterpriseTenantIsolationManager:
         namespace = {
             "tenant_id": tenant_id,
             "base_directory": f"/var/lib/dotmac/tenants/{tenant_id}",
-            "temp_directory": f"/tmp/dotmac_tenant_{tenant_id}",
+            "temp_directory": Path(tempfile.gettempdir()) / f"dotmac_tenant_{tenant_id}",
             "log_directory": f"/var/log/dotmac/tenants/{tenant_id}",
             "cache_directory": f"/var/cache/dotmac/tenants/{tenant_id}",
             "network_namespace": f"tenant_{tenant_id}_net" if policy.network_isolation else None,
@@ -439,9 +440,9 @@ class EnterpriseTenantPluginManager(TenantPluginManager):
         self.isolation_manager = isolation_manager
 
         # Enhanced components
-        self._network_controller: Optional["TenantNetworkController"] = None
-        self._resource_controller: Optional["TenantResourceController"] = None
-        self._data_controller: Optional["TenantDataController"] = None
+        self._network_controller: Optional[TenantNetworkController] = None
+        self._resource_controller: Optional[TenantResourceController] = None
+        self._data_controller: Optional[TenantDataController] = None
 
     async def initialize(self) -> None:
         """Initialize enterprise tenant manager with enhanced controls."""

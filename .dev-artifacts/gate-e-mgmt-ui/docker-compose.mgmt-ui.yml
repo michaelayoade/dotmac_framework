@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dotmac_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
+      POSTGRES_DB: dotmac_test
+    ports:
+      - "5437:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-dotmac_admin} -d dotmac_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [mgmt-ui]
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    ports:
+      - "6382:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis123}", "ping"]
+    networks: [mgmt-ui]
+
+  management-platform:
+    build:
+      context: ../../
+      dockerfile: Dockerfile.management
+    environment:
+      ENVIRONMENT: test
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD:-password123}@postgres:5432/dotmac_test
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      PORT: 8000
+      HOST: 0.0.0.0
+      ENABLE_OBSERVABILITY: "true"
+      ENABLE_METRICS: "true"
+      ENABLE_TRACING: "true"
+    volumes:
+      - ../../src/dotmac_management:/app/src/dotmac_management
+      - ../../src/dotmac_shared:/app/src/dotmac_shared
+      - ../../packages:/app/packages
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks: [mgmt-ui]
+
+  management-frontend:
+    build:
+      context: ../../frontend/management-portal/admin
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://management-platform:8000
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3005:3000"
+    depends_on:
+      management-platform:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks: [mgmt-ui]
+
+networks:
+  mgmt-ui:
+    driver: bridge
+

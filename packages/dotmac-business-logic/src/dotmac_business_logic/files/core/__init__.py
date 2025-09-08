@@ -1,13 +1,14 @@
 """
 Core file generation components.
 """
+
 try:
     from .generators import CSVGenerator, ExcelGenerator, PDFGenerator
 except (ImportError, ValueError) as e:
     # ValueError can occur from pandas/numpy compatibility issues
     import warnings
 
-    warnings.warn(f"File generators not available: {e}")
+    warnings.warn(f"File generators not available: {e}", stacklevel=2)
     PDFGenerator = ExcelGenerator = CSVGenerator = None
 
 try:
@@ -15,7 +16,7 @@ try:
 except (ImportError, ValueError) as e:
     import warnings
 
-    warnings.warn(f"Template engine not available: {e}")
+    warnings.warn(f"Template engine not available: {e}", stacklevel=2)
     TemplateEngine = None
 
 try:
@@ -23,7 +24,7 @@ try:
 except (ImportError, ValueError) as e:
     import warnings
 
-    warnings.warn(f"Image processor not available: {e}")
+    warnings.warn(f"Image processor not available: {e}", stacklevel=2)
     ImageProcessor = None
 
 __all__ = [

@@ -74,7 +74,7 @@ terraform apply -var-file="production.tfvars"
     │                Infrastructure                               │
     ├─────────────────┬─────────────────┬─────────────────────────┤
     │ PostgreSQL      │ Redis           │ RabbitMQ                │
-    │ Elasticsearch   │ Grafana         │ Prometheus              │
+    │ Elasticsearch   │ SigNoz          │ ClickHouse             │
     └─────────────────┴─────────────────┴─────────────────────────┘
 ```
 

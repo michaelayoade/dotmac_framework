@@ -47,16 +47,10 @@ class AlertRuleBase(BaseModel):
     threshold: float = Field(..., description="Alert threshold value")
     severity: str = Field(..., description="Alert severity (critical, warning, info)")
     enabled: bool = Field(default=True, description="Whether alert rule is enabled")
-    evaluation_interval: int = Field(
-        default=60, description="Evaluation interval in seconds"
-    )
-    for_duration: int = Field(
-        default=300, description="Duration before firing in seconds"
-    )
+    evaluation_interval: int = Field(default=60, description="Evaluation interval in seconds")
+    for_duration: int = Field(default=300, description="Duration before firing in seconds")
     labels: dict[str, str] = Field(default_factory=dict, description="Alert labels")
-    annotations: dict[str, str] = Field(
-        default_factory=dict, description="Alert annotations"
-    )
+    annotations: dict[str, str] = Field(default_factory=dict, description="Alert annotations")
 
 
 class AlertRuleCreate(AlertRuleBase):
@@ -98,9 +92,7 @@ class AlertBase(BaseModel):
     started_at: datetime = Field(..., description="Alert start time")
     resolved_at: Optional[datetime] = Field(None, description="Alert resolution time")
     labels: dict[str, str] = Field(default_factory=dict, description="Alert labels")
-    annotations: dict[str, str] = Field(
-        default_factory=dict, description="Alert annotations"
-    )
+    annotations: dict[str, str] = Field(default_factory=dict, description="Alert annotations")
     fingerprint: str = Field(..., description="Unique alert fingerprint")
 
 
@@ -132,9 +124,7 @@ class NotificationChannelBase(BaseModel):
     type: str = Field(..., description="Channel type (email, slack, webhook, etc.)")
     configuration: dict[str, Any] = Field(..., description="Channel configuration")
     enabled: bool = Field(default=True, description="Whether channel is enabled")
-    filters: dict[str, Any] = Field(
-        default_factory=dict, description="Notification filters"
-    )
+    filters: dict[str, Any] = Field(default_factory=dict, description="Notification filters")
 
 
 class NotificationChannelCreate(NotificationChannelBase):
@@ -169,9 +159,7 @@ class NotificationBase(BaseModel):
     delivered_at: Optional[datetime] = Field(None, description="Delivery timestamp")
     error_message: Optional[str] = Field(None, description="Error message if failed")
     retry_count: int = Field(default=0, description="Retry count")
-    metadata: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class NotificationCreate(NotificationBase):
@@ -205,18 +193,10 @@ class DashboardBase(BaseModel):
     name: str = Field(..., description="Dashboard name")
     description: Optional[str] = Field(None, description="Dashboard description")
     layout: dict[str, Any] = Field(..., description="Dashboard layout configuration")
-    widgets: list[dict[str, Any]] = Field(
-        default_factory=list, description="Dashboard widgets"
-    )
-    variables: dict[str, Any] = Field(
-        default_factory=dict, description="Dashboard variables"
-    )
-    time_range: dict[str, Any] = Field(
-        default_factory=dict, description="Default time range"
-    )
-    refresh_interval: Optional[int] = Field(
-        None, description="Auto-refresh interval in seconds"
-    )
+    widgets: list[dict[str, Any]] = Field(default_factory=list, description="Dashboard widgets")
+    variables: dict[str, Any] = Field(default_factory=dict, description="Dashboard variables")
+    time_range: dict[str, Any] = Field(default_factory=dict, description="Default time range")
+    refresh_interval: Optional[int] = Field(None, description="Auto-refresh interval in seconds")
     is_public: bool = Field(default=False, description="Whether dashboard is public")
     tags: list[str] = Field(default_factory=list, description="Dashboard tags")
 
@@ -259,9 +239,7 @@ class LogEntryBase(BaseModel):
     trace_id: Optional[str] = Field(None, description="Trace ID")
     span_id: Optional[str] = Field(None, description="Span ID")
     labels: dict[str, str] = Field(default_factory=dict, description="Log labels")
-    structured_data: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Structured log data"
-    )
+    structured_data: Optional[dict[str, Any]] = Field(default_factory=dict, description="Structured log data")
 
 
 class LogEntryCreate(LogEntryBase):
@@ -327,9 +305,7 @@ class MetricQuery(BaseModel):
     start_time: datetime = Field(..., description="Query start time")
     end_time: datetime = Field(..., description="Query end time")
     step: Optional[int] = Field(None, description="Query step in seconds")
-    labels: Optional[dict[str, str]] = Field(
-        default_factory=dict, description="Additional labels"
-    )
+    labels: Optional[dict[str, str]] = Field(default_factory=dict, description="Additional labels")
 
 
 class MetricQueryResult(BaseModel):
@@ -355,9 +331,7 @@ class LogQuery(BaseModel):
     start_time: datetime = Field(..., description="Query start time")
     end_time: datetime = Field(..., description="Query end time")
     limit: int = Field(default=1000, description="Maximum number of log entries")
-    labels: Optional[dict[str, str]] = Field(
-        default_factory=dict, description="Label filters"
-    )
+    labels: Optional[dict[str, str]] = Field(default_factory=dict, description="Label filters")
 
 
 class ServiceHealthStatus(BaseModel):
@@ -438,9 +412,7 @@ class SyntheticCheckResultBase(BaseModel):
     error_message: Optional[str] = Field(None, description="Error message if failed")
     location: str = Field(..., description="Check location")
     timestamp: datetime = Field(..., description="Check timestamp")
-    metadata: Optional[dict[str, Any]] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: Optional[dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
 
 
 class SyntheticCheckResultCreate(SyntheticCheckResultBase):

@@ -11,6 +11,7 @@ This package provides comprehensive IP address management capabilities:
 - Database persistence with SQLAlchemy integration
 - RESTful API schemas with Pydantic
 """
+
 from typing import Optional
 
 try:
@@ -25,7 +26,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM core models not available: {e}")
+    warnings.warn(f"IPAM core models not available: {e}", stacklevel=2)
     NetworkType = AllocationStatus = ReservationStatus = None
     IPNetwork = IPAllocation = IPReservation = None
 
@@ -45,7 +46,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM schemas not available: {e}")
+    warnings.warn(f"IPAM schemas not available: {e}", stacklevel=2)
     NetworkCreate = NetworkUpdate = NetworkResponse = None
     AllocationCreate = AllocationResponse = NetworkUtilization = None
 
@@ -54,7 +55,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM service not available: {e}")
+    warnings.warn(f"IPAM service not available: {e}", stacklevel=2)
     IPAMService = None
 
 # Enhanced service (placeholder for future implementation)
@@ -65,7 +66,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM SDK not available: {e}")
+    warnings.warn(f"IPAM SDK not available: {e}", stacklevel=2)
     IPAMSDK = None
 
 try:
@@ -73,7 +74,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM repository not available: {e}")
+    warnings.warn(f"IPAM repository not available: {e}", stacklevel=2)
     IPAMRepository = None
 
 # Utility imports
@@ -87,7 +88,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM network utilities not available: {e}")
+    warnings.warn(f"IPAM network utilities not available: {e}", stacklevel=2)
     validate_cidr = calculate_network_info = None
     find_next_available_subnet = check_ip_in_network = None
 
@@ -104,7 +105,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM enhanced components not available: {e}")
+    warnings.warn(f"IPAM enhanced components not available: {e}", stacklevel=2)
     IPAMRateLimiter = IPAMRateLimitMiddleware = None
     NetworkPlanner = SubnetRequirement = IPPool = None
     cleanup_expired_allocations = cleanup_expired_reservations = None
@@ -218,7 +219,9 @@ def get_default_config():
 
 
 # Quick setup functions for common use cases
-def create_ipam_service(database_session=None, config: Optional[dict] = None) -> "IPAMService":
+def create_ipam_service(
+    database_session=None, config: Optional[dict] = None
+) -> "IPAMService":
     """Create a configured IPAM service."""
     if not IPAMService:
         raise ImportError("IPAM service not available")
@@ -238,7 +241,9 @@ def create_ipam_sdk(
     return IPAMSDK(tenant_id, database_session, config)
 
 
-def create_simple_ipam(tenant_id: str = "default", config: Optional[dict] = None) -> "IPAMSDK":
+def create_simple_ipam(
+    tenant_id: str = "default", config: Optional[dict] = None
+) -> "IPAMSDK":
     """Create a simple in-memory IPAM SDK for testing."""
     if not IPAMSDK:
         raise ImportError("IPAM SDK not available")

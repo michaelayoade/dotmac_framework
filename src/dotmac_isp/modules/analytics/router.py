@@ -7,10 +7,11 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from fastapi import APIRouter, Body, Depends, Path, Query
+
 from dotmac_shared.api import StandardDependencies, standard_exception_handler
 from dotmac_shared.api.dependencies import get_standard_deps
 from dotmac_shared.schemas import BaseResponseSchema
-from fastapi import APIRouter, Body, Depends, Path, Query
 
 from ..schemas import (
     CreateMetricRequest,
@@ -50,8 +51,7 @@ def create_isp_analytics_router_dry() -> APIRouter:
     @standard_exception_handler
     async def get_customer_analytics(
         customer_id: UUID = Path(..., description="Customer ID"),
-        start_date: datetime
-        | None = Query(None, description="Start date for analytics"),
+        start_date: datetime | None = Query(None, description="Start date for analytics"),
         end_date: datetime | None = Query(None, description="End date for analytics"),
         include_usage: bool = Query(True, description="Include usage statistics"),
         deps: StandardDependencies = Depends(get_standard_deps),
@@ -77,17 +77,13 @@ def create_isp_analytics_router_dry() -> APIRouter:
         service_id: UUID = Path(..., description="Service ID"),
         start_date: datetime | None = Query(None, description="Start date"),
         end_date: datetime | None = Query(None, description="End date"),
-        include_performance: bool = Query(
-            True, description="Include performance metrics"
-        ),
+        include_performance: bool = Query(True, description="Include performance metrics"),
         deps: StandardDependencies = Depends(get_standard_deps),
         service: ISPAnalyticsService = Depends(get_isp_analytics_service),
     ) -> ServiceAnalyticsResponse:
         """Get analytics for a specific ISP service."""
 
-        filters = MetricFilters(
-            start_date=start_date, end_date=end_date, service_id=service_id
-        )
+        filters = MetricFilters(start_date=start_date, end_date=end_date, service_id=service_id)
 
         analytics = await service.get_service_analytics(
             service_id=service_id,

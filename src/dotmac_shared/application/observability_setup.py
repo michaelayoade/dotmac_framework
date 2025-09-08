@@ -11,7 +11,7 @@ from fastapi import FastAPI
 
 from ..auth.edge_validation import EdgeAuthMiddleware, EdgeJWTValidator
 from ..auth.service_tokens import ServiceAuthMiddleware, configure_service_auth
-from ..observability import (
+from dotmac.platform.observability import (
     create_default_config,
     initialize_metrics_registry,
     initialize_otel,
@@ -58,32 +58,32 @@ async def setup_observability(
     try:
         # 1. Initialize OpenTelemetry with environment-specific configuration
         logger.info("Initializing OpenTelemetry...")
+        # Choose exporters per environment (no Prometheus)
+        if environment == "development":
+            tracing_exporters = ["console"]
+            metrics_exporters = ["console"]
+        elif environment == "staging":
+            tracing_exporters = ["otlp", "console"]
+            metrics_exporters = ["otlp"]
+        else:  # production
+            tracing_exporters = ["otlp"]
+            metrics_exporters = ["otlp"]
+
         otel_config = create_default_config(
             service_name=service_name,
             environment=environment,
             service_version=service_version,
             custom_resource_attributes=_get_resource_attributes(platform_config),
+            tracing_exporters=tracing_exporters,
+            metrics_exporters=metrics_exporters,
         )
-
-        # Environment-specific exporter configuration
-        if environment == "development":
-            otel_config.tracing_exporters = ["console"]
-            otel_config.metrics_exporters = ["console"]
-        elif environment == "staging":
-            otel_config.tracing_exporters = ["otlp", "console"]
-            otel_config.metrics_exporters = ["otlp", "prometheus"]
-        else:  # production
-            otel_config.tracing_exporters = ["otlp"]
-            otel_config.metrics_exporters = ["otlp", "prometheus"]
 
         otel_bootstrap = initialize_otel(otel_config)
         components["otel_bootstrap"] = otel_bootstrap
 
         # 2. Initialize unified metrics registry
         logger.info("Setting up unified metrics registry...")
-        metrics_registry = initialize_metrics_registry(
-            service_name, enable_prometheus=True
-        )
+        metrics_registry = initialize_metrics_registry(service_name, enable_prometheus=False)
 
         # Connect OTEL meter to metrics registry
         if otel_bootstrap and otel_bootstrap.get_meter():
@@ -112,9 +112,7 @@ async def setup_observability(
 
         # 5. Configure service-to-service authentication
         logger.info("Setting up service authentication...")
-        service_signing_secret = os.getenv(
-            "SERVICE_SIGNING_SECRET", "dev-secret-key-change-in-production"
-        )
+        service_signing_secret = os.getenv("SERVICE_SIGNING_SECRET", "dev-secret-key-change-in-production")
         service_token_manager = configure_service_auth(service_signing_secret)
 
         # Register service capabilities
@@ -137,9 +135,7 @@ async def setup_observability(
         # 7. Configure edge authentication
         logger.info("Setting up edge JWT validation...")
         jwt_secret = os.getenv("JWT_SECRET", "dev-jwt-secret-change-in-production")
-        edge_validator = EdgeJWTValidator(
-            jwt_secret=jwt_secret, tenant_resolver=tenant_resolver
-        )
+        edge_validator = EdgeJWTValidator(jwt_secret=jwt_secret, tenant_resolver=tenant_resolver)
         _configure_route_sensitivity(edge_validator, platform_config)
         components["edge_validator"] = edge_validator
 
@@ -156,26 +152,22 @@ async def setup_observability(
         # 11. Set up platform dashboards and alerts
         logger.info("Setting up platform dashboards...")
         tenant_id = None
-        if platform_config.deployment_context and hasattr(
-            platform_config.deployment_context, "tenant_id"
-        ):
+        if platform_config.deployment_context and hasattr(platform_config.deployment_context, "tenant_id"):
             tenant_id = platform_config.deployment_context.tenant_id
 
-        dashboard_results = await setup_platform_dashboards(
-            app, platform_config, tenant_id
-        )
+        dashboard_results = await setup_platform_dashboards(app, platform_config, tenant_id)
         components["dashboards"] = dashboard_results
 
         logger.info("✅ Observability system setup complete")
         logger.info(f"   Service: {service_name}")
         logger.info(f"   Environment: {environment}")
         logger.info("   OTEL Enabled: True")
-        logger.info(
-            f"   Metrics Registry: {len(metrics_registry.metric_definitions)} metrics"
-        )
-        logger.info(
-            f"   Business SLOs: {'Enabled' if enable_business_slos else 'Disabled'}"
-        )
+        try:
+            metrics_count = len(metrics_registry.list_metrics())
+        except Exception:
+            metrics_count = 0
+        logger.info(f"   Metrics Registry: {metrics_count} metrics")
+        logger.info(f"   Business SLOs: {'Enabled' if enable_business_slos else 'Disabled'}")
 
         return components
 
@@ -209,9 +201,7 @@ def _get_resource_attributes(platform_config: PlatformConfig) -> dict[str, str]:
 
     if platform_config.deployment_context:
         mode = platform_config.deployment_context.mode
-        attributes["deployment.mode"] = (
-            mode.value if hasattr(mode, "value") else str(mode)
-        )
+        attributes["deployment.mode"] = mode.value if hasattr(mode, "value") else str(mode)
 
         if hasattr(platform_config.deployment_context, "tenant_id"):
             attributes["tenant.id"] = platform_config.deployment_context.tenant_id
@@ -221,11 +211,8 @@ def _get_resource_attributes(platform_config: PlatformConfig) -> dict[str, str]:
 
 def _register_business_slo_metrics(metrics_registry, platform_config: PlatformConfig):
     """Register business SLO metrics."""
-    from ..observability.metrics_schema import (
-        MetricCategory,
-        MetricDefinition,
-        MetricType,
-    )
+    # Use platform observability metric definitions
+    from dotmac.platform.observability.metrics.registry import MetricDefinition, MetricType
 
     # Core business SLOs
     business_metrics = [
@@ -233,7 +220,6 @@ def _register_business_slo_metrics(metrics_registry, platform_config: PlatformCo
         MetricDefinition(
             name="login_attempts_total",
             type=MetricType.COUNTER,
-            category=MetricCategory.BUSINESS,
             description="Total login attempts",
             labels=["result", "auth_method"],
             help_text="Total number of login attempts with result and method",
@@ -241,7 +227,6 @@ def _register_business_slo_metrics(metrics_registry, platform_config: PlatformCo
         MetricDefinition(
             name="login_duration_seconds",
             type=MetricType.HISTOGRAM,
-            category=MetricCategory.BUSINESS,
             description="Login duration in seconds",
             unit="seconds",
             labels=["auth_method", "result"],
@@ -252,7 +237,6 @@ def _register_business_slo_metrics(metrics_registry, platform_config: PlatformCo
         MetricDefinition(
             name="provisioning_requests_total",
             type=MetricType.COUNTER,
-            category=MetricCategory.BUSINESS,
             description="Total provisioning requests",
             labels=["service_type", "result"],
             help_text="Total service provisioning requests",
@@ -260,7 +244,6 @@ def _register_business_slo_metrics(metrics_registry, platform_config: PlatformCo
         MetricDefinition(
             name="provisioning_duration_seconds",
             type=MetricType.HISTOGRAM,
-            category=MetricCategory.BUSINESS,
             description="Service provisioning duration",
             unit="seconds",
             labels=["service_type", "result"],
@@ -271,7 +254,6 @@ def _register_business_slo_metrics(metrics_registry, platform_config: PlatformCo
         MetricDefinition(
             name="business_operations_total",
             type=MetricType.COUNTER,
-            category=MetricCategory.BUSINESS,
             description="Total business operations",
             labels=["operation_type", "result"],
             help_text="All business operations for success rate calculation",
@@ -280,7 +262,6 @@ def _register_business_slo_metrics(metrics_registry, platform_config: PlatformCo
         MetricDefinition(
             name="customer_satisfaction_score",
             type=MetricType.GAUGE,
-            category=MetricCategory.BUSINESS,
             description="Customer satisfaction score",
             labels=["score_type"],
             help_text="Customer satisfaction metrics (NPS, CSAT, etc.)",
@@ -289,7 +270,6 @@ def _register_business_slo_metrics(metrics_registry, platform_config: PlatformCo
         MetricDefinition(
             name="revenue_transactions_total",
             type=MetricType.COUNTER,
-            category=MetricCategory.BUSINESS,
             description="Revenue generating transactions",
             labels=["transaction_type", "currency"],
             help_text="Count of revenue transactions",
@@ -297,7 +277,6 @@ def _register_business_slo_metrics(metrics_registry, platform_config: PlatformCo
         MetricDefinition(
             name="revenue_amount",
             type=MetricType.GAUGE,
-            category=MetricCategory.BUSINESS,
             description="Revenue amount in base currency",
             unit="currency",
             labels=["revenue_type", "period"],
@@ -311,9 +290,7 @@ def _register_business_slo_metrics(metrics_registry, platform_config: PlatformCo
             logger.debug(f"Registered business SLO metric: {metric.name}")
 
 
-def _register_platform_business_metrics(
-    tenant_metrics, platform_config: PlatformConfig
-):
+def _register_platform_business_metrics(tenant_metrics, platform_config: PlatformConfig):
     """Register platform-specific business metrics."""
     if not platform_config.deployment_context:
         return
@@ -322,7 +299,7 @@ def _register_platform_business_metrics(
 
     if mode == DeploymentMode.MANAGEMENT_PLATFORM:
         # Management Platform metrics
-        from ..observability.tenant_metrics import (
+        from dotmac.platform.observability.metrics.business import (
             BusinessMetricSpec,
             BusinessMetricType,
         )
@@ -356,7 +333,7 @@ def _register_platform_business_metrics(
 
     elif mode == DeploymentMode.TENANT_CONTAINER:
         # ISP Framework metrics
-        from ..observability.tenant_metrics import (
+        from dotmac.platform.observability.metrics.business import (
             BusinessMetricSpec,
             BusinessMetricType,
         )
@@ -413,16 +390,10 @@ def _register_service_capabilities(
                     "plugin_management",
                 ]
             )
-            allowed_targets.extend(
-                ["isp-customer", "isp-billing", "isp-network", "isp-support"]
-            )
+            allowed_targets.extend(["isp-customer", "isp-billing", "isp-network", "isp-support"])
         elif mode == DeploymentMode.TENANT_CONTAINER:
-            capabilities.extend(
-                ["customer_management", "billing", "network_services", "support"]
-            )
-            allowed_targets.extend(
-                ["dotmac-management", "isp-billing", "isp-network", "isp-support"]
-            )
+            capabilities.extend(["customer_management", "billing", "network_services", "support"])
+            allowed_targets.extend(["dotmac-management", "isp-billing", "isp-network", "isp-support"])
 
     service_token_manager.register_service(
         service_name=service_name,
@@ -435,9 +406,7 @@ def _register_service_capabilities(
     )
 
 
-def _configure_tenant_patterns(
-    tenant_resolver: TenantIdentityResolver, platform_config: PlatformConfig
-):
+def _configure_tenant_patterns(tenant_resolver: TenantIdentityResolver, platform_config: PlatformConfig):
     """Configure tenant identity patterns based on platform."""
     if not platform_config.deployment_context:
         # Default patterns for development
@@ -465,9 +434,7 @@ def _configure_tenant_patterns(
         )
 
 
-def _configure_route_sensitivity(
-    edge_validator: EdgeJWTValidator, platform_config: PlatformConfig
-):
+def _configure_route_sensitivity(edge_validator: EdgeJWTValidator, platform_config: PlatformConfig):
     """Configure route sensitivity patterns based on platform."""
     base_patterns = {
         # Public routes
@@ -556,8 +523,71 @@ def _store_components_in_app_state(app: FastAPI, components: dict[str, Any]):
 
 def _setup_observability_health_checks(app: FastAPI, components: dict[str, Any]):
     """Set up health checks for observability components."""
-    # This would integrate with the existing health check system
-    pass
+    from ..health.comprehensive_checks import HealthChecker, ComponentStatus
+    
+    # Get or create health checker
+    if not hasattr(app.state, 'health_checker'):
+        app.state.health_checker = HealthChecker()
+    
+    health_checker = app.state.health_checker
+    
+    # Register OTEL health check
+    if 'otel_bootstrap' in components:
+        def check_otel_health() -> ComponentStatus:
+            try:
+                otel = components['otel_bootstrap']
+                if otel and otel.get_tracer():
+                    return ComponentStatus.HEALTHY
+                return ComponentStatus.DEGRADED
+            except Exception as e:
+                logger.warning(f"OTEL health check failed: {e}")
+                return ComponentStatus.UNHEALTHY
+        
+        health_checker.register_component_check('otel', check_otel_health)
+    
+    # Register metrics registry health check
+    if 'metrics_registry' in components:
+        def check_metrics_health() -> ComponentStatus:
+            try:
+                registry = components['metrics_registry']
+                if registry and len(registry.list_metrics()) > 0:
+                    return ComponentStatus.HEALTHY
+                return ComponentStatus.DEGRADED
+            except Exception as e:
+                logger.warning(f"Metrics registry health check failed: {e}")
+                return ComponentStatus.UNHEALTHY
+                
+        health_checker.register_component_check('metrics_registry', check_metrics_health)
+    
+    # Register tenant metrics health check
+    if 'tenant_metrics' in components:
+        def check_tenant_metrics_health() -> ComponentStatus:
+            try:
+                tenant_metrics = components['tenant_metrics']
+                if tenant_metrics and hasattr(tenant_metrics, 'is_healthy') and tenant_metrics.is_healthy():
+                    return ComponentStatus.HEALTHY
+                return ComponentStatus.DEGRADED
+            except Exception as e:
+                logger.warning(f"Tenant metrics health check failed: {e}")
+                return ComponentStatus.UNHEALTHY
+                
+        health_checker.register_component_check('tenant_metrics', check_tenant_metrics_health)
+    
+    # Register service auth health check
+    if 'service_token_manager' in components:
+        def check_auth_health() -> ComponentStatus:
+            try:
+                token_manager = components['service_token_manager']
+                if token_manager and hasattr(token_manager, 'is_healthy') and token_manager.is_healthy():
+                    return ComponentStatus.HEALTHY
+                return ComponentStatus.DEGRADED
+            except Exception as e:
+                logger.warning(f"Service auth health check failed: {e}")
+                return ComponentStatus.UNHEALTHY
+                
+        health_checker.register_component_check('service_auth', check_auth_health)
+    
+    logger.info(f"✅ Registered {len(components)} observability health checks")
 
 
 async def setup_platform_dashboards(
@@ -577,7 +607,7 @@ async def setup_platform_dashboards(
     logger.info("🎨 Setting up platform dashboards and alerts...")
 
     try:
-        from .dashboards.dashboard_manager import provision_platform_dashboards
+        from dotmac.platform.observability.dashboards.manager import provision_platform_dashboards
 
         # Determine platform type
         platform_type = _get_platform_type(platform_config)
@@ -602,12 +632,8 @@ async def setup_platform_dashboards(
 
         logger.info("✅ Platform dashboards provisioned successfully")
         logger.info(f"   Platform: {platform_type}")
-        logger.info(
-            f"   Grafana dashboards: {len(dashboard_results.get('grafana_dashboards', []))}"
-        )
-        logger.info(
-            f"   Signoz dashboards: {len(dashboard_results.get('signoz_dashboards', []))}"
-        )
+        # SigNoz-only stack: Grafana dashboards deprecated
+        logger.info(f"   Signoz dashboards: {len(dashboard_results.get('signoz_dashboards', []))}")
         logger.info(f"   Alert rules: {len(dashboard_results.get('alerts', []))}")
 
         return dashboard_results
@@ -639,9 +665,7 @@ def _get_service_name_from_components(components: dict[str, Any]) -> str:
     """Extract service name from components."""
     if "otel_bootstrap" in components:
         otel_bootstrap = components["otel_bootstrap"]
-        if hasattr(otel_bootstrap, "config") and hasattr(
-            otel_bootstrap.config, "service_name"
-        ):
+        if hasattr(otel_bootstrap, "config") and hasattr(otel_bootstrap.config, "service_name"):
             return otel_bootstrap.config.service_name
 
     return "dotmac-service"

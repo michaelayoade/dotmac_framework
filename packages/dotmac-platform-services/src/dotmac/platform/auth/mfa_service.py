@@ -20,11 +20,11 @@ import qrcode
 from pydantic import (
     BaseModel,
     Field,
-    field_validator,
+    model_validator,
 )
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 from .exceptions import (
     AuthenticationError,
@@ -100,17 +100,13 @@ class MFAEnrollmentRequest(BaseModel):
     phone_number: str | None = Field(None, pattern=r"^\+[1-9]\d{1,14}$")
     email: str | None = Field(None, pattern=r"^[^@]+@[^@]+\.[^@]+$")
 
-    @field_validator("phone_number")
-    def validate_phone_for_sms(cls, v, values):
-        if values.get("method") == MFAMethod.SMS and not v:
+    @model_validator(mode="after")
+    def _verify_contact_for_method(self):
+        if self.method == MFAMethod.SMS and not self.phone_number:
             raise ValueError("Phone number required for SMS method")
-        return v
-
-    @field_validator("email")
-    def validate_email_for_email(cls, v, values):
-        if values.get("method") == MFAMethod.EMAIL and not v:
+        if self.method == MFAMethod.EMAIL and not self.email:
             raise ValueError("Email required for email method")
-        return v
+        return self
 
 
 class MFAVerificationRequest(BaseModel):
@@ -225,12 +221,11 @@ class MFAService:
 
         if enrollment_request.method == MFAMethod.TOTP:
             return await self._enroll_totp_device(user_id, enrollment_request)
-        elif enrollment_request.method == MFAMethod.SMS:
+        if enrollment_request.method == MFAMethod.SMS:
             return await self._enroll_sms_device(user_id, enrollment_request)
-        elif enrollment_request.method == MFAMethod.EMAIL:
+        if enrollment_request.method == MFAMethod.EMAIL:
             return await self._enroll_email_device(user_id, enrollment_request)
-        else:
-            raise ValidationError(f"Unsupported MFA method: {enrollment_request.method}")
+        raise ValidationError(f"Unsupported MFA method: {enrollment_request.method}")
 
     async def _enroll_totp_device(
         self, user_id: str, enrollment_request: MFAEnrollmentRequest
@@ -412,12 +407,11 @@ class MFAService:
             await self.db.commit()
 
             return {"success": True, "device_id": str(device.id), "is_primary": device.is_primary}
-        else:
-            await self.db.commit()  # Save attempt increment
-            attempts_remaining = self.config.max_verification_attempts - challenge.attempts
-            raise AuthenticationError(
-                f"Invalid verification code. {attempts_remaining} attempts remaining."
-            )
+        await self.db.commit()  # Save attempt increment
+        attempts_remaining = self.config.max_verification_attempts - challenge.attempts
+        raise AuthenticationError(
+            f"Invalid verification code. {attempts_remaining} attempts remaining."
+        )
 
     async def initiate_mfa_challenge(
         self, user_id: str, device_id: str | None = None
@@ -564,22 +558,21 @@ class MFAService:
             }
 
             return {"success": True, "mfa_claims": mfa_claims, "user_id": str(challenge.user_id)}
-        else:
-            # Handle failed attempt
-            device.failure_count += 1
+        # Handle failed attempt
+        device.failure_count += 1
 
-            # Lock device if too many failures
-            if device.failure_count >= self.config.max_verification_attempts:
-                device.locked_until = datetime.now(UTC) + timedelta(
-                    minutes=self.config.lockout_duration_minutes
-                )
-
-            await self.db.commit()
-
-            attempts_remaining = self.config.max_verification_attempts - challenge.attempts
-            raise AuthenticationError(
-                f"Invalid verification code. {attempts_remaining} attempts remaining."
+        # Lock device if too many failures
+        if device.failure_count >= self.config.max_verification_attempts:
+            device.locked_until = datetime.now(UTC) + timedelta(
+                minutes=self.config.lockout_duration_minutes
             )
+
+        await self.db.commit()
+
+        attempts_remaining = self.config.max_verification_attempts - challenge.attempts
+        raise AuthenticationError(
+            f"Invalid verification code. {attempts_remaining} attempts remaining."
+        )
 
     async def verify_backup_code(self, user_id: str, backup_code: str) -> dict[str, Any]:
         """Verify backup code for emergency access."""

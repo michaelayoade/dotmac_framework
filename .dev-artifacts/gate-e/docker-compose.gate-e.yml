@@ -1,0 +1,299 @@
+version: '3.8'
+
+# Docker Compose for Gate E: Full E2E + Observability Testing
+# This configuration starts only the essential services needed for Gate E validation
+
+services:
+  # ===== CORE INFRASTRUCTURE =====
+  
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: gate-e-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dotmac_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
+      POSTGRES_DB: dotmac_test
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5435:5432"
+    networks:
+      - gate-e-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dotmac_admin -d dotmac_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: gate-e-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - gate-e-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== DOTMAC SERVICES =====
+  
+  # Management Platform
+  management-platform:
+    build:
+      context: ../../
+      dockerfile: Dockerfile.management
+    container_name: gate-e-management
+    environment:
+      # Environment
+      ENVIRONMENT: test
+      DEBUG: "true"
+      LOG_LEVEL: INFO
+      
+      # Database
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD:-password123}@postgres:5432/dotmac_test
+      
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      
+      # API Configuration
+      PORT: 8000
+      HOST: "0.0.0.0"
+      
+      # CORS
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3003"]'
+      
+      # Observability
+      ENABLE_OBSERVABILITY: "true"
+      ENABLE_METRICS: "true" 
+      ENABLE_TRACING: "true"
+      OTEL_SERVICE_NAME: dotmac-management-test
+      OTEL_TRACES_SAMPLER: always_on
+      
+      # Test Configuration
+      ENABLE_TEST_ENDPOINTS: "true"
+      TEST_MODE: "true"
+    volumes:
+      - ../../src/dotmac_management:/app/src/dotmac_management
+      - ../../src/dotmac_shared:/app/src/dotmac_shared
+      - ../../packages:/app/packages
+    ports:
+      - "8000:8000"
+    networks:
+      - gate-e-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # Management Frontend (Admin UI)
+  management-frontend:
+    build:
+      context: ../../frontend/management-portal/admin
+      dockerfile: Dockerfile
+    container_name: gate-e-management-frontend
+    environment:
+      NODE_ENV: production
+      # Point UI to the management backend inside the compose network
+      NEXT_PUBLIC_API_URL: http://management-platform:8000
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3005:3000"
+    networks:
+      - gate-e-network
+    depends_on:
+      management-platform:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ISP Service
+  isp-service:
+    build:
+      context: ../../
+      dockerfile: Dockerfile.isp
+    container_name: gate-e-isp
+    environment:
+      # Environment
+      ENVIRONMENT: test
+      DEBUG: "true"
+      LOG_LEVEL: INFO
+      
+      # Database
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD:-password123}@postgres:5432/dotmac_test
+      
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis123}@redis:6379/1
+      
+      # API Configuration
+      PORT: 8001
+      HOST: "0.0.0.0"
+      
+      # Management Platform Integration
+      MANAGEMENT_PLATFORM_URL: http://management-platform:8000
+      
+      # Observability
+      ENABLE_OBSERVABILITY: "true"
+      ENABLE_METRICS: "true"
+      ENABLE_TRACING: "true" 
+      OTEL_SERVICE_NAME: dotmac-isp-test
+      OTEL_TRACES_SAMPLER: always_on
+      
+      # Test Configuration
+      ENABLE_TEST_ENDPOINTS: "true"
+      TEST_MODE: "true"
+    volumes:
+      - ../../src/dotmac_isp:/app/src/dotmac_isp
+      - ../../src/dotmac_shared:/app/src/dotmac_shared
+      - ../../packages:/app/packages
+    ports:
+      - "8001:8001"
+    networks:
+      - gate-e-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      management-platform:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ===== OBSERVABILITY STACK =====
+  
+  # SigNoz (Observability Platform)
+  signoz-frontend:
+    image: signoz/frontend:0.40.0
+    container_name: gate-e-signoz-frontend
+    depends_on:
+      - signoz-query
+    ports:
+      - "3301:3301"
+    networks:
+      - gate-e-network
+    environment:
+      - FRONTEND_API_ENDPOINT=http://signoz-query:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://signoz-query:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  signoz-query:
+    image: signoz/query-service:0.40.0
+    container_name: gate-e-signoz-query
+    ports:
+      - "8080:8080"
+    networks:
+      - gate-e-network
+    volumes:
+      - signoz_data:/var/lib/signoz
+    environment:
+      - STORAGE=clickhouse
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=9000
+      - CLICKHOUSE_ADDRESS=clickhouse:9000
+      - CLICKHOUSE_ADDR=clickhouse:9000
+      - CLICKHOUSE_DSN=tcp://clickhouse:9000?database=signoz_traces
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - CLICKHOUSE_DATABASE=signoz_traces
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      clickhouse-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: gate-e-clickhouse
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    networks:
+      - gate-e-network
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    environment:
+      - CLICKHOUSE_DB=signoz_traces
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  clickhouse-init:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: gate-e-clickhouse-init
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "until wget -qO- http://clickhouse:8123/ping >/dev/null 2>&1; do echo 'waiting for clickhouse...'; sleep 2; done; \
+       clickhouse-client -h clickhouse -q \"CREATE DATABASE IF NOT EXISTS signoz_traces; CREATE DATABASE IF NOT EXISTS signoz_metrics; CREATE DATABASE IF NOT EXISTS signoz_logs;\"; \
+       echo 'ClickHouse databases initialized'"
+    networks:
+      - gate-e-network
+    restart: "no"
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.88.11
+    container_name: gate-e-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "14250:14250" # Jaeger gRPC receiver
+    networks:
+      - gate-e-network
+    depends_on:
+      signoz-query:
+        condition: service_healthy
+      clickhouse-init:
+        condition: service_completed_successfully
+
+networks:
+  gate-e-network:
+    driver: bridge
+    name: gate-e-network
+
+volumes:
+  postgres_data:
+    name: gate-e-postgres-data
+  redis_data:
+    name: gate-e-redis-data  
+  clickhouse_data:
+    name: gate-e-clickhouse-data
+  signoz_data:
+    name: gate-e-signoz-data

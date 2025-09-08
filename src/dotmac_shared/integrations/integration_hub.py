@@ -7,7 +7,6 @@ import logging
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +16,7 @@ from dotmac.core.schemas.base_schemas import (
     BaseResponseSchema,
     BaseUpdateSchema,
 )
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 from .base_integration import BaseIntegration, IntegrationConfig, IntegrationMetrics
 
@@ -69,17 +69,13 @@ class IntegrationHubService:
         self.integrations: dict[str, BaseIntegration] = {}
         self.integration_types: dict[str, type[BaseIntegration]] = {}
 
-    def register_integration_type(
-        self, name: str, integration_class: type[BaseIntegration]
-    ):
+    def register_integration_type(self, name: str, integration_class: type[BaseIntegration]):
         """Register a new integration type."""
         self.integration_types[name] = integration_class
         logger.info(f"Registered integration type: {name}")
 
     @standard_exception_handler
-    async def create(
-        self, data: IntegrationCreateSchema, user_id: UUID
-    ) -> IntegrationResponseSchema:
+    async def create(self, data: IntegrationCreateSchema, user_id: UUID) -> IntegrationResponseSchema:
         """Create a new integration connection."""
 
         # Validate integration type
@@ -115,9 +111,7 @@ class IntegrationHubService:
         return await self._integration_to_response(integration)
 
     @standard_exception_handler
-    async def get_by_id(
-        self, integration_id: UUID, user_id: UUID
-    ) -> IntegrationResponseSchema:
+    async def get_by_id(self, integration_id: UUID, user_id: UUID) -> IntegrationResponseSchema:
         """Get integration by ID."""
         # In a real implementation, this would query the database
         # For now, using the integration name as identifier
@@ -147,9 +141,7 @@ class IntegrationHubService:
                 name=data.name or integration.config.name,
                 description=data.description or integration.config.description,
                 version=integration.config.version,
-                enabled=data.enabled
-                if data.enabled is not None
-                else integration.config.enabled,
+                enabled=data.enabled if data.enabled is not None else integration.config.enabled,
                 **data.config,
             )
             await integration.update_config(new_config)
@@ -159,9 +151,7 @@ class IntegrationHubService:
         return await self._integration_to_response(integration)
 
     @standard_exception_handler
-    async def delete(
-        self, integration_id: UUID, user_id: UUID, soft_delete: bool = True
-    ):
+    async def delete(self, integration_id: UUID, user_id: UUID, soft_delete: bool = True):
         """Delete/disable integration."""
         integration_name = str(integration_id)  # Simplified
 
@@ -173,9 +163,7 @@ class IntegrationHubService:
         else:
             del self.integrations[integration_name]
 
-        logger.info(
-            f"{'Disabled' if soft_delete else 'Deleted'} integration: {integration_name}"
-        )
+        logger.info(f"{'Disabled' if soft_delete else 'Deleted'} integration: {integration_name}")
 
     @standard_exception_handler
     async def list(
@@ -192,10 +180,7 @@ class IntegrationHubService:
         for _name, integration in self.integrations.items():
             # Apply filters
             if filters:
-                if (
-                    "enabled" in filters
-                    and integration.config.enabled != filters["enabled"]
-                ):
+                if "enabled" in filters and integration.config.enabled != filters["enabled"]:
                     continue
                 if "integration_type" in filters:
                     # Would need to store type info
@@ -207,24 +192,17 @@ class IntegrationHubService:
         return integrations[skip : skip + limit]
 
     @standard_exception_handler
-    async def count(
-        self, filters: Optional[dict[str, Any]] = None, user_id: Optional[UUID] = None
-    ) -> int:
+    async def count(self, filters: Optional[dict[str, Any]] = None, user_id: Optional[UUID] = None) -> int:
         """Count integrations with filters."""
         count = 0
         for integration in self.integrations.values():
             if filters:
-                if (
-                    "enabled" in filters
-                    and integration.config.enabled != filters["enabled"]
-                ):
+                if "enabled" in filters and integration.config.enabled != filters["enabled"]:
                     continue
             count += 1
         return count
 
-    async def _integration_to_response(
-        self, integration: BaseIntegration
-    ) -> IntegrationResponseSchema:
+    async def _integration_to_response(self, integration: BaseIntegration) -> IntegrationResponseSchema:
         """Convert integration to response schema."""
         health = await integration.health_check()
         metrics = await integration.get_metrics()
@@ -264,9 +242,7 @@ class IntegrationHubService:
     async def get_hub_status(self) -> dict[str, Any]:
         """Get overall integration hub status."""
         total_integrations = len(self.integrations)
-        enabled_integrations = sum(
-            1 for i in self.integrations.values() if i.config.enabled
-        )
+        enabled_integrations = sum(1 for i in self.integrations.values() if i.config.enabled)
 
         health_checks = {}
         for name, integration in self.integrations.items():
@@ -276,18 +252,14 @@ class IntegrationHubService:
             except Exception as e:
                 health_checks[name] = {"status": "error", "error": str(e)}
 
-        healthy_integrations = sum(
-            1 for health in health_checks.values() if health.get("status") == "ok"
-        )
+        healthy_integrations = sum(1 for health in health_checks.values() if health.get("status") == "ok")
 
         return {
             "total_integrations": total_integrations,
             "enabled_integrations": enabled_integrations,
             "healthy_integrations": healthy_integrations,
             "health_checks": health_checks,
-            "overall_status": "healthy"
-            if healthy_integrations == enabled_integrations
-            else "degraded",
+            "overall_status": "healthy" if healthy_integrations == enabled_integrations else "degraded",
         }
 
 

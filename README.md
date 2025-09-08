@@ -244,7 +244,7 @@ cd management-platform && make run-api
 - ✅ **Deployment automation** - Complete production deployment scripts
 - ✅ **Automated backup and recovery** - Full disaster recovery system
 - ✅ **SSL certificate management** - Automated certificate setup
-- ✅ **Advanced monitoring and alerting** - Prometheus + Grafana + AlertManager
+- ✅ **Advanced monitoring and alerting** - SigNoz (OTLP) unified stack
 - ✅ **Production security hardening** - Comprehensive security implementation
 - ✅ **Performance optimization** - Database, cache, and application tuning
 - ✅ **Advanced logging** - Centralized logging with audit trails

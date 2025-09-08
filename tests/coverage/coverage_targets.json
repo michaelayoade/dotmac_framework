@@ -1,0 +1,98 @@
+{
+  "dotmac_shared/security": {
+    "module_path": "src/dotmac_shared/security",
+    "target_percentage": 95,
+    "critical_functions": [
+      "validate_secret_strength",
+      "generate_csrf_token",
+      "validate_csrf_token",
+      "validate_comprehensive_security",
+      "audit_security_event"
+    ],
+    "current_coverage": 92.5,
+    "trend": null
+  },
+  "dotmac_shared/auth": {
+    "module_path": "src/dotmac_shared/auth",
+    "target_percentage": 90,
+    "critical_functions": [
+      "authenticate_user",
+      "authorize_request",
+      "validate_token",
+      "refresh_token"
+    ],
+    "current_coverage": 85.7,
+    "trend": null
+  },
+  "dotmac_isp/modules/billing": {
+    "module_path": "src/dotmac_isp/modules/billing",
+    "target_percentage": 90,
+    "critical_functions": [
+      "create_invoice",
+      "process_payment",
+      "calculate_charges",
+      "handle_subscription",
+      "record_usage"
+    ],
+    "current_coverage": 88.3,
+    "trend": null
+  },
+  "dotmac_isp/api": {
+    "module_path": "src/dotmac_isp/api",
+    "target_percentage": 85,
+    "critical_functions": [
+      "create_tenant_admin",
+      "authenticate_request",
+      "validate_input",
+      "handle_errors"
+    ],
+    "current_coverage": 82.1,
+    "trend": null
+  },
+  "dotmac_management": {
+    "module_path": "src/dotmac_management",
+    "target_percentage": 85,
+    "critical_functions": [
+      "provision_tenant",
+      "manage_users",
+      "handle_billing",
+      "monitor_services"
+    ],
+    "current_coverage": 75.0,
+    "trend": null
+  },
+  "dotmac_shared/database": {
+    "module_path": "src/dotmac_shared/database",
+    "target_percentage": 80,
+    "critical_functions": [
+      "get_db_connection",
+      "execute_query",
+      "handle_transactions",
+      "migrate_schema"
+    ],
+    "current_coverage": 75.0,
+    "trend": null
+  },
+  "dotmac_shared/core": {
+    "module_path": "src/dotmac_shared/core",
+    "target_percentage": 80,
+    "critical_functions": [
+      "get_logger",
+      "handle_exceptions",
+      "validate_config"
+    ],
+    "current_coverage": 75.0,
+    "trend": null
+  },
+  "dotmac_shared/workflows": {
+    "module_path": "src/dotmac_shared/workflows",
+    "target_percentage": 75,
+    "critical_functions": [
+      "execute_workflow",
+      "handle_saga",
+      "process_events"
+    ],
+    "current_coverage": 75.0,
+    "trend": null
+  }
+}

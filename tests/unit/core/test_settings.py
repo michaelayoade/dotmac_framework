@@ -6,6 +6,7 @@ import os
 from unittest.mock import patch
 
 import pytest
+
 from dotmac_isp.core.settings import Settings, get_settings
 
 

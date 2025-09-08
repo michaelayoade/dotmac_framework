@@ -20,8 +20,7 @@ from pydantic import (
 )
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 
 from .exceptions import (
     AuthenticationError,
@@ -174,15 +173,16 @@ class APIKeyCreateRequest(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
-    scopes: list[str] = Field(..., min_items=1)
+    scopes: list[str] = Field(..., min_length=1)
     expires_in_days: int | None = Field(None, ge=1, le=365)
     rate_limit_requests: int = Field(1000, ge=1, le=100000)
     rate_limit_window: RateLimitWindow = RateLimitWindow.HOUR
-    allowed_ips: list[str] | None = Field(None, max_items=10)
+    allowed_ips: list[str] | None = Field(None, max_length=10)
     require_https: bool = True
     tenant_id: str | None = None
 
     @field_validator("scopes")
+    @classmethod
     def validate_scopes(cls, v):
         """Validate that all scopes are known."""
         valid_scopes = {scope.value for scope in APIKeyScope}
@@ -197,14 +197,15 @@ class APIKeyUpdateRequest(BaseModel):
 
     name: str | None = Field(None, min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
-    scopes: list[str] | None = Field(None, min_items=1)
+    scopes: list[str] | None = Field(None, min_length=1)
     status: APIKeyStatus | None = None
     rate_limit_requests: int | None = Field(None, ge=1, le=100000)
     rate_limit_window: RateLimitWindow | None = None
-    allowed_ips: list[str] | None = Field(None, max_items=10)
+    allowed_ips: list[str] | None = Field(None, max_length=10)
     require_https: bool | None = None
 
     @field_validator("scopes")
+    @classmethod
     def validate_scopes(cls, v):
         """Validate that all scopes are known."""
         if v is not None:
@@ -494,9 +495,7 @@ class APIKeyService:
         update_fields = request.dict(exclude_unset=True)
         for field, value in update_fields.items():
             if hasattr(db_key, field):
-                if field == "status" and isinstance(value, APIKeyStatus):
-                    setattr(db_key, field, value.value)
-                elif field == "rate_limit_window" and isinstance(value, RateLimitWindow):
+                if (field == "status" and isinstance(value, APIKeyStatus)) or (field == "rate_limit_window" and isinstance(value, RateLimitWindow)):
                     setattr(db_key, field, value.value)
                 else:
                     setattr(db_key, field, value)

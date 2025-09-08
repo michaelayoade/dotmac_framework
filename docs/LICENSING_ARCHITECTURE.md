@@ -541,13 +541,26 @@ class CacheManager:
 4. **Rate Limiting**: Per-feature rate limits
 5. **Usage Monitoring**: Detect and prevent abuse
 
-## Monitoring & Analytics
+## Monitoring & Analytics (SigNoz / OTEL)
 
 ```python
-# Prometheus metrics
-feature_usage = Counter('dotmac_feature_usage', 'Feature usage counter', ['tenant_id', 'feature'])
-license_checks = Histogram('dotmac_license_checks', 'License check duration', ['tenant_id'])
-feature_denials = Counter('dotmac_feature_denials', 'Feature access denials', ['tenant_id', 'feature'])
+from dotmac.platform.observability.metrics.registry import (
+    initialize_metrics_registry, MetricDefinition, MetricType
+)
+
+registry = initialize_metrics_registry('dotmac-licensing', enable_prometheus=False)
+registry.register_metric(MetricDefinition(
+    name='dotmac_feature_usage', type=MetricType.COUNTER,
+    description='Feature usage counter', labels=['tenant_id', 'feature']
+))
+registry.register_metric(MetricDefinition(
+    name='dotmac_license_checks', type=MetricType.HISTOGRAM,
+    description='License check duration', labels=['tenant_id'], unit='s'
+))
+registry.register_metric(MetricDefinition(
+    name='dotmac_feature_denials', type=MetricType.COUNTER,
+    description='Feature access denials', labels=['tenant_id', 'feature']
+))
 ```
 
 ## Support & Troubleshooting

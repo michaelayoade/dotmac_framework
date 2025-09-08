@@ -66,11 +66,7 @@ def feature_flag(
             if not flag_manager:
                 logger.warning(f"No FeatureFlagManager available for {flag_key}")
                 if fallback_enabled:
-                    return (
-                        await func(*args, **kwargs)
-                        if asyncio.iscoroutinefunction(func)
-                        else func(*args, **kwargs)
-                    )
+                    return await func(*args, **kwargs) if asyncio.iscoroutinefunction(func) else func(*args, **kwargs)
                 else:
                     if on_disabled:
                         return (
@@ -86,9 +82,7 @@ def feature_flag(
                 if is_enabled:
                     return await func(*args, **kwargs)
                 else:
-                    logger.debug(
-                        f"Feature {flag_key} is disabled for context: {context}"
-                    )
+                    logger.debug(f"Feature {flag_key} is disabled for context: {context}")
                     if on_disabled:
                         return (
                             await on_disabled(*args, **kwargs)
@@ -157,9 +151,7 @@ def requires_feature(
             flag_manager = manager or _get_global_manager()
             if not flag_manager:
                 logger.warning(f"No FeatureFlagManager available for {flag_key}")
-                raise HTTPException(
-                    status_code=503, detail="Feature flag service unavailable"
-                )
+                raise HTTPException(status_code=503, detail="Feature flag service unavailable")
 
             # Check feature
             try:
@@ -172,9 +164,7 @@ def requires_feature(
                 raise
             except Exception as e:
                 logger.error(f"Error checking feature flag {flag_key}: {e}")
-                raise HTTPException(
-                    status_code=503, detail="Feature flag evaluation failed"
-                ) from e
+                raise HTTPException(status_code=503, detail="Feature flag evaluation failed") from e
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
@@ -253,12 +243,8 @@ def ab_test(
                     variant_name = default_variant
 
                 # Execute variant function
-                variant_func = variants.get(
-                    variant_name, variants.get(default_variant, func)
-                )
-                logger.debug(
-                    f"A/B test {flag_key}: using variant {variant_name} for context {context}"
-                )
+                variant_func = variants.get(variant_name, variants.get(default_variant, func))
+                logger.debug(f"A/B test {flag_key}: using variant {variant_name} for context {context}")
 
                 return (
                     await variant_func(*args, **kwargs)
@@ -329,9 +315,7 @@ def feature_variant(
                 else:
                     return None
             except Exception as e:
-                logger.error(
-                    f"Error checking variant {variant_name} for flag {flag_key}: {e}"
-                )
+                logger.error(f"Error checking variant {variant_name} for flag {flag_key}: {e}")
                 return None
 
         @functools.wraps(func)

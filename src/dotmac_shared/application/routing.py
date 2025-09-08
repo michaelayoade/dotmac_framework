@@ -26,9 +26,7 @@ class SafeRouterLoader:
         try:
             # Security validation
             if not self._validate_router_security(router_config):
-                logger.warning(
-                    f"Security validation failed for router: {router_config.module_path}"
-                )
+                logger.warning(f"Security validation failed for router: {router_config.module_path}")
                 return None
 
             if router_config.auto_discover:
@@ -38,20 +36,14 @@ class SafeRouterLoader:
 
         except ImportError as e:
             if router_config.required:
-                logger.error(
-                    f"Required router failed to load: {router_config.module_path} - {e}"
-                )
+                logger.error(f"Required router failed to load: {router_config.module_path} - {e}")
                 raise
             else:
-                logger.debug(
-                    f"Optional router not available: {router_config.module_path} - {e}"
-                )
+                logger.debug(f"Optional router not available: {router_config.module_path} - {e}")
                 self.failed_routers.append(router_config.module_path)
                 return None
         except Exception as e:
-            logger.error(
-                f"Unexpected error loading router {router_config.module_path}: {e}"
-            )
+            logger.error(f"Unexpected error loading router {router_config.module_path}: {e}")
             if router_config.required:
                 raise
             return None
@@ -67,9 +59,7 @@ class SafeRouterLoader:
             "core.",
         ]
 
-        if not any(
-            router_config.module_path.startswith(ns) for ns in trusted_namespaces
-        ):
+        if not any(router_config.module_path.startswith(ns) for ns in trusted_namespaces):
             return False
 
         # Prevent path traversal attempts
@@ -98,9 +88,7 @@ class SafeRouterLoader:
         logger.warning(f"No valid router found in {router_config.module_path}")
         return None
 
-    def _auto_discover_router(
-        self, router_config: RouterConfig
-    ) -> Optional[list[APIRouter]]:
+    def _auto_discover_router(self, router_config: RouterConfig) -> Optional[list[APIRouter]]:
         """Auto-discover routers in a module namespace."""
         try:
             base_module = importlib.import_module(router_config.module_path)
@@ -130,9 +118,7 @@ class SafeRouterLoader:
                             discovered_routers.append(router)
 
                     except Exception as e:
-                        logger.debug(
-                            f"Failed to load auto-discovered router {full_module_path}: {e}"
-                        )
+                        logger.debug(f"Failed to load auto-discovered router {full_module_path}: {e}")
 
             return discovered_routers if discovered_routers else None
 
@@ -157,9 +143,7 @@ class RouterRegistry:
 
     def register_all_routers(self, app: FastAPI) -> dict[str, Any]:
         """Register all configured routers."""
-        logger.info(
-            f"Starting router registration for {self.platform_config.platform_name}"
-        )
+        logger.info(f"Starting router registration for {self.platform_config.platform_name}")
 
         for router_config in self.platform_config.routers:
             self._register_router(app, router_config)
@@ -195,31 +179,21 @@ class RouterRegistry:
 
             app.include_router(**include_kwargs)
 
-            self.registered_routes.append(
-                f"{router_config.prefix} ({router_config.module_path})"
-            )
+            self.registered_routes.append(f"{router_config.prefix} ({router_config.module_path})")
             self.registration_stats["successfully_registered"] += 1
 
-            logger.info(
-                f"Registered router: {router_config.module_path} at {router_config.prefix}"
-            )
+            logger.info(f"Registered router: {router_config.module_path} at {router_config.prefix}")
         else:
             self.registration_stats["failed_registrations"] += 1
 
-    def _register_auto_discovered_routers(
-        self, app: FastAPI, router_config: RouterConfig
-    ):
+    def _register_auto_discovered_routers(self, app: FastAPI, router_config: RouterConfig):
         """Register auto-discovered routers."""
         routers = self.loader.load_router(router_config)
 
         if routers:
             for _i, router in enumerate(routers):
                 # Generate prefix for auto-discovered routers
-                router_prefix = (
-                    f"{router_config.prefix}/{router.prefix}"
-                    if router.prefix
-                    else router_config.prefix
-                )
+                router_prefix = f"{router_config.prefix}/{router.prefix}" if router.prefix else router_config.prefix
 
                 include_kwargs = {
                     "router": router,

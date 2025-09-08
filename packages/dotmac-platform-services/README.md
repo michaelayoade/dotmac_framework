@@ -23,7 +23,7 @@ Unified platform services package providing authentication, secrets management, 
 
 ### 📊 Observability
 - OpenTelemetry tracing and metrics
-- Prometheus metrics export
+- OTLP metrics export (SigNoz)
 - Structured logging with correlation IDs
 - Performance monitoring
 - Business metrics tracking
@@ -148,7 +148,7 @@ dotmac/platform/
 │   └── rotation.py # Secrets rotation
 └── observability/  # Monitoring and observability
     ├── tracing.py  # OpenTelemetry tracing
-    ├── metrics.py  # Prometheus metrics
+    ├── metrics.py  # Metrics registry (OTLP, optional Prometheus)
     ├── logging.py  # Structured logging
     └── health.py   # Health checks
 ```
@@ -241,7 +241,7 @@ If you're migrating from separate `dotmac-auth`, `dotmac-secrets`, and `dotmac-o
 # Old imports
 from dotmac.auth import JWTService
 from dotmac.secrets import SecretsManager
-from dotmac.observability import get_tracer
+from dotmac.platform.observability import get_tracer
 
 # New imports
 from dotmac.platform.auth import JWTService

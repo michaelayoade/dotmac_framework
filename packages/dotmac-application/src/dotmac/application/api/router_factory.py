@@ -3,17 +3,67 @@ Clean Router Factory - DRY Migration
 Production-ready router factory using standardized patterns.
 """
 
+from __future__ import annotations
+
+from typing import Any, Protocol, runtime_checkable
 from uuid import UUID
 
-from dotmac_shared.api.dependencies import (
+from fastapi import APIRouter, Body, Depends, Path, Query
+from pydantic import BaseModel
+
+from dotmac.application.dependencies.dependencies import (
     PaginatedDependencies,
     StandardDependencies,
     get_paginated_deps,
     get_standard_deps,
 )
-from dotmac_shared.schemas.base import PaginatedResponse
-from fastapi import APIRouter, Body, Depends, Path, Query
-from pydantic import BaseModel
+from dotmac.core.schemas.base_schemas import PaginatedResponseSchema
+
+# Type alias for cleaner imports
+PaginatedResponse = PaginatedResponseSchema
+
+
+# Service Protocol for better type safety
+@runtime_checkable
+class ServiceProtocol(Protocol):
+    """Protocol defining the expected interface for services used with RouterFactory."""
+
+    async def create(self, data: BaseModel, user_id: Any) -> BaseModel:
+        """Create a new entity."""
+        ...
+
+    async def list(self, skip: int, limit: int, user_id: Any) -> list[BaseModel]:
+        """List entities with pagination."""
+        ...
+
+    async def count(self, user_id: Any) -> int:
+        """Count total entities."""
+        ...
+
+    async def get_by_id(self, entity_id: UUID, user_id: Any) -> BaseModel:
+        """Get entity by ID."""
+        ...
+
+    async def update(self, entity_id: UUID, data: BaseModel, user_id: Any) -> BaseModel:
+        """Update an entity."""
+        ...
+
+    async def delete(self, entity_id: UUID, user_id: Any, soft_delete: bool = True) -> None:
+        """Delete an entity."""
+        ...
+
+    # Optional bulk operations
+    async def bulk_create(self, data: list[BaseModel], user_id: Any) -> list[BaseModel]:
+        """Bulk create entities."""
+        ...
+
+    async def bulk_update(self, updates: dict[str, BaseModel], user_id: Any) -> None:
+        """Bulk update entities."""
+        ...
+
+    async def bulk_delete(self, entity_ids: list[UUID], user_id: Any, soft_delete: bool = True) -> None:
+        """Bulk delete entities."""
+        ...
 
 
 class RouterFactory:
@@ -21,7 +71,7 @@ class RouterFactory:
 
     @staticmethod
     def create_crud_router(
-        service_class: type,
+        service_class: type[ServiceProtocol],
         create_schema: type[BaseModel],
         update_schema: type[BaseModel],
         response_schema: type[BaseModel],
@@ -201,5 +251,32 @@ class RouterFactory:
         return APIRouter(prefix=prefix, tags=tags or [])
 
 
-# Export the factory
-__all__ = ["RouterFactory"]
+# Convenience functions for backward compatibility
+def create_crud_router(
+    service_class: type,
+    create_schema: type[BaseModel],
+    update_schema: type[BaseModel],
+    response_schema: type[BaseModel],
+    prefix: str,
+    tags: list[str] | None = None,
+    enable_search: bool = False,
+    enable_bulk_operations: bool = False,
+) -> APIRouter:
+    """Convenience function for RouterFactory.create_crud_router."""
+    return RouterFactory.create_crud_router(
+        service_class=service_class,
+        create_schema=create_schema,
+        update_schema=update_schema,
+        response_schema=response_schema,
+        prefix=prefix,
+        tags=tags,
+        enable_search=enable_search,
+        enable_bulk_operations=enable_bulk_operations,
+    )
+
+def create_router(prefix: str, tags: list[str] | None = None) -> APIRouter:
+    """Convenience function for RouterFactory.create_standard_router."""
+    return RouterFactory.create_standard_router(prefix=prefix, tags=tags)
+
+# Export the factory and convenience functions
+__all__ = ["RouterFactory", "create_crud_router", "create_router"]

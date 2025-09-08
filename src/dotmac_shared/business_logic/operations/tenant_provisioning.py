@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import uuid4
 
-from ...standard_exception_handler import standard_exception_handler
+from dotmac.application import standard_exception_handler
 from ..exceptions import ErrorContext, ProvisioningError
 from ..idempotency import IdempotentOperation
 from ..sagas import CompensationHandler, SagaContext, SagaDefinition, SagaStep
@@ -204,9 +204,7 @@ class ActivateTenantStep(SagaStep):
             "status": "active",
             "domain": tenant_record.get("domain") if tenant_record else None,
             "activated_at": datetime.utcnow().isoformat(),
-            "access_url": f"https://{tenant_record.get('domain')}.platform.com"
-            if tenant_record
-            else None,
+            "access_url": f"https://{tenant_record.get('domain')}.platform.com" if tenant_record else None,
         }
 
         context.set_shared_data("activation_result", activation_result)
@@ -225,9 +223,7 @@ class TenantProvisioningCompensationHandler(CompensationHandler):
     """Custom compensation handler for tenant provisioning"""
 
     @standard_exception_handler
-    async def compensate(
-        self, context: SagaContext, failed_step: str, completed_steps: list
-    ) -> None:
+    async def compensate(self, context: SagaContext, failed_step: str, completed_steps: list) -> None:
         """Execute custom compensation logic"""
 
         tenant_id = context.get_shared_data("tenant_id")
@@ -272,9 +268,7 @@ class TenantProvisioningOperation(IdempotentOperation[dict[str, Any]]):
         # Validate plan
         valid_plans = ["basic", "pro", "enterprise"]
         if operation_data["plan"] not in valid_plans:
-            raise ValueError(
-                f"Invalid plan: {operation_data['plan']}. Must be one of {valid_plans}"
-            )
+            raise ValueError(f"Invalid plan: {operation_data['plan']}. Must be one of {valid_plans}")
 
         # Validate domain format
         domain = operation_data["domain"]
@@ -287,9 +281,7 @@ class TenantProvisioningOperation(IdempotentOperation[dict[str, Any]]):
             raise ValueError("Valid admin email is required")
 
     @standard_exception_handler
-    async def execute(
-        self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None
-    ) -> dict[str, Any]:
+    async def execute(self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         """Execute tenant provisioning via saga orchestration"""
 
         context = context or {}

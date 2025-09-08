@@ -19,6 +19,7 @@ from sqlalchemy import (
 )
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSON, UUID
+from uuid import uuid4
 from sqlalchemy.orm import relationship
 
 from .base import BaseModel
@@ -79,6 +80,7 @@ class PricingPlan(BaseModel):
     """Pricing plans for tenant subscriptions."""
 
     __tablename__ = "pricing_plans"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
 
     # Basic plan information
     name = Column(String(255), nullable=False, index=True)
@@ -91,9 +93,7 @@ class PricingPlan(BaseModel):
     setup_fee_cents = Column(Integer, default=0, nullable=False)
 
     # Billing configuration
-    billing_interval = Column(
-        String(20), default="monthly", nullable=False
-    )  # monthly, annual
+    billing_interval = Column(String(20), default="monthly", nullable=False)  # monthly, annual
     billing_interval_count = Column(Integer, default=1, nullable=False)
     trial_days = Column(Integer, default=14, nullable=False)
 
@@ -149,9 +149,7 @@ class Subscription(BaseModel):
         nullable=False,
         index=True,
     )
-    pricing_plan_id = Column(
-        UUID(as_uuid=True), ForeignKey("pricing_plans.id"), nullable=False
-    )
+    pricing_plan_id = Column(UUID(as_uuid=True), ForeignKey("pricing_plans.id"), nullable=False)
 
     # Subscription details
     status = Column(
@@ -168,9 +166,7 @@ class Subscription(BaseModel):
     trial_end = Column(DateTime, nullable=True)
 
     # Billing configuration
-    billing_cycle_day = Column(
-        Integer, default=1, nullable=False
-    )  # Day of month for billing
+    billing_cycle_day = Column(Integer, default=1, nullable=False)  # Day of month for billing
 
     # Subscription metadata
     cancel_at_period_end = Column(Boolean, default=False, nullable=False)
@@ -234,15 +230,11 @@ class Invoice(BaseModel):
 
     __tablename__ = "invoices"
 
-    subscription_id = Column(
-        UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=False, index=True
-    )
+    subscription_id = Column(UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=False, index=True)
 
     # Invoice details
     invoice_number = Column(String(100), unique=True, nullable=False, index=True)
-    status = Column(
-        SQLEnum(InvoiceStatus), default=InvoiceStatus.DRAFT, nullable=False, index=True
-    )
+    status = Column(SQLEnum(InvoiceStatus), default=InvoiceStatus.DRAFT, nullable=False, index=True)
 
     # Invoice period
     period_start = Column(DateTime, nullable=False)
@@ -256,9 +248,7 @@ class Invoice(BaseModel):
     amount_due_cents = Column(Integer, nullable=False)
 
     # Invoice dates
-    invoice_date = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+    invoice_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     due_date = Column(DateTime, nullable=False)
     paid_at = Column(DateTime, nullable=True)
 
@@ -312,9 +302,7 @@ class Payment(BaseModel):
 
     __tablename__ = "payments"
 
-    invoice_id = Column(
-        UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False, index=True
-    )
+    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False, index=True)
 
     # Payment details
     amount_cents = Column(Integer, nullable=False)
@@ -327,9 +315,7 @@ class Payment(BaseModel):
     )
 
     # Payment method
-    payment_method_type = Column(
-        String(50), nullable=False
-    )  # card, bank_transfer, etc.
+    payment_method_type = Column(String(50), nullable=False)  # card, bank_transfer, etc.
     payment_method_details = Column(JSON, default=dict, nullable=False)
 
     # Payment processing
@@ -370,14 +356,10 @@ class UsageRecord(BaseModel):
 
     __tablename__ = "usage_records"
 
-    subscription_id = Column(
-        UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=False, index=True
-    )
+    subscription_id = Column(UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=False, index=True)
 
     # Usage details
-    metric_name = Column(
-        String(100), nullable=False, index=True
-    )  # api_calls, storage_gb, etc.
+    metric_name = Column(String(100), nullable=False, index=True)  # api_calls, storage_gb, etc.
     quantity = Column(Numeric(15, 6), nullable=False)
     unit_price_cents = Column(Integer, nullable=False)
     total_cost_cents = Column(Integer, nullable=False)
@@ -414,25 +396,19 @@ class Commission(BaseModel):
     __tablename__ = "commissions"
 
     # Commission details
-    reseller_id = Column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
-    )
+    reseller_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     tenant_id = Column(
         UUID(as_uuid=True),
         ForeignKey("customer_tenants.id"),
         nullable=False,
         index=True,
     )
-    subscription_id = Column(
-        UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=True
-    )
+    subscription_id = Column(UUID(as_uuid=True), ForeignKey("subscriptions.id"), nullable=True)
     invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=True)
 
     # Commission calculation
     base_amount_cents = Column(Integer, nullable=False)  # Amount commission is based on
-    commission_rate = Column(
-        Numeric(5, 4), nullable=False
-    )  # Commission rate (0.1000 = 10%)
+    commission_rate = Column(Numeric(5, 4), nullable=False)  # Commission rate (0.1000 = 10%)
     commission_amount_cents = Column(Integer, nullable=False)
 
     # Commission status
@@ -446,9 +422,7 @@ class Commission(BaseModel):
     # Commission period
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
-    earned_date = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+    earned_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Payment details
     paid_at = Column(DateTime, nullable=True)

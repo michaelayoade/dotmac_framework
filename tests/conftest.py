@@ -28,7 +28,7 @@ import pytest
 
 # Test environment setup
 os.environ.setdefault("ENVIRONMENT", "testing")
-os.environ.setdefault("DATABASE_URL", "sqlite:///test.db")
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/15")
 os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-for-testing-only-32-chars-min")
 

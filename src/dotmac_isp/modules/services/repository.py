@@ -6,9 +6,10 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_isp.shared.base_repository import BaseTenantRepository
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, joinedload
+
+from dotmac_isp.shared.base_repository import BaseTenantRepository
 
 from .models import (
     ServiceInstance,
@@ -138,9 +139,7 @@ class ServiceInstanceRepository(BaseTenantRepository[ServiceInstance]):
             .all()
         )
 
-    def get_active_services(
-        self, customer_id: Optional[UUID] = None
-    ) -> list[ServiceInstance]:
+    def get_active_services(self, customer_id: Optional[UUID] = None) -> list[ServiceInstance]:
         """Get active services, optionally filtered by customer."""
         query = self.db.query(ServiceInstance).filter(
             and_(
@@ -210,9 +209,7 @@ class ServiceInstanceRepository(BaseTenantRepository[ServiceInstance]):
             .all()
         )
 
-    def get_service_revenue_by_period(
-        self, start_date: date, end_date: date
-    ) -> Decimal:
+    def get_service_revenue_by_period(self, start_date: date, end_date: date) -> Decimal:
         """Get total service revenue for a period."""
         result = (
             self.db.query(func.sum(ServiceInstance.monthly_price))
@@ -280,9 +277,7 @@ class ServiceProvisioningRepository(BaseTenantRepository[ServiceProvisioning]):
     def __init__(self, db: Session, tenant_id: str):
         super().__init__(db, ServiceProvisioning, tenant_id)
 
-    def get_by_service_instance(
-        self, service_instance_id: UUID
-    ) -> Optional[ServiceProvisioning]:
+    def get_by_service_instance(self, service_instance_id: UUID) -> Optional[ServiceProvisioning]:
         """Get provisioning record by service instance."""
         return (
             self.db.query(ServiceProvisioning)
@@ -319,9 +314,7 @@ class ServiceProvisioningRepository(BaseTenantRepository[ServiceProvisioning]):
                 and_(
                     ServiceProvisioning.tenant_id == self.tenant_id,
                     ServiceProvisioning.assigned_technician_id == technician_id,
-                    ServiceProvisioning.provisioning_status.in_(
-                        ["pending", "in_progress"]
-                    ),
+                    ServiceProvisioning.provisioning_status.in_(["pending", "in_progress"]),
                 )
             )
             .order_by(ServiceProvisioning.scheduled_date.asc())
@@ -338,9 +331,7 @@ class ServiceProvisioningRepository(BaseTenantRepository[ServiceProvisioning]):
             .filter(
                 and_(
                     ServiceProvisioning.tenant_id == self.tenant_id,
-                    ServiceProvisioning.provisioning_status.in_(
-                        ["pending", "in_progress"]
-                    ),
+                    ServiceProvisioning.provisioning_status.in_(["pending", "in_progress"]),
                     ServiceProvisioning.scheduled_date < today,
                 )
             )
@@ -371,8 +362,7 @@ class ServiceProvisioningRepository(BaseTenantRepository[ServiceProvisioning]):
                 func.avg(
                     func.extract(
                         "epoch",
-                        ServiceProvisioning.completed_date
-                        - ServiceProvisioning.started_date,
+                        ServiceProvisioning.completed_date - ServiceProvisioning.started_date,
                     )
                     / 3600
                 )
@@ -396,9 +386,7 @@ class ServiceProvisioningRepository(BaseTenantRepository[ServiceProvisioning]):
             .filter(
                 and_(
                     ServiceProvisioning.tenant_id == self.tenant_id,
-                    ServiceProvisioning.provisioning_status.in_(
-                        ["completed", "failed"]
-                    ),
+                    ServiceProvisioning.provisioning_status.in_(["completed", "failed"]),
                 )
             )
             .scalar()
@@ -415,9 +403,7 @@ class ServiceProvisioningRepository(BaseTenantRepository[ServiceProvisioning]):
             .scalar()
         )
 
-        stats["success_rate"] = (
-            (successful_completed / total_completed * 100) if total_completed > 0 else 0
-        )
+        stats["success_rate"] = (successful_completed / total_completed * 100) if total_completed > 0 else 0
 
         return stats
 
@@ -428,9 +414,7 @@ class ServiceStatusHistoryRepository(BaseTenantRepository[ServiceStatusHistory])
     def __init__(self, db: Session, tenant_id: str):
         super().__init__(db, ServiceStatusHistory, tenant_id)
 
-    def get_service_history(
-        self, service_instance_id: UUID, limit: int = 50
-    ) -> list[ServiceStatusHistory]:
+    def get_service_history(self, service_instance_id: UUID, limit: int = 50) -> list[ServiceStatusHistory]:
         """Get status history for a service instance."""
         return (
             self.db.query(ServiceStatusHistory)
@@ -468,9 +452,7 @@ class ServiceStatusHistoryRepository(BaseTenantRepository[ServiceStatusHistory])
         self.db.add(history_record)
         return history_record
 
-    def get_status_changes_by_period(
-        self, start_date: date, end_date: date
-    ) -> list[ServiceStatusHistory]:
+    def get_status_changes_by_period(self, start_date: date, end_date: date) -> list[ServiceStatusHistory]:
         """Get status changes within a date range."""
         return (
             self.db.query(ServiceStatusHistory)
@@ -510,20 +492,14 @@ class ServiceUsageMetricRepository(BaseTenantRepository[ServiceUsageMetric]):
             .all()
         )
 
-    def get_usage_summary(
-        self, service_instance_id: UUID, start_date: date, end_date: date
-    ) -> dict[str, Any]:
+    def get_usage_summary(self, service_instance_id: UUID, start_date: date, end_date: date) -> dict[str, Any]:
         """Get usage summary for a service within date range."""
         metrics = (
             self.db.query(
                 func.sum(ServiceUsageMetric.data_downloaded_mb).label("total_download"),
                 func.sum(ServiceUsageMetric.data_uploaded_mb).label("total_upload"),
-                func.max(ServiceUsageMetric.peak_download_speed_mbps).label(
-                    "max_download_speed"
-                ),
-                func.max(ServiceUsageMetric.peak_upload_speed_mbps).label(
-                    "max_upload_speed"
-                ),
+                func.max(ServiceUsageMetric.peak_download_speed_mbps).label("max_download_speed"),
+                func.max(ServiceUsageMetric.peak_upload_speed_mbps).label("max_upload_speed"),
                 func.sum(ServiceUsageMetric.uptime_minutes).label("total_uptime"),
                 func.sum(ServiceUsageMetric.downtime_minutes).label("total_downtime"),
                 func.sum(ServiceUsageMetric.connection_drops).label("total_drops"),
@@ -546,10 +522,7 @@ class ServiceUsageMetricRepository(BaseTenantRepository[ServiceUsageMetric]):
             "peak_upload_speed_mbps": float(metrics.max_upload_speed or 0),
             "uptime_percentage": (
                 float(metrics.total_uptime or 0)
-                / (
-                    float(metrics.total_uptime or 0)
-                    + float(metrics.total_downtime or 0)
-                )
+                / (float(metrics.total_uptime or 0) + float(metrics.total_downtime or 0))
                 * 100
             )
             if (metrics.total_uptime or metrics.total_downtime)
@@ -615,19 +588,16 @@ class ServiceUsageMetricRepository(BaseTenantRepository[ServiceUsageMetric]):
             self.db.add(usage_metric)
             return usage_metric
 
-    def get_top_usage_services(
-        self, limit: int = 10, period_days: int = 30
-    ) -> list[dict[str, Any]]:
+    def get_top_usage_services(self, limit: int = 10, period_days: int = 30) -> list[dict[str, Any]]:
         """Get top services by data usage."""
         start_date = date.today() - timedelta(days=period_days)
 
         results = (
             self.db.query(
                 ServiceUsageMetric.service_instance_id,
-                func.sum(
-                    ServiceUsageMetric.data_downloaded_mb
-                    + ServiceUsageMetric.data_uploaded_mb
-                ).label("total_data"),
+                func.sum(ServiceUsageMetric.data_downloaded_mb + ServiceUsageMetric.data_uploaded_mb).label(
+                    "total_data"
+                ),
             )
             .filter(
                 and_(
@@ -636,12 +606,7 @@ class ServiceUsageMetricRepository(BaseTenantRepository[ServiceUsageMetric]):
                 )
             )
             .group_by(ServiceUsageMetric.service_instance_id)
-            .order_by(
-                func.sum(
-                    ServiceUsageMetric.data_downloaded_mb
-                    + ServiceUsageMetric.data_uploaded_mb
-                ).desc()
-            )
+            .order_by(func.sum(ServiceUsageMetric.data_downloaded_mb + ServiceUsageMetric.data_uploaded_mb).desc())
             .limit(limit)
             .all()
         )

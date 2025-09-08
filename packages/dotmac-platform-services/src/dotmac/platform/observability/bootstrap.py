@@ -215,7 +215,7 @@ def _create_trace_exporter(config: ExporterConfig) -> "SpanExporter":
     if config.type == ExporterType.CONSOLE:
         return ConsoleSpanExporter()
 
-    elif config.type == ExporterType.OTLP_HTTP:
+    if config.type == ExporterType.OTLP_HTTP:
         return HTTPTraceExporter(
             endpoint=config.endpoint,
             headers=config.headers,
@@ -223,7 +223,7 @@ def _create_trace_exporter(config: ExporterConfig) -> "SpanExporter":
             compression=config.compression,
         )
 
-    elif config.type == ExporterType.OTLP_GRPC:
+    if config.type == ExporterType.OTLP_GRPC:
         return GRPCTraceExporter(
             endpoint=config.endpoint,
             headers=config.headers,
@@ -231,7 +231,7 @@ def _create_trace_exporter(config: ExporterConfig) -> "SpanExporter":
             compression=config.compression,
         )
 
-    elif config.type == ExporterType.JAEGER:
+    if config.type == ExporterType.JAEGER:
         return JaegerExporter(
             agent_host_name=config.endpoint.split(":")[0] if config.endpoint else "localhost",
             agent_port=int(config.endpoint.split(":")[1])
@@ -239,8 +239,7 @@ def _create_trace_exporter(config: ExporterConfig) -> "SpanExporter":
             else 6831,
         )
 
-    else:
-        raise ValueError(f"Unsupported trace exporter type: {config.type}")
+    raise ValueError(f"Unsupported trace exporter type: {config.type}")
 
 
 def _create_metric_exporter(config: ExporterConfig) -> Any:
@@ -251,7 +250,7 @@ def _create_metric_exporter(config: ExporterConfig) -> Any:
     if config.type == ExporterType.CONSOLE:
         return ConsoleMetricExporter()
 
-    elif config.type == ExporterType.OTLP_HTTP:
+    if config.type == ExporterType.OTLP_HTTP:
         return HTTPMetricsExporter(
             endpoint=config.endpoint,
             headers=config.headers,
@@ -259,7 +258,7 @@ def _create_metric_exporter(config: ExporterConfig) -> Any:
             compression=config.compression,
         )
 
-    elif config.type == ExporterType.OTLP_GRPC:
+    if config.type == ExporterType.OTLP_GRPC:
         return GRPCMetricsExporter(
             endpoint=config.endpoint,
             headers=config.headers,
@@ -267,8 +266,7 @@ def _create_metric_exporter(config: ExporterConfig) -> Any:
             compression=config.compression,
         )
 
-    else:
-        raise ValueError(f"Unsupported metric exporter type: {config.type}")
+    raise ValueError(f"Unsupported metric exporter type: {config.type}")
 
 
 def shutdown_otel(bootstrap: OTelBootstrap) -> None:

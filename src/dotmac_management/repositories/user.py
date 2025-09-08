@@ -7,8 +7,9 @@ from datetime import timezone
 from typing import Optional
 from uuid import UUID
 
-from dotmac_shared.repositories import AsyncBaseRepository
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac_shared.repositories import AsyncBaseRepository
 
 from ..models.user import User, UserInvitation, UserSession
 
@@ -27,17 +28,13 @@ class UserRepository(AsyncBaseRepository[User]):
         """Get user by username."""
         return await self.get_by_field("username", username)
 
-    async def get_active_users(
-        self, tenant_id: Optional[UUID] = None, skip: int = 0, limit: int = 100
-    ) -> list[User]:
+    async def get_active_users(self, tenant_id: Optional[UUID] = None, skip: int = 0, limit: int = 100) -> list[User]:
         """Get active users, optionally filtered by tenant."""
         filters = {"is_active": True}
         if tenant_id:
             filters["tenant_id"] = tenant_id
 
-        return await self.list(
-            skip=skip, limit=limit, filters=filters, order_by="created_at"
-        )
+        return await self.list(skip=skip, limit=limit, filters=filters, order_by="created_at")
 
     async def get_users_by_role(
         self,
@@ -51,9 +48,7 @@ class UserRepository(AsyncBaseRepository[User]):
         if tenant_id:
             filters["tenant_id"] = tenant_id
 
-        return await self.list(
-            skip=skip, limit=limit, filters=filters, order_by="created_at"
-        )
+        return await self.list(skip=skip, limit=limit, filters=filters, order_by="created_at")
 
     async def update_last_login(self, user_id: UUID) -> bool:
         """Update user's last login timestamp."""
@@ -74,12 +69,7 @@ class UserRepository(AsyncBaseRepository[User]):
 
     async def increment_failed_login(self, user_id: UUID) -> bool:
         """Increment failed login attempts."""
-        return (
-            await self.update(
-                user_id, {"failed_login_attempts": User.failed_login_attempts + 1}
-            )
-            is not None
-        )
+        return await self.update(user_id, {"failed_login_attempts": User.failed_login_attempts + 1}) is not None
 
     async def lock_user(self, user_id: UUID, duration_minutes: int = 30) -> bool:
         """Lock user account."""
@@ -89,8 +79,7 @@ class UserRepository(AsyncBaseRepository[User]):
             await self.update(
                 user_id,
                 {
-                    "locked_until": datetime.now(timezone.utc)
-                    + timedelta(minutes=duration_minutes),
+                    "locked_until": datetime.now(timezone.utc) + timedelta(minutes=duration_minutes),
                     "failed_login_attempts": User.failed_login_attempts + 1,
                 },
             )
@@ -99,12 +88,7 @@ class UserRepository(AsyncBaseRepository[User]):
 
     async def unlock_user(self, user_id: UUID) -> bool:
         """Unlock user account."""
-        return (
-            await self.update(
-                user_id, {"locked_until": None, "failed_login_attempts": 0}
-            )
-            is not None
-        )
+        return await self.update(user_id, {"locked_until": None, "failed_login_attempts": 0}) is not None
 
 
 class UserSessionRepository(AsyncBaseRepository[UserSession]):
@@ -119,9 +103,7 @@ class UserSessionRepository(AsyncBaseRepository[UserSession]):
 
     async def get_active_sessions(self, user_id: UUID) -> list[UserSession]:
         """Get active sessions for user."""
-        return await self.list(
-            filters={"user_id": user_id, "is_active": True}, order_by="-last_activity"
-        )
+        return await self.list(filters={"user_id": user_id, "is_active": True}, order_by="-last_activity")
 
     async def revoke_all_sessions(self, user_id: UUID) -> int:
         """Revoke all sessions for a user."""
@@ -142,9 +124,7 @@ class UserSessionRepository(AsyncBaseRepository[UserSession]):
 
         from sqlalchemy import delete
 
-        query = delete(UserSession).where(
-            UserSession.expires_at < datetime.now(timezone.utc)
-        )
+        query = delete(UserSession).where(UserSession.expires_at < datetime.now(timezone.utc))
         result = await self.db.execute(query)
         return result.rowcount
 
@@ -159,9 +139,7 @@ class UserInvitationRepository(AsyncBaseRepository[UserInvitation]):
         """Get invitation by token."""
         return await self.get_by_field("invitation_token", invitation_token)
 
-    async def get_pending_invitations(
-        self, tenant_id: Optional[UUID] = None
-    ) -> list[UserInvitation]:
+    async def get_pending_invitations(self, tenant_id: Optional[UUID] = None) -> list[UserInvitation]:
         """Get pending invitations."""
         filters = {"is_accepted": False}
         if tenant_id:

@@ -141,9 +141,7 @@ def setup_logging(
 
     # Log the setup completion
     logger = get_logger(__name__, service_name)
-    logger.info(
-        f"Logging configured: level={level}, service={service_name}, json={enable_json}"
-    )
+    logger.info(f"Logging configured: level={level}, service={service_name}, json={enable_json}")
 
 
 # Convenience function for adding correlation ID to logs

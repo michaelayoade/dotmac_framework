@@ -75,7 +75,7 @@ class LicenseTestHelper:
 
         elif limit_type == "api_calls":
             # Make rapid API calls to trigger rate limit
-            for i in range(20):
+            for _i in range(20):
                 await self.page.evaluate(
                     """
                     fetch('/api/v1/dashboard/stats', {

@@ -43,7 +43,7 @@ global:
 postgresql:
   enabled: true
   auth:
-    postgresPassword: "dotmac-postgres-2024!"
+    postgresPassword: "__VAULT_MANAGED__"
     database: "dotmac_isp"
   primary:
     persistence:
@@ -84,7 +84,7 @@ postgresql:
 redis:
   enabled: true
   auth:
-    password: "dotmac-redis-2024!"
+    password: "__VAULT_MANAGED__"
   master:
     persistence:
       enabled: true
@@ -100,7 +100,7 @@ redis:
 clickhouse:
   enabled: true
   auth:
-    password: "dotmac-clickhouse-2024!"
+    password: "__VAULT_MANAGED__"
   persistence:
     enabled: true
     size: 200Gi
@@ -167,23 +167,24 @@ ispFramework:
     DEBUG: "false"
 
     # Database connections
-    DATABASE_URL: "postgresql://postgres:dotmac-postgres-2024!@postgresql:5432/dotmac_isp"
-    REDIS_URL: "redis://:dotmac-redis-2024!@redis-master:6379/0"
-    CLICKHOUSE_URL: "clickhouse://default:dotmac-clickhouse-2024!@clickhouse:9000"
+    # Vault Agent should render these files at runtime
+    DATABASE_URL_FILE: "/vault/secrets/isp_database_url"
+    REDIS_URL_FILE: "/vault/secrets/isp_redis_url"
     VAULT_URL: "http://openbao:8200"
 
     # Service integrations
     FREERADIUS_ENABLED: "true"
     FREERADIUS_HOST: "freeradius"
     FREERADIUS_SECRET: "testing123"
-    FREERADIUS_DB_URL: "postgresql://postgres:dotmac-postgres-2024!@postgresql:5432/radius"
+    # Provided via Vault at runtime
+    FREERADIUS_DB_URL_FILE: "/vault/secrets/radius_db_url"
 
     ANSIBLE_ENABLED: "true"
     ANSIBLE_VAULT_PASSWORD_FILE: "/etc/ansible/vault_pass"
 
     VOLTHA_ENABLED: "true"
     VOLTHA_GRPC_ENDPOINT: "voltha-api:50057"
-    VOLTHA_DB_URL: "postgresql://postgres:dotmac-postgres-2024!@postgresql:5432/voltha"
+    VOLTHA_DB_URL_FILE: "/vault/secrets/voltha_db_url"
 
     # SignOz observability
     SIGNOZ_ENDPOINT: "signoz-collector:4317"
@@ -237,11 +238,11 @@ freeradius:
     clients:
       - name: "docker-network"
         ipaddr: "172.16.0.0/12"
-        secret: "testing123"
+        secret: "__VAULT_MANAGED__"
         nastype: "other"
       - name: "kubernetes-pods"
         ipaddr: "10.244.0.0/16"
-        secret: "testing123"
+        secret: "__VAULT_MANAGED__"
         nastype: "other"
 
     # SQL configuration for PostgreSQL backend
@@ -250,7 +251,7 @@ freeradius:
       server: "postgresql"
       port: 5432
       login: "postgres"
-      password: "dotmac-postgres-2024!"
+      password: "__VAULT_MANAGED__"
       radius_db: "radius"
 
     # Authentication methods
@@ -271,7 +272,7 @@ freeradius:
         - /bin/bash
         - -c
         - |
-          export PGPASSWORD="dotmac-postgres-2024!"
+          export PGPASSWORD="${RADIUS_DB_PASSWORD}"
 
           # Wait for PostgreSQL to be ready
           until pg_isready -h postgresql -p 5432 -U postgres; do
@@ -576,8 +577,8 @@ managementPlatform:
 
   env:
     ENVIRONMENT: "production"
-    DATABASE_URL: "postgresql://postgres:dotmac-postgres-2024!@postgresql:5432/mgmt_platform"
-    REDIS_URL: "redis://:dotmac-redis-2024!@redis-master:6379/1"
+    DATABASE_URL_FILE: "/vault/secrets/mgmt_database_url"
+    REDIS_URL_FILE: "/vault/secrets/mgmt_redis_url"
     ISP_FRAMEWORK_URL: "http://isp-framework:8000"
 
 # ============================================================================
@@ -661,24 +662,7 @@ security:
   serviceMonitor:
     enabled: true
 
-# ============================================================================
-# MONITORING AND ALERTING
-# ============================================================================
-
-monitoring:
-  prometheus:
-    enabled: true
-    server:
-      persistentVolume:
-        enabled: true
-        size: 100Gi
-
-  grafana:
-    enabled: true
-    persistence:
-      enabled: true
-      size: 10Gi
-    adminPassword: "dotmac-grafana-2024!"
+# Monitoring is provided by SigNoz (see signoz section)
 
 # ============================================================================
 # BACKUP AND DISASTER RECOVERY

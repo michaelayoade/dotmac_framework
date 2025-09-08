@@ -8,11 +8,11 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
-from dotmac_shared.core.logging import get_logger
-from dotmac_shared.exceptions import ExceptionContext
 from sqlalchemy.exc import SQLAlchemyError
 
 from dotmac.database.base import get_db_session
+from dotmac_shared.core.logging import get_logger
+from dotmac_shared.exceptions import ExceptionContext
 
 from ...infrastructure import get_adapter_factory
 from ...models.tenant import CustomerTenant, TenantStatus
@@ -107,9 +107,7 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
 
         return True
 
-    async def can_execute(
-        self, input_data: dict[str, Any], context: Optional[UseCaseContext] = None
-    ) -> bool:
+    async def can_execute(self, input_data: dict[str, Any], context: Optional[UseCaseContext] = None) -> bool:
         """Check if tenant management operation can be executed"""
 
         # Check permissions
@@ -151,17 +149,13 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
             operation_result = await self._execute_operation(tenant, input_data)
 
             if not operation_result["success"]:
-                return self._create_error_result(
-                    operation_result["error"], error_code="OPERATION_FAILED"
-                )
+                return self._create_error_result(operation_result["error"], error_code="OPERATION_FAILED")
 
             # Update tenant status if needed
             new_status = operation_result.get("new_status", previous_status)
             if new_status != previous_status:
                 await self._update_tenant_status(tenant, new_status)
-                self.add_rollback_action(
-                    lambda: self._rollback_tenant_status(tenant.id, previous_status)
-                )
+                self.add_rollback_action(lambda: self._rollback_tenant_status(tenant.id, previous_status))
 
             # Create output data
             output_data = ManageTenantOutput(
@@ -190,16 +184,12 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
             self.logger.error(f"Tenant management transaction failed: {e}")
             return self._create_error_result(str(e), error_code="TRANSACTION_FAILED")
 
-    async def _get_tenant(
-        self, tenant_id: str, input_data: dict[str, Any]
-    ) -> Optional[CustomerTenant]:
+    async def _get_tenant(self, tenant_id: str, input_data: dict[str, Any]) -> Optional[CustomerTenant]:
         """Get tenant from database"""
         with get_db_session() as db:
             return db.query(CustomerTenant).filter_by(tenant_id=tenant_id).first()
 
-    async def _execute_operation(
-        self, tenant: CustomerTenant, input_data: ManageTenantInput
-    ) -> dict[str, Any]:
+    async def _execute_operation(self, tenant: CustomerTenant, input_data: ManageTenantInput) -> dict[str, Any]:
         """Execute the specific tenant operation"""
 
         operation_map = {
@@ -221,9 +211,7 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
 
         return await operation_func(tenant, input_data.parameters)
 
-    async def _suspend_tenant(
-        self, tenant: CustomerTenant, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _suspend_tenant(self, tenant: CustomerTenant, parameters: dict[str, Any]) -> dict[str, Any]:
         """Suspend tenant services"""
         try:
             deployment_adapter = await self.adapter_factory.get_deployment_adapter()
@@ -252,18 +240,14 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
         except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS as e:
             return {"success": False, "error": f"Suspend operation failed: {e}"}
 
-    async def _resume_tenant(
-        self, tenant: CustomerTenant, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _resume_tenant(self, tenant: CustomerTenant, parameters: dict[str, Any]) -> dict[str, Any]:
         """Resume tenant services"""
         try:
             deployment_adapter = await self.adapter_factory.get_deployment_adapter()
 
             if tenant.container_id:
                 # Check current status
-                status = await deployment_adapter.get_deployment_status(
-                    tenant.container_id
-                )
+                status = await deployment_adapter.get_deployment_status(tenant.container_id)
 
                 if status.get("status") != "running":
                     # Would implement resume logic based on deployment provider
@@ -281,18 +265,14 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
         except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS as e:
             return {"success": False, "error": f"Resume operation failed: {e}"}
 
-    async def _scale_tenant(
-        self, tenant: CustomerTenant, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _scale_tenant(self, tenant: CustomerTenant, parameters: dict[str, Any]) -> dict[str, Any]:
         """Scale tenant resources"""
         try:
             instances = int(parameters["instances"])
             deployment_adapter = await self.adapter_factory.get_deployment_adapter()
 
             if tenant.container_id:
-                success = await deployment_adapter.scale_deployment(
-                    tenant.container_id, instances
-                )
+                success = await deployment_adapter.scale_deployment(tenant.container_id, instances)
                 if not success:
                     return {
                         "success": False,
@@ -314,9 +294,7 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
         ) as e:
             return {"success": False, "error": f"Scale operation failed: {e}"}
 
-    async def _update_tenant_config(
-        self, tenant: CustomerTenant, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _update_tenant_config(self, tenant: CustomerTenant, parameters: dict[str, Any]) -> dict[str, Any]:
         """Update tenant configuration"""
         try:
             config_updates = parameters.get("config", {})
@@ -337,15 +315,11 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
         except (ValueError, TypeError, KeyError) as e:
             return {"success": False, "error": f"Config update failed: {e}"}
 
-    async def _backup_tenant(
-        self, tenant: CustomerTenant, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _backup_tenant(self, tenant: CustomerTenant, parameters: dict[str, Any]) -> dict[str, Any]:
         """Create tenant backup"""
         try:
             # Would implement backup logic using storage adapter
-            backup_id = (
-                f"backup-{tenant.tenant_id}-{int(datetime.utcnow().timestamp())}"
-            )
+            backup_id = f"backup-{tenant.tenant_id}-{int(datetime.utcnow().timestamp())}"
 
             return {
                 "success": True,
@@ -359,9 +333,7 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
         except ExceptionContext.LIFECYCLE_EXCEPTIONS as e:
             return {"success": False, "error": f"Backup operation failed: {e}"}
 
-    async def _restore_tenant(
-        self, tenant: CustomerTenant, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _restore_tenant(self, tenant: CustomerTenant, parameters: dict[str, Any]) -> dict[str, Any]:
         """Restore tenant from backup"""
         try:
             backup_id = parameters["backup_id"]
@@ -380,9 +352,7 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
         except (KeyError, ExceptionContext.LIFECYCLE_EXCEPTIONS) as e:
             return {"success": False, "error": f"Restore operation failed: {e}"}
 
-    async def _delete_tenant(
-        self, tenant: CustomerTenant, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _delete_tenant(self, tenant: CustomerTenant, parameters: dict[str, Any]) -> dict[str, Any]:
         """Delete tenant and all resources"""
         try:
             force_delete = parameters.get("force", False)
@@ -411,9 +381,7 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
         except ExceptionContext.EXTERNAL_SERVICE_EXCEPTIONS as e:
             return {"success": False, "error": f"Delete operation failed: {e}"}
 
-    async def _update_tenant_status(
-        self, tenant: CustomerTenant, new_status: TenantStatus
-    ):
+    async def _update_tenant_status(self, tenant: CustomerTenant, new_status: TenantStatus):
         """Update tenant status in database"""
         with get_db_session() as db:
             db_tenant = db.query(CustomerTenant).filter_by(id=tenant.id).first()
@@ -421,9 +389,7 @@ class ManageTenantUseCase(TransactionalUseCase[ManageTenantInput, ManageTenantOu
                 db_tenant.status = new_status
                 db.commit()
 
-    async def _rollback_tenant_status(
-        self, tenant_id: int, previous_status: TenantStatus
-    ):
+    async def _rollback_tenant_status(self, tenant_id: int, previous_status: TenantStatus):
         """Rollback tenant status change"""
         try:
             with get_db_session() as db:

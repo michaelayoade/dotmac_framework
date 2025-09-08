@@ -8,13 +8,14 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 from dotmac_shared.common.schemas import (
     BaseCreateSchema,
     BaseResponseSchema,
     BaseUpdateSchema,
     PaginatedResponseSchema,
 )
-from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..models.rbac_models import PermissionScope, PermissionType
 
@@ -57,9 +58,7 @@ class RoleCreateSchema(BaseCreateSchema):
     def validate_name_format(cls, v: str) -> str:
         """Validate role name format."""
         if not v.replace("_", "").replace("-", "").replace(".", "").isalnum():
-            raise ValueError(
-                "Role name can only contain letters, numbers, underscores, hyphens, and dots"
-            )
+            raise ValueError("Role name can only contain letters, numbers, underscores, hyphens, and dots")
         return v.lower()
 
     @field_validator("custom_metadata")
@@ -72,9 +71,7 @@ class RoleCreateSchema(BaseCreateSchema):
 
     @field_validator("cross_app_permissions")
     @classmethod
-    def validate_cross_app_permissions(
-        cls, v: Optional[dict[str, list[str]]]
-    ) -> Optional[dict[str, list[str]]]:
+    def validate_cross_app_permissions(cls, v: Optional[dict[str, list[str]]]) -> Optional[dict[str, list[str]]]:
         """Validate cross-app permissions format."""
         if not v:
             return v
@@ -82,18 +79,14 @@ class RoleCreateSchema(BaseCreateSchema):
         valid_apps = {"isp", "crm", "ecommerce", "projects", "analytics", "lms"}
         for app_name, permissions in v.items():
             if app_name not in valid_apps:
-                raise ValueError(
-                    f"Invalid app name: {app_name}. Must be one of: {valid_apps}"
-                )
+                raise ValueError(f"Invalid app name: {app_name}. Must be one of: {valid_apps}")
 
             if not isinstance(permissions, list):
                 raise ValueError(f"Permissions for app '{app_name}' must be a list")
 
             for perm in permissions:
                 if not isinstance(perm, str) or ":" not in perm:
-                    raise ValueError(
-                        f"Permission '{perm}' must be in format 'resource:action'"
-                    )
+                    raise ValueError(f"Permission '{perm}' must be in format 'resource:action'")
 
         return v
 
@@ -101,9 +94,7 @@ class RoleCreateSchema(BaseCreateSchema):
 class RoleUpdateSchema(BaseUpdateSchema):
     """Schema for updating existing roles."""
 
-    name: Optional[str] = Field(
-        None, min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_.-]+$"
-    )
+    name: Optional[str] = Field(None, min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_.-]+$")
     display_name: Optional[str] = Field(None, min_length=1, max_length=150)
     description: Optional[str] = Field(None, max_length=1000)
     parent_role_id: Optional[UUID] = None
@@ -117,9 +108,7 @@ class RoleUpdateSchema(BaseUpdateSchema):
     def validate_name_format(cls, v: Optional[str]) -> Optional[str]:
         """Validate role name format."""
         if v and not v.replace("_", "").replace("-", "").replace(".", "").isalnum():
-            raise ValueError(
-                "Role name can only contain letters, numbers, underscores, hyphens, and dots"
-            )
+            raise ValueError("Role name can only contain letters, numbers, underscores, hyphens, and dots")
         return v.lower() if v else v
 
 
@@ -182,9 +171,7 @@ class PermissionCreateSchema(BaseCreateSchema):
     def validate_resource_format(cls, v: str) -> str:
         """Validate resource name format."""
         if not v.replace("_", "").replace("-", "").isalnum():
-            raise ValueError(
-                "Resource name can only contain letters, numbers, underscores, and hyphens"
-            )
+            raise ValueError("Resource name can only contain letters, numbers, underscores, and hyphens")
         return v.lower()
 
 
@@ -445,7 +432,5 @@ class UserPermissionSummarySchema(BaseModel):
 # Response Collections
 RolePaginatedResponseSchema = PaginatedResponseSchema[RoleResponseSchema]
 PermissionPaginatedResponseSchema = PaginatedResponseSchema[PermissionResponseSchema]
-RolePermissionPaginatedResponseSchema = PaginatedResponseSchema[
-    RolePermissionResponseSchema
-]
+RolePermissionPaginatedResponseSchema = PaginatedResponseSchema[RolePermissionResponseSchema]
 UserRolePaginatedResponseSchema = PaginatedResponseSchema[UserRoleResponseSchema]

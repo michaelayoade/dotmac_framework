@@ -24,11 +24,15 @@ from ..core.models import (
     ReservationStatus,
 )
 
+try:
+    from sqlalchemy.orm import Session
+
+    SQLALCHEMY_AVAILABLE = True
+except ImportError:
+    SQLALCHEMY_AVAILABLE = False
+    Session = None
+
 MODELS_AVAILABLE = True
-
-from sqlalchemy.orm import Session
-
-SQLALCHEMY_AVAILABLE = True
 
 
 class IPAMService:

@@ -125,9 +125,7 @@ class CSRFToken:
         self.secret_key = secret_key
         self.lifetime = lifetime
 
-    def generate(
-        self, session_id: Optional[str] = None, user_id: Optional[str] = None
-    ) -> str:
+    def generate(self, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
         """
         Generate CSRF token with optional session/user binding.
 
@@ -247,14 +245,11 @@ class CSRFValidationContext:
         content_type = self.request.headers.get("Content-Type", "")
 
         # Check path patterns
-        is_ssr_path = any(
-            path.startswith(ssr_path) for ssr_path in self.config.ssr_paths
-        )
+        is_ssr_path = any(path.startswith(ssr_path) for ssr_path in self.config.ssr_paths)
 
         # Check content type for form submissions
         is_form_submission = (
-            "application/x-www-form-urlencoded" in content_type
-            or "multipart/form-data" in content_type
+            "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type
         )
 
         return is_ssr_path or is_form_submission
@@ -372,8 +367,7 @@ class UnifiedCSRFMiddleware(BaseHTTPMiddleware):
 
             # Double-submit cookie pattern validation
             if (
-                self.config.token_delivery
-                in [CSRFTokenDelivery.COOKIE_ONLY, CSRFTokenDelivery.BOTH]
+                self.config.token_delivery in [CSRFTokenDelivery.COOKIE_ONLY, CSRFTokenDelivery.BOTH]
                 and cookie_token
                 and token_to_validate != cookie_token
             ):
@@ -409,9 +403,7 @@ class UnifiedCSRFMiddleware(BaseHTTPMiddleware):
         session_id = self._extract_session_id(request) if context else None
         user_id = self._extract_user_id(request) if context else None
 
-        new_token = self.token_generator.generate(
-            session_id=session_id, user_id=user_id
-        )
+        new_token = self.token_generator.generate(session_id=session_id, user_id=user_id)
 
         self._token_stats["generated"] += 1
 
@@ -471,16 +463,12 @@ class UnifiedCSRFMiddleware(BaseHTTPMiddleware):
 
         # Check against allowed origins
         if self.config.allowed_origins:
-            return any(
-                referer.startswith(origin) for origin in self.config.allowed_origins
-            )
+            return any(referer.startswith(origin) for origin in self.config.allowed_origins)
 
         # Default: same origin check
         host = request.headers.get("Host")
         if host:
-            return referer.startswith(f"https://{host}") or referer.startswith(
-                f"http://{host}"
-            )
+            return referer.startswith(f"https://{host}") or referer.startswith(f"http://{host}")
 
         return False
 
@@ -608,9 +596,7 @@ def create_technician_portal_csrf_config() -> CSRFConfig:
 
 
 # Factory function for creating CSRF middleware
-def create_csrf_middleware(
-    portal_type: str, custom_config: Optional[CSRFConfig] = None
-) -> UnifiedCSRFMiddleware:
+def create_csrf_middleware(portal_type: str, custom_config: Optional[CSRFConfig] = None) -> UnifiedCSRFMiddleware:
     """
     Create CSRF middleware for specific portal type.
 
@@ -648,9 +634,7 @@ def get_portal_csrf_config(portal_type: str) -> CSRFConfig:
         "management": create_management_portal_csrf_config,
         "reseller": create_reseller_portal_csrf_config,
         "technician": create_technician_portal_csrf_config,
-        "api": lambda: CSRFConfig(
-            mode=CSRFMode.API_ONLY, token_delivery=CSRFTokenDelivery.HEADER_ONLY
-        ),
+        "api": lambda: CSRFConfig(mode=CSRFMode.API_ONLY, token_delivery=CSRFTokenDelivery.HEADER_ONLY),
     }
     factory = mapping.get(portal_type)
     return factory() if factory else CSRFConfig()

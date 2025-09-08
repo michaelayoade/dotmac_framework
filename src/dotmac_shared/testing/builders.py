@@ -54,9 +54,7 @@ class ScenarioContext:
 class BaseBuilder(ABC):
     """Abstract base class for all builders."""
 
-    def __init__(
-        self, registry: FactoryRegistry, generator: Optional[DataGenerator] = None
-    ):
+    def __init__(self, registry: FactoryRegistry, generator: Optional[DataGenerator] = None):
         """Initialize builder with factory registry and data generator."""
         self.registry = registry
         self.generator = generator or DataGenerator()
@@ -114,9 +112,7 @@ class BaseBuilder(ABC):
 
         def visit(step_name: str):
             if step_name in temp_visited:
-                raise BuilderError(
-                    f"Circular dependency detected involving {step_name}"
-                )
+                raise BuilderError(f"Circular dependency detected involving {step_name}")
             if step_name in visited:
                 return
 
@@ -147,11 +143,7 @@ class BaseBuilder(ABC):
         resolved = deepcopy(step.attributes)
 
         for key, value in resolved.items():
-            if (
-                isinstance(value, str)
-                and value.startswith("${")
-                and value.endswith("}")
-            ):
+            if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
                 # Reference to another entity or variable
                 ref = value[2:-1]  # Remove ${ }
 
@@ -161,9 +153,7 @@ class BaseBuilder(ABC):
                         entity = self.context.entities[entity_name]
                         resolved[key] = getattr(entity, attr_name)
                     else:
-                        raise BuilderError(
-                            f"Entity {entity_name} not found for reference {ref}"
-                        )
+                        raise BuilderError(f"Entity {entity_name} not found for reference {ref}")
                 else:
                     # Simple variable reference
                     if ref in self.context.variables:
@@ -203,9 +193,7 @@ class EntityBuilder(BaseBuilder):
         self.attributes[name] = value
         return self
 
-    def with_generated_attribute(
-        self, name: str, data_type: DataType, **kwargs
-    ) -> "EntityBuilder":
+    def with_generated_attribute(self, name: str, data_type: DataType, **kwargs) -> "EntityBuilder":
         """Set attribute to generated value."""
         self.attributes[name] = self.generator.generate(data_type, **kwargs)
         return self
@@ -251,9 +239,7 @@ class RelationshipBuilder(BaseBuilder):
     and cascading entity creation.
     """
 
-    def __init__(
-        self, registry: FactoryRegistry, generator: Optional[DataGenerator] = None
-    ):
+    def __init__(self, registry: FactoryRegistry, generator: Optional[DataGenerator] = None):
         """Initialize relationship builder."""
         super().__init__(registry, generator)
         self.relationships: list[RelationshipDefinition] = []
@@ -392,9 +378,7 @@ class ScenarioBuilder(BaseBuilder):
         self.preconditions.append(condition)
         return self
 
-    def ensures(
-        self, condition: Callable[[ScenarioContext], bool]
-    ) -> "ScenarioBuilder":
+    def ensures(self, condition: Callable[[ScenarioContext], bool]) -> "ScenarioBuilder":
         """Add postcondition."""
         self.postconditions.append(condition)
         return self
@@ -410,9 +394,7 @@ class ScenarioBuilder(BaseBuilder):
         self.steps.append(step)
         return self
 
-    def customer_onboarding_scenario(
-        self, tenant_id: str, service_type: str = "basic_internet"
-    ) -> "ScenarioBuilder":
+    def customer_onboarding_scenario(self, tenant_id: str, service_type: str = "basic_internet") -> "ScenarioBuilder":
         """Pre-built customer onboarding scenario."""
         return (
             self.set_variable("tenant_id", tenant_id)
@@ -440,9 +422,7 @@ class ScenarioBuilder(BaseBuilder):
             )
         )
 
-    def service_provisioning_scenario(
-        self, customer_id: str, equipment_count: int = 1
-    ) -> "ScenarioBuilder":
+    def service_provisioning_scenario(self, customer_id: str, equipment_count: int = 1) -> "ScenarioBuilder":
         """Pre-built service provisioning scenario."""
         return (
             self.set_variable("customer_id", customer_id)
@@ -489,9 +469,7 @@ class TestDataBuilder:
     various builder patterns and strategies.
     """
 
-    def __init__(
-        self, registry: FactoryRegistry, generator: Optional[DataGenerator] = None
-    ):
+    def __init__(self, registry: FactoryRegistry, generator: Optional[DataGenerator] = None):
         """Initialize test data builder."""
         self.registry = registry
         self.generator = generator or DataGenerator()

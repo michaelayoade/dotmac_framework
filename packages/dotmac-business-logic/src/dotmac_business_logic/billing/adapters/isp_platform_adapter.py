@@ -14,6 +14,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..adapters.service_factory import create_full_featured_billing_service
 
+# ISP platform imports with graceful fallbacks
+ISP_AVAILABLE = True
+ISP_IMPORT_ERROR = None
+
 try:
     from dotmac_isp.core.celery_app import celery_app
 
@@ -33,9 +37,10 @@ try:
     from dotmac_isp.modules.identity.models import Customer as ISPCustomer
     from dotmac_isp.modules.services.models import ServiceInstance, ServicePlan
     from dotmac_isp.shared.base_service import BaseTenantService
+except ImportError as e:
+    ISP_AVAILABLE = False
+    ISP_IMPORT_ERROR = str(e)
 
-    ISP_AVAILABLE = True
-except ImportError:
     # Fallback types for development/testing
     ISPInvoice = dict[str, Any]
     ISPPayment = dict[str, Any]
@@ -51,9 +56,19 @@ except ImportError:
     PaymentCreate = dict[str, Any]
     SubscriptionResponse = dict[str, Any]
 
-    isp_session_factory = None
-    celery_app = None
-    ISP_AVAILABLE = False
+    # Fallback functions
+    def isp_session_factory():
+        """Fallback session factory."""
+        raise NotImplementedError("ISP platform not available")
+
+    class CeleryApp:
+        """Fallback Celery app."""
+
+        @staticmethod
+        def send_task(*args, **kwargs):
+            raise NotImplementedError("ISP platform Celery not available")
+
+    celery_app = CeleryApp()
 
 
 class ISPBillingAdapter:
@@ -72,6 +87,12 @@ class ISPBillingAdapter:
         notification_config: Optional[dict[str, Any]] = None,
     ):
         """Initialize ISP billing adapter."""
+        if not ISP_AVAILABLE:
+            raise ImportError(
+                f"ISP platform not available: {ISP_IMPORT_ERROR}. "
+                "Install with: pip install dotmac-business-logic[isp]"
+            )
+
         self.db_session = db_session
         self.tenant_id = tenant_id
 

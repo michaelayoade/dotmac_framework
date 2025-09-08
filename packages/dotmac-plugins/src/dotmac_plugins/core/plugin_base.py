@@ -61,7 +61,7 @@ class PluginMetadata:
 
     # Runtime information
     plugin_id: UUID = field(default_factory=uuid4)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
 
     # Tags for categorization and discovery

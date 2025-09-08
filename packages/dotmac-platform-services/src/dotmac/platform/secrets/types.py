@@ -73,14 +73,13 @@ class DatabaseCredentials:
         """Generate database connection URL"""
         if self.driver == "postgresql":
             return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
-        elif self.driver == "mysql":
+        if self.driver == "mysql":
             return (
                 f"mysql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
             )
-        elif self.driver == "sqlite":
+        if self.driver == "sqlite":
             return f"sqlite:///{self.database}"
-        else:
-            raise ValueError(f"Unsupported database driver: {self.driver}")
+        raise ValueError(f"Unsupported database driver: {self.driver}")
 
     @property
     def connection_params(self) -> dict[str, Any]:
@@ -113,7 +112,7 @@ class SecretPolicy(BaseModel):
     rotation_warning_days: int = Field(default=7, ge=1)
 
     @field_validator("forbidden_patterns")
-    def validate_patterns(cls, v: list[str]) -> list[str]:
+    def validate_patterns(self, v: list[str]) -> list[str]:
         """Validate forbidden patterns are not empty"""
         return [p for p in v if p.strip()]
 
@@ -131,7 +130,7 @@ class SecretMetadata(BaseModel):
     policy: SecretPolicy | None = None
 
     @field_validator("path")
-    def validate_path(cls, v: str) -> str:
+    def validate_path(self, v: str) -> str:
         """Validate secret path format"""
         if not v or not v.strip():
             raise ValueError("Secret path cannot be empty")
@@ -155,26 +154,23 @@ class SecretValue:
         """Get secret as string"""
         if isinstance(self.value, str):
             return self.value
-        elif isinstance(self.value, bytes):
+        if isinstance(self.value, bytes):
             return self.value.decode("utf-8")
-        else:
-            raise TypeError(f"Cannot convert {type(self.value)} to string")
+        raise TypeError(f"Cannot convert {type(self.value)} to string")
 
     def as_bytes(self) -> bytes:
         """Get secret as bytes"""
         if isinstance(self.value, bytes):
             return self.value
-        elif isinstance(self.value, str):
+        if isinstance(self.value, str):
             return self.value.encode("utf-8")
-        else:
-            raise TypeError(f"Cannot convert {type(self.value)} to bytes")
+        raise TypeError(f"Cannot convert {type(self.value)} to bytes")
 
     def as_dict(self) -> dict[str, Any]:
         """Get secret as dictionary"""
         if isinstance(self.value, dict):
             return self.value
-        else:
-            raise TypeError(f"Cannot convert {type(self.value)} to dict")
+        raise TypeError(f"Cannot convert {type(self.value)} to dict")
 
 
 class ProviderConfig(BaseModel):
@@ -200,14 +196,14 @@ class OpenBaoConfig(ProviderConfig):
     namespace: str | None = None
 
     @field_validator("url")
-    def validate_url(cls, v: str) -> str:
+    def validate_url(self, v: str) -> str:
         """Validate OpenBao URL format"""
         if not v.startswith(("http://", "https://")):
             raise ValueError("OpenBao URL must start with http:// or https://")
         return v.rstrip("/")
 
     @field_validator("token")
-    def validate_token(cls, v: str) -> str:
+    def validate_token(self, v: str) -> str:
         """Validate token is not empty"""
         if not v or not v.strip():
             raise ValueError("OpenBao token cannot be empty")
@@ -240,7 +236,7 @@ class FileConfig(ProviderConfig):
     file_format: str = Field(default="json")  # json, yaml, toml
 
     @field_validator("base_path")
-    def validate_base_path(cls, v: str) -> str:
+    def validate_base_path(self, v: str) -> str:
         """Validate base path exists"""
         if not os.path.exists(v):
             raise ValueError(f"Base path does not exist: {v}")
@@ -249,7 +245,7 @@ class FileConfig(ProviderConfig):
         return v
 
     @field_validator("file_format")
-    def validate_format(cls, v: str) -> str:
+    def validate_format(self, v: str) -> str:
         """Validate supported file format"""
         if v not in {"json", "yaml", "toml"}:
             raise ValueError(f"Unsupported file format: {v}")

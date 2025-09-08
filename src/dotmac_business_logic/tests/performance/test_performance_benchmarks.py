@@ -325,7 +325,7 @@ class TestTasksPerformance:
             def execute_linear_workflow(self, steps):
                 """Execute steps sequentially."""
                 results = []
-                for i, step in enumerate(steps):
+                for i, _step in enumerate(steps):
                     # Simulate step execution
                     time.sleep(0.001)  # 1ms per step
                     results.append({"step": i, "result": f"step_{i}_completed"})

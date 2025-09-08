@@ -19,10 +19,11 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from dotmac_shared.core.exceptions import ValidationError
-from dotmac_shared.services.base import BaseService
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
+
+from dotmac_shared.core.exceptions import ValidationError
+from dotmac_shared.services.base import BaseService
 
 logger = logging.getLogger(__name__)
 
@@ -100,24 +101,16 @@ class UnifiedAnalyticsService(BaseService):
         self.components = {}
 
         if self.config.business_analytics_enabled:
-            self.components["business"] = BusinessAnalyticsComponent(
-                self.db, self.tenant_id
-            )
+            self.components["business"] = BusinessAnalyticsComponent(self.db, self.tenant_id)
 
         if self.config.workflow_analytics_enabled:
-            self.components["workflow"] = WorkflowAnalyticsComponent(
-                self.db, self.tenant_id
-            )
+            self.components["workflow"] = WorkflowAnalyticsComponent(self.db, self.tenant_id)
 
         if self.config.infrastructure_analytics_enabled:
-            self.components["infrastructure"] = InfrastructureAnalyticsComponent(
-                self.db, self.tenant_id
-            )
+            self.components["infrastructure"] = InfrastructureAnalyticsComponent(self.db, self.tenant_id)
 
         if self.config.knowledge_analytics_enabled:
-            self.components["knowledge"] = KnowledgeAnalyticsComponent(
-                self.db, self.tenant_id
-            )
+            self.components["knowledge"] = KnowledgeAnalyticsComponent(self.db, self.tenant_id)
 
     # Unified Analytics Interface
 
@@ -150,9 +143,7 @@ class UnifiedAnalyticsService(BaseService):
         if not component:
             return []
 
-        return await component.get_metrics(
-            metric_names, start_time, end_time, tags_filter
-        )
+        return await component.get_metrics(metric_names, start_time, end_time, tags_filter)
 
     async def create_dashboard(
         self,
@@ -184,9 +175,7 @@ class UnifiedAnalyticsService(BaseService):
 
     # Convenience Methods for Common Analytics Operations
 
-    async def track_user_action(
-        self, user_id: str, action: str, context: dict[str, Any] | None = None
-    ) -> bool:
+    async def track_user_action(self, user_id: str, action: str, context: dict[str, Any] | None = None) -> bool:
         """Track a user action for behavioral analytics."""
         return await self.record_metric(
             name=f"user_action_{action}",
@@ -231,9 +220,7 @@ class UnifiedAnalyticsService(BaseService):
 
         return True
 
-    async def track_system_metric(
-        self, metric_name: str, value: int | float, component: str
-    ) -> bool:
+    async def track_system_metric(self, metric_name: str, value: int | float, component: str) -> bool:
         """Track system metrics for infrastructure analytics."""
         return await self.record_metric(
             name=metric_name,
@@ -243,9 +230,7 @@ class UnifiedAnalyticsService(BaseService):
             tags={"component": component},
         )
 
-    async def get_business_kpis(
-        self, kpi_names: list[str] | None = None, period_days: int = 30
-    ) -> dict[str, Any]:
+    async def get_business_kpis(self, kpi_names: list[str] | None = None, period_days: int = 30) -> dict[str, Any]:
         """Get business KPIs for the specified period."""
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=period_days)
@@ -321,9 +306,7 @@ class BaseAnalyticsComponent:
         """Get metrics. Override in subclasses."""
         raise NotImplementedError
 
-    async def create_dashboard(
-        self, name: str, config: dict[str, Any], user_id: str | None
-    ) -> dict[str, Any]:
+    async def create_dashboard(self, name: str, config: dict[str, Any], user_id: str | None) -> dict[str, Any]:
         """Create dashboard. Override in subclasses."""
         raise NotImplementedError
 
@@ -363,9 +346,7 @@ class BusinessAnalyticsComponent(BaseAnalyticsComponent):
         # Implementation for retrieving business metrics
         return []
 
-    async def create_dashboard(
-        self, name: str, config: dict[str, Any], user_id: str | None
-    ) -> dict[str, Any]:
+    async def create_dashboard(self, name: str, config: dict[str, Any], user_id: str | None) -> dict[str, Any]:
         # Implementation for creating business dashboards
         return {"id": str(UUID.uuid4()), "name": name, "type": "business"}
 

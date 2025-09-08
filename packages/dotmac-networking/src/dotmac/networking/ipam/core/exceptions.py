@@ -1,4 +1,5 @@
 """IPAM-specific exceptions."""
+
 from typing import Optional
 
 
@@ -84,7 +85,9 @@ class NetworkOverlapError(IPAMError):
 class ExpiredAllocationError(IPAMError):
     """IP allocation has expired."""
 
-    def __init__(self, allocation_id: str, expired_at: str, message: Optional[str] = None):
+    def __init__(
+        self, allocation_id: str, expired_at: str, message: Optional[str] = None
+    ):
         self.allocation_id = allocation_id
         self.expired_at = expired_at
         if message is None:

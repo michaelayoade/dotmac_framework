@@ -118,9 +118,7 @@ class Deployment(BaseModel):
         nullable=False,
         index=True,
     )
-    infrastructure_template_id = Column(
-        UUID(as_uuid=True), ForeignKey("infrastructure_templates.id"), nullable=True
-    )
+    infrastructure_template_id = Column(UUID(as_uuid=True), ForeignKey("infrastructure_templates.id"), nullable=True)
 
     # Deployment identification
     name = Column(String(255), nullable=False, index=True)
@@ -187,9 +185,7 @@ class Deployment(BaseModel):
     alerting_enabled = Column(Boolean, default=True, nullable=False)
 
     # External references
-    cloud_resource_id = Column(
-        String(255), nullable=True
-    )  # Instance ID from cloud provider
+    cloud_resource_id = Column(String(255), nullable=True)  # Instance ID from cloud provider
     kubernetes_namespace = Column(String(255), nullable=True)
     load_balancer_id = Column(String(255), nullable=True)
 
@@ -202,16 +198,10 @@ class Deployment(BaseModel):
 
     # Relationships
     tenant = relationship("Tenant", back_populates="deployments")
-    infrastructure_template = relationship(
-        "InfrastructureTemplate", back_populates="deployments"
-    )
+    infrastructure_template = relationship("InfrastructureTemplate", back_populates="deployments")
     created_by_user = relationship("User", back_populates="created_deployments")
-    events = relationship(
-        "DeploymentEvent", back_populates="deployment", cascade="all, delete-orphan"
-    )
-    resources = relationship(
-        "DeploymentResource", back_populates="deployment", cascade="all, delete-orphan"
-    )
+    events = relationship("DeploymentEvent", back_populates="deployment", cascade="all, delete-orphan")
+    resources = relationship("DeploymentResource", back_populates="deployment", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Deployment(name='{self.name}', status='{self.status}')>"
@@ -251,9 +241,7 @@ class Deployment(BaseModel):
         self.status = DeploymentStatus.FAILED
         self.error_message = error_message
 
-    def update_health(
-        self, status: str, details: Optional[dict[str, Any]] = None
-    ) -> None:
+    def update_health(self, status: str, details: Optional[dict[str, Any]] = None) -> None:
         """Update health status."""
         self.health_status = status
         self.health_details = details or {}
@@ -271,9 +259,7 @@ class DeploymentEvent(BaseModel):
 
     __tablename__ = "deployment_events"
 
-    deployment_id = Column(
-        UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=False, index=True
-    )
+    deployment_id = Column(UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=False, index=True)
 
     # Event details
     event_type = Column(SQLEnum(DeploymentEventType), nullable=False, index=True)
@@ -304,14 +290,10 @@ class DeploymentResource(BaseModel):
 
     __tablename__ = "deployment_resources"
 
-    deployment_id = Column(
-        UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=False, index=True
-    )
+    deployment_id = Column(UUID(as_uuid=True), ForeignKey("deployments.id"), nullable=False, index=True)
 
     # Resource details
-    resource_type = Column(
-        String(100), nullable=False, index=True
-    )  # instance, load_balancer, etc.
+    resource_type = Column(String(100), nullable=False, index=True)  # instance, load_balancer, etc.
     resource_name = Column(String(255), nullable=False)
     resource_id = Column(String(255), nullable=False)  # Cloud provider resource ID
 

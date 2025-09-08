@@ -33,9 +33,7 @@ class ServiceRegistry:
     - Lazy initialization
     """
 
-    def __init__(
-        self, db_session: Session | AsyncSession, tenant_id: str | None = None
-    ):
+    def __init__(self, db_session: Session | AsyncSession, tenant_id: str | None = None):
         """
         Initialize service registry.
 
@@ -239,9 +237,7 @@ class ServiceRegistry:
         self.factory.clear_cache()
         logger.debug("Cleared service registry cache")
 
-    def add_initialization_callback(
-        self, service_name: str, callback: Callable[[Any], None]
-    ) -> None:
+    def add_initialization_callback(self, service_name: str, callback: Callable[[Any], None]) -> None:
         """
         Add callback to run after service initialization.
 
@@ -275,9 +271,7 @@ class ServiceRegistry:
         return {
             "name": name,
             "service_class": definition["service_class"].__name__,
-            "model_class": definition["model_class"].__name__
-            if definition["model_class"]
-            else None,
+            "model_class": definition["model_class"].__name__ if definition["model_class"] else None,
             "dependencies": self._service_dependencies.get(name, []),
             "singleton": definition["singleton"],
             "lazy": definition["lazy"],
@@ -300,9 +294,7 @@ class ServiceRegistry:
 
         for dependency in dependencies:
             if dependency not in self._service_definitions:
-                raise ServiceError(
-                    f"Service '{service_name}' depends on '{dependency}' which is not registered"
-                )
+                raise ServiceError(f"Service '{service_name}' depends on '{dependency}' which is not registered")
 
             # Recursively resolve dependencies
             try:
@@ -312,9 +304,7 @@ class ServiceRegistry:
                     f"Failed to resolve dependency '{dependency}' for service '{service_name}': {e}"
                 ) from e
 
-    def _run_initialization_callbacks(
-        self, service_name: str, service_instance: Any
-    ) -> None:
+    def _run_initialization_callbacks(self, service_name: str, service_instance: Any) -> None:
         """
         Run initialization callbacks for a service.
 
@@ -329,9 +319,7 @@ class ServiceRegistry:
                 callback(service_instance)
                 logger.debug(f"Ran initialization callback for {service_name}")
             except Exception as e:
-                logger.warning(
-                    f"Initialization callback failed for {service_name}: {e}"
-                )
+                logger.warning(f"Initialization callback failed for {service_name}: {e}")
 
 
 class ServiceRegistryBuilder:
@@ -341,29 +329,21 @@ class ServiceRegistryBuilder:
     Provides fluent interface for service registration and configuration.
     """
 
-    def __init__(
-        self, db_session: Session | AsyncSession, tenant_id: str | None = None
-    ):
+    def __init__(self, db_session: Session | AsyncSession, tenant_id: str | None = None):
         self.registry = ServiceRegistry(db_session, tenant_id)
 
-    def register(
-        self, name: str, service_class: type[ServiceType], **kwargs
-    ) -> ServiceRegistryBuilder:
+    def register(self, name: str, service_class: type[ServiceType], **kwargs) -> ServiceRegistryBuilder:
         """Register a service with the registry."""
         self.registry.register_service(name, service_class, **kwargs)
         return self
 
-    def with_dependency(
-        self, service_name: str, dependency: str
-    ) -> ServiceRegistryBuilder:
+    def with_dependency(self, service_name: str, dependency: str) -> ServiceRegistryBuilder:
         """Add a dependency to a registered service."""
         if service_name in self.registry._service_dependencies:
             self.registry._service_dependencies[service_name].append(dependency)
         return self
 
-    def with_callback(
-        self, service_name: str, callback: Callable[[Any], None]
-    ) -> ServiceRegistryBuilder:
+    def with_callback(self, service_name: str, callback: Callable[[Any], None]) -> ServiceRegistryBuilder:
         """Add initialization callback to a service."""
         self.registry.add_initialization_callback(service_name, callback)
         return self

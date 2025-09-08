@@ -37,13 +37,9 @@ class ReliabilityTester:
         circuit_key = f"{service}:{test_id}"
         self._circuit_breaker_states[circuit_key] = circuit_config
 
-        logger.info(
-            f"Configured circuit breaker for {service} with threshold {failure_threshold}"
-        )
+        logger.info(f"Configured circuit breaker for {service} with threshold {failure_threshold}")
 
-    async def get_circuit_breaker_state(
-        self, service: str, test_id: str
-    ) -> dict[str, Any]:
+    async def get_circuit_breaker_state(self, service: str, test_id: str) -> dict[str, Any]:
         """Get current circuit breaker state"""
         circuit_key = f"{service}:{test_id}"
         state = self._circuit_breaker_states.get(circuit_key, {})
@@ -57,9 +53,7 @@ class ReliabilityTester:
                 last_failure = datetime.fromisoformat(state["last_failure_time"])
                 recovery_timeout = state.get("recovery_timeout", 5)
 
-                if datetime.utcnow() > last_failure + timedelta(
-                    seconds=recovery_timeout
-                ):
+                if datetime.utcnow() > last_failure + timedelta(seconds=recovery_timeout):
                     state["status"] = "HALF_OPEN"
 
         return state.copy()
@@ -73,9 +67,7 @@ class ReliabilityTester:
             state["failure_count"] = state.get("failure_count", 0) + 1
             state["last_failure_time"] = datetime.utcnow().isoformat()
 
-            logger.info(
-                f"Simulated failure for {service}, count: {state['failure_count']}"
-            )
+            logger.info(f"Simulated failure for {service}, count: {state['failure_count']}")
 
     async def simulate_service_recovery(self, service: str):
         """Simulate service recovery"""
@@ -188,9 +180,7 @@ class ReliabilityTester:
         # Simulate high load on non-critical service
         non_critical_tasks = []
         for _i in range(load_factor):
-            task = asyncio.create_task(
-                self._simulate_service_load(non_critical_service)
-            )
+            task = asyncio.create_task(self._simulate_service_load(non_critical_service))
             non_critical_tasks.append(task)
 
         # Test critical service performance under load
@@ -211,9 +201,7 @@ class ReliabilityTester:
             task.cancel()
 
         # Determine if isolation was effective (critical service wasn't significantly impacted)
-        results["isolation_effective"] = (
-            critical_response_time < 1.0
-        )  # Threshold for acceptable performance
+        results["isolation_effective"] = critical_response_time < 1.0  # Threshold for acceptable performance
 
         return results
 
@@ -225,9 +213,7 @@ class ReliabilityTester:
         """Simulate a service operation"""
         await asyncio.sleep(0.1)  # Normal operation time
 
-    async def test_graceful_degradation(
-        self, primary_service: str, fallback_service: str
-    ) -> dict[str, Any]:
+    async def test_graceful_degradation(self, primary_service: str, fallback_service: str) -> dict[str, Any]:
         """Test graceful degradation when primary service fails"""
         results = {
             "primary_attempts": 0,

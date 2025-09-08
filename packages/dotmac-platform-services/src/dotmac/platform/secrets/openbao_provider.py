@@ -151,8 +151,7 @@ class OpenBaoProvider(WritableSecretsProvider):
         # Build full path based on KV version
         if self.kv_version == 2:
             return f"v1/{self.mount_point}/data/{secret_path}"
-        else:
-            return f"v1/{self.mount_point}/{secret_path}"
+        return f"v1/{self.mount_point}/{secret_path}"
 
     def _build_metadata_path(self, secret_path: str) -> str:
         """Build metadata path for KV v2."""
@@ -208,8 +207,7 @@ class OpenBaoProvider(WritableSecretsProvider):
                             )
                             await asyncio.sleep(self.retry_delay * (2**attempt))
                             continue
-                        else:
-                            raise SecretsProviderError(error_msg, "openbao")
+                        raise SecretsProviderError(error_msg, "openbao")
 
             except aiohttp.ClientError as e:
                 if attempt < self.max_retries:
@@ -218,8 +216,7 @@ class OpenBaoProvider(WritableSecretsProvider):
                     )
                     await asyncio.sleep(self.retry_delay * (2**attempt))
                     continue
-                else:
-                    raise ProviderConnectionError("openbao", str(e)) from e
+                raise ProviderConnectionError("openbao", str(e)) from e
 
         raise SecretsProviderError("Max retries exceeded", "openbao")
 
@@ -247,14 +244,11 @@ class OpenBaoProvider(WritableSecretsProvider):
                 # KV v2 returns data nested under 'data' key
                 if "data" in response and "data" in response["data"]:
                     return response["data"]["data"]
-                else:
-                    raise SecretNotFoundError(secret_path, "openbao")
-            else:
-                # KV v1 returns data directly
-                if "data" in response:
-                    return response["data"]
-                else:
-                    raise SecretNotFoundError(secret_path, "openbao")
+                raise SecretNotFoundError(secret_path, "openbao")
+            # KV v1 returns data directly
+            if "data" in response:
+                return response["data"]
+            raise SecretNotFoundError(secret_path, "openbao")
 
         except SecretNotFoundError:
             raise

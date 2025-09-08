@@ -237,7 +237,7 @@ class JWTRotationPolicy(RotationPolicy):
 
         if algorithm == "RS256":
             return "private_key" in new_secret and "public_key" in new_secret
-        elif algorithm == "HS256":
+        if algorithm == "HS256":
             return "secret_key" in new_secret and len(new_secret["secret_key"]) >= 32
 
         return False

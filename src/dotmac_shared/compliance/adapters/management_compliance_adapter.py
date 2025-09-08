@@ -32,9 +32,7 @@ class ManagementComplianceAdapter:
 
     def __init__(
         self,
-        tenant_id: Optional[
-            str
-        ] = None,  # Management platform may not always be tenant-specific
+        tenant_id: Optional[str] = None,  # Management platform may not always be tenant-specific
         compliance_service: Optional[ComplianceService] = None,
         event_bus: Optional[EventBus] = None,
         cache_service=None,
@@ -254,9 +252,7 @@ class ManagementComplianceAdapter:
     ) -> dict[str, Any]:
         """Get multi-tenant compliance summary for management platform."""
 
-        dashboard = await self.compliance_service.get_compliance_dashboard(
-            period_days=period_days
-        )
+        dashboard = await self.compliance_service.get_compliance_dashboard(period_days=period_days)
 
         # Add management platform specific data
         dashboard["platform"] = "management"
@@ -295,9 +291,7 @@ class ManagementComplianceAdapter:
             "framework": "SOC2",
             "check_type": "tenant_isolation",
             "checks": results,
-            "overall_status": "compliant"
-            if all(r["status"] == "compliant" for r in results)
-            else "non_compliant",
+            "overall_status": "compliant" if all(r["status"] == "compliant" for r in results) else "non_compliant",
             "checked_at": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -320,9 +314,7 @@ class ManagementComplianceAdapter:
 
         activities = [
             {
-                "timestamp": (
-                    datetime.now(timezone.utc) - timedelta(hours=i)
-                ).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) - timedelta(hours=i)).isoformat(),
                 "event_type": "config_change" if i % 3 == 0 else "user_access",
                 "admin_user": admin_user_id,
                 "resource": f"tenant_{i % 5 + 1}" if i % 2 == 0 else "platform_config",
@@ -367,11 +359,7 @@ class ManagementComplianceAdapter:
 
         risk_levels = {"low": 0, "medium": 1, "high": 2, "critical": 3}
 
-        filtered_alerts = [
-            alert
-            for alert in alerts
-            if risk_levels.get(alert.severity.value, 0) >= min_level
-        ]
+        filtered_alerts = [alert for alert in alerts if risk_levels.get(alert.severity.value, 0) >= min_level]
 
         # Group by tenant (simulated)
         tenant_risks = {}
@@ -401,9 +389,7 @@ class ManagementComplianceAdapter:
         return {
             "platform": "management",
             "overall_score": dashboard["overall"]["average_score"],
-            "status": "compliant"
-            if dashboard["overall"]["average_score"] >= 85
-            else "needs_attention",
+            "status": "compliant" if dashboard["overall"]["average_score"] >= 85 else "needs_attention",
             "frameworks": dashboard["frameworks"],
             "critical_alerts": dashboard["overall"]["critical_alerts"],
             "total_issues": dashboard["overall"]["total_issues"],
@@ -413,9 +399,7 @@ class ManagementComplianceAdapter:
     async def health_check(self) -> dict[str, Any]:
         """Health check for the management compliance adapter."""
         try:
-            compliance_health = (
-                await self.compliance_service._health_check_stateful_service()
-            )
+            compliance_health = await self.compliance_service._health_check_stateful_service()
 
             return {
                 "adapter": "healthy",

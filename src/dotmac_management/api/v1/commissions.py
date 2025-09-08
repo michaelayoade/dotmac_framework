@@ -44,18 +44,12 @@ class CommissionResponse:
         self.id = str(commission.id)
         self.reseller_id = str(commission.reseller_id)
         self.tenant_id = str(commission.tenant_id)
-        self.subscription_id = (
-            str(commission.subscription_id) if commission.subscription_id else None
-        )
+        self.subscription_id = str(commission.subscription_id) if commission.subscription_id else None
         self.invoice_id = str(commission.invoice_id) if commission.invoice_id else None
         self.base_amount_cents = commission.base_amount_cents
         self.commission_rate = float(commission.commission_rate)
         self.commission_amount_cents = commission.commission_amount_cents
-        self.status = (
-            commission.status.value
-            if hasattr(commission.status, "value")
-            else str(commission.status)
-        )
+        self.status = commission.status.value if hasattr(commission.status, "value") else str(commission.status)
         self.period_start = commission.period_start
         self.period_end = commission.period_end
         self.earned_date = commission.earned_date
@@ -95,9 +89,7 @@ class CommissionResponse:
 @standard_exception_handler
 async def list_commissions(
     reseller_id: Optional[UUID] = Query(None, description="Filter by reseller ID"),
-    status: Optional[CommissionStatus] = Query(
-        None, description="Filter by commission status"
-    ),
+    status: Optional[CommissionStatus] = Query(None, description="Filter by commission status"),
     deps: PaginatedDependencies = Depends(get_paginated_deps),
 ) -> PaginatedResponseSchema[dict]:
     """List commissions with optional filtering by reseller and status."""
@@ -204,9 +196,7 @@ async def update_commission_status(
 @standard_exception_handler
 async def get_commission_analytics(
     reseller_id: Optional[UUID] = Query(None, description="Filter by reseller ID"),
-    start_date: Optional[datetime] = Query(
-        None, description="Start date for analytics"
-    ),
+    start_date: Optional[datetime] = Query(None, description="Start date for analytics"),
     end_date: Optional[datetime] = Query(None, description="End date for analytics"),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> dict[str, Any]:
@@ -313,9 +303,7 @@ async def export_commissions(
 )
 @standard_exception_handler
 async def process_batch_payment(
-    commission_ids: list[UUID] = Query(
-        ..., description="List of commission IDs to mark as paid"
-    ),
+    commission_ids: list[UUID] = Query(..., description="List of commission IDs to mark as paid"),
     payment_reference: str = Query(..., description="Payment reference number"),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> dict[str, Any]:

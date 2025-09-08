@@ -8,6 +8,7 @@ AWS S3, and other cloud storage providers with multi-tenant isolation.
 import asyncio
 import logging
 import shutil
+import tempfile
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -16,7 +17,7 @@ from typing import Any, BinaryIO, Optional, Protocol
 
 try:
     import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError
+    from botocore.exceptions import ClientError
 
     HAS_BOTO3 = True
 except ImportError:
@@ -26,13 +27,7 @@ except ImportError:
 HAS_AZURE = False
 
 # Google Cloud Storage support
-try:
-    from google.api_core import exceptions as gcs_exceptions
-    from google.cloud import storage as gcs
-
-    HAS_GCS = True
-except ImportError:
-    HAS_GCS = False
+HAS_GCS = False  # Not currently used
 
 import aiofiles
 import aiofiles.os
@@ -112,8 +107,11 @@ class StorageBackend(Protocol):
 class LocalFileStorage:
     """Local filesystem storage backend."""
 
-    def __init__(self, base_path: str = "/tmp/dotmac_files"):
+    def __init__(self, base_path: str | None = None):
         """Initialize local file storage."""
+        if base_path is None:
+            # Use secure temporary directory
+            base_path = tempfile.mkdtemp(prefix="dotmac_files_")
         self.base_path = Path(base_path)
         self.base_path.mkdir(parents=True, exist_ok=True)
         logger.info(f"Local file storage initialized at: {self.base_path}")
@@ -134,8 +132,8 @@ class LocalFileStorage:
         # Security check: ensure path is within tenant directory
         try:
             full_path.resolve().relative_to(tenant_path.resolve())
-        except ValueError:
-            raise ValueError(f"Invalid file path: {file_path}")
+        except ValueError as e:
+            raise ValueError(f"Invalid file path: {file_path}") from e
 
         return full_path
 
@@ -251,7 +249,7 @@ class LocalFileStorage:
                         try:
                             import json
 
-                            async with aiofiles.open(metadata_path, "r") as f:
+                            async with aiofiles.open(metadata_path) as f:
                                 metadata_content = await f.read()
                                 metadata = json.loads(metadata_content)
                         except Exception:
@@ -306,7 +304,7 @@ class LocalFileStorage:
                 try:
                     import json
 
-                    async with aiofiles.open(metadata_path, "r") as f:
+                    async with aiofiles.open(metadata_path) as f:
                         metadata_content = await f.read()
                         metadata = json.loads(metadata_content)
                 except Exception:
@@ -538,10 +536,11 @@ class S3FileStorage:
             files = []
             for obj in response.get("Contents", []):
                 # Get object metadata
+                key = obj["Key"]  # Capture variable to avoid closure issue
                 head_response = await asyncio.get_event_loop().run_in_executor(
                     None,
-                    lambda: self.s3_client.head_object(
-                        Bucket=self.bucket_name, Key=obj["Key"]
+                    lambda key=key: self.s3_client.head_object(
+                        Bucket=self.bucket_name, Key=key
                     ),
                 )
 
@@ -664,7 +663,7 @@ def create_storage_backend(config: dict[str, Any]) -> StorageBackend:
     backend_type = config.get("type", "local").lower()
 
     if backend_type == "local":
-        return LocalFileStorage(base_path=config.get("base_path", "/tmp/dotmac_files"))
+        return LocalFileStorage(base_path=config.get("base_path"))
     elif backend_type == "s3":
         return S3FileStorage(
             bucket_name=config["bucket_name"],

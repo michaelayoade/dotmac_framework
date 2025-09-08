@@ -5,16 +5,16 @@ Commission management endpoints using RouterFactory patterns.
 
 from typing import Any
 
+from fastapi import Depends, Query
+from pydantic import BaseModel, Field
+
+from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
     StandardDependencies,
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import Depends, Query
-from pydantic import BaseModel, Field
-
-from dotmac.application import RouterFactory, standard_exception_handler
 
 # === Commission Configuration Schemas ===
 
@@ -23,9 +23,7 @@ class CommissionConfigCreateRequest(BaseModel):
     """Request schema for creating commission configurations."""
 
     name: str = Field(..., description="Configuration name")
-    commission_type: str = Field(
-        ..., description="Type of commission (percentage, fixed)"
-    )
+    commission_type: str = Field(..., description="Type of commission (percentage, fixed)")
     rate: float = Field(..., description="Commission rate")
     conditions: dict[str, Any] = Field(..., description="Commission conditions")
     applies_to: list[str] = Field(..., description="Services/products this applies to")
@@ -92,9 +90,7 @@ async def list_commission_configurations(
 
     # Apply filters
     if commission_type:
-        configurations = [
-            c for c in configurations if c["commission_type"] == commission_type
-        ]
+        configurations = [c for c in configurations if c["commission_type"] == commission_type]
     if is_active is not None:
         configurations = [c for c in configurations if c["is_active"] == is_active]
 
@@ -124,9 +120,7 @@ async def create_commission_configuration(
     }
 
 
-@commission_config_router.get(
-    "/configurations/{config_id}", response_model=dict[str, Any]
-)
+@commission_config_router.get("/configurations/{config_id}", response_model=dict[str, Any])
 @standard_exception_handler
 async def get_commission_configuration(
     config_id: str,
@@ -154,9 +148,7 @@ async def get_commission_configuration(
     }
 
 
-@commission_config_router.put(
-    "/configurations/{config_id}", response_model=dict[str, Any]
-)
+@commission_config_router.put("/configurations/{config_id}", response_model=dict[str, Any])
 @standard_exception_handler
 async def update_commission_configuration(
     config_id: str,
@@ -167,9 +159,7 @@ async def update_commission_configuration(
     return {
         "id": config_id,
         "status": "updated",
-        "updated_fields": {
-            k: v for k, v in request.model_dump().items() if v is not None
-        },
+        "updated_fields": {k: v for k, v in request.model_dump().items() if v is not None},
         "updated_by": deps.user_id,
         "updated_at": "2025-01-15T10:30:00Z",
         "message": "Commission configuration updated successfully",

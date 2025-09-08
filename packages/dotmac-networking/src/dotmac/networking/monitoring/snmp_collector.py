@@ -97,7 +97,9 @@ class SNMPCollector:
 
     @standard_exception_handler
     @retry_on_failure(max_attempts=3, delay=1.0)
-    async def get_system_info(self, host: str, community: Optional[str] = None) -> dict[str, Any]:
+    async def get_system_info(
+        self, host: str, community: Optional[str] = None
+    ) -> dict[str, Any]:
         """
         Get basic system information via SNMP
 

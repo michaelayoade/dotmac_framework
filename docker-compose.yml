@@ -97,7 +97,7 @@ services:
     container_name: dotmac-signoz-collector
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ./shared/deployments/signoz/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+      - ./config/signoz/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
     environment:
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
@@ -120,6 +120,8 @@ services:
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
       STORAGE: clickhouse
       TELEMETRY_ENABLED: "false"
+    volumes:
+      - signoz_data:/var/lib/signoz
     ports:
       - "8080:8080"
     networks:
@@ -327,6 +329,8 @@ volumes:
     name: dotmac-openbao-shared-data
   clickhouse_data:
     name: dotmac-clickhouse-data
+  signoz_data:
+    name: dotmac-signoz-data
   isp_uploads:
     name: dotmac-isp-uploads
   isp_logs:

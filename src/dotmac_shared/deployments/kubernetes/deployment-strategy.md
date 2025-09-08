@@ -228,9 +228,9 @@ spec:
               fieldPath: metadata.namespace
 ```
 
-### `/metrics` - Prometheus Metrics
+### Observability Export (SigNoz)
 
-- Standard Prometheus exposition format
+- OTLP export via OpenTelemetry SDKs to SigNoz collector
 - HTTP request metrics (latency, throughput, errors)
 - Database query metrics
 - Circuit breaker metrics

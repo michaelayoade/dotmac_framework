@@ -304,14 +304,15 @@ global_rules:
 # This allows the same config to work across environments
 environment_variables:
   production:
-    TWILIO_ACCOUNT_SID: "prod_account_sid"
-    TWILIO_AUTH_TOKEN: "prod_auth_token"
-    SENDGRID_API_KEY: "prod_sendgrid_key"
+    # Set via environment or Vault-injected env/files at deploy time
+    TWILIO_ACCOUNT_SID: "<set-in-env-or-vault>"
+    TWILIO_AUTH_TOKEN: "<set-in-env-or-vault>"
+    SENDGRID_API_KEY: "<set-in-env-or-vault>"
 
   staging:
-    TWILIO_ACCOUNT_SID: "staging_account_sid"
-    TWILIO_AUTH_TOKEN: "staging_auth_token"
-    SENDGRID_API_KEY: "staging_sendgrid_key"
+    TWILIO_ACCOUNT_SID: "<set-in-env-or-vault>"
+    TWILIO_AUTH_TOKEN: "<set-in-env-or-vault>"
+    SENDGRID_API_KEY: "<set-in-env-or-vault>"
 
   development:
     # Use mock/test services in development

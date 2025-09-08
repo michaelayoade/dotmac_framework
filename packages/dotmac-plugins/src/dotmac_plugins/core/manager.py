@@ -37,7 +37,7 @@ class PluginManager:
         # Core components
         import datetime
 
-        self.registry = PluginRegistry(datetime.timezone.utc)
+        self.registry = PluginRegistry()
         self.dependency_resolver = DependencyResolver()
         self.lifecycle_manager = LifecycleManager(
             registry=self.registry,
@@ -147,8 +147,8 @@ class PluginManager:
             try:
                 await self.registry.unregister_plugin(plugin.domain, plugin.name)
                 self.dependency_resolver.remove_plugin(plugin_key)
-            except Exception:
-                pass
+            except Exception as cleanup_error:
+                self._logger.warning(f"Failed to cleanup after plugin registration failure: {cleanup_error}")
 
             raise PluginError(
                 f"Plugin registration failed: {e}",
@@ -294,6 +294,40 @@ class PluginManager:
             raise PluginError(f"Module plugin loading failed: {e}") from e
 
     # Plugin discovery and access
+
+    async def discover_plugins(self) -> dict[str, list[str]]:
+        """
+        Discover plugins in default directories.
+        
+        Returns:
+            Dict mapping domain to list of discovered plugin names
+        """
+        discovered = {}
+        plugin_dirs = self.config.get("registry", {}).get("plugin_dirs", ["plugins", "./plugins"])
+
+        for plugin_dir in plugin_dirs:
+            try:
+                plugin_path = Path(plugin_dir)
+                if plugin_path.exists() and plugin_path.is_dir():
+                    self._logger.info(f"Scanning for plugins in: {plugin_path}")
+
+                    # Basic Python module discovery
+                    for py_file in plugin_path.rglob("*.py"):
+                        if py_file.name.startswith("_"):
+                            continue
+
+                        # Simple heuristic: look for plugin-like files
+                        if "plugin" in py_file.name.lower():
+                            domain = py_file.parent.name if py_file.parent != plugin_path else "default"
+                            if domain not in discovered:
+                                discovered[domain] = []
+                            discovered[domain].append(py_file.stem)
+
+            except Exception as e:
+                self._logger.warning(f"Failed to scan plugin directory {plugin_dir}: {e}")
+
+        self._logger.info(f"Discovered plugins: {discovered}")
+        return discovered
 
     async def get_plugin(self, domain: str, name: str) -> Optional[BasePlugin]:
         """Get a plugin by domain and name."""

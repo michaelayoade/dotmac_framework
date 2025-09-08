@@ -5,10 +5,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
 
-from dotmac_isp.shared.base_repository import BaseRepository
-from dotmac_shared.exceptions import NotFoundError, ValidationError
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
+
+from dotmac_isp.shared.base_repository import BaseRepository
+from dotmac_shared.exceptions import NotFoundError, ValidationError
 
 from ..models.websocket_event import (
     DeliveryStatus,
@@ -32,16 +33,12 @@ class WebSocketEventRepository(BaseRepository):
 
     # Event Operations
 
-    async def create_event(
-        self, tenant_id: str, event_data: dict, user_id: str
-    ) -> WebSocketEvent:
+    async def create_event(self, tenant_id: str, event_data: dict, user_id: str) -> WebSocketEvent:
         """Create a new WebSocket event."""
         try:
             event_id = str(uuid4())
 
-            event = WebSocketEvent(
-                event_id=event_id, tenant_id=tenant_id, created_by=user_id, **event_data
-            )
+            event = WebSocketEvent(event_id=event_id, tenant_id=tenant_id, created_by=user_id, **event_data)
 
             self.session.add(event)
             await self.session.commit()
@@ -55,9 +52,7 @@ class WebSocketEventRepository(BaseRepository):
             logger.error(f"Failed to create WebSocket event: {e}")
             raise ValidationError(f"Failed to create WebSocket event: {str(e)}") from e
 
-    async def get_event_by_id(
-        self, event_id: str, tenant_id: str
-    ) -> Optional[WebSocketEvent]:
+    async def get_event_by_id(self, event_id: str, tenant_id: str) -> Optional[WebSocketEvent]:
         """Get event by ID."""
         return (
             await self.session.query(WebSocketEvent)
@@ -70,9 +65,7 @@ class WebSocketEventRepository(BaseRepository):
             .first()
         )
 
-    async def get_pending_events(
-        self, tenant_id: Optional[str] = None, limit: int = 100
-    ) -> list[WebSocketEvent]:
+    async def get_pending_events(self, tenant_id: Optional[str] = None, limit: int = 100) -> list[WebSocketEvent]:
         """Get pending events ready for delivery."""
         query = self.session.query(WebSocketEvent).filter(
             and_(
@@ -91,13 +84,7 @@ class WebSocketEventRepository(BaseRepository):
         if tenant_id:
             query = query.filter(WebSocketEvent.tenant_id == tenant_id)
 
-        return (
-            await query.order_by(
-                WebSocketEvent.priority.desc(), WebSocketEvent.created_at.asc()
-            )
-            .limit(limit)
-            .all()
-        )
+        return await query.order_by(WebSocketEvent.priority.desc(), WebSocketEvent.created_at.asc()).limit(limit).all()
 
     async def get_events_for_user(
         self,
@@ -121,13 +108,7 @@ class WebSocketEventRepository(BaseRepository):
         if event_types:
             query = query.filter(WebSocketEvent.event_type.in_(event_types))
 
-        return (
-            await query.order_by(
-                WebSocketEvent.priority.desc(), WebSocketEvent.created_at.desc()
-            )
-            .limit(limit)
-            .all()
-        )
+        return await query.order_by(WebSocketEvent.priority.desc(), WebSocketEvent.created_at.desc()).limit(limit).all()
 
     async def update_event_delivery_status(
         self,
@@ -160,13 +141,9 @@ class WebSocketEventRepository(BaseRepository):
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Failed to update event delivery status: {e}")
-            raise ValidationError(
-                f"Failed to update event delivery status: {str(e)}"
-            ) from e
+            raise ValidationError(f"Failed to update event delivery status: {str(e)}") from e
 
-    async def acknowledge_event(
-        self, event_id: str, tenant_id: str, user_id: str
-    ) -> WebSocketEvent:
+    async def acknowledge_event(self, event_id: str, tenant_id: str, user_id: str) -> WebSocketEvent:
         """Acknowledge an event."""
         event = await self.get_event_by_id(event_id, tenant_id)
         if not event:
@@ -195,16 +172,12 @@ class WebSocketEventRepository(BaseRepository):
 
     # Connection Operations
 
-    async def create_connection(
-        self, tenant_id: str, connection_data: dict
-    ) -> WebSocketConnection:
+    async def create_connection(self, tenant_id: str, connection_data: dict) -> WebSocketConnection:
         """Create a new WebSocket connection record."""
         try:
             connection_id = str(uuid4())
 
-            connection = WebSocketConnection(
-                connection_id=connection_id, tenant_id=tenant_id, **connection_data
-            )
+            connection = WebSocketConnection(connection_id=connection_id, tenant_id=tenant_id, **connection_data)
 
             self.session.add(connection)
             await self.session.commit()
@@ -216,17 +189,13 @@ class WebSocketEventRepository(BaseRepository):
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Failed to create WebSocket connection: {e}")
-            raise ValidationError(
-                f"Failed to create WebSocket connection: {str(e)}"
-            ) from e
+            raise ValidationError(f"Failed to create WebSocket connection: {str(e)}") from e
 
     async def get_active_connections(
         self, tenant_id: Optional[str] = None, user_id: Optional[str] = None
     ) -> list[WebSocketConnection]:
         """Get active WebSocket connections."""
-        query = self.session.query(WebSocketConnection).filter(
-            WebSocketConnection.is_active is True
-        )
+        query = self.session.query(WebSocketConnection).filter(WebSocketConnection.is_active is True)
 
         if tenant_id:
             query = query.filter(WebSocketConnection.tenant_id == tenant_id)
@@ -236,9 +205,7 @@ class WebSocketEventRepository(BaseRepository):
 
         return await query.all()
 
-    async def update_connection_activity(
-        self, connection_id: str, activity_data: dict
-    ) -> WebSocketConnection:
+    async def update_connection_activity(self, connection_id: str, activity_data: dict) -> WebSocketConnection:
         """Update connection activity metrics."""
         connection = (
             await self.session.query(WebSocketConnection)
@@ -264,9 +231,7 @@ class WebSocketEventRepository(BaseRepository):
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Failed to update connection activity: {e}")
-            raise ValidationError(
-                f"Failed to update connection activity: {str(e)}"
-            ) from e
+            raise ValidationError(f"Failed to update connection activity: {str(e)}") from e
 
     async def disconnect_connection(self, connection_id: str) -> bool:
         """Mark connection as disconnected."""
@@ -294,9 +259,7 @@ class WebSocketEventRepository(BaseRepository):
 
     # Subscription Operations
 
-    async def create_subscription(
-        self, tenant_id: str, subscription_data: dict, user_id: str
-    ) -> WebSocketSubscription:
+    async def create_subscription(self, tenant_id: str, subscription_data: dict, user_id: str) -> WebSocketSubscription:
         """Create a new WebSocket subscription."""
         try:
             subscription = WebSocketSubscription(
@@ -310,21 +273,15 @@ class WebSocketEventRepository(BaseRepository):
             await self.session.commit()
             await self.session.refresh(subscription)
 
-            logger.info(
-                f"Created WebSocket subscription: {subscription.subscription_name}"
-            )
+            logger.info(f"Created WebSocket subscription: {subscription.subscription_name}")
             return subscription
 
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Failed to create WebSocket subscription: {e}")
-            raise ValidationError(
-                f"Failed to create WebSocket subscription: {str(e)}"
-            ) from e
+            raise ValidationError(f"Failed to create WebSocket subscription: {str(e)}") from e
 
-    async def get_subscriptions_for_connection(
-        self, connection_id: str
-    ) -> list[WebSocketSubscription]:
+    async def get_subscriptions_for_connection(self, connection_id: str) -> list[WebSocketSubscription]:
         """Get active subscriptions for a connection."""
         return (
             await self.session.query(WebSocketSubscription)
@@ -337,9 +294,7 @@ class WebSocketEventRepository(BaseRepository):
             .all()
         )
 
-    async def get_matching_subscriptions(
-        self, event: WebSocketEvent
-    ) -> list[WebSocketSubscription]:
+    async def get_matching_subscriptions(self, event: WebSocketEvent) -> list[WebSocketSubscription]:
         """Get subscriptions that match an event."""
         query = self.session.query(WebSocketSubscription).filter(
             and_(
@@ -369,16 +324,12 @@ class WebSocketEventRepository(BaseRepository):
 
     # Delivery Operations
 
-    async def create_delivery(
-        self, tenant_id: str, delivery_data: dict
-    ) -> WebSocketDelivery:
+    async def create_delivery(self, tenant_id: str, delivery_data: dict) -> WebSocketDelivery:
         """Create a delivery record."""
         try:
             delivery_id = str(uuid4())
 
-            delivery = WebSocketDelivery(
-                delivery_id=delivery_id, tenant_id=tenant_id, **delivery_data
-            )
+            delivery = WebSocketDelivery(delivery_id=delivery_id, tenant_id=tenant_id, **delivery_data)
 
             self.session.add(delivery)
             await self.session.commit()
@@ -399,9 +350,7 @@ class WebSocketEventRepository(BaseRepository):
     ) -> WebSocketDelivery:
         """Update delivery status."""
         delivery = (
-            await self.session.query(WebSocketDelivery)
-            .filter(WebSocketDelivery.delivery_id == delivery_id)
-            .first()
+            await self.session.query(WebSocketDelivery).filter(WebSocketDelivery.delivery_id == delivery_id).first()
         )
 
         if not delivery:
@@ -413,9 +362,7 @@ class WebSocketEventRepository(BaseRepository):
             if status == DeliveryStatus.DELIVERED:
                 delivery.delivered_at = datetime.now(timezone.utc)
             elif status == DeliveryStatus.FAILED:
-                delivery.retry_after = datetime.now(timezone.utc) + timedelta(
-                    minutes=5
-                )  # 5 minute retry
+                delivery.retry_after = datetime.now(timezone.utc) + timedelta(minutes=5)  # 5 minute retry
 
             if delivery_data:
                 for key, value in delivery_data.items():
@@ -434,15 +381,11 @@ class WebSocketEventRepository(BaseRepository):
 
     # Metrics Operations
 
-    async def record_metrics(
-        self, tenant_id: str, metric_data: dict
-    ) -> WebSocketMetrics:
+    async def record_metrics(self, tenant_id: str, metric_data: dict) -> WebSocketMetrics:
         """Record WebSocket metrics."""
         try:
             # Get current hour metrics or create new
-            current_hour = datetime.now(timezone.utc).replace(
-                minute=0, second=0, microsecond=0
-            )
+            current_hour = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
 
             metrics = (
                 await self.session.query(WebSocketMetrics)
@@ -503,9 +446,7 @@ class WebSocketEventRepository(BaseRepository):
 
             # Events by type
             events_by_type = (
-                await self.session.query(
-                    WebSocketEvent.event_type, func.count(WebSocketEvent.id)
-                )
+                await self.session.query(WebSocketEvent.event_type, func.count(WebSocketEvent.id))
                 .filter(
                     and_(
                         WebSocketEvent.tenant_id == tenant_id,
@@ -518,9 +459,7 @@ class WebSocketEventRepository(BaseRepository):
 
             # Events by priority
             events_by_priority = (
-                await self.session.query(
-                    WebSocketEvent.priority, func.count(WebSocketEvent.id)
-                )
+                await self.session.query(WebSocketEvent.priority, func.count(WebSocketEvent.id))
                 .filter(
                     and_(
                         WebSocketEvent.tenant_id == tenant_id,
@@ -557,11 +496,7 @@ class WebSocketEventRepository(BaseRepository):
                 .scalar()
             )
 
-            success_rate = (
-                (successful_deliveries / total_deliveries * 100)
-                if total_deliveries > 0
-                else 0
-            )
+            success_rate = (successful_deliveries / total_deliveries * 100) if total_deliveries > 0 else 0
 
             # Active connections
             active_connections = (
@@ -664,9 +599,7 @@ class WebSocketEventRepository(BaseRepository):
             cutoff_time = datetime.now(timezone.utc) - timedelta(days=days)
 
             old_deliveries = (
-                await self.session.query(WebSocketDelivery)
-                .filter(WebSocketDelivery.attempted_at < cutoff_time)
-                .all()
+                await self.session.query(WebSocketDelivery).filter(WebSocketDelivery.attempted_at < cutoff_time).all()
             )
 
             count = len(old_deliveries)

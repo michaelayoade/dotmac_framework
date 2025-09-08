@@ -37,9 +37,7 @@ class OnboardingRequest(BaseModel):
     tenant_name = Column(String(100), nullable=False)
     tenant_slug = Column(String(100), nullable=False, index=True)
 
-    status = Column(
-        SQLEnum(OnboardingStatus), default=OnboardingStatus.PENDING, index=True
-    )
+    status = Column(SQLEnum(OnboardingStatus), default=OnboardingStatus.PENDING, index=True)
     error_message = Column(String(500), nullable=True)
 
     # Summary/links
@@ -47,12 +45,8 @@ class OnboardingRequest(BaseModel):
     metadata_json = Column(JSON, default=dict, nullable=False)
 
     # Relationships
-    steps = relationship(
-        "OnboardingStep", back_populates="request", cascade="all, delete-orphan"
-    )
-    artifacts = relationship(
-        "OnboardingArtifact", back_populates="request", cascade="all, delete-orphan"
-    )
+    steps = relationship("OnboardingStep", back_populates="request", cascade="all, delete-orphan")
+    artifacts = relationship("OnboardingArtifact", back_populates="request", cascade="all, delete-orphan")
 
 
 class OnboardingStep(BaseModel):
@@ -66,9 +60,7 @@ class OnboardingStep(BaseModel):
         nullable=False,
         index=True,
     )
-    step_key = Column(
-        String(100), nullable=False, index=True
-    )  # e.g., provision_container
+    step_key = Column(String(100), nullable=False, index=True)  # e.g., provision_container
     name = Column(String(200), nullable=False)
     status = Column(SQLEnum(StepStatus), default=StepStatus.PENDING, index=True)
     started_at = Column(DateTime, nullable=True)

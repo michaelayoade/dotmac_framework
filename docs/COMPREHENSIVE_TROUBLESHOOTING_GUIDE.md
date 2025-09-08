@@ -758,26 +758,20 @@ kubectl exec deployment/dotmac-api -n dotmac-production -- env | sort | grep -E 
 
 ### Metrics Collection Issues
 
-**Prometheus Troubleshooting:**
+**SigNoz Troubleshooting:**
 ```bash
-# Check Prometheus targets
-curl http://prometheus:9090/api/v1/targets
+# Check SigNoz Query Service health
+curl http://signoz-query:8080/api/v1/health
 
-# Verify metrics endpoints
-curl http://dotmac-api:8000/metrics
-
-# Check metric scraping
-curl "http://prometheus:9090/api/v1/query?query=up"
+# Verify application OTLP endpoint connectivity (collector)
+nc -z signoz-collector 4317 && echo "OTLP gRPC reachable"
 ```
 
-**Grafana Dashboard Issues:**
+**Dashboard Issues (SigNoz):**
 ```bash
-# Check Grafana connectivity to Prometheus
-curl http://prometheus:9090/api/v1/query?query=up
-
-# Import/export dashboards
-curl -X GET http://grafana:3000/api/dashboards/uid/abc123 \
-  -H "Authorization: Bearer $GRAFANA_TOKEN" > dashboard.json
+# List dashboards via SigNoz API
+curl -s -H "Authorization: Bearer $SIGNOZ_API_KEY" \
+  http://signoz-frontend:3301/api/v1/dashboards | jq '.data | length'
 ```
 
 ### Alert Manager Configuration
@@ -881,7 +875,7 @@ make -f Makefile.readiness schema-check
 
 **Vendor Support:**
 - **Database**: PostgreSQL community, managed service support
-- **Monitoring**: Prometheus/Grafana community slack
+- **Monitoring**: SigNoz community resources
 - **Security**: OWASP community, security vendor support
 
 ### Documentation & Resources
@@ -895,7 +889,7 @@ make -f Makefile.readiness schema-check
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Prometheus Documentation](https://prometheus.io/docs/)
+- [SigNoz Documentation](https://signoz.io/docs/)
 
 ---
 

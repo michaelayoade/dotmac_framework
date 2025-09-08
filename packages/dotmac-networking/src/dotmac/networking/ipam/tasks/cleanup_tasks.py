@@ -8,7 +8,6 @@ from typing import Optional
 
 try:
     from celery import shared_task
-    from celery.exceptions import Retry
 
     CELERY_AVAILABLE = True
 except ImportError:
@@ -23,7 +22,7 @@ except ImportError:
 
 
 try:
-    from sqlalchemy import and_, func, or_
+    from sqlalchemy import func
     from sqlalchemy.orm import Session
 
     SQLALCHEMY_AVAILABLE = True

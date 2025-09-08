@@ -7,10 +7,11 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from fastapi import APIRouter, Body, Depends, Path, Query
+
 from dotmac_shared.api import StandardDependencies, standard_exception_handler
 from dotmac_shared.api.dependencies import get_standard_deps
 from dotmac_shared.schemas import BaseResponseSchema
-from fastapi import APIRouter, Body, Depends, Path, Query
 
 from ..schemas import CreateTicketRequest, TicketResponse, TicketUpdateRequest
 from ..services import ISPTicketingService, get_ticketing_service
@@ -47,14 +48,10 @@ def create_isp_ticketing_router_dry() -> APIRouter:
     @standard_exception_handler
     async def list_tickets(
         status: str | None = Query(None, description="Filter by ticket status"),
-        priority: str
-        | None = Query(
-            None, description="Filter by priority (low, medium, high, critical)"
-        ),
+        priority: str | None = Query(None, description="Filter by priority (low, medium, high, critical)"),
         category: str | None = Query(None, description="Filter by ticket category"),
         customer_id: UUID | None = Query(None, description="Filter by customer ID"),
-        assigned_to: UUID
-        | None = Query(None, description="Filter by assigned technician"),
+        assigned_to: UUID | None = Query(None, description="Filter by assigned technician"),
         limit: int = Query(50, ge=1, le=200, description="Maximum tickets to return"),
         offset: int = Query(0, ge=0, description="Number of tickets to skip"),
         deps: StandardDependencies = Depends(get_standard_deps),
@@ -106,9 +103,7 @@ def create_isp_ticketing_router_dry() -> APIRouter:
     @standard_exception_handler
     async def get_ticket_details(
         ticket_id: UUID = Path(..., description="Ticket ID"),
-        include_history: bool = Query(
-            True, description="Include ticket update history"
-        ),
+        include_history: bool = Query(True, description="Include ticket update history"),
         deps: StandardDependencies = Depends(get_standard_deps),
         service: ISPTicketingService = Depends(get_ticket_service),
     ) -> TicketResponse:
@@ -204,8 +199,7 @@ def create_isp_ticketing_router_dry() -> APIRouter:
     async def close_ticket(
         ticket_id: UUID = Path(..., description="Ticket ID"),
         resolution_notes: str = Body(..., description="Resolution details"),
-        customer_satisfaction: int
-        | None = Body(None, ge=1, le=5, description="Customer satisfaction rating"),
+        customer_satisfaction: int | None = Body(None, ge=1, le=5, description="Customer satisfaction rating"),
         deps: StandardDependencies = Depends(get_standard_deps),
         service: ISPTicketingService = Depends(get_ticket_service),
     ) -> dict[str, str]:
@@ -230,17 +224,13 @@ def create_isp_ticketing_router_dry() -> APIRouter:
     @standard_exception_handler
     async def get_ticket_statistics(
         time_range: str = Query("30d", description="Time range for statistics"),
-        group_by: str = Query(
-            "status", description="Group statistics by (status, priority, category)"
-        ),
+        group_by: str = Query("status", description="Group statistics by (status, priority, category)"),
         deps: StandardDependencies = Depends(get_standard_deps),
         service: ISPTicketingService = Depends(get_ticket_service),
     ) -> dict[str, any]:
         """Get comprehensive ticket statistics and metrics."""
 
-        stats = await service.get_ticket_statistics(
-            tenant_id=deps.tenant_id, time_range=time_range, group_by=group_by
-        )
+        stats = await service.get_ticket_statistics(tenant_id=deps.tenant_id, time_range=time_range, group_by=group_by)
 
         return {
             "statistics": stats,

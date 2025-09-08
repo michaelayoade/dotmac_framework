@@ -32,9 +32,7 @@ class SecretEncryption:
             if not self.master_key:
                 # Generate a new key (for development only)
                 self.master_key = Fernet.generate_key()
-                logger.warning(
-                    "Generated new encryption key - should be configured in production"
-                )
+                logger.warning("Generated new encryption key - should be configured in production")
 
         # Derive key using PBKDF2
         kdf = PBKDF2HMAC(
@@ -97,9 +95,7 @@ class SecretStore(ABC):
         pass
 
     @abstractmethod
-    async def rotate_secret(
-        self, tenant_id: UUID, key: str, new_encrypted_value: str
-    ) -> bool:
+    async def rotate_secret(self, tenant_id: UUID, key: str, new_encrypted_value: str) -> bool:
         """Rotate a secret."""
         pass
 
@@ -148,15 +144,9 @@ class InMemorySecretStore(SecretStore):
     async def list_secrets(self, tenant_id: UUID) -> list[str]:
         """List secret keys for a tenant."""
         tenant_prefix = f"{tenant_id}:"
-        return [
-            key.replace(tenant_prefix, "")
-            for key in self._secrets.keys()
-            if key.startswith(tenant_prefix)
-        ]
+        return [key.replace(tenant_prefix, "") for key in self._secrets.keys() if key.startswith(tenant_prefix)]
 
-    async def rotate_secret(
-        self, tenant_id: UUID, key: str, new_encrypted_value: str
-    ) -> bool:
+    async def rotate_secret(self, tenant_id: UUID, key: str, new_encrypted_value: str) -> bool:
         """Rotate a secret."""
         internal_key = self._make_key(tenant_id, key)
         if internal_key in self._secrets:
@@ -203,9 +193,7 @@ class DatabaseSecretStore(SecretStore):
         logger.info(f"Would list secrets for tenant {tenant_id} from database")
         return []
 
-    async def rotate_secret(
-        self, tenant_id: UUID, key: str, new_encrypted_value: str
-    ) -> bool:
+    async def rotate_secret(self, tenant_id: UUID, key: str, new_encrypted_value: str) -> bool:
         """Rotate a secret in database."""
         # Placeholder - would implement actual database update
         logger.info(f"Would rotate secret {key} for tenant {tenant_id} in database")
@@ -271,17 +259,14 @@ class SecretManager:
 
             # Prepare metadata
             secret_metadata = {
-                "rotation_interval_days": rotation_interval_days
-                or self.rotation_interval_days,
+                "rotation_interval_days": rotation_interval_days or self.rotation_interval_days,
                 "created_at": datetime.now().isoformat(),
                 "auto_generated": False,
                 **(metadata or {}),
             }
 
             # Store in secret store
-            success = await self.secret_store.store_secret(
-                tenant_id, key, encrypted_value, secret_metadata
-            )
+            success = await self.secret_store.store_secret(tenant_id, key, encrypted_value, secret_metadata)
 
             if success:
                 logger.info(f"Stored secret {key} for tenant {tenant_id}")
@@ -349,32 +334,24 @@ class SecretManager:
             logger.error(f"Failed to inject secrets for tenant {config.tenant_id}: {e}")
             raise
 
-    async def _inject_secrets_recursive(
-        self, obj: Any, tenant_id: UUID, path: str = ""
-    ) -> None:
+    async def _inject_secrets_recursive(self, obj: Any, tenant_id: UUID, path: str = "") -> None:
         """Recursively inject secrets into nested objects."""
         if isinstance(obj, dict):
             for key, value in obj.items():
                 current_path = f"{path}.{key}" if path else key
                 if isinstance(value, str):
-                    obj[key] = await self._replace_secret_placeholders(
-                        value, tenant_id, current_path
-                    )
+                    obj[key] = await self._replace_secret_placeholders(value, tenant_id, current_path)
                 elif isinstance(value, (dict, list)):
                     await self._inject_secrets_recursive(value, tenant_id, current_path)
         elif isinstance(obj, list):
             for i, item in enumerate(obj):
                 current_path = f"{path}[{i}]"
                 if isinstance(item, str):
-                    obj[i] = await self._replace_secret_placeholders(
-                        item, tenant_id, current_path
-                    )
+                    obj[i] = await self._replace_secret_placeholders(item, tenant_id, current_path)
                 elif isinstance(item, (dict, list)):
                     await self._inject_secrets_recursive(item, tenant_id, current_path)
 
-    async def _replace_secret_placeholders(
-        self, value: str, tenant_id: UUID, path: str
-    ) -> str:
+    async def _replace_secret_placeholders(self, value: str, tenant_id: UUID, path: str) -> str:
         """Replace secret placeholders in a string value."""
         if not isinstance(value, str):
             return value
@@ -390,16 +367,10 @@ class SecretManager:
             if secret_value is None:
                 # Try to auto-generate the secret if we have a generator
                 if secret_key in self.secret_generators:
-                    logger.info(
-                        f"Auto-generating secret {secret_key} for tenant {tenant_id}"
-                    )
-                    secret_value = await self._auto_generate_secret(
-                        tenant_id, secret_key
-                    )
+                    logger.info(f"Auto-generating secret {secret_key} for tenant {tenant_id}")
+                    secret_value = await self._auto_generate_secret(tenant_id, secret_key)
                 else:
-                    logger.warning(
-                        f"Secret {secret_key} not found for tenant {tenant_id} at {path}"
-                    )
+                    logger.warning(f"Secret {secret_key} not found for tenant {tenant_id} at {path}")
                     continue
 
             placeholder = f"${{SECRET:{secret_key}}}"
@@ -407,9 +378,7 @@ class SecretManager:
 
         return result
 
-    async def _auto_generate_secret(
-        self, tenant_id: UUID, secret_key: str
-    ) -> Optional[str]:
+    async def _auto_generate_secret(self, tenant_id: UUID, secret_key: str) -> Optional[str]:
         """Auto-generate a secret using the appropriate generator."""
         generator = self.secret_generators.get(secret_key)
         if not generator:
@@ -520,9 +489,7 @@ class SecretManager:
         logger.info("Auto-rotation is enabled but not implemented in placeholder")
         return results
 
-    async def validate_secret_access(
-        self, tenant_id: UUID, secret_key: str, user_id: Optional[str] = None
-    ) -> bool:
+    async def validate_secret_access(self, tenant_id: UUID, secret_key: str, user_id: Optional[str] = None) -> bool:
         """
         Validate that access to a secret is authorized.
 
@@ -537,9 +504,7 @@ class SecretManager:
         # Basic validation - in production would implement RBAC
         try:
             # Check if secret exists
-            secret_exists = (
-                await self.secret_store.get_secret(tenant_id, secret_key) is not None
-            )
+            secret_exists = await self.secret_store.get_secret(tenant_id, secret_key) is not None
 
             # For now, allow access if secret exists
             # In production, would check user permissions, API keys, etc.
@@ -611,9 +576,7 @@ class SecretManager:
             backup_json = json.dumps(backup)
             encrypted_backup = self.encryption.encrypt(backup_json)
 
-            logger.info(
-                f"Created backup with {len(backup_data)} secrets for tenant {tenant_id}"
-            )
+            logger.info(f"Created backup with {len(backup_data)} secrets for tenant {tenant_id}")
 
             return {"backup": encrypted_backup}
 

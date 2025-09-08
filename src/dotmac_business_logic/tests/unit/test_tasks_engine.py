@@ -158,7 +158,7 @@ class TestWorkflowManager:
 
         try:
             failing_step({})
-            assert False, "Should have raised exception"
+            raise AssertionError("Should have raised exception")
         except WorkflowError as e:
             assert str(e) == "Step failed"
 

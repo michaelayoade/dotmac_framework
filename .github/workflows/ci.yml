@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python-quality:
+    name: Python Quality + Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy pytest pytest-asyncio pytest-cov build
+
+      - name: Python gates (lint/type/tests/build)
+        run: bash scripts/ci/run_python_quality.sh
+
+      - name: Upload wheels
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels
+          path: |
+            packages/*/dist/*.whl
+            packages/*/dist/*.tar.gz
+
+  migrations:
+    name: DB Migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: dotmac
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" \
+          --health-interval 10s \
+          --health-timeout 5s \
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Alembic + driver
+        run: |
+          python -m pip install --upgrade pip
+          pip install alembic psycopg2-binary
+
+      - name: Run migrations (upgrade/downgrade/upgrade)
+        env:
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/dotmac
+        run: bash scripts/ci/run_migrations.sh
+
+  docker-smoke:
+    name: Docker Build + Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build images
+        run: |
+          docker build -f Dockerfile.management -t dotmac/management:ci .
+          docker build -f Dockerfile.isp -t dotmac/isp:ci .
+
+      - name: Compose up core stack
+        run: |
+          docker compose -f docker-compose.yml up -d
+
+      - name: Wait for health endpoints
+        run: |
+          bash scripts/ci/wait_for_http.sh http://localhost:8080/health 120 || true
+          bash scripts/ci/wait_for_http.sh http://localhost:8081/health 120 || true
+
+      - name: Compose logs (on failure)
+        if: failure()
+        run: docker compose -f docker-compose.yml logs --no-color
+
+      - name: Compose down
+        if: always()
+        run: docker compose -f docker-compose.yml down -v --remove-orphans
+

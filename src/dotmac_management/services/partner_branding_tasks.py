@@ -16,15 +16,14 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from dotmac_management.models.partner_branding import PartnerBrandConfig
-from dotmac_shared.core.logging import get_logger
-
 from dotmac.database.base import get_db_session
 from dotmac.tasks.decorators import (
     TaskExecutionContext,
     background_task,
     high_priority_task,
 )
+from dotmac_management.models.partner_branding import PartnerBrandConfig
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -80,18 +79,14 @@ class PartnerBrandingTaskService:
         """
         async with TaskExecutionContext(
             task_name="generate_comprehensive_brand_assets",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
             metadata={"brand_config_id": brand_config_id},
         ) as ctx:
             await ctx.update_progress(5, "Loading brand configuration")
 
             # Load brand configuration
             with get_db_session() as db:
-                brand_config = (
-                    db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
-                )
+                brand_config = db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
                 if not brand_config:
                     raise ValueError(f"Brand configuration {brand_config_id} not found")
 
@@ -108,44 +103,32 @@ class PartnerBrandingTaskService:
             try:
                 # Step 1: Process logos and generate variants
                 await ctx.update_progress(15, "Processing logo assets")
-                logo_assets = await self._process_logo_assets(
-                    brand_config, regenerate_all, ctx
-                )
+                logo_assets = await self._process_logo_assets(brand_config, regenerate_all, ctx)
                 result["assets_generated"]["logos"] = logo_assets
 
                 # Step 2: Generate advanced color palettes
                 await ctx.update_progress(35, "Generating color palettes")
-                color_assets = await self._generate_advanced_color_palettes(
-                    brand_config, ctx
-                )
+                color_assets = await self._generate_advanced_color_palettes(brand_config, ctx)
                 result["assets_generated"]["colors"] = color_assets
 
                 # Step 3: Create custom CSS and themes
                 await ctx.update_progress(55, "Building custom CSS themes")
-                css_assets = await self._build_custom_css_themes(
-                    brand_config, color_assets, ctx
-                )
+                css_assets = await self._build_custom_css_themes(brand_config, color_assets, ctx)
                 result["assets_generated"]["css"] = css_assets
 
                 # Step 4: Generate typography assets
                 await ctx.update_progress(70, "Processing typography settings")
-                typography_assets = await self._process_typography_assets(
-                    brand_config, ctx
-                )
+                typography_assets = await self._process_typography_assets(brand_config, ctx)
                 result["assets_generated"]["typography"] = typography_assets
 
                 # Step 5: Create brand preview assets
                 await ctx.update_progress(85, "Creating brand preview assets")
-                preview_assets = await self._create_brand_preview_assets(
-                    brand_config, ctx
-                )
+                preview_assets = await self._create_brand_preview_assets(brand_config, ctx)
                 result["assets_generated"]["previews"] = preview_assets
 
                 # Step 6: Validate brand consistency
                 await ctx.update_progress(95, "Validating brand consistency")
-                validation_results = await self._validate_brand_consistency(
-                    brand_config, result["assets_generated"]
-                )
+                validation_results = await self._validate_brand_consistency(brand_config, result["assets_generated"])
                 result["validation"] = validation_results
 
                 # Step 7: Update database with generated assets
@@ -165,10 +148,7 @@ class PartnerBrandingTaskService:
                     extra={
                         "brand_config_id": brand_config_id,
                         "processing_time": result["processing_time"],
-                        "assets_count": sum(
-                            len(assets)
-                            for assets in result["assets_generated"].values()
-                        ),
+                        "assets_count": sum(len(assets) for assets in result["assets_generated"].values()),
                     },
                 )
 
@@ -217,31 +197,22 @@ class PartnerBrandingTaskService:
         """
         async with TaskExecutionContext(
             task_name="process_uploaded_logo",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
         ) as ctx:
             await ctx.update_progress(10, "Validating logo upload")
 
             # Decode and validate logo
             try:
                 logo_bytes = base64.b64decode(logo_data)
-                if (
-                    len(logo_bytes)
-                    > self.processing_config["max_logo_size_mb"] * 1024 * 1024
-                ):
-                    raise ValueError(
-                        f"Logo size exceeds {self.processing_config['max_logo_size_mb']}MB limit"
-                    )
+                if len(logo_bytes) > self.processing_config["max_logo_size_mb"] * 1024 * 1024:
+                    raise ValueError(f"Logo size exceeds {self.processing_config['max_logo_size_mb']}MB limit")
             except Exception as e:
                 raise ValueError(f"Invalid logo data: {e}") from e
 
             await ctx.update_progress(25, "Processing logo image")
 
             # Process logo with multiple formats and sizes
-            processed_variants = await self._process_single_logo(
-                logo_bytes, logo_type, brand_config_id, ctx
-            )
+            processed_variants = await self._process_single_logo(logo_bytes, logo_type, brand_config_id, ctx)
 
             await ctx.update_progress(70, "Uploading to CDN")
 
@@ -260,9 +231,7 @@ class PartnerBrandingTaskService:
             with get_db_session() as db:
                 from dotmac_shared.core.error_utils import db_transaction
 
-                brand_config = (
-                    db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
-                )
+                brand_config = db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
                 if brand_config:
                     with db_transaction(db):
                         if not brand_config.generated_assets:
@@ -283,17 +252,11 @@ class PartnerBrandingTaskService:
 
                         # Update specific logo URL field
                         if logo_type == "primary":
-                            brand_config.logo_url = cdn_urls.get(
-                                "optimized", cdn_urls.get("original")
-                            )
+                            brand_config.logo_url = cdn_urls.get("optimized", cdn_urls.get("original"))
                         elif logo_type == "dark":
-                            brand_config.logo_dark_url = cdn_urls.get(
-                                "optimized", cdn_urls.get("original")
-                            )
+                            brand_config.logo_dark_url = cdn_urls.get("optimized", cdn_urls.get("original"))
                         elif logo_type == "favicon":
-                            brand_config.favicon_url = cdn_urls.get(
-                                "favicon_32", cdn_urls.get("original")
-                            )
+                            brand_config.favicon_url = cdn_urls.get("favicon_32", cdn_urls.get("original"))
 
             await ctx.update_progress(100, "Logo processing completed")
 
@@ -304,9 +267,7 @@ class PartnerBrandingTaskService:
                 "processing_metadata": {
                     "original_size_bytes": len(logo_bytes),
                     "variants_count": len(processed_variants),
-                    "formats_generated": list(
-                        {v["format"] for v in processed_variants.values()}
-                    ),
+                    "formats_generated": list({v["format"] for v in processed_variants.values()}),
                 },
             }
 
@@ -337,16 +298,12 @@ class PartnerBrandingTaskService:
         """
         async with TaskExecutionContext(
             task_name="regenerate_custom_css_themes",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
         ) as ctx:
             await ctx.update_progress(10, "Loading brand configuration")
 
             with get_db_session() as db:
-                brand_config = (
-                    db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
-                )
+                brand_config = db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
                 if not brand_config:
                     raise ValueError(f"Brand configuration {brand_config_id} not found")
 
@@ -365,9 +322,7 @@ class PartnerBrandingTaskService:
             # Generate high contrast variant
             if include_high_contrast:
                 await ctx.update_progress(70, "Generating high contrast theme")
-                high_contrast_css = await self._generate_high_contrast_css(
-                    brand_config, base_css
-                )
+                high_contrast_css = await self._generate_high_contrast_css(brand_config, base_css)
                 css_variants["high_contrast"] = high_contrast_css
 
             await ctx.update_progress(85, "Uploading CSS files")
@@ -392,9 +347,7 @@ class PartnerBrandingTaskService:
             with get_db_session() as db:
                 from dotmac_shared.core.error_utils import db_transaction
 
-                brand_config = (
-                    db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
-                )
+                brand_config = db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
                 if brand_config:
                     with db_transaction(db):
                         if not brand_config.generated_assets:
@@ -413,9 +366,7 @@ class PartnerBrandingTaskService:
                 "brand_config_id": brand_config_id,
                 "css_urls": css_urls,
                 "variants_generated": list(css_variants.keys()),
-                "total_css_size": sum(
-                    len(css.encode("utf-8")) for css in css_variants.values()
-                ),
+                "total_css_size": sum(len(css.encode("utf-8")) for css in css_variants.values()),
             }
 
     @background_task(
@@ -447,16 +398,12 @@ class PartnerBrandingTaskService:
         """
         async with TaskExecutionContext(
             task_name="validate_brand_compliance",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
         ) as ctx:
             await ctx.update_progress(10, "Loading brand configuration")
 
             with get_db_session() as db:
-                brand_config = (
-                    db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
-                )
+                brand_config = db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
                 if not brand_config:
                     raise ValueError(f"Brand configuration {brand_config_id} not found")
 
@@ -486,18 +433,14 @@ class PartnerBrandingTaskService:
                     passed_checks += 1
                 else:
                     validation_results["failed_checks"].append("color_contrast")
-                    validation_results["recommendations"].extend(
-                        contrast_results["recommendations"]
-                    )
+                    validation_results["recommendations"].extend(contrast_results["recommendations"])
 
                 total_checks += 1
 
             # Typography readability
             if check_typography_readability:
                 await ctx.update_progress(50, "Checking typography readability")
-                typography_results = await self._validate_typography_readability(
-                    brand_config
-                )
+                typography_results = await self._validate_typography_readability(brand_config)
                 validation_results["typography"] = typography_results
                 validation_results["checks_performed"].append("typography")
 
@@ -506,18 +449,14 @@ class PartnerBrandingTaskService:
                     passed_checks += 1
                 else:
                     validation_results["failed_checks"].append("typography")
-                    validation_results["recommendations"].extend(
-                        typography_results["recommendations"]
-                    )
+                    validation_results["recommendations"].extend(typography_results["recommendations"])
 
                 total_checks += 1
 
             # Accessibility compliance
             if check_accessibility:
                 await ctx.update_progress(70, "Running accessibility compliance checks")
-                accessibility_results = await self._validate_accessibility_compliance(
-                    brand_config
-                )
+                accessibility_results = await self._validate_accessibility_compliance(brand_config)
                 validation_results["accessibility"] = accessibility_results
                 validation_results["checks_performed"].append("accessibility")
 
@@ -526,17 +465,13 @@ class PartnerBrandingTaskService:
                     passed_checks += 1
                 else:
                     validation_results["failed_checks"].append("accessibility")
-                    validation_results["recommendations"].extend(
-                        accessibility_results["recommendations"]
-                    )
+                    validation_results["recommendations"].extend(accessibility_results["recommendations"])
 
                 total_checks += 1
 
             # Brand consistency checks
             await ctx.update_progress(85, "Validating brand consistency")
-            consistency_results = await self._validate_brand_consistency_detailed(
-                brand_config
-            )
+            consistency_results = await self._validate_brand_consistency_detailed(brand_config)
             validation_results["brand_consistency"] = consistency_results
             validation_results["checks_performed"].append("brand_consistency")
 
@@ -550,9 +485,7 @@ class PartnerBrandingTaskService:
             total_checks += 1
 
             # Calculate overall score
-            validation_results["overall_score"] = (
-                (passed_checks / total_checks * 100) if total_checks > 0 else 0
-            )
+            validation_results["overall_score"] = (passed_checks / total_checks * 100) if total_checks > 0 else 0
 
             # Determine compliance level
             if validation_results["overall_score"] >= 90:
@@ -570,9 +503,7 @@ class PartnerBrandingTaskService:
             with get_db_session() as db:
                 from dotmac_shared.core.error_utils import db_transaction
 
-                brand_config = (
-                    db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
-                )
+                brand_config = db.query(PartnerBrandConfig).filter_by(id=brand_config_id).first()
                 if brand_config:
                     with db_transaction(db):
                         if not brand_config.generated_assets:
@@ -581,9 +512,7 @@ class PartnerBrandingTaskService:
                         brand_config.generated_assets["validation"] = {
                             "results": validation_results,
                             "validated_at": datetime.now(timezone.utc).isoformat(),
-                            "next_validation_due": (
-                                datetime.now(timezone.utc) + timedelta(days=30)
-                            ).isoformat(),
+                            "next_validation_due": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
                         }
 
             await ctx.update_progress(
@@ -612,15 +541,11 @@ class PartnerBrandingTaskService:
 
         # Process dark variant
         if brand_config.logo_dark_url:
-            logo_assets["dark"] = await self._process_logo_from_url(
-                brand_config.logo_dark_url, "dark", brand_config.id
-            )
+            logo_assets["dark"] = await self._process_logo_from_url(brand_config.logo_dark_url, "dark", brand_config.id)
 
         # Generate favicon variants
         if brand_config.logo_url:
-            logo_assets["favicon"] = await self._generate_favicon_variants(
-                brand_config.logo_url, brand_config.id
-            )
+            logo_assets["favicon"] = await self._generate_favicon_variants(brand_config.logo_url, brand_config.id)
 
         return logo_assets
 
@@ -630,9 +555,7 @@ class PartnerBrandingTaskService:
         """Generate advanced color palettes with accessibility considerations."""
         color_assets = {
             "primary_palette": self._generate_color_shades(brand_config.primary_color),
-            "secondary_palette": self._generate_color_shades(
-                brand_config.secondary_color
-            )
+            "secondary_palette": self._generate_color_shades(brand_config.secondary_color)
             if brand_config.secondary_color
             else None,
             "accent_palette": self._generate_color_shades(brand_config.accent_color)
@@ -641,9 +564,7 @@ class PartnerBrandingTaskService:
         }
 
         # Generate complementary colors
-        color_assets["complementary"] = self._generate_complementary_colors(
-            brand_config.primary_color
-        )
+        color_assets["complementary"] = self._generate_complementary_colors(brand_config.primary_color)
 
         # Generate accessible color pairs
         color_assets["accessible_pairs"] = self._generate_accessible_color_pairs(
@@ -667,19 +588,13 @@ class PartnerBrandingTaskService:
         css_themes["base"] = await self._generate_base_css_theme(brand_config)
 
         # Generate dark mode theme
-        css_themes["dark"] = await self._generate_dark_mode_css(
-            brand_config, css_themes["base"]
-        )
+        css_themes["dark"] = await self._generate_dark_mode_css(brand_config, css_themes["base"])
 
         # Generate high contrast theme
-        css_themes["high_contrast"] = await self._generate_high_contrast_css(
-            brand_config, css_themes["base"]
-        )
+        css_themes["high_contrast"] = await self._generate_high_contrast_css(brand_config, css_themes["base"])
 
         # Generate mobile-optimized theme
-        css_themes["mobile"] = await self._generate_mobile_optimized_css(
-            brand_config, css_themes["base"]
-        )
+        css_themes["mobile"] = await self._generate_mobile_optimized_css(brand_config, css_themes["base"])
 
         return css_themes
 
@@ -707,9 +622,7 @@ class PartnerBrandingTaskService:
                 if level <= 500:
                     # Lighter shades
                     lightness_factor = (500 - level) / 500
-                    new_l = min(
-                        1.0, lightness + (1 - lightness) * lightness_factor * 0.8
-                    )
+                    new_l = min(1.0, lightness + (1 - lightness) * lightness_factor * 0.8)
                 else:
                     # Darker shades
                     darkness_factor = (level - 500) / 500
@@ -719,9 +632,7 @@ class PartnerBrandingTaskService:
                 new_r, new_g, new_b = colorsys.hls_to_rgb(h, new_l, s)
 
                 # Convert to hex
-                hex_value = (
-                    f"#{int(new_r*255):02x}{int(new_g*255):02x}{int(new_b*255):02x}"
-                )
+                hex_value = f"#{int(new_r*255):02x}{int(new_g*255):02x}{int(new_b*255):02x}"
                 shades[str(level)] = hex_value
 
             return shades
@@ -746,9 +657,7 @@ class PartnerBrandingTaskService:
             # Direct complement (180 degrees)
             comp_h = (h + 0.5) % 1.0
             comp_r, comp_g, comp_b = colorsys.hls_to_rgb(comp_h, lightness, s)
-            complementary_colors[
-                "complement"
-            ] = f"#{int(comp_r*255):02x}{int(comp_g*255):02x}{int(comp_b*255):02x}"
+            complementary_colors["complement"] = f"#{int(comp_r*255):02x}{int(comp_g*255):02x}{int(comp_b*255):02x}"
 
             # Triadic colors (120 degrees apart)
             tri1_h = (h + 1 / 3) % 1.0
@@ -757,12 +666,8 @@ class PartnerBrandingTaskService:
             tri1_r, tri1_g, tri1_b = colorsys.hls_to_rgb(tri1_h, lightness, s)
             tri2_r, tri2_g, tri2_b = colorsys.hls_to_rgb(tri2_h, lightness, s)
 
-            complementary_colors[
-                "triadic_1"
-            ] = f"#{int(tri1_r*255):02x}{int(tri1_g*255):02x}{int(tri1_b*255):02x}"
-            complementary_colors[
-                "triadic_2"
-            ] = f"#{int(tri2_r*255):02x}{int(tri2_g*255):02x}{int(tri2_b*255):02x}"
+            complementary_colors["triadic_1"] = f"#{int(tri1_r*255):02x}{int(tri1_g*255):02x}{int(tri1_b*255):02x}"
+            complementary_colors["triadic_2"] = f"#{int(tri2_r*255):02x}{int(tri2_g*255):02x}{int(tri2_b*255):02x}"
 
             # Analogous colors (30 degrees apart)
             ana1_h = (h + 1 / 12) % 1.0  # 30 degrees
@@ -771,12 +676,8 @@ class PartnerBrandingTaskService:
             ana1_r, ana1_g, ana1_b = colorsys.hls_to_rgb(ana1_h, lightness, s)
             ana2_r, ana2_g, ana2_b = colorsys.hls_to_rgb(ana2_h, lightness, s)
 
-            complementary_colors[
-                "analogous_1"
-            ] = f"#{int(ana1_r*255):02x}{int(ana1_g*255):02x}{int(ana1_b*255):02x}"
-            complementary_colors[
-                "analogous_2"
-            ] = f"#{int(ana2_r*255):02x}{int(ana2_g*255):02x}{int(ana2_b*255):02x}"
+            complementary_colors["analogous_1"] = f"#{int(ana1_r*255):02x}{int(ana1_g*255):02x}{int(ana1_b*255):02x}"
+            complementary_colors["analogous_2"] = f"#{int(ana2_r*255):02x}{int(ana2_g*255):02x}{int(ana2_b*255):02x}"
 
             return complementary_colors
 
@@ -880,11 +781,7 @@ class PartnerBrandingTaskService:
 
     async def _generate_base_css_theme(self, brand_config):
         """Generate base CSS theme."""
-        return (
-            ":root { --primary-color: "
-            + (brand_config.primary_color or "#3b82f6")
-            + "; }"
-        )
+        return ":root { --primary-color: " + (brand_config.primary_color or "#3b82f6") + "; }"
 
     async def _generate_dark_mode_css(self, brand_config, base_css):
         """Generate dark mode CSS variant."""

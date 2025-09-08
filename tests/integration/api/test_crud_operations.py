@@ -30,7 +30,7 @@ class TestCustomerCRUD:
                 "country": "USA"
             },
             "service_address": {
-                "street": "123 Main St", 
+                "street": "123 Main St",
                 "city": "Anytown",
                 "state": "CA",
                 "zip_code": "90210",
@@ -62,28 +62,28 @@ class TestCustomerCRUD:
                     mock_instance = AsyncMock()
                     mock_instance.create_customer.return_value = sample_customer_response
                     mock_service.return_value = mock_instance
-                    
+
                     mock_get_user.return_value = {"id": "user-123", "tenant_id": "tenant-123"}
                     mock_perms.return_value = lambda: None
-                    
+
                     # Make request
                     headers = {
                         "Authorization": "Bearer test_token",
                         "X-Tenant-ID": "tenant-123"
                     }
-                    
+
                     response = client.post(
                         "/identity/customers",
                         json=sample_customer_data,
                         headers=headers
                     )
-                    
+
                     assert response.status_code == 201
                     data = response.json()
                     assert data["email"] == "john.doe@example.com"
                     assert data["first_name"] == "John"
                     assert data["status"] == "active"
-                    
+
                     # Verify service was called correctly
                     mock_instance.create_customer.assert_called_once()
 
@@ -94,10 +94,10 @@ class TestCustomerCRUD:
             "first_name": "",  # Empty required field
             # Missing last_name
         }
-        
+
         headers = {"Authorization": "Bearer test_token"}
         response = client.post("/identity/customers", json=invalid_data, headers=headers)
-        
+
         assert response.status_code == 422
         assert "validation error" in response.json()["detail"][0]["type"]
 
@@ -110,13 +110,13 @@ class TestCustomerCRUD:
                     mock_instance = AsyncMock()
                     mock_instance.get_customer_by_id.return_value = sample_customer_response
                     mock_service.return_value = mock_instance
-                    
+
                     mock_get_user.return_value = {"id": "user-123", "tenant_id": "tenant-123"}
                     mock_perms.return_value = lambda: None
-                    
+
                     headers = {"Authorization": "Bearer test_token"}
                     response = client.get("/identity/customers/customer-123", headers=headers)
-                    
+
                     assert response.status_code == 200
                     data = response.json()
                     assert data["id"] == "customer-123"
@@ -131,13 +131,13 @@ class TestCustomerCRUD:
                     mock_instance = AsyncMock()
                     mock_instance.get_customer_by_id.return_value = None
                     mock_service.return_value = mock_instance
-                    
+
                     mock_get_user.return_value = {"id": "user-123"}
                     mock_perms.return_value = lambda: None
-                    
+
                     headers = {"Authorization": "Bearer test_token"}
                     response = client.get("/identity/customers/nonexistent-123", headers=headers)
-                    
+
                     assert response.status_code == 404
                     assert "Customer not found" in response.json()["detail"]
 
@@ -150,7 +150,7 @@ class TestCustomerCRUD:
             "last_name": "Smith",
             "status": "active"
         }]
-        
+
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
             with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
@@ -158,13 +158,13 @@ class TestCustomerCRUD:
                     mock_instance = AsyncMock()
                     mock_instance.get_customers_by_status.return_value = customers_list
                     mock_service.return_value = mock_instance
-                    
+
                     mock_get_user.return_value = {"id": "user-123"}
                     mock_perms.return_value = lambda: None
-                    
+
                     headers = {"Authorization": "Bearer test_token"}
                     response = client.get("/identity/customers", headers=headers)
-                    
+
                     assert response.status_code == 200
                     data = response.json()
                     assert len(data) == 2
@@ -179,7 +179,7 @@ class TestCustomerCRUD:
             "first_name": "Search",
             "last_name": "Result"
         }]
-        
+
         with patch('dotmac_isp.modules.identity.router.CustomerService') as mock_service:
             with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 with patch('dotmac.auth.dependencies.require_permissions') as mock_perms:
@@ -187,18 +187,18 @@ class TestCustomerCRUD:
                     mock_instance = AsyncMock()
                     mock_instance.search_customers.return_value = search_results
                     mock_service.return_value = mock_instance
-                    
+
                     mock_get_user.return_value = {"id": "user-123"}
                     mock_perms.return_value = lambda: None
-                    
+
                     headers = {"Authorization": "Bearer test_token"}
                     response = client.get("/identity/customers?search=search", headers=headers)
-                    
+
                     assert response.status_code == 200
                     data = response.json()
                     assert len(data) == 1
                     assert data[0]["email"] == "search@example.com"
-                    
+
                     # Verify service method was called with search term
                     mock_instance.search_customers.assert_called_once_with("search")
 
@@ -250,16 +250,16 @@ class TestServicePlansCRUD:
                 mock_service = AsyncMock()
                 mock_service.create_service_plan.return_value = sample_service_plan_response
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123", "tenant_id": "tenant-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.post(
                     "/services/plans",
                     json=sample_service_plan_data,
                     headers=headers
                 )
-                
+
                 assert response.status_code == 201
                 data = response.json()
                 assert data["name"] == "Premium Internet"
@@ -275,12 +275,12 @@ class TestServicePlansCRUD:
                 mock_service = AsyncMock()
                 mock_service.get_service_plan.return_value = sample_service_plan_response
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.get("/services/plans/plan-123", headers=headers)
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["id"] == "plan-123"
@@ -294,12 +294,12 @@ class TestServicePlansCRUD:
                 mock_service = AsyncMock()
                 mock_service.get_service_plan.return_value = None
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.get("/services/plans/nonexistent-123", headers=headers)
-                
+
                 assert response.status_code == 404
                 assert "Service plan not found" in response.json()["detail"]
 
@@ -315,19 +315,19 @@ class TestServicePlansCRUD:
             "is_active": True,
             "is_public": True
         }]
-        
+
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
             with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.list_service_plans.return_value = plans_list
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.get("/services/plans", headers=headers)
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert len(data) == 2
@@ -342,27 +342,27 @@ class TestServicePlansCRUD:
             "service_type": "internet",
             "is_active": True
         }]
-        
+
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
             with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.list_service_plans.return_value = filtered_plans
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.get(
                     "/services/plans?service_type=internet&is_active=true",
                     headers=headers
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert len(data) == 1
                 assert data[0]["service_type"] == "internet"
-                
+
                 # Verify service was called with correct filters
                 expected_filters = {"service_type": "internet", "is_active": True}
                 mock_service.list_service_plans.assert_called_once()
@@ -381,7 +381,7 @@ class TestServiceInstancesCRUD:
             "service_plan_id": "plan-123",
             "installation_address": {
                 "street": "456 Oak Ave",
-                "city": "Techtown", 
+                "city": "Techtown",
                 "state": "CA",
                 "zip_code": "90211"
             },
@@ -417,16 +417,16 @@ class TestServiceInstancesCRUD:
                 }
                 mock_service.activate_service.return_value = activation_response
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.post(
                     "/services/activate",
                     json=sample_activation_data,
                     headers=headers
                 )
-                
+
                 assert response.status_code == 201
                 data = response.json()
                 assert data["service_instance"]["service_number"] == "SVC-001234"
@@ -440,12 +440,12 @@ class TestServiceInstancesCRUD:
                 mock_service = AsyncMock()
                 mock_service.get_service_instance.return_value = sample_service_instance_response
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.get("/services/instances/service-123", headers=headers)
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["id"] == "service-123"
@@ -460,22 +460,22 @@ class TestServiceInstancesCRUD:
                 updated_response = {**sample_service_instance_response, "status": "suspended"}
                 mock_service.update_service_status.return_value = updated_response
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123", "user_id": "user-123"}
-                
+
                 status_update = {
                     "new_status": "suspended",
                     "reason": "Non-payment",
                     "effective_date": "2024-02-15T00:00:00Z"
                 }
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.patch(
                     "/services/instances/service-123/status",
                     json=status_update,
                     headers=headers
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["status"] == "suspended"
@@ -489,19 +489,19 @@ class TestServiceInstancesCRUD:
                 suspended_response = {**sample_service_instance_response, "status": "suspended"}
                 mock_service.suspend_service.return_value = suspended_response
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123", "user_id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.post(
                     "/services/instances/service-123/suspend?reason=Non-payment",
                     headers=headers
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["status"] == "suspended"
-                
+
                 # Verify service was called with correct parameters
                 mock_service.suspend_service.assert_called_once()
 
@@ -514,15 +514,15 @@ class TestServiceInstancesCRUD:
                 reactivated_response = {**sample_service_instance_response, "status": "active"}
                 mock_service.reactivate_service.return_value = reactivated_response
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123", "user_id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.post(
                     "/services/instances/service-123/reactivate?reason=Payment+received",
                     headers=headers
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["status"] == "active"
@@ -536,15 +536,15 @@ class TestServiceInstancesCRUD:
                 cancelled_response = {**sample_service_instance_response, "status": "cancelled"}
                 mock_service.cancel_service.return_value = cancelled_response
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123", "user_id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.post(
                     "/services/instances/service-123/cancel?reason=Customer+request&effective_date=2024-03-01T00:00:00Z",
                     headers=headers
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["status"] == "cancelled"
@@ -595,16 +595,16 @@ class TestUsageDataCRUD:
                 mock_service = AsyncMock()
                 mock_service.record_service_usage.return_value = sample_usage_response
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.post(
                     "/services/instances/service-123/usage",
                     json=sample_usage_data,
                     headers=headers
                 )
-                
+
                 assert response.status_code == 201
                 data = response.json()
                 assert data["data_downloaded"] == 25000000000
@@ -619,22 +619,22 @@ class TestUsageDataCRUD:
             "data_downloaded": 30000000000,
             "data_uploaded": 6000000000
         }]
-        
+
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
             with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
                 mock_service.get_service_usage.return_value = usage_list
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.get(
                     "/services/instances/service-123/usage?start_date=2024-01-15&end_date=2024-01-16",
                     headers=headers
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert len(data) == 2
@@ -653,46 +653,35 @@ class TestBulkOperations:
             "reason": "Maintenance window",
             "effective_date": None
         }
-        
-        expected_response = {
-            "total_requested": 3,
-            "successful": 3,
-            "failed": 0,
-            "results": [
-                {"service_id": "service-123", "status": "success", "service_number": "SVC-001234"},
-                {"service_id": "service-456", "status": "success", "service_number": "SVC-001235"},
-                {"service_id": "service-789", "status": "success", "service_number": "SVC-001236"}
-            ],
-            "operation_id": "operation-123"
-        }
-        
+
+
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
             with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
-                
+
                 def mock_suspend(service_id, reason, user_id):
                     service_numbers = {
                         "service-123": "SVC-001234",
-                        "service-456": "SVC-001235", 
+                        "service-456": "SVC-001235",
                         "service-789": "SVC-001236"
                     }
                     return type('MockResponse', (), {
                         'service_number': service_numbers[str(service_id)]
                     })()
-                
+
                 mock_service.suspend_service.side_effect = mock_suspend
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123", "user_id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.post(
                     "/services/bulk-operation",
                     json=bulk_request,
                     headers=headers
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["total_requested"] == 3
@@ -707,30 +696,30 @@ class TestBulkOperations:
             "operation": "suspend",
             "reason": "Test suspension"
         }
-        
+
         with patch('dotmac_isp.modules.services.router.get_services_service') as mock_get_service:
             with patch('dotmac.auth.dependencies.get_current_user') as mock_get_user:
                 # Setup mocks
                 mock_service = AsyncMock()
-                
+
                 def mock_suspend(service_id, reason, user_id):
                     if str(service_id) == "service-123":
                         return type('MockResponse', (), {'service_number': 'SVC-001234'})()
                     else:
                         raise Exception("Service not found")
-                
+
                 mock_service.suspend_service.side_effect = mock_suspend
                 mock_get_service.return_value = mock_service
-                
+
                 mock_get_user.return_value = {"id": "user-123", "user_id": "user-123"}
-                
+
                 headers = {"Authorization": "Bearer test_token"}
                 response = client.post(
                     "/services/bulk-operation",
                     json=bulk_request,
                     headers=headers
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["total_requested"] == 2

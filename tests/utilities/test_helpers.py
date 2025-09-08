@@ -26,9 +26,12 @@ try:
     from dotmac_shared.database.session import get_async_db
 except ImportError:
     # Handle missing imports gracefully for testing
-    get_async_db = lambda: None
-    get_current_user = lambda: None
-    get_settings = lambda: None
+    def get_async_db():
+        return None
+    def get_current_user():
+        return None
+    def get_settings():
+        return None
 
 
 fake = Faker()
@@ -223,7 +226,7 @@ def create_mock_settings(**overrides) -> MagicMock:
 
     # Default settings that match DotMac structure
     defaults = {
-        "database_url": "sqlite:///test.db",
+        "database_url": "sqlite:///:memory:",
         "redis_url": "redis://localhost:6379/15",
         "secret_key": "test-secret-key",
         "environment": "testing",
@@ -244,8 +247,9 @@ def create_mock_settings(**overrides) -> MagicMock:
 
 async def create_unified_test_client():
     """Create FastAPI test client using the unified factory."""
-    from dotmac_shared.application.factory import create_isp_framework_app
     from fastapi.testclient import TestClient
+
+    from dotmac_shared.application.factory import create_isp_framework_app
 
     # Create app using the unified factory in development mode
     app = await create_isp_framework_app(tenant_config=None)  # None = development mode

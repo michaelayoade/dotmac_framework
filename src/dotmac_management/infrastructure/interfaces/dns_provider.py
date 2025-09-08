@@ -79,16 +79,12 @@ class IDNSProvider(ABC):
         pass
 
     @abstractmethod
-    async def resolve_domain(
-        self, domain: str, record_type: str = "A"
-    ) -> dict[str, Any]:
+    async def resolve_domain(self, domain: str, record_type: str = "A") -> dict[str, Any]:
         """Resolve DNS domain"""
         pass
 
     @abstractmethod
-    async def check_dns_propagation(
-        self, domain: str, expected_value: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def check_dns_propagation(self, domain: str, expected_value: Optional[str] = None) -> dict[str, Any]:
         """Check DNS propagation status"""
         pass
 

@@ -1,0 +1,96 @@
+# Gate E-0a: Core Infrastructure Layer
+# Dependencies: None
+# Purpose: Fundamental data persistence and secrets management
+
+version: '3.8'
+
+services:
+  # ===== CORE DATA LAYER =====
+  
+  postgres-shared:
+    image: postgres:15-alpine
+    container_name: dotmac-postgres-shared
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dotmac_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: "dotmac_isp,mgmt_platform,dotmac_tenants,dotmac_analytics"
+    volumes:
+      - postgres_shared_data:/var/lib/postgresql/data
+      - ./shared/deployments/scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
+    ports:
+      - "5434:5432"
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dotmac_admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  redis-shared:
+    image: redis:7-alpine
+    container_name: dotmac-redis-shared
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --databases 16
+    volumes:
+      - redis_shared_data:/data
+    ports:
+      - "6378:6379"
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  openbao-shared:
+    image: quay.io/openbao/openbao:latest
+    container_name: dotmac-openbao-shared
+    cap_add:
+      - IPC_LOCK
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN}
+      BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+      BAO_LOG_LEVEL: info
+    ports:
+      - "8200:8200"
+    volumes:
+      - openbao_shared_data:/openbao/file
+      - ./shared/deployments/openbao:/openbao/config:ro
+    command: server -dev -dev-no-store-token
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8200/v1/sys/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+volumes:
+  postgres_shared_data:
+    name: dotmac-postgres-shared-data
+  redis_shared_data:
+    name: dotmac-redis-shared-data
+  openbao_shared_data:
+    name: dotmac-openbao-shared-data
+
+networks:
+  dotmac-network:
+    driver: bridge
+    name: dotmac-network

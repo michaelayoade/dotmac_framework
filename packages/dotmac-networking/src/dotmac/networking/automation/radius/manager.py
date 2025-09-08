@@ -294,10 +294,11 @@ class RADIUSManager:
         header = struct.pack("!BBH", packet.packet_type, packet.packet_id, length)
 
         # Calculate response authenticator
+        # MD5 is required by RADIUS protocol RFC 2865 - not used for security
         auth_data = (
             header + packet.authenticator + attrs_data + shared_secret.encode("utf-8")
         )
-        response_auth = hashlib.md5(auth_data).digest()
+        response_auth = hashlib.md5(auth_data, usedforsecurity=False).digest()  # nosec B324
 
         return header + response_auth + attrs_data
 

@@ -51,9 +51,7 @@ class MiddlewareManager:
                     return None
                 current_request = result
             except Exception as e:
-                logger.error(
-                    f"Error in middleware {middleware.__class__.__name__}: {e}"
-                )
+                logger.error(f"Error in middleware {middleware.__class__.__name__}: {e}")
                 raise
 
         return current_request
@@ -65,13 +63,9 @@ class MiddlewareManager:
         # Process in reverse order for response
         for middleware in reversed(self.middleware_stack):
             try:
-                current_response = await middleware.process_response(
-                    request, current_response
-                )
+                current_response = await middleware.process_response(request, current_response)
             except Exception as e:
-                logger.error(
-                    f"Error in middleware {middleware.__class__.__name__}: {e}"
-                )
+                logger.error(f"Error in middleware {middleware.__class__.__name__}: {e}")
                 raise
 
         return current_response

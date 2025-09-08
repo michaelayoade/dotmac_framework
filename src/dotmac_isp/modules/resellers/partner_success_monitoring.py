@@ -112,17 +112,11 @@ class PartnerSuccessMetric(Base):
     # Engagement metrics
     portal_login_frequency = Column(Numeric(5, 2), default=0)  # logins per week
     marketing_material_usage = Column(Numeric(5, 2), default=0)  # usage score 0-100
-    community_participation = Column(
-        Numeric(5, 2), default=0
-    )  # participation score 0-100
+    community_participation = Column(Numeric(5, 2), default=0)  # participation score 0-100
 
     # Calculated scores
-    performance_trend = Column(
-        String(20), nullable=True
-    )  # improving, declining, stable
-    benchmark_comparison = Column(
-        Numeric(5, 2), default=0
-    )  # vs peer average, percentage
+    performance_trend = Column(String(20), nullable=True)  # improving, declining, stable
+    benchmark_comparison = Column(Numeric(5, 2), default=0)  # vs peer average, percentage
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -154,9 +148,7 @@ class PartnerAlert(Base):
     triggered_at = Column(DateTime, default=datetime.utcnow)
     acknowledged_at = Column(DateTime, nullable=True)
     resolved_at = Column(DateTime, nullable=True)
-    status = Column(
-        String(20), default="open"
-    )  # open, acknowledged, resolved, dismissed
+    status = Column(String(20), default="open")  # open, acknowledged, resolved, dismissed
 
     # Alert context
     triggering_metrics = Column(JSON, default=dict)
@@ -187,9 +179,7 @@ class PartnerInterventionRecord(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     intervention_id = Column(String(100), nullable=False, unique=True, index=True)
     reseller_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    alert_id = Column(
-        UUID(as_uuid=True), ForeignKey("partner_alerts.id"), nullable=True
-    )
+    alert_id = Column(UUID(as_uuid=True), ForeignKey("partner_alerts.id"), nullable=True)
 
     # Intervention details
     intervention_type = Column(String(100), nullable=False)
@@ -200,9 +190,7 @@ class PartnerInterventionRecord(Base):
     planned_date = Column(DateTime, nullable=True)
     executed_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
-    execution_status = Column(
-        String(50), default="planned"
-    )  # planned, in_progress, completed, cancelled
+    execution_status = Column(String(50), default="planned")  # planned, in_progress, completed, cancelled
 
     # Assignment
     assigned_to = Column(String(200), nullable=False)
@@ -254,25 +242,17 @@ class PartnerSuccessEngine:
         if not reseller:
             raise ValueError(f"Reseller {reseller_id} not found")
 
-        customers = await self.customer_service.list_for_reseller(
-            reseller_id, limit=1000
-        )
+        customers = await self.customer_service.list_for_reseller(reseller_id, limit=1000)
 
         # Calculate component scores (0-100 each)
         component_scores = {
-            "revenue_performance": await self._calculate_revenue_score(
-                reseller, customers
-            ),
+            "revenue_performance": await self._calculate_revenue_score(reseller, customers),
             "customer_acquisition": await self._calculate_acquisition_score(customers),
             "customer_retention": await self._calculate_retention_score(customers),
             "engagement_level": await self._calculate_engagement_score(reseller_id),
             "growth_trajectory": await self._calculate_growth_score(reseller_id),
-            "operational_excellence": await self._calculate_operational_score(
-                reseller_id
-            ),
-            "partner_satisfaction": await self._calculate_satisfaction_score(
-                reseller_id
-            ),
+            "operational_excellence": await self._calculate_operational_score(reseller_id),
+            "partner_satisfaction": await self._calculate_satisfaction_score(reseller_id),
         }
 
         # Component weights (must sum to 1.0)
@@ -287,10 +267,7 @@ class PartnerSuccessEngine:
         }
 
         # Calculate weighted health score
-        health_score = sum(
-            component_scores[component] * weights[component]
-            for component in component_scores
-        )
+        health_score = sum(component_scores[component] * weights[component] for component in component_scores)
 
         # Determine health status
         health_status = self._determine_health_status(health_score)
@@ -299,9 +276,7 @@ class PartnerSuccessEngine:
         risk_factors = self._identify_risk_factors(component_scores, customers)
 
         # Generate recommendations
-        recommendations = self._generate_health_recommendations(
-            component_scores, health_status
-        )
+        recommendations = self._generate_health_recommendations(component_scores, health_status)
 
         health_analysis = {
             "reseller_id": reseller_id,
@@ -313,9 +288,7 @@ class PartnerSuccessEngine:
             "risk_factors": risk_factors,
             "recommendations": recommendations,
             "trend_analysis": await self._calculate_health_trend(reseller_id),
-            "benchmark_comparison": await self._compare_to_benchmarks(
-                health_score, component_scores
-            ),
+            "benchmark_comparison": await self._compare_to_benchmarks(health_score, component_scores),
             "next_assessment_due": (calculation_date + timedelta(days=7)).isoformat(),
         }
 
@@ -324,9 +297,7 @@ class PartnerSuccessEngine:
 
         return health_analysis
 
-    async def monitor_partner_alerts(
-        self, reseller_id: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def monitor_partner_alerts(self, reseller_id: Optional[str] = None) -> dict[str, Any]:
         """Monitor and generate partner success alerts"""
 
         alerts_generated = []
@@ -339,36 +310,26 @@ class PartnerSuccessEngine:
 
         for reseller in resellers:
             # Calculate current health score
-            health_analysis = await self.calculate_partner_health_score(
-                reseller.reseller_id
-            )
+            health_analysis = await self.calculate_partner_health_score(reseller.reseller_id)
 
             # Check for alert conditions
-            partner_alerts = await self._evaluate_alert_conditions(
-                reseller.reseller_id, health_analysis
-            )
+            partner_alerts = await self._evaluate_alert_conditions(reseller.reseller_id, health_analysis)
 
             for alert_data in partner_alerts:
                 # Create alert record
-                alert = await self._create_partner_alert(
-                    reseller.reseller_id, alert_data
-                )
+                alert = await self._create_partner_alert(reseller.reseller_id, alert_data)
                 alerts_generated.append(alert)
 
                 # Trigger immediate intervention if critical
                 if alert["severity"] == AlertSeverity.CRITICAL.value:
-                    await self._trigger_immediate_intervention(
-                        reseller.reseller_id, alert["alert_id"]
-                    )
+                    await self._trigger_immediate_intervention(reseller.reseller_id, alert["alert_id"])
 
         monitoring_summary = {
             "monitoring_date": datetime.now(timezone.utc).isoformat(),
             "resellers_monitored": len(resellers),
             "total_alerts_generated": len(alerts_generated),
             "alert_breakdown": self._summarize_alerts(alerts_generated),
-            "immediate_interventions": len(
-                [a for a in alerts_generated if a["severity"] == "critical"]
-            ),
+            "immediate_interventions": len([a for a in alerts_generated if a["severity"] == "critical"]),
             "alerts": alerts_generated,
         }
 
@@ -395,14 +356,11 @@ class PartnerSuccessEngine:
         # Create intervention record
         intervention_record = PartnerInterventionRecord(
             intervention_id=intervention_id,
-            reseller_id=UUID(reseller_id)
-            if isinstance(reseller_id, str)
-            else reseller_id,
+            reseller_id=UUID(reseller_id) if isinstance(reseller_id, str) else reseller_id,
             intervention_type=intervention_type,
             intervention_title=intervention_plan["title"],
             intervention_description=intervention_plan["description"],
-            planned_date=datetime.now(timezone.utc)
-            + timedelta(days=intervention_plan.get("delay_days", 1)),
+            planned_date=datetime.now(timezone.utc) + timedelta(days=intervention_plan.get("delay_days", 1)),
             assigned_to=intervention_plan["assigned_to"],
             estimated_effort_hours=intervention_plan.get("estimated_hours", 2),
             resources_allocated=intervention_plan.get("resources", []),
@@ -457,17 +415,13 @@ class PartnerSuccessEngine:
                 "call_scheduled": outreach_content.get("call_script") is not None,
                 "resources_shared": len(outreach_content.get("resources", [])),
             },
-            "expected_response_timeframe": outreach_content.get(
-                "response_timeframe", "3-5 business days"
-            ),
+            "expected_response_timeframe": outreach_content.get("response_timeframe", "3-5 business days"),
             "follow_up_scheduled": outreach_content.get("follow_up_date"),
             "success_criteria": outreach_content.get("success_criteria", []),
         }
 
         # Log the outreach activity
-        await self._log_partner_activity(
-            reseller_id, "proactive_outreach", execution_result
-        )
+        await self._log_partner_activity(reseller_id, "proactive_outreach", execution_result)
 
         return execution_result
 
@@ -486,9 +440,7 @@ class PartnerSuccessEngine:
         }
 
         # Get current health score for comparison
-        current_health = await self.calculate_partner_health_score(
-            intervention_data["reseller_id"]
-        )
+        current_health = await self.calculate_partner_health_score(intervention_data["reseller_id"])
 
         # Calculate effectiveness metrics
         effectiveness_analysis = {
@@ -504,13 +456,9 @@ class PartnerSuccessEngine:
                 "measurement_date": datetime.now(timezone.utc).isoformat(),
             },
             "improvement_metrics": {
-                "health_score_change": current_health["health_score"]
-                - intervention_data["baseline_health_score"],
+                "health_score_change": current_health["health_score"] - intervention_data["baseline_health_score"],
                 "improvement_percentage": (
-                    (
-                        current_health["health_score"]
-                        - intervention_data["baseline_health_score"]
-                    )
+                    (current_health["health_score"] - intervention_data["baseline_health_score"])
                     / intervention_data["baseline_health_score"]
                     * 100
                 ),
@@ -542,9 +490,7 @@ class PartnerSuccessEngine:
         # Get comprehensive partner data
         health_analysis = await self.calculate_partner_health_score(reseller_id)
         reseller = await self.reseller_service.get_by_id(reseller_id)
-        customers = await self.customer_service.list_for_reseller(
-            reseller_id, limit=1000
-        )
+        customers = await self.customer_service.list_for_reseller(reseller_id, limit=1000)
 
         # Get recent alerts and interventions
         recent_alerts = await self._get_recent_alerts(reseller_id, days=30)
@@ -565,18 +511,10 @@ class PartnerSuccessEngine:
             # Key Performance Indicators
             "kpi_summary": {
                 "total_customers": len(customers),
-                "active_customers": len(
-                    [c for c in customers if c.relationship_status == "active"]
-                ),
-                "monthly_recurring_revenue": float(
-                    sum(c.monthly_recurring_revenue for c in customers)
-                ),
-                "customer_acquisition_rate": health_analysis["component_scores"][
-                    "customer_acquisition"
-                ],
-                "retention_rate": health_analysis["component_scores"][
-                    "customer_retention"
-                ],
+                "active_customers": len([c for c in customers if c.relationship_status == "active"]),
+                "monthly_recurring_revenue": float(sum(c.monthly_recurring_revenue for c in customers)),
+                "customer_acquisition_rate": health_analysis["component_scores"]["customer_acquisition"],
+                "retention_rate": health_analysis["component_scores"]["customer_retention"],
                 "growth_rate": health_analysis["component_scores"]["growth_trajectory"],
             },
             # Health Component Breakdown
@@ -585,40 +523,26 @@ class PartnerSuccessEngine:
             "recent_activity": {
                 "alerts_last_30_days": len(recent_alerts),
                 "interventions_active": len(active_interventions),
-                "last_significant_event": await self._get_last_significant_event(
-                    reseller_id
-                ),
+                "last_significant_event": await self._get_last_significant_event(reseller_id),
                 "upcoming_milestones": await self._get_upcoming_milestones(reseller_id),
             },
             # Risk Assessment
             "risk_assessment": {
                 "risk_factors": health_analysis["risk_factors"],
                 "risk_score": self._calculate_risk_score(health_analysis),
-                "mitigation_strategies": await self._get_mitigation_strategies(
-                    reseller_id, health_analysis
-                ),
+                "mitigation_strategies": await self._get_mitigation_strategies(reseller_id, health_analysis),
             },
             # Success Opportunities
             "opportunities": {
-                "immediate_wins": await self._identify_immediate_wins(
-                    reseller_id, health_analysis
-                ),
-                "expansion_potential": await self._assess_expansion_potential(
-                    reseller_id
-                ),
-                "capability_gaps": await self._identify_capability_gaps(
-                    reseller_id, health_analysis
-                ),
+                "immediate_wins": await self._identify_immediate_wins(reseller_id, health_analysis),
+                "expansion_potential": await self._assess_expansion_potential(reseller_id),
+                "capability_gaps": await self._identify_capability_gaps(reseller_id, health_analysis),
             },
             # Recommendations
             "recommendations": {
                 "priority_actions": health_analysis["recommendations"][:3],
-                "suggested_interventions": await self._suggest_interventions(
-                    reseller_id, health_analysis
-                ),
-                "resource_recommendations": await self._recommend_resources(
-                    reseller_id, health_analysis
-                ),
+                "suggested_interventions": await self._suggest_interventions(reseller_id, health_analysis),
+                "resource_recommendations": await self._recommend_resources(reseller_id, health_analysis),
             },
             # Benchmark Comparison
             "benchmarks": health_analysis["benchmark_comparison"],
@@ -633,9 +557,7 @@ class PartnerSuccessEngine:
                     }
                     for i in active_interventions
                 ],
-                "recommended_timeline": await self._generate_timeline(
-                    reseller_id, health_analysis
-                ),
+                "recommended_timeline": await self._generate_timeline(reseller_id, health_analysis),
             },
         }
 
@@ -656,11 +578,7 @@ class PartnerSuccessEngine:
     async def _calculate_acquisition_score(self, customers) -> float:
         """Calculate customer acquisition score (0-100)"""
         # Calculate recent acquisitions
-        recent_customers = [
-            c
-            for c in customers
-            if c.created_at >= datetime.now(timezone.utc) - timedelta(days=90)
-        ]
+        recent_customers = [c for c in customers if c.created_at >= datetime.now(timezone.utc) - timedelta(days=90)]
 
         acquisition_rate = len(recent_customers) / 3  # per month
         target_rate = 5  # 5 new customers per month target
@@ -731,9 +649,7 @@ class PartnerSuccessEngine:
         else:
             return PartnerHealthStatus.CRITICAL
 
-    def _identify_risk_factors(
-        self, component_scores: dict[str, float], customers
-    ) -> list[str]:
+    def _identify_risk_factors(self, component_scores: dict[str, float], customers) -> list[str]:
         """Identify partner risk factors"""
         risk_factors = []
 
@@ -768,9 +684,7 @@ class PartnerSuccessEngine:
             recommendations.append("Provide additional sales training and support")
 
         if component_scores["engagement_level"] < 60:
-            recommendations.append(
-                "Increase partner engagement through training and resources"
-            )
+            recommendations.append("Increase partner engagement through training and resources")
 
         if component_scores["revenue_performance"] < 70:
             recommendations.append("Analyze and adjust commission structure if needed")
@@ -787,16 +701,8 @@ class PartnerSuccessEngine:
         ]
 
         if len(historical_scores) >= 2:
-            recent_trend = (
-                historical_scores[-1]["score"] - historical_scores[-2]["score"]
-            )
-            direction = (
-                "improving"
-                if recent_trend > 0
-                else "declining"
-                if recent_trend < 0
-                else "stable"
-            )
+            recent_trend = historical_scores[-1]["score"] - historical_scores[-2]["score"]
+            direction = "improving" if recent_trend > 0 else "declining" if recent_trend < 0 else "stable"
         else:
             recent_trend = 0
             direction = "stable"
@@ -807,9 +713,7 @@ class PartnerSuccessEngine:
             "historical_scores": historical_scores,
         }
 
-    async def _compare_to_benchmarks(
-        self, health_score: float, component_scores: dict[str, float]
-    ) -> dict[str, Any]:
+    async def _compare_to_benchmarks(self, health_score: float, component_scores: dict[str, float]) -> dict[str, Any]:
         """Compare partner metrics to benchmarks"""
         # Simulate benchmark data
         benchmarks = {
@@ -826,20 +730,14 @@ class PartnerSuccessEngine:
         }
 
         comparison = {
-            "vs_peer_average": round(
-                health_score - benchmarks["peer_average_health_score"], 1
-            ),
-            "vs_industry_average": round(
-                health_score - benchmarks["industry_average"], 1
-            ),
+            "vs_peer_average": round(health_score - benchmarks["peer_average_health_score"], 1),
+            "vs_industry_average": round(health_score - benchmarks["industry_average"], 1),
             "percentile_ranking": min(
                 95,
                 max(5, int((health_score / benchmarks["top_quartile_threshold"]) * 85)),
             ),
             "component_vs_benchmark": {
-                component: round(
-                    score - benchmarks["component_benchmarks"][component], 1
-                )
+                component: round(score - benchmarks["component_benchmarks"][component], 1)
                 for component, score in component_scores.items()
                 if component in benchmarks["component_benchmarks"]
             },
@@ -847,14 +745,10 @@ class PartnerSuccessEngine:
 
         return comparison
 
-    async def _save_health_metrics(
-        self, reseller_id: str, health_analysis: dict[str, Any], metric_date: date
-    ):
+    async def _save_health_metrics(self, reseller_id: str, health_analysis: dict[str, Any], metric_date: date):
         """Save health metrics to database"""
         # In production, this would save to the PartnerSuccessMetric table
-        logger.info(
-            f"💾 Saving health metrics for {reseller_id}: Score {health_analysis['health_score']}"
-        )
+        logger.info(f"💾 Saving health metrics for {reseller_id}: Score {health_analysis['health_score']}")
 
     # Additional helper methods would continue here...
     # (Implementation continues with alert evaluation, intervention planning, etc.)
@@ -883,9 +777,7 @@ class PartnerSuccessEngine:
 
         return alerts
 
-    async def _create_partner_alert(
-        self, reseller_id: str, alert_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _create_partner_alert(self, reseller_id: str, alert_data: dict[str, Any]) -> dict[str, Any]:
         """Create partner alert record"""
         alert_id = f"ALERT_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6].upper()}"
 
@@ -904,9 +796,7 @@ class PartnerSuccessEngine:
 
     async def _trigger_immediate_intervention(self, reseller_id: str, alert_id: str):
         """Trigger immediate intervention for critical alerts"""
-        logger.info(
-            f"🚨 Triggering immediate intervention for {reseller_id} (Alert: {alert_id})"
-        )
+        logger.info(f"🚨 Triggering immediate intervention for {reseller_id} (Alert: {alert_id})")
 
     def _summarize_alerts(self, alerts: list[dict[str, Any]]) -> dict[str, int]:
         """Summarize alerts by severity"""
@@ -950,9 +840,7 @@ class PartnerSuccessEngine:
             "success_criteria": ["Response received", "Meeting scheduled"],
         }
 
-    async def _log_partner_activity(
-        self, reseller_id: str, activity_type: str, activity_data: dict[str, Any]
-    ):
+    async def _log_partner_activity(self, reseller_id: str, activity_type: str, activity_data: dict[str, Any]):
         logger.info(f"📝 Logged activity: {activity_type} for {reseller_id}")
 
     def _calculate_effectiveness_rating(
@@ -970,9 +858,7 @@ class PartnerSuccessEngine:
         return ["Continue monitoring progress", "Schedule follow-up in 30 days"]
 
     # More placeholder methods for dashboard generation...
-    async def _get_recent_alerts(
-        self, reseller_id: str, days: int
-    ) -> list[dict[str, Any]]:
+    async def _get_recent_alerts(self, reseller_id: str, days: int) -> list[dict[str, Any]]:
         return []
 
     async def _get_active_interventions(self, reseller_id: str) -> list[dict[str, Any]]:
@@ -987,9 +873,7 @@ class PartnerSuccessEngine:
         else:
             return "low"
 
-    async def _get_last_significant_event(
-        self, reseller_id: str
-    ) -> Optional[dict[str, Any]]:
+    async def _get_last_significant_event(self, reseller_id: str) -> Optional[dict[str, Any]]:
         return {
             "event_type": "new_customer_acquisition",
             "date": (datetime.now(timezone.utc) - timedelta(days=5)).isoformat(),
@@ -1008,18 +892,14 @@ class PartnerSuccessEngine:
     def _calculate_risk_score(self, health_analysis: dict[str, Any]) -> float:
         return max(0, 100 - health_analysis["health_score"])
 
-    async def _get_mitigation_strategies(
-        self, reseller_id: str, health_analysis: dict[str, Any]
-    ) -> list[str]:
+    async def _get_mitigation_strategies(self, reseller_id: str, health_analysis: dict[str, Any]) -> list[str]:
         return [
             "Focus on customer retention",
             "Increase sales activity",
             "Enhance partner engagement",
         ]
 
-    async def _identify_immediate_wins(
-        self, reseller_id: str, health_analysis: dict[str, Any]
-    ) -> list[str]:
+    async def _identify_immediate_wins(self, reseller_id: str, health_analysis: dict[str, Any]) -> list[str]:
         return [
             "Contact warm prospects",
             "Follow up on pending proposals",
@@ -1033,18 +913,14 @@ class PartnerSuccessEngine:
             "new_service_opportunities": ["managed_services", "cloud_solutions"],
         }
 
-    async def _identify_capability_gaps(
-        self, reseller_id: str, health_analysis: dict[str, Any]
-    ) -> list[str]:
+    async def _identify_capability_gaps(self, reseller_id: str, health_analysis: dict[str, Any]) -> list[str]:
         return [
             "Technical certifications",
             "Sales methodology training",
             "Customer success skills",
         ]
 
-    async def _suggest_interventions(
-        self, reseller_id: str, health_analysis: dict[str, Any]
-    ) -> list[dict[str, str]]:
+    async def _suggest_interventions(self, reseller_id: str, health_analysis: dict[str, Any]) -> list[dict[str, str]]:
         return [
             {"type": "success_coaching", "priority": "high", "timeline": "1 week"},
             {
@@ -1054,18 +930,14 @@ class PartnerSuccessEngine:
             },
         ]
 
-    async def _recommend_resources(
-        self, reseller_id: str, health_analysis: dict[str, Any]
-    ) -> list[str]:
+    async def _recommend_resources(self, reseller_id: str, health_analysis: dict[str, Any]) -> list[str]:
         return [
             "Sales Training Portal",
             "Customer Success Playbook",
             "Technical Documentation Library",
         ]
 
-    async def _generate_timeline(
-        self, reseller_id: str, health_analysis: dict[str, Any]
-    ) -> list[dict[str, str]]:
+    async def _generate_timeline(self, reseller_id: str, health_analysis: dict[str, Any]) -> list[dict[str, str]]:
         return [
             {
                 "week": "1",

@@ -113,9 +113,7 @@ class NetworkEvent(Base):
             "tags": self.tags,
             "custom_fields": self.custom_fields,
             "event_timestamp": self.event_timestamp.isoformat(),
-            "processed_at": self.processed_at.isoformat()
-            if self.processed_at
-            else None,
+            "processed_at": self.processed_at.isoformat() if self.processed_at else None,
             "created_at": self.created_at.isoformat(),
         }
 

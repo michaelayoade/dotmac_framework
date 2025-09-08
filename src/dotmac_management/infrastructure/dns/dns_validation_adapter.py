@@ -13,9 +13,9 @@ from typing import Any, Optional
 import dns.exception
 import dns.resolver
 import httpx
-from dotmac_shared.core.logging import get_logger
 
 from dotmac.application import standard_exception_handler
+from dotmac_shared.core.logging import get_logger
 
 from ..interfaces.dns_provider import (
     DNSValidationResult,
@@ -46,13 +46,9 @@ class DNSValidationAdapter(IDNSProvider):
             if self._initialized:
                 return True
 
-            self.base_domain = self.config.get("base_domain") or os.getenv(
-                "BASE_DOMAIN"
-            )
+            self.base_domain = self.config.get("base_domain") or os.getenv("BASE_DOMAIN")
             if not self.base_domain:
-                logger.warning(
-                    "Base domain not configured - subdomain validation may not work"
-                )
+                logger.warning("Base domain not configured - subdomain validation may not work")
 
             self.timeout = self.config.get("timeout", 10)
 
@@ -69,9 +65,7 @@ class DNSValidationAdapter(IDNSProvider):
             if self.base_domain:
                 health_result = await self.health_check()
                 if not health_result.get("healthy", False):
-                    logger.warning(
-                        f"DNS health check failed: {health_result.get('error')}"
-                    )
+                    logger.warning(f"DNS health check failed: {health_result.get('error')}")
 
             self._initialized = True
             logger.info("✅ DNS validation adapter initialized")
@@ -123,9 +117,7 @@ class DNSValidationAdapter(IDNSProvider):
         try:
             domain_to_check = base_domain or self.base_domain
             if not domain_to_check:
-                return DNSValidationResult(
-                    domain=subdomain, available=False, error="No base domain configured"
-                )
+                return DNSValidationResult(domain=subdomain, available=False, error="No base domain configured")
 
             full_domain = f"{subdomain}.{domain_to_check}"
             logger.info(f"Validating subdomain availability: {full_domain}")
@@ -177,17 +169,13 @@ class DNSValidationAdapter(IDNSProvider):
             # Check if domain resolves first
             dns_result = await self._resolve_domain_internal(domain, "A")
             if not dns_result.get("success", False):
-                return SSLCertificateInfo(
-                    domain=domain, valid=False, error="Domain does not resolve"
-                )
+                return SSLCertificateInfo(domain=domain, valid=False, error="Domain does not resolve")
 
             # Get SSL certificate info
             ssl_info = await self._get_ssl_certificate_info(domain)
 
             if ssl_info.get("error"):
-                return SSLCertificateInfo(
-                    domain=domain, valid=False, error=ssl_info["error"]
-                )
+                return SSLCertificateInfo(domain=domain, valid=False, error=ssl_info["error"])
 
             # Parse certificate info
             expires_at = ssl_info.get("expires_at")
@@ -196,9 +184,7 @@ class DNSValidationAdapter(IDNSProvider):
             days_until_expiry = None
             if expires_at:
                 try:
-                    expires_datetime = datetime.fromisoformat(
-                        expires_at.replace("Z", "+00:00")
-                    )
+                    expires_datetime = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
                     days_until_expiry = (expires_datetime - datetime.utcnow()).days
                 except Exception:
                     pass
@@ -217,16 +203,12 @@ class DNSValidationAdapter(IDNSProvider):
             return SSLCertificateInfo(domain=domain, valid=False, error=str(e))
 
     @standard_exception_handler
-    async def resolve_domain(
-        self, domain: str, record_type: str = "A"
-    ) -> dict[str, Any]:
+    async def resolve_domain(self, domain: str, record_type: str = "A") -> dict[str, Any]:
         """Resolve DNS domain"""
         return await self._resolve_domain_internal(domain, record_type)
 
     @standard_exception_handler
-    async def check_dns_propagation(
-        self, domain: str, expected_value: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def check_dns_propagation(self, domain: str, expected_value: Optional[str] = None) -> dict[str, Any]:
         """Check DNS propagation status"""
         try:
             logger.info(f"Checking DNS propagation for: {domain}")
@@ -245,11 +227,7 @@ class DNSValidationAdapter(IDNSProvider):
 
             # Check if the resolved value matches expected
             resolved_ips = a_result.get("addresses", [])
-            propagated = (
-                expected_value in resolved_ips
-                if expected_value
-                else len(resolved_ips) > 0
-            )
+            propagated = expected_value in resolved_ips if expected_value else len(resolved_ips) > 0
 
             return {
                 "propagated": propagated,
@@ -347,9 +325,7 @@ class DNSValidationAdapter(IDNSProvider):
         except Exception:
             return {"exists": False}
 
-    async def _resolve_domain_internal(
-        self, domain: str, record_type: str
-    ) -> dict[str, Any]:
+    async def _resolve_domain_internal(self, domain: str, record_type: str) -> dict[str, Any]:
         """Internal DNS resolution method"""
         try:
             if not self.resolver:
@@ -357,9 +333,7 @@ class DNSValidationAdapter(IDNSProvider):
 
             # Run DNS resolution in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(
-                None, self._sync_resolve_domain, domain, record_type
-            )
+            result = await loop.run_in_executor(None, self._sync_resolve_domain, domain, record_type)
 
             return result
 
@@ -384,10 +358,7 @@ class DNSValidationAdapter(IDNSProvider):
 
             elif record_type == "MX":
                 answers = self.resolver.resolve(domain, "MX")
-                mx_records = [
-                    {"priority": answer.preference, "host": str(answer.exchange)}
-                    for answer in answers
-                ]
+                mx_records = [{"priority": answer.preference, "host": str(answer.exchange)} for answer in answers]
                 return {"success": True, "mx_records": mx_records}
 
             elif record_type == "TXT":
@@ -440,12 +411,8 @@ class DNSValidationAdapter(IDNSProvider):
                     issuer = dict(x[0] for x in cert.get("issuer", []))
 
                     # Parse dates
-                    not_before = datetime.strptime(
-                        cert.get("notBefore"), "%b %d %H:%M:%S %Y %Z"
-                    )
-                    not_after = datetime.strptime(
-                        cert.get("notAfter"), "%b %d %H:%M:%S %Y %Z"
-                    )
+                    not_before = datetime.strptime(cert.get("notBefore"), "%b %d %H:%M:%S %Y %Z")
+                    not_after = datetime.strptime(cert.get("notAfter"), "%b %d %H:%M:%S %Y %Z")
 
                     # Check if certificate is currently valid
                     now = datetime.utcnow()
@@ -460,9 +427,7 @@ class DNSValidationAdapter(IDNSProvider):
                         "days_remaining": (not_after - now).days,
                         "serial_number": cert.get("serialNumber"),
                         "version": cert.get("version"),
-                        "subject_alt_names": [
-                            x[1] for x in cert.get("subjectAltName", [])
-                        ],
+                        "subject_alt_names": [x[1] for x in cert.get("subjectAltName", [])],
                     }
 
         except socket.timeout:

@@ -5,11 +5,11 @@ Comprehensive portal integration endpoints using RouterFactory patterns.
 
 from typing import Any
 
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from fastapi import Body, Depends, Query
 from pydantic import BaseModel, Field
 
 from dotmac.application import RouterFactory, standard_exception_handler
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 # === Request/Response Schemas ===
 
@@ -97,9 +97,7 @@ async def list_portal_integrations(
     return integrations
 
 
-@portal_integrations_router.get(
-    "/integrations/{integration_id}", response_model=dict[str, Any]
-)
+@portal_integrations_router.get("/integrations/{integration_id}", response_model=dict[str, Any])
 @standard_exception_handler
 async def get_portal_integration(
     integration_id: str,
@@ -208,15 +206,11 @@ async def test_sso_configuration(
 # === Portal Customization ===
 
 
-@portal_integrations_router.post(
-    "/customization/{integration_id}", response_model=dict[str, Any]
-)
+@portal_integrations_router.post("/customization/{integration_id}", response_model=dict[str, Any])
 @standard_exception_handler
 async def customize_portal(
     integration_id: str,
-    customization_data: dict[str, Any] = Body(
-        ..., description="Customization settings"
-    ),
+    customization_data: dict[str, Any] = Body(..., description="Customization settings"),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> dict[str, Any]:
     """Apply customization to a portal integration."""

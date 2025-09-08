@@ -313,9 +313,7 @@ class DomainStatsResponse(BaseModel):
     ssl_by_status: dict[str, int] = Field(default_factory=dict)
     providers_usage: dict[str, int] = Field(default_factory=dict)
     expiring_domains: list[DomainResponse] = Field(default_factory=list)
-    expiring_ssl_certificates: list[SSLCertificateResponse] = Field(
-        default_factory=list
-    )
+    expiring_ssl_certificates: list[SSLCertificateResponse] = Field(default_factory=list)
 
 
 # Search and Filter Schemas

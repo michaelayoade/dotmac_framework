@@ -1,0 +1,65 @@
+version: '3.8'
+
+# Gate E-0b: Database and Cache Services
+# Depends on E-0a (OpenBao) for secrets management
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: gate-e0b-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dotmac_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
+      POSTGRES_DB: dotmac_test
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5436:5432"
+    networks:
+      - gate-e0b-network
+      - gate-e0a-network  # Connect to E-0a for secrets
+    external_links:
+      - gate-e0a-openbao:openbao
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dotmac_admin -d dotmac_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: gate-e0b-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6381:6379"
+    networks:
+      - gate-e0b-network
+      - gate-e0a-network  # Connect to E-0a for secrets
+    external_links:
+      - gate-e0a-openbao:openbao
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  gate-e0b-network:
+    driver: bridge
+    name: gate-e0b-network
+  gate-e0a-network:
+    external: true
+    name: gate-e0a-network
+
+volumes:
+  postgres_data:
+    name: gate-e0b-postgres-data
+  redis_data:
+    name: gate-e0b-redis-data

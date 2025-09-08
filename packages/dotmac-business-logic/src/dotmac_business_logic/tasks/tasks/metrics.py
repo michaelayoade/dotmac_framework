@@ -2,7 +2,7 @@
 Metrics hooks for observability integration.
 
 Provides no-op hooks by default that can be wired to observability
-systems like dotmac.observability or external metrics collectors.
+via dotmac.platform.observability or external metrics collectors.
 """
 
 import logging
@@ -22,27 +22,27 @@ class MetricsHooks:
 
     def __init__(self) -> None:
         """Initialize metrics hooks."""
-        self.record_operation_enqueued: Callable[
-            [str, str, dict[str, Any]], None
-        ] = self._noop_hook
+        self.record_operation_enqueued: Callable[[str, str, dict[str, Any]], None] = (
+            self._noop_hook
+        )
         self.record_operation_completed: Callable[
             [str, str, bool, Optional[str]], None
         ] = self._noop_hook
-        self.record_operation_duration: Callable[
-            [str, str, float], None
-        ] = self._noop_hook
+        self.record_operation_duration: Callable[[str, str, float], None] = (
+            self._noop_hook
+        )
         self.record_saga_created: Callable[[str, str, int], None] = self._noop_hook
-        self.record_saga_status_change: Callable[
-            [str, str, str], None
-        ] = self._noop_hook
-        self.record_saga_step_executed: Callable[
-            [str, str, str, bool, int], None
-        ] = self._noop_hook
+        self.record_saga_status_change: Callable[[str, str, str], None] = (
+            self._noop_hook
+        )
+        self.record_saga_step_executed: Callable[[str, str, str, bool, int], None] = (
+            self._noop_hook
+        )
         self.record_idempotency_hit: Callable[[str, str], None] = self._noop_hook
         self.record_idempotency_miss: Callable[[str, str], None] = self._noop_hook
-        self.record_storage_operation: Callable[
-            [str, str, float], None
-        ] = self._noop_hook
+        self.record_storage_operation: Callable[[str, str, float], None] = (
+            self._noop_hook
+        )
         self.record_lock_acquired: Callable[[str, float], None] = self._noop_hook
         self.record_lock_failed: Callable[[str], None] = self._noop_hook
 
@@ -253,78 +253,77 @@ def record_lock_failed(lock_key: str) -> None:
 
 def setup_dotmac_observability_integration() -> None:
     """
-    Set up integration with dotmac.observability package.
+    Set up integration with platform observability package.
 
-    This function attempts to import and configure dotmac.observability
-    metrics. If the package is not available, it falls back to no-op hooks.
+    Attempts to use dotmac.platform.observability metrics. If unavailable,
+    falls back to no-op hooks.
     """
     try:
-        # Try to import dotmac.observability
-        from dotmac.observability import (
-            get_tenant_metrics,
-            record_counter,
-            record_histogram,
+        # Integrate with platform observability metrics registry
+        from dotmac.platform.observability.metrics.registry import (
+            initialize_metrics_registry,
         )
+
+        registry = initialize_metrics_registry("dotmac-tasks", enable_prometheus=False)
 
         def observability_operation_enqueued(
             tenant_id: str, operation_type: str, metadata: dict[str, Any]
         ) -> None:
-            metrics = get_tenant_metrics(tenant_id)
-            metrics.record_counter(
-                "background_operations_enqueued",
-                1,
-                {"operation_type": operation_type, **metadata},
-            )
+            labels = {"tenant_id": tenant_id, "operation_type": operation_type, **metadata}
+            registry.increment_counter("background_operations_enqueued", 1, labels)
 
         def observability_operation_completed(
             tenant_id: str, operation_type: str, success: bool, error: Optional[str]
         ) -> None:
-            metrics = get_tenant_metrics(tenant_id)
-            metrics.record_counter(
-                "background_operations_completed",
-                1,
-                {
-                    "operation_type": operation_type,
-                    "success": str(success).lower(),
-                    "error_type": error or "none",
-                },
-            )
+            labels = {
+                "tenant_id": tenant_id,
+                "operation_type": operation_type,
+                "success": str(success).lower(),
+                "error_type": error or "none",
+            }
+            registry.increment_counter("background_operations_completed", 1, labels)
 
         def observability_operation_duration(
             tenant_id: str, operation_type: str, duration_seconds: float
         ) -> None:
-            metrics = get_tenant_metrics(tenant_id)
-            metrics.record_histogram(
+            labels = {"tenant_id": tenant_id, "operation_type": operation_type}
+            registry.observe_histogram(
                 "background_operation_duration_seconds",
                 duration_seconds,
-                {"operation_type": operation_type},
+                labels,
             )
 
         def observability_saga_created(
             tenant_id: str, workflow_type: str, step_count: int
         ) -> None:
-            metrics = get_tenant_metrics(tenant_id)
-            metrics.record_counter("sagas_created", 1, {"workflow_type": workflow_type})
-            metrics.record_histogram(
-                "saga_step_count", step_count, {"workflow_type": workflow_type}
+            registry.increment_counter(
+                "sagas_created", 1, {"tenant_id": tenant_id, "workflow_type": workflow_type}
+            )
+            registry.observe_histogram(
+                "saga_step_count",
+                step_count,
+                {"tenant_id": tenant_id, "workflow_type": workflow_type},
             )
 
         def observability_saga_status_change(
             tenant_id: str, saga_id: str, new_status: str
         ) -> None:
-            metrics = get_tenant_metrics(tenant_id)
-            metrics.record_counter("saga_status_changes", 1, {"status": new_status})
+            registry.increment_counter(
+                "saga_status_changes", 1, {"tenant_id": tenant_id, "status": new_status}
+            )
 
         def observability_idempotency_hit(tenant_id: str, operation_type: str) -> None:
-            metrics = get_tenant_metrics(tenant_id)
-            metrics.record_counter(
-                "idempotency_cache_hits", 1, {"operation_type": operation_type}
+            registry.increment_counter(
+                "idempotency_cache_hits",
+                1,
+                {"tenant_id": tenant_id, "operation_type": operation_type},
             )
 
         def observability_idempotency_miss(tenant_id: str, operation_type: str) -> None:
-            metrics = get_tenant_metrics(tenant_id)
-            metrics.record_counter(
-                "idempotency_cache_misses", 1, {"operation_type": operation_type}
+            registry.increment_counter(
+                "idempotency_cache_misses",
+                1,
+                {"tenant_id": tenant_id, "operation_type": operation_type},
             )
 
         # Configure hooks
@@ -338,10 +337,10 @@ def setup_dotmac_observability_integration() -> None:
         hooks.record_idempotency_miss = observability_idempotency_miss
 
         configure_metrics_hooks(hooks)
-        logger.info("Configured dotmac.observability metrics integration")
+        logger.info("Configured platform observability metrics integration for tasks")
 
     except ImportError:
-        logger.warning("dotmac.observability not available, using no-op metrics hooks")
+        logger.warning("platform observability not available, using no-op metrics hooks")
         # Keep default no-op hooks
 
 

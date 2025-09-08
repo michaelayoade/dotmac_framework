@@ -1,0 +1,105 @@
+[build-system]
+requires = ["poetry-core"]
+
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "dotmac-benchmarking"
+version = "1.0.0"
+description = "Modular benchmarking toolkit for API, database, HTTP, and system profiling"
+authors = ["DotMac Framework <info@dotmac.dev>"]
+
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/dotmac-framework/dotmac-benchmarking"
+repository = "https://github.com/dotmac-framework/dotmac-benchmarking.git"
+documentation = "https://docs.dotmac.com/benchmarking"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: System :: Benchmark",
+    "Topic :: System :: Monitoring"
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0.0"
+pytest-asyncio = ">=0.21.0"
+pytest-cov = ">=4.0.0"
+mypy = ">=1.0.0"
+
+## Setuptools section removed; using Poetry/Hatch config only
+[tool.pytest]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+python_files = ["test_*.py", "*_test.py"]
+
+python_classes = ["Test*"]
+
+python_functions = ["test_*"]
+
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--strict-config",
+    "--tb=short",
+    "--cov=dotmac_benchmarking",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=55"
+]
+
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests"
+]
+
+asyncio_mode = "auto"
+
+[tool.mypy]
+
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "S", "B", "C4", "T20"]
+ignore = ["S101", "S603", "S607"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "T20"]
+
+[tool.ruff.mccabe]
+max-complexity = 10
+
+[tool.coverage]
+[tool.coverage.run]
+source = ["dotmac_benchmarking"]
+
+omit = ["*/tests/*", "*/examples/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == \"__main__\":",
+    "if TYPE_CHECKING:"
+]

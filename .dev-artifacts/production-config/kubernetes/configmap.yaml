@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  BUSINESS_LOGIC_WORKFLOWS_ENABLED: 'true'
+  ENVIRONMENT: production
+  LOG_LEVEL: INFO
+  PROMETHEUS_METRICS_ENABLED: 'true'
+kind: ConfigMap
+metadata:
+  name: dotmac-config
+  namespace: dotmac-production

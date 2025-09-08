@@ -152,9 +152,7 @@ class VPSDeploymentEvent(Base, TimestampMixin, UUIDMixin):
     tenant = relationship("CustomerTenant", backref="vps_deployment_events")
 
     # Event details
-    event_type = Column(
-        String(100), nullable=False
-    )  # e.g., "ssh_test", "docker_install"
+    event_type = Column(String(100), nullable=False)  # e.g., "ssh_test", "docker_install"
     status = Column(String(20), nullable=False)  # in_progress, success, failed, warning
     message = Column(String(500))
 

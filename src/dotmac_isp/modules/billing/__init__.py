@@ -17,9 +17,7 @@ try:
     # In production, the system will be properly dependency-injected
     try:
         loop = asyncio.get_event_loop()
-        event_publisher = loop.run_until_complete(
-            create_shared_billing_event_publisher(_event_bus, websocket_manager)
-        )
+        event_publisher = loop.run_until_complete(create_shared_billing_event_publisher(_event_bus, websocket_manager))
     except RuntimeError:
         # No event loop, will be initialized later
         event_publisher = None

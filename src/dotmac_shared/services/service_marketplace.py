@@ -113,9 +113,7 @@ class ServiceInstance:
         self.host = host
         self.port = port
         self.base_path = base_path
-        self.health_check_url = (
-            health_check_url or f"http://{host}:{port}{base_path}/health"
-        )
+        self.health_check_url = health_check_url or f"http://{host}:{port}{base_path}/health"
         self.metadata = metadata or {}
         self.status = ServiceStatus.UNKNOWN
         self.last_seen = datetime.now(timezone.utc)
@@ -146,14 +144,10 @@ class ServiceMarketplace(BaseService):
 
         # Service registry storage
         self.services: dict[str, ServiceMetadata] = {}
-        self.instances: dict[
-            str, dict[str, ServiceInstance]
-        ] = {}  # service_id -> {instance_id: instance}
+        self.instances: dict[str, dict[str, ServiceInstance]] = {}  # service_id -> {instance_id: instance}
 
         # Monitoring and health check configuration
-        self.health_check_interval = self.config.get(
-            "health_check_interval_seconds", 30
-        )
+        self.health_check_interval = self.config.get("health_check_interval_seconds", 30)
         self.instance_timeout = self.config.get("instance_timeout_seconds", 300)
 
         # Load balancing strategies
@@ -199,9 +193,7 @@ class ServiceMarketplace(BaseService):
             # Trigger lifecycle hooks
             await self._trigger_lifecycle_hooks("service_registered", metadata)
 
-            logger.info(
-                f"Registered service: {metadata.name} (ID: {metadata.service_id})"
-            )
+            logger.info(f"Registered service: {metadata.name} (ID: {metadata.service_id})")
             return True
 
         except Exception as e:
@@ -240,9 +232,7 @@ class ServiceMarketplace(BaseService):
         """Register a service instance."""
         try:
             if instance.service_id not in self.services:
-                raise EntityNotFoundError(
-                    f"Service {instance.service_id} not registered"
-                )
+                raise EntityNotFoundError(f"Service {instance.service_id} not registered")
 
             # Store instance
             if instance.service_id not in self.instances:
@@ -256,9 +246,7 @@ class ServiceMarketplace(BaseService):
             # Trigger lifecycle hooks
             await self._trigger_lifecycle_hooks("instance_added", instance)
 
-            logger.info(
-                f"Registered instance: {instance.instance_id} for service {instance.service_id}"
-            )
+            logger.info(f"Registered instance: {instance.instance_id} for service {instance.service_id}")
             return True
 
         except Exception as e:
@@ -268,13 +256,8 @@ class ServiceMarketplace(BaseService):
     async def deregister_instance(self, service_id: str, instance_id: str) -> bool:
         """Deregister a service instance."""
         try:
-            if (
-                service_id not in self.instances
-                or instance_id not in self.instances[service_id]
-            ):
-                raise EntityNotFoundError(
-                    f"Instance {instance_id} not found for service {service_id}"
-                )
+            if service_id not in self.instances or instance_id not in self.instances[service_id]:
+                raise EntityNotFoundError(f"Instance {instance_id} not found for service {service_id}")
 
             instance = self.instances[service_id][instance_id]
 
@@ -284,9 +267,7 @@ class ServiceMarketplace(BaseService):
             # Trigger lifecycle hooks
             await self._trigger_lifecycle_hooks("instance_removed", instance)
 
-            logger.info(
-                f"Deregistered instance: {instance_id} for service {service_id}"
-            )
+            logger.info(f"Deregistered instance: {instance_id} for service {service_id}")
             return True
 
         except Exception as e:
@@ -314,9 +295,7 @@ class ServiceMarketplace(BaseService):
             if service_type and service.service_type != service_type:
                 continue
 
-            if capabilities and not all(
-                cap in service.capabilities for cap in capabilities
-            ):
+            if capabilities and not all(cap in service.capabilities for cap in capabilities):
                 continue
 
             if tags and not all(service.tags.get(k) == v for k, v in tags.items()):
@@ -438,9 +417,7 @@ class ServiceMarketplace(BaseService):
 
     # Service Metrics and Analytics
 
-    async def get_service_metrics(
-        self, service_id: str, time_range: timedelta = timedelta(hours=1)
-    ) -> dict[str, Any]:
+    async def get_service_metrics(self, service_id: str, time_range: timedelta = timedelta(hours=1)) -> dict[str, Any]:
         """Get metrics for a service."""
         if service_id not in self.services:
             raise EntityNotFoundError(f"Service {service_id} not found")
@@ -462,14 +439,9 @@ class ServiceMarketplace(BaseService):
         total_instances = sum(len(instances) for instances in self.instances.values())
 
         # Calculate health statistics
-        healthy_services = sum(
-            1 for s in self.services.values() if s.status == ServiceStatus.HEALTHY
-        )
+        healthy_services = sum(1 for s in self.services.values() if s.status == ServiceStatus.HEALTHY)
         healthy_instances = sum(
-            1
-            for instances in self.instances.values()
-            for i in instances.values()
-            if i.status == ServiceStatus.HEALTHY
+            1 for instances in self.instances.values() for i in instances.values() if i.status == ServiceStatus.HEALTHY
         )
 
         return {
@@ -478,12 +450,8 @@ class ServiceMarketplace(BaseService):
             "total_instances": total_instances,
             "healthy_services": healthy_services,
             "healthy_instances": healthy_instances,
-            "service_availability": (healthy_services / total_services * 100)
-            if total_services > 0
-            else 0,
-            "instance_availability": (healthy_instances / total_instances * 100)
-            if total_instances > 0
-            else 0,
+            "service_availability": (healthy_services / total_services * 100) if total_services > 0 else 0,
+            "instance_availability": (healthy_instances / total_instances * 100) if total_instances > 0 else 0,
         }
 
     # API Gateway Integration
@@ -511,19 +479,12 @@ class ServiceMarketplace(BaseService):
             }
 
             # Generate upstream configuration
-            healthy_instances = [
-                i
-                for i in self.instances[service_id].values()
-                if i.status == ServiceStatus.HEALTHY
-            ]
+            healthy_instances = [i for i in self.instances[service_id].values() if i.status == ServiceStatus.HEALTHY]
 
             if healthy_instances:
                 upstream_config = {
                     "name": f"{service_metadata.name}_upstream",
-                    "targets": [
-                        {"target": f"{i.host}:{i.port}", "weight": 100}
-                        for i in healthy_instances
-                    ],
+                    "targets": [{"target": f"{i.host}:{i.port}", "weight": 100} for i in healthy_instances],
                 }
                 gateway_config["upstreams"].append(upstream_config)
 
@@ -531,9 +492,7 @@ class ServiceMarketplace(BaseService):
                 for endpoint in service_metadata.endpoints:
                     route_config = {
                         "name": f"{service_metadata.name}_{endpoint.get('name', 'default')}",
-                        "paths": [
-                            f"{service_metadata.name.lower()}{endpoint.get('path', '')}"
-                        ],
+                        "paths": [f"{service_metadata.name.lower()}{endpoint.get('path', '')}"],
                         "methods": endpoint.get("methods", ["GET", "POST"]),
                         "service": {"name": f"{service_metadata.name}_upstream"},
                     }
@@ -614,31 +573,23 @@ class ServiceMarketplace(BaseService):
 
     # Load Balancing Strategies
 
-    def _round_robin_strategy(
-        self, instances: list[ServiceInstance]
-    ) -> list[ServiceInstance]:
+    def _round_robin_strategy(self, instances: list[ServiceInstance]) -> list[ServiceInstance]:
         """Round-robin load balancing strategy."""
         # Placeholder - in real implementation, would maintain round-robin state
         return instances
 
-    def _least_connections_strategy(
-        self, instances: list[ServiceInstance]
-    ) -> list[ServiceInstance]:
+    def _least_connections_strategy(self, instances: list[ServiceInstance]) -> list[ServiceInstance]:
         """Least connections load balancing strategy."""
         # Placeholder - in real implementation, would track connection counts
         return instances
 
-    def _random_strategy(
-        self, instances: list[ServiceInstance]
-    ) -> list[ServiceInstance]:
+    def _random_strategy(self, instances: list[ServiceInstance]) -> list[ServiceInstance]:
         """Random load balancing strategy."""
         import random
 
         return random.sample(instances, len(instances))
 
-    def _health_weighted_strategy(
-        self, instances: list[ServiceInstance]
-    ) -> list[ServiceInstance]:
+    def _health_weighted_strategy(self, instances: list[ServiceInstance]) -> list[ServiceInstance]:
         """Health-weighted load balancing strategy."""
         # Placeholder - in real implementation, would weight by health score
         return instances
@@ -681,9 +632,7 @@ class ServiceMarketplaceFactory:
         )
 
     @staticmethod
-    def create_service_instance(
-        service_id: str, host: str, port: int, **kwargs
-    ) -> ServiceInstance:
+    def create_service_instance(service_id: str, host: str, port: int, **kwargs) -> ServiceInstance:
         """Create service instance for registration."""
         instance_id = kwargs.get("instance_id", str(uuid4()))
         return ServiceInstance(

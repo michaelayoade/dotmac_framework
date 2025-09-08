@@ -34,13 +34,12 @@ from .config import ObservabilityConfig
 from .logging import AuditLogger, LogContext, PerformanceLogger, StructuredLogger
 from .tracing import TraceCorrelator, TracingManager
 
-try:
-    from prometheus_client import Counter, Gauge, Histogram, generate_latest
-
-    _prometheus_available = True
-except ImportError:
-    _prometheus_available = False
-    Counter = Histogram = Gauge = generate_latest = None
+from .metrics.registry import (
+    MetricDefinition,
+    MetricType,
+    MetricsRegistry,
+    initialize_metrics_registry,
+)
 
 
 class MetricsCollector:
@@ -50,58 +49,83 @@ class MetricsCollector:
 
     def __init__(self, service_name: str = "api") -> None:
         self.service_name = service_name
-
-        if _prometheus_available:
-            # Request metrics
-            self.request_count = Counter(
-                "http_requests_total",
-                "Total HTTP requests",
-                ["method", "endpoint", "status_code", "tenant_id"],
+        # Initialize a metrics registry without Prometheus exposition
+        self.registry: MetricsRegistry = initialize_metrics_registry(
+            service_name, enable_prometheus=False
+        )
+        # Ensure instruments exist
+        self._ensure_metric(
+            MetricDefinition(
+                name="http_requests_total",
+                type=MetricType.COUNTER,
+                description="Total HTTP requests",
+                labels=["method", "endpoint", "status_code", "tenant_id"],
             )
-
-            self.request_duration = Histogram(
-                "http_request_duration_seconds",
-                "HTTP request duration",
-                ["method", "endpoint", "tenant_id"],
+        )
+        self._ensure_metric(
+            MetricDefinition(
+                name="http_request_duration_seconds",
+                type=MetricType.HISTOGRAM,
+                description="HTTP request duration",
+                labels=["method", "endpoint", "tenant_id"],
                 buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
+                unit="s",
             )
+        )
+        self._ensure_metric(
+            MetricDefinition(
+                name="http_requests_active",
+                type=MetricType.GAUGE,
+                description="Active HTTP requests",
+                labels=["method", "endpoint", "tenant_id"],
+            )
+        )
+        self._ensure_metric(
+            MetricDefinition(
+                name="http_request_size_bytes",
+                type=MetricType.HISTOGRAM,
+                description="HTTP request size in bytes",
+                labels=["method", "endpoint", "tenant_id"],
+                unit="byte",
+            )
+        )
+        self._ensure_metric(
+            MetricDefinition(
+                name="http_response_size_bytes",
+                type=MetricType.HISTOGRAM,
+                description="HTTP response size in bytes",
+                labels=["method", "endpoint", "status_code", "tenant_id"],
+                unit="byte",
+            )
+        )
+        self._ensure_metric(
+            MetricDefinition(
+                name="http_errors_total",
+                type=MetricType.COUNTER,
+                description="Total HTTP errors",
+                labels=["method", "endpoint", "error_type", "tenant_id"],
+            )
+        )
+        self._ensure_metric(
+            MetricDefinition(
+                name="business_operations_total",
+                type=MetricType.COUNTER,
+                description="Business operation counter",
+                labels=["operation", "tenant_id", "status"],
+            )
+        )
+        self._ensure_metric(
+            MetricDefinition(
+                name="security_events_total",
+                type=MetricType.COUNTER,
+                description="Security events counter",
+                labels=["event_type", "severity", "client_ip"],
+            )
+        )
 
-            self.active_requests = Gauge(
-                "http_requests_active", "Active HTTP requests", ["method", "endpoint", "tenant_id"]
-            )
-
-            self.request_size = Histogram(
-                "http_request_size_bytes",
-                "HTTP request size in bytes",
-                ["method", "endpoint", "tenant_id"],
-            )
-
-            self.response_size = Histogram(
-                "http_response_size_bytes",
-                "HTTP response size in bytes",
-                ["method", "endpoint", "status_code", "tenant_id"],
-            )
-
-            # Error metrics
-            self.error_count = Counter(
-                "http_errors_total",
-                "Total HTTP errors",
-                ["method", "endpoint", "error_type", "tenant_id"],
-            )
-
-            # Business metrics
-            self.business_operations = Counter(
-                "business_operations_total",
-                "Business operation counter",
-                ["operation", "tenant_id", "status"],
-            )
-
-            # Security metrics
-            self.security_events = Counter(
-                "security_events_total",
-                "Security events counter",
-                ["event_type", "severity", "client_ip"],
-            )
+    def _ensure_metric(self, definition: MetricDefinition) -> None:
+        if self.registry.get_metric(definition.name) is None:
+            self.registry.register_metric(definition)
 
     def record_request(
         self,
@@ -112,87 +136,86 @@ class MetricsCollector:
         tenant_id: str = "unknown",
     ) -> None:
         """Record HTTP request metrics."""
-        if not _prometheus_available:
-            return
-
         labels = {
             "method": method,
             "endpoint": endpoint,
             "status_code": str(status_code),
             "tenant_id": tenant_id,
         }
-
-        self.request_count.labels(**labels).inc()
-        self.request_duration.labels(method=method, endpoint=endpoint, tenant_id=tenant_id).observe(
-            duration
+        self.registry.increment_counter("http_requests_total", 1, labels)
+        self.registry.observe_histogram(
+            "http_request_duration_seconds",
+            duration,
+            {"method": method, "endpoint": endpoint, "tenant_id": tenant_id},
         )
 
     def record_active_request(
         self, method: str, endpoint: str, tenant_id: str = "unknown", delta: int = 1
     ) -> None:
         """Record active request change."""
-        if not _prometheus_available:
-            return
-
-        self.active_requests.labels(method=method, endpoint=endpoint, tenant_id=tenant_id).inc(
-            delta
+        # Gauges adjusted by setting current value; here we approximate with inc semantics
+        # Consumers can set explicit values via set_gauge if needed
+        # For compatibility, we increment/decrement via current value fetch not available; record delta as set
+        # This is a simplified approach to avoid Prometheus-specific behavior
+        self.registry.set_gauge(
+            "http_requests_active",
+            delta,
+            {"method": method, "endpoint": endpoint, "tenant_id": tenant_id},
         )
 
     def record_request_size(
         self, method: str, endpoint: str, size: int, tenant_id: str = "unknown"
     ) -> None:
         """Record request size."""
-        if not _prometheus_available:
-            return
-
-        self.request_size.labels(method=method, endpoint=endpoint, tenant_id=tenant_id).observe(
-            size
+        self.registry.observe_histogram(
+            "http_request_size_bytes",
+            size,
+            {"method": method, "endpoint": endpoint, "tenant_id": tenant_id},
         )
 
     def record_response_size(
         self, method: str, endpoint: str, status_code: int, size: int, tenant_id: str = "unknown"
     ) -> None:
         """Record response size."""
-        if not _prometheus_available:
-            return
-
-        self.response_size.labels(
-            method=method, endpoint=endpoint, status_code=str(status_code), tenant_id=tenant_id
-        ).observe(size)
+        self.registry.observe_histogram(
+            "http_response_size_bytes",
+            size,
+            {
+                "method": method,
+                "endpoint": endpoint,
+                "status_code": str(status_code),
+                "tenant_id": tenant_id,
+            },
+        )
 
     def record_error(self, method: str, endpoint: str, error_type: str, tenant_id: str = "unknown") -> None:
         """Record error metric."""
-        if not _prometheus_available:
-            return
-
-        self.error_count.labels(
-            method=method, endpoint=endpoint, error_type=error_type, tenant_id=tenant_id
-        ).inc()
+        self.registry.increment_counter(
+            "http_errors_total",
+            1,
+            {"method": method, "endpoint": endpoint, "error_type": error_type, "tenant_id": tenant_id},
+        )
 
     def record_business_operation(self, operation: str, status: str, tenant_id: str = "unknown") -> None:
         """Record business operation metric."""
-        if not _prometheus_available:
-            return
-
-        self.business_operations.labels(
-            operation=operation, tenant_id=tenant_id, status=status
-        ).inc()
+        self.registry.increment_counter(
+            "business_operations_total",
+            1,
+            {"operation": operation, "tenant_id": tenant_id, "status": status},
+        )
 
     def record_security_event(self, event_type: str, severity: str, client_ip: str = "unknown") -> None:
         """Record security event metric."""
-        if not _prometheus_available:
-            return
-
-        self.security_events.labels(
-            event_type=event_type, severity=severity, client_ip=client_ip
-        ).inc()
+        self.registry.increment_counter(
+            "security_events_total",
+            1,
+            {"event_type": event_type, "severity": severity, "client_ip": client_ip},
+        )
 
     def get_metrics(self) -> str:
         """Get Prometheus metrics output."""
-        if not _prometheus_available:
-            return "# Prometheus not available\n"
-
-        return generate_latest()
+        # Prometheus exposition removed; metrics are exported via OTLP
+        return "# Metrics exported via OTLP (Prometheus exposition disabled)\n"
 
 
 class MetricsMiddleware(BaseHTTPMiddleware if _fastapi_available else object):

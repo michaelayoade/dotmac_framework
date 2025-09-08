@@ -13,7 +13,6 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,6 +23,7 @@ from dotmac.core.schemas.base_schemas import (
     BaseResponseSchema,
     BaseUpdateSchema,
 )
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 logger = logging.getLogger(__name__)
 
@@ -114,37 +114,23 @@ class WebhookProcessor:
         """Add middleware for webhook processing."""
         self.middleware.append(middleware)
 
-    async def process_event(
-        self, event: WebhookEvent, endpoint_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def process_event(self, event: WebhookEvent, endpoint_config: dict[str, Any]) -> dict[str, Any]:
         """Process webhook event through handlers and middleware."""
 
         # Apply middleware
         for middleware in self.middleware:
-            event = (
-                await middleware(event)
-                if asyncio.iscoroutinefunction(middleware)
-                else middleware(event)
-            )
+            event = await middleware(event) if asyncio.iscoroutinefunction(middleware) else middleware(event)
 
         # Process through registered handlers
         results = []
         if event.event_type in self.handlers:
             for handler in self.handlers[event.event_type]:
                 try:
-                    result = (
-                        await handler(event)
-                        if asyncio.iscoroutinefunction(handler)
-                        else handler(event)
-                    )
-                    results.append(
-                        {"handler": handler.__name__, "success": True, "result": result}
-                    )
+                    result = await handler(event) if asyncio.iscoroutinefunction(handler) else handler(event)
+                    results.append({"handler": handler.__name__, "success": True, "result": result})
                 except Exception as e:
                     logger.error(f"Handler {handler.__name__} failed: {str(e)}")
-                    results.append(
-                        {"handler": handler.__name__, "success": False, "error": str(e)}
-                    )
+                    results.append({"handler": handler.__name__, "success": False, "error": str(e)})
 
         return {
             "event_id": event.id,
@@ -169,9 +155,7 @@ class WebhookManager:
         self.deliveries: dict[str, WebhookDelivery] = {}
 
     @standard_exception_handler
-    async def create(
-        self, data: WebhookEndpointCreateSchema, user_id: UUID
-    ) -> WebhookEndpointResponseSchema:
+    async def create(self, data: WebhookEndpointCreateSchema, user_id: UUID) -> WebhookEndpointResponseSchema:
         """Create a new webhook endpoint."""
 
         endpoint_id = str(uuid4())
@@ -197,9 +181,7 @@ class WebhookManager:
         return self._endpoint_to_response(endpoint_config)
 
     @standard_exception_handler
-    async def get_by_id(
-        self, endpoint_id: UUID, user_id: UUID
-    ) -> WebhookEndpointResponseSchema:
+    async def get_by_id(self, endpoint_id: UUID, user_id: UUID) -> WebhookEndpointResponseSchema:
         """Get webhook endpoint by ID."""
         endpoint_str = str(endpoint_id)
 
@@ -252,15 +234,11 @@ class WebhookManager:
 
         if soft_delete:
             self.endpoints[endpoint_str]["active"] = False
-            self.endpoints[endpoint_str]["disabled_at"] = datetime.now(
-                timezone.utc
-            ).isoformat()
+            self.endpoints[endpoint_str]["disabled_at"] = datetime.now(timezone.utc).isoformat()
         else:
             del self.endpoints[endpoint_str]
 
-        logger.info(
-            f"{'Disabled' if soft_delete else 'Deleted'} webhook endpoint: {endpoint_str}"
-        )
+        logger.info(f"{'Disabled' if soft_delete else 'Deleted'} webhook endpoint: {endpoint_str}")
 
     @standard_exception_handler
     async def list(
@@ -277,14 +255,9 @@ class WebhookManager:
         for endpoint_config in self.endpoints.values():
             # Apply filters
             if filters:
-                if (
-                    "active" in filters
-                    and endpoint_config["active"] != filters["active"]
-                ):
+                if "active" in filters and endpoint_config["active"] != filters["active"]:
                     continue
-                if "event_type" in filters and filters[
-                    "event_type"
-                ] not in endpoint_config.get("events", []):
+                if "event_type" in filters and filters["event_type"] not in endpoint_config.get("events", []):
                     continue
 
             endpoints.append(self._endpoint_to_response(endpoint_config))
@@ -293,28 +266,19 @@ class WebhookManager:
         return endpoints[skip : skip + limit]
 
     @standard_exception_handler
-    async def count(
-        self, filters: Optional[dict[str, Any]] = None, user_id: Optional[UUID] = None
-    ) -> int:
+    async def count(self, filters: Optional[dict[str, Any]] = None, user_id: Optional[UUID] = None) -> int:
         """Count webhook endpoints with filters."""
         count = 0
         for endpoint_config in self.endpoints.values():
             if filters:
-                if (
-                    "active" in filters
-                    and endpoint_config["active"] != filters["active"]
-                ):
+                if "active" in filters and endpoint_config["active"] != filters["active"]:
                     continue
-                if "event_type" in filters and filters[
-                    "event_type"
-                ] not in endpoint_config.get("events", []):
+                if "event_type" in filters and filters["event_type"] not in endpoint_config.get("events", []):
                     continue
             count += 1
         return count
 
-    def _endpoint_to_response(
-        self, endpoint_config: dict[str, Any]
-    ) -> WebhookEndpointResponseSchema:
+    def _endpoint_to_response(self, endpoint_config: dict[str, Any]) -> WebhookEndpointResponseSchema:
         """Convert endpoint config to response schema."""
         return WebhookEndpointResponseSchema(
             id=UUID(endpoint_config["id"]),
@@ -332,9 +296,7 @@ class WebhookManager:
         )
 
     @standard_exception_handler
-    async def trigger_event(
-        self, event_type: str, data: dict[str, Any], source: str = "system"
-    ) -> dict[str, Any]:
+    async def trigger_event(self, event_type: str, data: dict[str, Any], source: str = "system") -> dict[str, Any]:
         """Trigger webhook event to all subscribed endpoints."""
 
         event = WebhookEvent(
@@ -350,8 +312,7 @@ class WebhookManager:
         matching_endpoints = [
             config
             for config in self.endpoints.values()
-            if config["active"]
-            and (not config["events"] or event_type in config["events"])
+            if config["active"] and (not config["events"] or event_type in config["events"])
         ]
 
         delivery_results = []
@@ -374,9 +335,7 @@ class WebhookManager:
 
                 self.deliveries[delivery.id] = delivery
                 endpoint_config["success_count"] += 1
-                endpoint_config["last_triggered"] = datetime.now(
-                    timezone.utc
-                ).isoformat()
+                endpoint_config["last_triggered"] = datetime.now(timezone.utc).isoformat()
 
                 delivery_results.append(
                     {
@@ -420,16 +379,12 @@ class WebhookManager:
             "delivery_results": delivery_results,
         }
 
-    def validate_signature(
-        self, payload: bytes, signature: str, secret: str, algorithm: str = "sha256"
-    ) -> bool:
+    def validate_signature(self, payload: bytes, signature: str, secret: str, algorithm: str = "sha256") -> bool:
         """Validate webhook signature."""
         if not secret or not signature:
             return True  # No signature validation required
 
-        expected_signature = hmac.new(
-            secret.encode(), payload, getattr(hashlib, algorithm)
-        ).hexdigest()
+        expected_signature = hmac.new(secret.encode(), payload, getattr(hashlib, algorithm)).hexdigest()
 
         # Support different signature formats
         if signature.startswith("sha256="):
@@ -518,9 +473,7 @@ class WebhookManagerRouter:
                 payload_data = json.loads(payload) if payload else {}
                 event_type = payload_data.get("type", "webhook.received")
 
-                result = await manager.trigger_event(
-                    event_type=event_type, data=payload_data, source="webhook"
-                )
+                result = await manager.trigger_event(event_type=event_type, data=payload_data, source="webhook")
 
                 return {"status": "received", "result": result}
 

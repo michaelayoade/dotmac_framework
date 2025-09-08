@@ -21,9 +21,7 @@ class StandardEndpoints:
 
     def add_to_app(self, app: FastAPI) -> list[str]:
         """Add standard endpoints to FastAPI application."""
-        logger.info(
-            f"Adding standard endpoints for {self.platform_config.platform_name}"
-        )
+        logger.info(f"Adding standard endpoints for {self.platform_config.platform_name}")
 
         # Add core endpoints
         self._add_root_endpoint(app)
@@ -106,11 +104,7 @@ class StandardEndpoints:
                 {
                     "tenant_id": context.tenant_id,
                     "isolation_level": context.isolation_level,
-                    "resource_limits": (
-                        context.resource_limits.__dict__
-                        if context.resource_limits
-                        else None
-                    ),
+                    "resource_limits": (context.resource_limits.__dict__ if context.resource_limits else None),
                     "kubernetes_namespace": context.kubernetes_namespace,
                     "container_name": context.container_name,
                 }
@@ -144,11 +138,7 @@ class StandardEndpoints:
                     {
                         "status": "operational" if stats else "disconnected",
                         "workers": len(stats) if stats else 0,
-                        "active_tasks": (
-                            sum(len(tasks) for tasks in active_tasks.values())
-                            if active_tasks
-                            else 0
-                        ),
+                        "active_tasks": (sum(len(tasks) for tasks in active_tasks.values()) if active_tasks else 0),
                     }
                 )
             except ImportError:
@@ -156,9 +146,7 @@ class StandardEndpoints:
             except Exception as e:
                 return JSONResponse({"status": "error", "message": str(e)})
 
-        self.added_endpoints.extend(
-            ["GET /tenant/info", "GET /tenant/ssl-status", "GET /tenant/celery-status"]
-        )
+        self.added_endpoints.extend(["GET /tenant/info", "GET /tenant/ssl-status", "GET /tenant/celery-status"])
 
     def _add_management_endpoints(self, app: FastAPI):
         """Add management platform specific endpoints."""
@@ -176,9 +164,7 @@ class StandardEndpoints:
             # Try to get real stats if available
             try:
                 if hasattr(app.state, "websocket_manager"):
-                    stats[
-                        "websocket_connections"
-                    ] = app.state.websocket_manager.connection_count
+                    stats["websocket_connections"] = app.state.websocket_manager.connection_count
             except Exception:
                 pass
 
@@ -271,9 +257,7 @@ class StandardEndpoints:
             # Add observability status
             if hasattr(app.state, "observability_instance"):
                 try:
-                    obs_status = (
-                        await app.state.observability_instance.get_system_status()
-                    )
+                    obs_status = await app.state.observability_instance.get_system_status()
                     report["observability_status"] = obs_status
                 except Exception:
                     pass
@@ -288,6 +272,4 @@ class StandardEndpoints:
 
             return JSONResponse(report)
 
-        self.added_endpoints.extend(
-            ["GET /dev/config", "GET /dev/routes", "GET /dev/startup-report"]
-        )
+        self.added_endpoints.extend(["GET /dev/config", "GET /dev/routes", "GET /dev/startup-report"])

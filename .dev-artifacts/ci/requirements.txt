@@ -1,0 +1,17 @@
+# Pinned CI tooling used in local venv
+pip==24.2
+setuptools==72.1.0
+wheel==0.44.0
+
+pytest==8.2.2
+pytest-asyncio==0.23.8
+pytest-cov==4.1.0
+mypy==1.11.2
+ruff==0.6.8
+build==1.2.2.post1
+pip-audit==2.7.3
+bandit==1.7.9
+
+# Optional helpers
+types-requests==2.32.0.20240907
+types-PyYAML==6.0.12.20240808

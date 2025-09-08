@@ -14,7 +14,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
-from ..observability import MonitoringStack
+from .monitoring import MonitoringStack
 from .automation import DeploymentAutomation, DeploymentSpec, DeploymentStatus
 
 
@@ -116,7 +116,7 @@ class MetricsCollector(ABC):
 
 
 class PrometheusMetricsCollector(MetricsCollector):
-    """Prometheus-based metrics collector."""
+    """Legacy Prometheus-based metrics collector (deprecated; use SigNoz/OTLP)."""
 
     def __init__(self, prometheus_url: str, monitoring: MonitoringStack):
         self.prometheus_url = prometheus_url
@@ -126,7 +126,7 @@ class PrometheusMetricsCollector(MetricsCollector):
     async def collect_metrics(
         self, service_name: str, version: str, duration_minutes: int
     ) -> dict[str, float]:
-        """Collect metrics from Prometheus."""
+        """Collect metrics from Prometheus (deprecated)."""
         try:
             import aiohttp
 

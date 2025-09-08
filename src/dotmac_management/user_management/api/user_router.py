@@ -6,11 +6,11 @@ Production-ready user management using RouterFactory patterns.
 from typing import Any
 from uuid import UUID
 
-from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 from fastapi import Body, Depends, Path, Query
 from pydantic import BaseModel, Field
 
 from dotmac.application import RouterFactory, standard_exception_handler
+from dotmac_shared.api.dependencies import StandardDependencies, get_standard_deps
 
 from ..schemas.user_schemas import (
     UserCreateSchema,
@@ -34,9 +34,7 @@ class UserSearchRequest(BaseModel):
 class BulkUserOperation(BaseModel):
     """Bulk user operation request."""
 
-    operation: str = Field(
-        ..., description="Operation type (activate, deactivate, delete)"
-    )
+    operation: str = Field(..., description="Operation type (activate, deactivate, delete)")
     user_ids: list[UUID] = Field(..., description="List of user IDs")
     reason: str | None = Field(None, description="Operation reason")
 
@@ -101,8 +99,7 @@ async def search_users(
         "total": total_count,
         "page": search_request.page,
         "page_size": search_request.page_size,
-        "total_pages": (total_count // search_request.page_size)
-        + (1 if total_count % search_request.page_size else 0),
+        "total_pages": (total_count // search_request.page_size) + (1 if total_count % search_request.page_size else 0),
     }
 
 
@@ -169,15 +166,12 @@ async def deactivate_user(
 async def suspend_user(
     user_id: UUID = Path(..., description="User ID to suspend"),
     reason: str = Body(..., embed=True, description="Suspension reason"),
-    duration_days: int
-    | None = Body(None, embed=True, description="Suspension duration in days"),
+    duration_days: int | None = Body(None, embed=True, description="Suspension duration in days"),
     deps: StandardDependencies = Depends(get_standard_deps),
 ) -> UserResponseSchema:
     """Suspend user account."""
     service = UserService(deps.db, deps.tenant_id)
-    return await service.suspend_user(
-        user_id, UUID(deps.user_id), reason, duration_days
-    )
+    return await service.suspend_user(user_id, UUID(deps.user_id), reason, duration_days)
 
 
 # === Bulk Operations ===

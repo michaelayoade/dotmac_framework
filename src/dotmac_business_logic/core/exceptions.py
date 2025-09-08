@@ -51,9 +51,7 @@ class BusinessLogicError(Exception):
         self.severity = severity
         self.context = context or {}
         self.retry_able = retry_able
-        self.user_message = (
-            user_message or "An error occurred while processing your request."
-        )
+        self.user_message = user_message or "An error occurred while processing your request."
         self.timestamp = datetime.now(timezone.utc)
 
     def to_dict(self) -> dict[str, Any]:
@@ -155,9 +153,7 @@ class TaskError(BusinessLogicError):
 class TaskExecutionError(TaskError):
     """Raised when task execution fails."""
 
-    def __init__(
-        self, task_id: str, original_error: Optional[Exception] = None, **kwargs
-    ):
+    def __init__(self, task_id: str, original_error: Optional[Exception] = None, **kwargs):
         message = f"Task execution failed: {task_id}"
         if original_error:
             message += f" - {str(original_error)}"
@@ -220,9 +216,7 @@ class InvalidFileTypeError(FileProcessingError):
     """Raised when an invalid file type is provided."""
 
     def __init__(self, filename: str, allowed_types: list[str], **kwargs):
-        message = (
-            f"Invalid file type: {filename}. Allowed types: {', '.join(allowed_types)}"
-        )
+        message = f"Invalid file type: {filename}. Allowed types: {', '.join(allowed_types)}"
         super().__init__(
             message,
             error_code="INVALID_FILE_TYPE",
@@ -255,9 +249,7 @@ class FileSizeLimitExceededError(FileProcessingError):
 class TemplateRenderingError(FileProcessingError):
     """Raised when template rendering fails."""
 
-    def __init__(
-        self, template_name: str, original_error: Optional[Exception] = None, **kwargs
-    ):
+    def __init__(self, template_name: str, original_error: Optional[Exception] = None, **kwargs):
         message = f"Template rendering failed: {template_name}"
         if original_error:
             message += f" - {str(original_error)}"
@@ -406,9 +398,7 @@ class ErrorHandler:
                 original_error=str(error),
             )
 
-            self.logger.error(
-                "Unexpected error occurred", extra=wrapped_error.to_dict()
-            )
+            self.logger.error("Unexpected error occurred", extra=wrapped_error.to_dict())
 
             return {
                 "error_id": wrapped_error.error_id,

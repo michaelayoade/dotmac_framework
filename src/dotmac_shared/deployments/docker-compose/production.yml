@@ -19,8 +19,6 @@ volumes:
     driver: local
   elasticsearch_data:
     driver: local
-  grafana_data:
-    driver: local
 
 services:
   # Core Infrastructure
@@ -83,39 +81,7 @@ services:
       - dotmac_internal
     restart: unless-stopped
 
-  grafana:
-    image: grafana/grafana:latest
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
-      GF_DATABASE_TYPE: postgres
-      GF_DATABASE_HOST: postgres:5432
-      GF_DATABASE_NAME: grafana
-      GF_DATABASE_USER: ${POSTGRES_USER}
-      GF_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - grafana_data:/var/lib/grafana
-    networks:
-      - dotmac_internal
-      - dotmac_external
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
-    depends_on:
-      - postgres
 
-  prometheus:
-    image: prom/prometheus:latest
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--web.console.libraries=/etc/prometheus/console_libraries"
-      - "--web.console.templates=/etc/prometheus/consoles"
-      - "--web.enable-lifecycle"
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - dotmac_internal
-    restart: unless-stopped
 
   # Core Planes
   dotmac_core_events:

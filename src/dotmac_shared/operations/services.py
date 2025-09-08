@@ -9,12 +9,12 @@ import logging
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from dotmac_management.user_management.schemas.lifecycle_schemas import UserRegistration
-from dotmac_management.user_management.schemas.user_schemas import UserType
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac.application import standard_exception_handler
 from dotmac.core.exceptions import BusinessRuleError, EntityNotFoundError
+from dotmac_management.user_management.schemas.lifecycle_schemas import UserRegistration
+from dotmac_management.user_management.schemas.user_schemas import UserType
 
 from .automation import OperationsOrchestrator
 from .health_monitoring import (
@@ -49,9 +49,7 @@ class NetworkMonitoringService:
         self.service_checker = ServiceHealthChecker()
 
     @standard_exception_handler
-    async def register_endpoint(
-        self, endpoint_data: dict[str, Any], user_id: UUID
-    ) -> NetworkEndpointResponse:
+    async def register_endpoint(self, endpoint_data: dict[str, Any], user_id: UUID) -> NetworkEndpointResponse:
         """Register network endpoint for monitoring."""
 
         endpoint = NetworkEndpoint(
@@ -102,9 +100,7 @@ class NetworkMonitoringService:
         )
 
     @standard_exception_handler
-    async def get_endpoint_trends(
-        self, endpoint_id: UUID, hours: int, user_id: UUID
-    ) -> EndpointTrendsResponse:
+    async def get_endpoint_trends(self, endpoint_id: UUID, hours: int, user_id: UUID) -> EndpointTrendsResponse:
         """Get endpoint health trends."""
         trends = await self.health_monitor.get_endpoint_trends(endpoint_id, hours)
 
@@ -146,9 +142,7 @@ class NetworkMonitoringService:
             if "container_id" not in connection_params:
                 raise BusinessRuleError("Container ID required")
 
-            result = await self.service_checker.check_container_health(
-                connection_params["container_id"]
-            )
+            result = await self.service_checker.check_container_health(connection_params["container_id"])
 
         else:
             raise BusinessRuleError(f"Unsupported service type: {service_type}")
@@ -176,9 +170,7 @@ class CustomerLifecycleService:
         self.provisioning = ServiceProvisioningAutomation(db_session)
 
     @standard_exception_handler
-    async def register_customer(
-        self, registration_data: dict[str, Any], user_id: UUID
-    ) -> CustomerLifecycleResponse:
+    async def register_customer(self, registration_data: dict[str, Any], user_id: UUID) -> CustomerLifecycleResponse:
         """Register new customer."""
 
         # Convert to UserRegistration schema
@@ -192,15 +184,11 @@ class CustomerLifecycleService:
             requires_approval=registration_data.get("requires_approval", False),
             referral_code=registration_data.get("referral_code"),
             terms_accepted=registration_data.get("terms_accepted", True),
-            privacy_policy_accepted=registration_data.get(
-                "privacy_policy_accepted", True
-            ),
+            privacy_policy_accepted=registration_data.get("privacy_policy_accepted", True),
             marketing_consent=registration_data.get("marketing_consent", False),
         )
 
-        result = await self.lifecycle_manager.process_new_registration(
-            user_registration
-        )
+        result = await self.lifecycle_manager.process_new_registration(user_registration)
 
         return CustomerLifecycleResponse(
             id=result["user_id"],
@@ -219,9 +207,7 @@ class CustomerLifecycleService:
     ) -> CustomerLifecycleResponse:
         """Verify customer account."""
 
-        result = await self.lifecycle_manager.verify_customer_account(
-            customer_id, verification_data
-        )
+        result = await self.lifecycle_manager.verify_customer_account(customer_id, verification_data)
 
         return CustomerLifecycleResponse(
             id=customer_id,
@@ -244,9 +230,7 @@ class CustomerLifecycleService:
     ) -> CustomerLifecycleResponse:
         """Suspend customer account."""
 
-        result = await self.lifecycle_manager.suspend_customer(
-            customer_id, reason, suspension_data
-        )
+        result = await self.lifecycle_manager.suspend_customer(customer_id, reason, suspension_data)
 
         return CustomerLifecycleResponse(
             id=customer_id,
@@ -269,9 +253,7 @@ class CustomerLifecycleService:
     ) -> ServiceProvisioningResponse:
         """Provision service for customer."""
 
-        result = await self.provisioning.provision_service(
-            customer_id, service_name, custom_config
-        )
+        result = await self.provisioning.provision_service(customer_id, service_name, custom_config)
 
         return ServiceProvisioningResponse(
             id=UUID(result["request_id"]),
@@ -285,9 +267,7 @@ class CustomerLifecycleService:
         )
 
     @standard_exception_handler
-    async def get_provisioning_status(
-        self, request_id: UUID, user_id: UUID
-    ) -> ServiceProvisioningResponse:
+    async def get_provisioning_status(self, request_id: UUID, user_id: UUID) -> ServiceProvisioningResponse:
         """Get service provisioning status."""
 
         result = await self.provisioning.get_provisioning_status(request_id)
@@ -304,9 +284,7 @@ class CustomerLifecycleService:
         )
 
     @standard_exception_handler
-    async def get_customer_lifecycle_summary(
-        self, customer_id: UUID, user_id: UUID
-    ) -> dict[str, Any]:
+    async def get_customer_lifecycle_summary(self, customer_id: UUID, user_id: UUID) -> dict[str, Any]:
         """Get customer lifecycle summary."""
         return await self.lifecycle_manager.get_customer_lifecycle_summary(customer_id)
 
@@ -402,9 +380,7 @@ class OperationsService:
 
     async def get_endpoint_trends(self, endpoint_id: UUID, hours: int, user_id: UUID):
         """Get endpoint trends."""
-        return await self.network_monitoring.get_endpoint_trends(
-            endpoint_id, hours, user_id
-        )
+        return await self.network_monitoring.get_endpoint_trends(endpoint_id, hours, user_id)
 
     # Customer Lifecycle Operations
     async def register_customer(self, data: dict[str, Any], user_id: UUID):
@@ -419,18 +395,12 @@ class OperationsService:
         user_id: UUID,
     ):
         """Provision service for customer."""
-        return await self.customer_lifecycle.provision_service(
-            customer_id, service_name, config, user_id
-        )
+        return await self.customer_lifecycle.provision_service(customer_id, service_name, config, user_id)
 
     # Infrastructure Maintenance Operations
-    async def execute_maintenance(
-        self, maintenance_type: str, parameters: dict[str, Any], user_id: UUID
-    ):
+    async def execute_maintenance(self, maintenance_type: str, parameters: dict[str, Any], user_id: UUID):
         """Execute maintenance operation."""
-        return await self.infrastructure_maintenance.execute_maintenance(
-            maintenance_type, parameters, user_id
-        )
+        return await self.infrastructure_maintenance.execute_maintenance(maintenance_type, parameters, user_id)
 
     async def get_operations_status(self, user_id: UUID):
         """Get operations status."""
@@ -452,9 +422,7 @@ class OperationsService:
         """List entities (placeholder for RouterFactory compatibility)."""
         return []
 
-    async def count(
-        self, filters: Optional[dict] = None, user_id: Optional[UUID] = None
-    ):
+    async def count(self, filters: Optional[dict] = None, user_id: Optional[UUID] = None):
         """Count entities (placeholder for RouterFactory compatibility)."""
         return 0
 

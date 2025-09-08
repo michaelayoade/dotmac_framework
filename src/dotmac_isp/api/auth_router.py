@@ -33,9 +33,7 @@ from dotmac_shared.core.logging import get_logger
 logger = get_logger(__name__)
 
 # Create auth router
-auth_router = RouterFactory.create_standard_router(
-    prefix="/auth", tags=["authentication", "provisioning"]
-)
+auth_router = RouterFactory.create_standard_router(prefix="/auth", tags=["authentication", "provisioning"])
 
 
 class AdminCreateRequest(BaseModel):
@@ -155,9 +153,7 @@ async def get_admin_status() -> dict[str, Any]:
             "tenant_configured": admin_count > 0,
             "admin_count": admin_count,
             "status": "configured" if admin_count > 0 else "pending_admin_creation",
-            "message": "Tenant has admin users"
-            if admin_count > 0
-            else "Tenant needs admin user creation",
+            "message": "Tenant has admin users" if admin_count > 0 else "Tenant needs admin user creation",
         }
 
     except Exception as e:

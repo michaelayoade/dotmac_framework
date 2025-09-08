@@ -12,11 +12,9 @@ from typing import Any, Optional
 from uuid import UUID
 
 from dotmac_plugins.isolation.tenant_plugin_manager import get_tenant_plugin_manager
-from dotmac_shared.workflows.base import BaseWorkflow, WorkflowResult
-from dotmac_shared.workflows.exceptions import (
+from dotmac_workflows import Workflow, WorkflowResult
+from dotmac_workflows.base import (
     WorkflowError,
-    WorkflowTransientError,
-    WorkflowValidationError,
 )
 
 from dotmac.security.sandbox import SecurityScanner
@@ -45,7 +43,7 @@ class PluginInstallationStep(str, Enum):
     COMPLETE_INSTALLATION = "complete_installation"
 
 
-class PluginInstallationWorkflow(BaseWorkflow):
+class PluginInstallationWorkflow(Workflow):
     """
     Complete plugin installation workflow following DRY patterns.
 
@@ -79,9 +77,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
             steps=[step.value for step in PluginInstallationStep],
         )
 
-        logger.info(
-            f"Initialized plugin installation workflow for plugin {request.plugin_id}"
-        )
+        logger.info(f"Initialized plugin installation workflow for plugin {request.plugin_id}")
 
     async def execute_step(self, step_name: str) -> WorkflowResult:
         """
@@ -124,9 +120,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
 
     async def _validate_request(self) -> dict[str, Any]:
         """Validate plugin installation request."""
-        logger.info(
-            f"Validating installation request for plugin {self.request.plugin_id}"
-        )
+        logger.info(f"Validating installation request for plugin {self.request.plugin_id}")
 
         # Get and validate plugin
         self.plugin = await self.plugin_service.get_plugin(self.request.plugin_id)
@@ -134,27 +128,17 @@ class PluginInstallationWorkflow(BaseWorkflow):
             raise WorkflowValidationError(f"Plugin {self.request.plugin_id} not found")
 
         if self.plugin.status != "active":
-            raise WorkflowValidationError(
-                f"Plugin {self.plugin.name} is not available for installation"
-            )
+            raise WorkflowValidationError(f"Plugin {self.plugin.name} is not available for installation")
 
         # Validate license tier
-        if not self.plugin_service._is_license_tier_available(
-            self.plugin, self.request.license_tier
-        ):
-            raise WorkflowValidationError(
-                f"License tier {self.request.license_tier} not available"
-            )
+        if not self.plugin_service._is_license_tier_available(self.plugin, self.request.license_tier):
+            raise WorkflowValidationError(f"License tier {self.request.license_tier} not available")
 
         # Check if already installed
-        existing_license = await self.plugin_service.get_tenant_plugin_license(
-            self.tenant_id, self.request.plugin_id
-        )
+        existing_license = await self.plugin_service.get_tenant_plugin_license(self.tenant_id, self.request.plugin_id)
 
         if existing_license and existing_license.is_active:
-            raise WorkflowValidationError(
-                f"Plugin {self.plugin.name} is already installed"
-            )
+            raise WorkflowValidationError(f"Plugin {self.plugin.name} is already installed")
 
         return {
             "plugin_id": str(self.plugin.id),
@@ -191,9 +175,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
                 missing_dependencies.append(dep_name)
 
         if missing_dependencies:
-            raise WorkflowValidationError(
-                f"Missing required dependencies: {', '.join(missing_dependencies)}"
-            )
+            raise WorkflowValidationError(f"Missing required dependencies: {', '.join(missing_dependencies)}")
 
         return {
             "dependencies_satisfied": True,
@@ -239,14 +221,10 @@ class PluginInstallationWorkflow(BaseWorkflow):
 
         except (ValueError, OSError) as e:
             logger.error(f"Security validation failed: {e}")
-            raise WorkflowValidationError(
-                f"Plugin security validation failed: {str(e)}"
-            ) from e
+            raise WorkflowValidationError(f"Plugin security validation failed: {str(e)}") from e
         except (TimeoutError, ConnectionError) as e:
             logger.error(f"Security validation transient failure: {e}")
-            raise WorkflowTransientError(
-                "Plugin security validation transient failure"
-            ) from e
+            raise WorkflowTransientError("Plugin security validation transient failure") from e
         except PluginError as e:
             logger.error(f"Security validation plugin error: {e}")
             raise WorkflowError(str(e)) from e
@@ -268,22 +246,16 @@ class PluginInstallationWorkflow(BaseWorkflow):
                 "license_tier": self.plugin_license.license_tier.value,
                 "license_status": self.plugin_license.status.value,
                 "trial_ends_at": (
-                    self.plugin_license.trial_ends_at.isoformat()
-                    if self.plugin_license.trial_ends_at
-                    else None
+                    self.plugin_license.trial_ends_at.isoformat() if self.plugin_license.trial_ends_at else None
                 ),
             }
 
         except (ValueError, KeyError) as e:
             logger.error(f"License creation validation failed: {e}")
-            raise WorkflowValidationError(
-                f"Failed to create plugin license: {str(e)}"
-            ) from e
+            raise WorkflowValidationError(f"Failed to create plugin license: {str(e)}") from e
         except (TimeoutError, ConnectionError) as e:
             logger.error(f"License creation transient failure: {e}")
-            raise WorkflowTransientError(
-                "Failed to create plugin license (transient)"
-            ) from e
+            raise WorkflowTransientError("Failed to create plugin license (transient)") from e
         except PluginError as e:
             logger.error(f"License creation plugin error: {e}")
             raise WorkflowError(f"Failed to create plugin license: {str(e)}") from e
@@ -303,10 +275,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
             )
 
             # Ensure tenant manager is initialized
-            if (
-                not hasattr(self.tenant_manager, "_initialized")
-                or not self.tenant_manager._initialized
-            ):
+            if not hasattr(self.tenant_manager, "_initialized") or not self.tenant_manager._initialized:
                 await self.tenant_manager.initialize()
 
             return {
@@ -317,14 +286,10 @@ class PluginInstallationWorkflow(BaseWorkflow):
 
         except (TimeoutError, ConnectionError) as e:
             logger.error(f"Tenant environment setup transient failure: {e}")
-            raise WorkflowTransientError(
-                "Failed to setup tenant environment (transient)"
-            ) from e
+            raise WorkflowTransientError("Failed to setup tenant environment (transient)") from e
         except (OSError, ValueError) as e:
             logger.error(f"Tenant environment setup validation failed: {e}")
-            raise WorkflowValidationError(
-                f"Failed to setup tenant environment: {str(e)}"
-            ) from e
+            raise WorkflowValidationError(f"Failed to setup tenant environment: {str(e)}") from e
         except PluginError as e:
             logger.error(f"Tenant environment setup plugin error: {e}")
             raise WorkflowError(f"Failed to setup tenant environment: {str(e)}") from e
@@ -380,9 +345,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
             }
 
             # Update license with final configuration
-            await self.plugin_service.license_repo.update(
-                self.plugin_license.id, {"configuration": final_config}
-            )
+            await self.plugin_service.license_repo.update(self.plugin_license.id, {"configuration": final_config})
 
             return {
                 "plugin_configured": True,
@@ -392,14 +355,10 @@ class PluginInstallationWorkflow(BaseWorkflow):
 
         except (ValueError, KeyError, TypeError) as e:
             logger.error(f"Plugin configuration validation failed: {e}")
-            raise WorkflowValidationError(
-                f"Failed to configure plugin: {str(e)}"
-            ) from e
+            raise WorkflowValidationError(f"Failed to configure plugin: {str(e)}") from e
         except (TimeoutError, ConnectionError) as e:
             logger.error(f"Plugin configuration transient failure: {e}")
-            raise WorkflowTransientError(
-                "Failed to configure plugin (transient)"
-            ) from e
+            raise WorkflowTransientError("Failed to configure plugin (transient)") from e
         except PluginError as e:
             logger.error(f"Plugin configuration plugin error: {e}")
             raise WorkflowError(f"Failed to configure plugin: {str(e)}") from e
@@ -513,21 +472,15 @@ class PluginInstallationWorkflow(BaseWorkflow):
                 "completion_time": datetime.now(timezone.utc).isoformat(),
             }
 
-            logger.info(
-                f"Plugin installation completed successfully: {self.plugin.name}"
-            )
+            logger.info(f"Plugin installation completed successfully: {self.plugin.name}")
             return installation_summary
 
         except (TimeoutError, ConnectionError) as e:
             logger.error(f"Installation completion transient failure: {e}")
-            raise WorkflowTransientError(
-                "Failed to complete installation (transient)"
-            ) from e
+            raise WorkflowTransientError("Failed to complete installation (transient)") from e
         except (ValueError, KeyError) as e:
             logger.error(f"Installation completion validation failure: {e}")
-            raise WorkflowValidationError(
-                f"Failed to complete installation: {str(e)}"
-            ) from e
+            raise WorkflowValidationError(f"Failed to complete installation: {str(e)}") from e
         except (OSError, RuntimeError, PluginError) as e:
             logger.error(f"Installation completion failed: {e}")
             raise WorkflowError(f"Failed to complete installation: {str(e)}") from e
@@ -561,9 +514,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
     async def _rollback_license_creation(self) -> None:
         """Rollback license creation."""
         if self.plugin_license:
-            await self.plugin_service.license_repo.update(
-                self.plugin_license.id, {"status": LicenseStatus.CANCELLED}
-            )
+            await self.plugin_service.license_repo.update(self.plugin_license.id, {"status": LicenseStatus.CANCELLED})
             logger.info(f"Rolled back license creation for plugin {self.plugin.name}")
 
     async def _rollback_tenant_setup(self) -> None:
@@ -575,9 +526,7 @@ class PluginInstallationWorkflow(BaseWorkflow):
     async def _rollback_plugin_activation(self) -> None:
         """Rollback plugin activation."""
         if self.plugin_license:
-            await self.plugin_service.license_repo.update(
-                self.plugin_license.id, {"status": LicenseStatus.SUSPENDED}
-            )
+            await self.plugin_service.license_repo.update(self.plugin_license.id, {"status": LicenseStatus.SUSPENDED})
             logger.info(f"Rolled back plugin activation for plugin {self.plugin.name}")
 
 
@@ -621,9 +570,7 @@ class PluginUninstallWorkflow(BaseWorkflow):
     Plugin uninstallation workflow with complete cleanup.
     """
 
-    def __init__(
-        self, installation_id: UUID, tenant_id: UUID, plugin_service: PluginService
-    ):
+    def __init__(self, installation_id: UUID, tenant_id: UUID, plugin_service: PluginService):
         self.installation_id = installation_id
         self.tenant_id = tenant_id
         self.plugin_service = plugin_service

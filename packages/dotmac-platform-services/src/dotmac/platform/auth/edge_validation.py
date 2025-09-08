@@ -195,8 +195,8 @@ class EdgeJWTValidator:
         if self.require_https and request.url.scheme != "https":
             # Allow HTTP for local development and health checks
             if not (
-                request.client
-                and request.client.host in ["127.0.0.1", "localhost"]
+                (request.client
+                and request.client.host in ["127.0.0.1", "localhost"])
                 or path in ["/health", "/ready", "/metrics"]
             ):
                 raise AuthError("HTTPS required", error_code="HTTPS_REQUIRED")
@@ -270,7 +270,7 @@ class EdgeJWTValidator:
             # Just need valid token - already verified
             return
 
-        elif sensitivity == SensitivityLevel.SENSITIVE:
+        if sensitivity == SensitivityLevel.SENSITIVE:
             # Require specific scopes for sensitive operations
             required_scopes = ["read:sensitive"]
             if not any(scope in user_scopes for scope in required_scopes):

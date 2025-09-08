@@ -16,17 +16,54 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from dotmac.core import ValidationError
-from dotmac.core import ValidationError as CustomValidationError
-from dotmac.core.exceptions import (
-    AuthenticationError,
+from dotmac.core import (
     AuthorizationError,
-    BusinessRuleError,
-    EntityNotFoundError,
-    ExternalServiceError,
-    RateLimitError,
-    ServiceError,
+    DotMacError,
+    ValidationError,
 )
+from dotmac.core import ValidationError as CustomValidationError
+
+# Try to import additional platform exceptions
+try:
+    from dotmac.platform.auth.exceptions import AuthenticationError as PlatformAuthError
+    from dotmac.platform.auth.exceptions import (
+        InvalidTokenError,
+        TokenExpiredError,
+    )
+    _has_platform_auth_exceptions = True
+except ImportError:
+    PlatformAuthError = None
+    TokenExpiredError = None
+    InvalidTokenError = None
+    _has_platform_auth_exceptions = False
+
+try:
+    from dotmac.core.exceptions import BusinessRuleError as CoreBusinessRuleError
+    from dotmac.core.exceptions import EntityNotFoundError as CoreEntityNotFoundError
+    _has_core_exceptions = True
+except ImportError:
+    CoreEntityNotFoundError = None
+    CoreBusinessRuleError = None
+    _has_core_exceptions = False
+
+# Define missing exception types locally for backward compatibility
+class AuthenticationError(DotMacError):
+    """Authentication failed."""
+
+class BusinessRuleError(DotMacError):
+    """Business rule violation."""
+
+class EntityNotFoundError(DotMacError):
+    """Entity not found."""
+
+class ExternalServiceError(DotMacError):
+    """External service error."""
+
+class RateLimitError(DotMacError):
+    """Rate limit exceeded."""
+
+class ServiceError(DotMacError):
+    """Internal service error."""
 
 logger = logging.getLogger(__name__)
 
@@ -108,29 +145,58 @@ class ErrorResponse:
         return response
 
 
-# === Exception to HTTP Status Mapping ===
+# === Comprehensive Exception to HTTP Status Mapping ===
 
-EXCEPTION_STATUS_MAP = {
-    EntityNotFoundError: status.HTTP_404_NOT_FOUND,
-    CustomValidationError: status.HTTP_400_BAD_REQUEST,
-    BusinessRuleError: status.HTTP_422_UNPROCESSABLE_ENTITY,
-    AuthenticationError: status.HTTP_401_UNAUTHORIZED,
-    AuthorizationError: status.HTTP_403_FORBIDDEN,
-    RateLimitError: status.HTTP_429_TOO_MANY_REQUESTS,
-    ExternalServiceError: status.HTTP_502_BAD_GATEWAY,
-    ServiceError: status.HTTP_500_INTERNAL_SERVER_ERROR,
-}
+def _build_exception_maps() -> tuple[dict, dict]:
+    """Build exception mapping dictionaries dynamically."""
+    status_map = {
+        # Local exceptions
+        EntityNotFoundError: status.HTTP_404_NOT_FOUND,
+        CustomValidationError: status.HTTP_400_BAD_REQUEST,
+        BusinessRuleError: status.HTTP_422_UNPROCESSABLE_ENTITY,
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        RateLimitError: status.HTTP_429_TOO_MANY_REQUESTS,
+        ExternalServiceError: status.HTTP_502_BAD_GATEWAY,
+        ServiceError: status.HTTP_500_INTERNAL_SERVER_ERROR,
+    }
 
-ERROR_CODE_MAP = {
-    EntityNotFoundError: "ENTITY_NOT_FOUND",
-    CustomValidationError: "VALIDATION_ERROR",
-    BusinessRuleError: "BUSINESS_RULE_VIOLATION",
-    AuthenticationError: "AUTHENTICATION_FAILED",
-    AuthorizationError: "ACCESS_DENIED",
-    RateLimitError: "RATE_LIMIT_EXCEEDED",
-    ExternalServiceError: "EXTERNAL_SERVICE_ERROR",
-    ServiceError: "INTERNAL_ERROR",
-}
+    code_map = {
+        # Local exceptions
+        EntityNotFoundError: "ENTITY_NOT_FOUND",
+        CustomValidationError: "VALIDATION_ERROR",
+        BusinessRuleError: "BUSINESS_RULE_VIOLATION",
+        AuthenticationError: "AUTHENTICATION_FAILED",
+        AuthorizationError: "ACCESS_DENIED",
+        RateLimitError: "RATE_LIMIT_EXCEEDED",
+        ExternalServiceError: "EXTERNAL_SERVICE_ERROR",
+        ServiceError: "INTERNAL_ERROR",
+    }
+
+    # Add platform auth exceptions if available
+    if _has_platform_auth_exceptions:
+        if PlatformAuthError:
+            status_map[PlatformAuthError] = status.HTTP_401_UNAUTHORIZED
+            code_map[PlatformAuthError] = "PLATFORM_AUTH_ERROR"
+        if TokenExpiredError:
+            status_map[TokenExpiredError] = status.HTTP_401_UNAUTHORIZED
+            code_map[TokenExpiredError] = "TOKEN_EXPIRED"
+        if InvalidTokenError:
+            status_map[InvalidTokenError] = status.HTTP_401_UNAUTHORIZED
+            code_map[InvalidTokenError] = "INVALID_TOKEN"
+
+    # Add core exceptions if available
+    if _has_core_exceptions:
+        if CoreEntityNotFoundError:
+            status_map[CoreEntityNotFoundError] = status.HTTP_404_NOT_FOUND
+            code_map[CoreEntityNotFoundError] = "CORE_ENTITY_NOT_FOUND"
+        if CoreBusinessRuleError:
+            status_map[CoreBusinessRuleError] = status.HTTP_422_UNPROCESSABLE_ENTITY
+            code_map[CoreBusinessRuleError] = "CORE_BUSINESS_RULE_VIOLATION"
+
+    return status_map, code_map
+
+EXCEPTION_STATUS_MAP, ERROR_CODE_MAP = _build_exception_maps()
 
 
 # === Standard Exception Handler Decorator ===
@@ -160,16 +226,7 @@ def standard_exception_handler(func: Callable) -> Callable:
             # Re-raise FastAPI HTTPExceptions as-is
             raise
 
-        except (
-            EntityNotFoundError,
-            CustomValidationError,
-            BusinessRuleError,
-            AuthenticationError,
-            AuthorizationError,
-            RateLimitError,
-            ExternalServiceError,
-            ServiceError,
-        ) as e:
+        except tuple(EXCEPTION_STATUS_MAP.keys()) as e:
             status_code = EXCEPTION_STATUS_MAP.get(
                 type(e), status.HTTP_500_INTERNAL_SERVER_ERROR
             )

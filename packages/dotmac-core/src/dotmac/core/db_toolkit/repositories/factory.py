@@ -2,14 +2,13 @@
 Repository factory functions for creating appropriate repository instances.
 """
 
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from ...database import TenantMixin
-from ..types import ModelType, ValidationError
-from .async_base import AsyncRepository, AsyncTenantRepository
-from .base import BaseRepository, BaseTenantRepository
+from dotmac.core.database import TenantMixin
+from dotmac.core.db_toolkit.repositories.async_base import AsyncRepository, AsyncTenantRepository
+from dotmac.core.db_toolkit.repositories.base import BaseRepository, BaseTenantRepository
+from dotmac.core.db_toolkit.types import ModelType, ValidationError
 
 
 def create_repository(
@@ -38,7 +37,9 @@ def create_repository(
     if is_tenant_model and tenant_id:
         return BaseTenantRepository(db, model_class, tenant_id, auto_commit)
     elif is_tenant_model and not tenant_id:
-        raise ValidationError(f"Model {model_class.__name__} requires tenant_id but none provided")
+        msg = f"Model {model_class.__name__} requires tenant_id but none provided"
+
+        raise ValidationError(msg)
     else:
         return BaseRepository(db, model_class, tenant_id, auto_commit)
 
@@ -69,7 +70,9 @@ def create_async_repository(
     if is_tenant_model and tenant_id:
         return AsyncTenantRepository(db, model_class, tenant_id, auto_commit)
     elif is_tenant_model and not tenant_id:
-        raise ValidationError(f"Model {model_class.__name__} requires tenant_id but none provided")
+        msg = f"Model {model_class.__name__} requires tenant_id but none provided"
+
+        raise ValidationError(msg)
     else:
         return AsyncRepository(db, model_class, tenant_id, auto_commit)
 
@@ -79,7 +82,12 @@ def create_repository_from_session(
     model_class: type[ModelType],
     tenant_id: str | None = None,
     auto_commit: bool = True,
-) -> BaseRepository[ModelType] | BaseTenantRepository[ModelType] | AsyncRepository[ModelType] | AsyncTenantRepository[ModelType]:
+) -> (
+    BaseRepository[ModelType]
+    | BaseTenantRepository[ModelType]
+    | AsyncRepository[ModelType]
+    | AsyncTenantRepository[ModelType]
+):
     """
     Factory function that automatically detects session type and creates appropriate repository.
 

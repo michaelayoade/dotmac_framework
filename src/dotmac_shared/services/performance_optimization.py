@@ -89,36 +89,27 @@ class PerformanceMetrics:
         cache_hit_rate = 0.0
         if (self.metrics["cache_hits"] + self.metrics["cache_misses"]) > 0:
             cache_hit_rate = (
-                self.metrics["cache_hits"]
-                / (self.metrics["cache_hits"] + self.metrics["cache_misses"])
-                * 100
+                self.metrics["cache_hits"] / (self.metrics["cache_hits"] + self.metrics["cache_misses"]) * 100
             )
 
         avg_query_time = 0.0
         if self.metrics["query_count"] > 0:
-            avg_query_time = (
-                self.metrics["query_time_total"] / self.metrics["query_count"]
-            )
+            avg_query_time = self.metrics["query_time_total"] / self.metrics["query_count"]
 
         avg_request_time = 0.0
         if self.metrics["request_count"] > 0:
-            avg_request_time = (
-                self.metrics["request_time_total"] / self.metrics["request_count"]
-            )
+            avg_request_time = self.metrics["request_time_total"] / self.metrics["request_count"]
 
         return {
             "uptime_seconds": uptime,
             "cache_hit_rate": round(cache_hit_rate, 2),
             "total_requests": self.metrics["request_count"],
-            "requests_per_second": round(self.metrics["request_count"] / uptime, 2)
-            if uptime > 0
-            else 0,
+            "requests_per_second": round(self.metrics["request_count"] / uptime, 2) if uptime > 0 else 0,
             "average_request_time_ms": round(avg_request_time * 1000, 2),
             "total_queries": self.metrics["query_count"],
             "average_query_time_ms": round(avg_query_time * 1000, 2),
             "error_rate": round(
-                (self.metrics["error_count"] / max(self.metrics["request_count"], 1))
-                * 100,
+                (self.metrics["error_count"] / max(self.metrics["request_count"], 1)) * 100,
                 2,
             ),
             "background_tasks_completed": self.metrics["background_tasks"],
@@ -143,7 +134,7 @@ class CacheManager:
         key_data = f"{prefix}:{':'.join(str(arg) for arg in args)}"
         if kwargs:
             key_data += f":{json.dumps(kwargs, sort_keys=True)}"
-        return hashlib.md5(key_data.encode()).hexdigest()
+        return hashlib.sha256(key_data.encode()).hexdigest()[:32]  # Use SHA-256 instead of MD5
 
     async def get(self, key: str, cache_level: str = CacheLevel.MEMORY) -> Any | None:
         """Get value from cache."""
@@ -235,9 +226,7 @@ class CacheManager:
         return {
             "memory_cache_size": len(self.memory_cache),
             "memory_cache_limit": self.max_memory_entries,
-            "memory_usage_percent": round(
-                (len(self.memory_cache) / self.max_memory_entries) * 100, 2
-            ),
+            "memory_usage_percent": round((len(self.memory_cache) / self.max_memory_entries) * 100, 2),
             "redis_enabled": self.redis_enabled,
             "default_ttl_seconds": self.cache_ttl,
         }
@@ -265,10 +254,7 @@ class DatabaseOptimizer:
 
         # Basic optimization: ensure LIMIT is present for large result sets
         if "SELECT" in query_str.upper() and "LIMIT" not in query_str.upper():
-            if not any(
-                keyword in query_str.upper()
-                for keyword in ["COUNT", "SUM", "AVG", "MAX", "MIN"]
-            ):
+            if not any(keyword in query_str.upper() for keyword in ["COUNT", "SUM", "AVG", "MAX", "MIN"]):
                 optimized += " LIMIT 1000"
 
         return optimized
@@ -283,9 +269,7 @@ class DatabaseOptimizer:
     ) -> Any:
         """Execute query with result caching."""
         if not cache_key:
-            cache_key = hashlib.md5(
-                f"{query_str}:{json.dumps(params or {}, sort_keys=True)}".encode()
-            ).hexdigest()
+            cache_key = hashlib.sha256(f"{query_str}:{json.dumps(params or {}, sort_keys=True)}".encode()).hexdigest()[:32]
 
         # Check cache first
         if cache_key in self.query_cache:
@@ -344,9 +328,7 @@ class DatabaseOptimizer:
             total_time = sum(stat["total_time"] for stat in self.query_stats.values())
             avg_query_time = total_time / total_queries
 
-        slowest_queries = sorted(
-            self.query_stats.items(), key=lambda x: x[1]["avg_time"], reverse=True
-        )[:5]
+        slowest_queries = sorted(self.query_stats.items(), key=lambda x: x[1]["avg_time"], reverse=True)[:5]
 
         return {
             "total_queries": total_queries,
@@ -463,11 +445,7 @@ class BackgroundTaskManager:
             "completed_tasks": self.completed_tasks,
             "failed_tasks": self.failed_tasks,
             "success_rate": round(
-                (
-                    self.completed_tasks
-                    / max(self.completed_tasks + self.failed_tasks, 1)
-                )
-                * 100,
+                (self.completed_tasks / max(self.completed_tasks + self.failed_tasks, 1)) * 100,
                 2,
             ),
         }
@@ -505,9 +483,7 @@ class PerformanceOptimizationService(BaseService):
 
     # Caching Interface
 
-    async def cache_get(
-        self, key: str, cache_level: str = CacheLevel.MEMORY
-    ) -> Any | None:
+    async def cache_get(self, key: str, cache_level: str = CacheLevel.MEMORY) -> Any | None:
         """Get value from cache with metrics tracking."""
         value = await self.cache_manager.get(key, cache_level)
 
@@ -534,16 +510,12 @@ class PerformanceOptimizationService(BaseService):
 
     # Database Optimization Interface
 
-    async def execute_optimized_query(
-        self, query_str: str, params: dict | None = None, cache_ttl: int = 300
-    ) -> Any:
+    async def execute_optimized_query(self, query_str: str, params: dict | None = None, cache_ttl: int = 300) -> Any:
         """Execute database query with optimization and caching."""
         start_time = time.time()
 
         try:
-            result = await self.db_optimizer.execute_with_cache(
-                self.db, query_str, params, cache_ttl=cache_ttl
-            )
+            result = await self.db_optimizer.execute_with_cache(self.db, query_str, params, cache_ttl=cache_ttl)
 
             duration = time.time() - start_time
             self.metrics.record_query(duration)
@@ -567,9 +539,7 @@ class PerformanceOptimizationService(BaseService):
     ) -> str:
         """Enqueue a background task."""
         task_id = f"{task_name}_{int(time.time())}"
-        return await self.task_manager.enqueue_task(
-            task_id, task_func, args, kwargs, priority, delay
-        )
+        return await self.task_manager.enqueue_task(task_id, task_func, args, kwargs, priority, delay)
 
     # Performance Monitoring Interface
 
@@ -600,9 +570,7 @@ class PerformanceOptimizationService(BaseService):
                 if key_func:
                     cache_key = key_func(*args, **kwargs)
                 else:
-                    cache_key = self.cache_manager._generate_cache_key(
-                        f"{func.__name__}", *args, **kwargs
-                    )
+                    cache_key = self.cache_manager._generate_cache_key(f"{func.__name__}", *args, **kwargs)
 
                 # Try to get from cache
                 cached_result = await self.cache_get(cache_key, cache_level)

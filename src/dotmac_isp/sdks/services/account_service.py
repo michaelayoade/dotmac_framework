@@ -19,9 +19,7 @@ class AccountService:
         self._accounts: dict[UUID, Account] = {}
         self._mfa_factors: dict[UUID, list[MFAFactor]] = {}
 
-    async def create_account(
-        self, username: str, email: str, password: Optional[str] = None, **kwargs
-    ) -> Account:
+    async def create_account(self, username: str, email: str, password: Optional[str] = None, **kwargs) -> Account:
         """Create a new account."""
         account = Account(username=username, email=email, **kwargs)
         self._accounts[account.id] = account

@@ -30,9 +30,7 @@ class CustomerRepository(BaseRepository[Customer]):
     async def get_by_email(self, tenant_id: UUID, email: str) -> Optional[Customer]:
         """Get customer by email within tenant."""
         result = await self.db.execute(
-            select(Customer).where(
-                and_(Customer.tenant_id == tenant_id, Customer.email == email)
-            )
+            select(Customer).where(and_(Customer.tenant_id == tenant_id, Customer.email == email))
         )
         return result.scalars().first()
 
@@ -84,9 +82,7 @@ class CustomerRepository(BaseRepository[Customer]):
         query = query.offset(offset).limit(page_size)
 
         # Execute query with relationships loaded
-        query = query.options(
-            selectinload(Customer.services), selectinload(Customer.usage_records)
-        )
+        query = query.options(selectinload(Customer.services), selectinload(Customer.usage_records))
         result = await self.db.execute(query)
         customers = result.scalars().all()
 
@@ -98,17 +94,13 @@ class CustomerRepository(BaseRepository[Customer]):
             "has_more": (page * page_size) < total_count,
         }
 
-    async def get_customer_metrics(
-        self, tenant_id: UUID, period_days: int = 30
-    ) -> dict[str, Any]:
+    async def get_customer_metrics(self, tenant_id: UUID, period_days: int = 30) -> dict[str, Any]:
         """Get customer metrics and statistics for a tenant."""
 
         period_start = datetime.now(timezone.utc) - timedelta(days=period_days)
 
         # Total customers
-        total_query = select(func.count(Customer.id)).where(
-            Customer.tenant_id == tenant_id
-        )
+        total_query = select(func.count(Customer.id)).where(Customer.tenant_id == tenant_id)
         total_result = await self.db.execute(total_query)
         total_customers = total_result.scalar() or 0
 
@@ -171,22 +163,16 @@ class CustomerRepository(BaseRepository[Customer]):
             "previous_period_customers": previous_period_customers + total_customers,
         }
 
-    async def get_customer_with_services(
-        self, tenant_id: UUID, customer_id: UUID
-    ) -> Optional[Customer]:
+    async def get_customer_with_services(self, tenant_id: UUID, customer_id: UUID) -> Optional[Customer]:
         """Get customer with all services loaded."""
         result = await self.db.execute(
             select(Customer)
             .where(and_(Customer.tenant_id == tenant_id, Customer.id == customer_id))
-            .options(
-                selectinload(Customer.services), selectinload(Customer.usage_records)
-            )
+            .options(selectinload(Customer.services), selectinload(Customer.usage_records))
         )
         return result.scalars().first()
 
-    async def get_customer_services(
-        self, tenant_id: UUID, customer_id: UUID
-    ) -> list[CustomerService]:
+    async def get_customer_services(self, tenant_id: UUID, customer_id: UUID) -> list[CustomerService]:
         """Get all services for a specific customer."""
         result = await self.db.execute(
             select(CustomerService)
@@ -229,9 +215,7 @@ class CustomerServiceRepository(BaseRepository[CustomerService]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, CustomerService)
 
-    async def get_service_usage_stats(
-        self, tenant_id: UUID, service_id: UUID
-    ) -> dict[str, Any]:
+    async def get_service_usage_stats(self, tenant_id: UUID, service_id: UUID) -> dict[str, Any]:
         """Get usage statistics for a specific service."""
 
         # Get latest usage record

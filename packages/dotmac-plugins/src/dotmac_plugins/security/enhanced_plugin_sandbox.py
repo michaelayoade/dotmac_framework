@@ -108,7 +108,7 @@ class EnhancedPluginPermissions(PluginPermissions):
         self.tenant_isolation = tenant_isolation
         self._permission_cache: dict[str, bool] = {}
 
-    def has_permission_cached(self, category: str, operation: str, context: Optional[Dict] = None) -> bool:
+    def has_permission_cached(self, category: str, operation: str, context: Optional[dict] = None) -> bool:
         """Check permission with caching and context awareness."""
         cache_key = f"{category}:{operation}"
 
@@ -121,7 +121,7 @@ class EnhancedPluginPermissions(PluginPermissions):
 
         return has_perm
 
-    def _check_contextual_permission(self, category: str, operation: str, context: Optional[Dict]) -> bool:
+    def _check_contextual_permission(self, category: str, operation: str, context: Optional[dict]) -> bool:
         """Check permission with context awareness."""
         base_permission = self.has_permission(category, operation)
 
@@ -135,7 +135,7 @@ class EnhancedPluginPermissions(PluginPermissions):
 
         return True
 
-    def _check_tenant_isolation(self, context: Dict) -> bool:
+    def _check_tenant_isolation(self, context: dict) -> bool:
         """Verify tenant isolation constraints."""
         plugin_tenant = context.get("plugin_tenant_id")
         access_tenant = context.get("access_tenant_id")
@@ -446,7 +446,7 @@ class EnterprisePluginSandbox(PluginSandbox):
         }
 
     @standard_exception_handler
-    async def check_permission_with_audit(self, category: str, operation: str, context: Optional[Dict] = None) -> bool:
+    async def check_permission_with_audit(self, category: str, operation: str, context: Optional[dict] = None) -> bool:
         """Check permission with comprehensive auditing."""
 
         # Merge sandbox context with provided context

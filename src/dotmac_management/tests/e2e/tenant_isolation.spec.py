@@ -525,7 +525,7 @@ class TestAPIIsolation:
         tenant_b_jwt = f"jwt_b_{secrets.token_hex(16)}"
 
         # Exhaust rate limit for tenant A
-        for i in range(10):  # Reduced for testing
+        for _i in range(10):  # Reduced for testing
             try:
                 await http_client.get(
                     f"{tenant_a_url}/api/v1/health",

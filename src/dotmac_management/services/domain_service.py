@@ -53,9 +53,7 @@ class DomainService:
                 full_domain = domain_name
 
             # Check if domain already exists
-            existing_domain = await self.domain_repository.get_domain_by_name(
-                full_domain, tenant_id
-            )
+            existing_domain = await self.domain_repository.get_domain_by_name(full_domain, tenant_id)
             if existing_domain:
                 raise ValidationError(f"Domain already exists: {full_domain}")
 
@@ -122,19 +120,13 @@ class DomainService:
         await self._check_domain_permission(domain, user_id)
 
         # Get DNS records
-        dns_records = await self.domain_repository.get_domain_dns_records(
-            domain_id, tenant_id
-        )
+        dns_records = await self.domain_repository.get_domain_dns_records(domain_id, tenant_id)
 
         # Get SSL certificates
-        ssl_certificates = await self.domain_repository.get_domain_ssl_certificates(
-            domain_id, tenant_id
-        )
+        ssl_certificates = await self.domain_repository.get_domain_ssl_certificates(domain_id, tenant_id)
 
         # Get recent logs
-        domain_logs = await self.domain_repository.get_domain_logs(
-            domain_id, tenant_id, limit=20
-        )
+        domain_logs = await self.domain_repository.get_domain_logs(domain_id, tenant_id, limit=20)
 
         return {
             "domain": domain,
@@ -143,9 +135,7 @@ class DomainService:
             "recent_logs": domain_logs,
         }
 
-    async def update_domain(
-        self, domain_id: str, tenant_id: str, user_id: str, updates: dict
-    ) -> dict:
+    async def update_domain(self, domain_id: str, tenant_id: str, user_id: str, updates: dict) -> dict:
         """Update domain configuration."""
         domain = await self.domain_repository.get_domain_by_id(domain_id, tenant_id)
         if not domain:
@@ -166,9 +156,7 @@ class DomainService:
 
         return {"domain": updated_domain}
 
-    async def delete_domain(
-        self, domain_id: str, tenant_id: str, user_id: str, force: bool = False
-    ) -> bool:
+    async def delete_domain(self, domain_id: str, tenant_id: str, user_id: str, force: bool = False) -> bool:
         """Delete domain and associated records."""
         domain = await self.domain_repository.get_domain_by_id(domain_id, tenant_id)
         if not domain:
@@ -235,20 +223,14 @@ class DomainService:
 
         return {"dns_record": dns_record}
 
-    async def update_dns_record(
-        self, record_id: str, tenant_id: str, user_id: str, updates: dict
-    ) -> dict:
+    async def update_dns_record(self, record_id: str, tenant_id: str, user_id: str, updates: dict) -> dict:
         """Update DNS record."""
-        dns_record = await self.domain_repository.get_dns_record_by_id(
-            record_id, tenant_id
-        )
+        dns_record = await self.domain_repository.get_dns_record_by_id(record_id, tenant_id)
         if not dns_record:
             raise NotFoundError(f"DNS record not found: {record_id}")
 
         # Get domain for permission check
-        domain = await self.domain_repository.get_domain_by_id(
-            dns_record.domain_id, tenant_id
-        )
+        domain = await self.domain_repository.get_domain_by_id(dns_record.domain_id, tenant_id)
         await self._check_domain_permission(domain, user_id)
 
         # Check if record is editable
@@ -280,29 +262,21 @@ class DomainService:
 
         return {"dns_record": updated_record}
 
-    async def delete_dns_record(
-        self, record_id: str, tenant_id: str, user_id: str
-    ) -> bool:
+    async def delete_dns_record(self, record_id: str, tenant_id: str, user_id: str) -> bool:
         """Delete DNS record."""
-        dns_record = await self.domain_repository.get_dns_record_by_id(
-            record_id, tenant_id
-        )
+        dns_record = await self.domain_repository.get_dns_record_by_id(record_id, tenant_id)
         if not dns_record:
             raise NotFoundError(f"DNS record not found: {record_id}")
 
         # Get domain for permission check
-        domain = await self.domain_repository.get_domain_by_id(
-            dns_record.domain_id, tenant_id
-        )
+        domain = await self.domain_repository.get_domain_by_id(dns_record.domain_id, tenant_id)
         await self._check_domain_permission(domain, user_id)
 
         # Check if record is editable
         if not dns_record.is_editable:
             raise PermissionError("DNS record is not editable")
 
-        success = await self.domain_repository.delete_dns_record(
-            record_id, tenant_id, user_id
-        )
+        success = await self.domain_repository.delete_dns_record(record_id, tenant_id, user_id)
 
         if success:
             # Log DNS record deletion
@@ -334,18 +308,14 @@ class DomainService:
         # Check permissions
         await self._check_domain_permission(domain, user_id)
 
-        verification = await self._initiate_domain_verification(
-            domain, user_id, verification_method
-        )
+        verification = await self._initiate_domain_verification(domain, user_id, verification_method)
 
         return {
             "verification": verification,
             "instructions": self._get_verification_instructions(verification),
         }
 
-    async def check_domain_verification(
-        self, domain_id: str, tenant_id: str, user_id: str
-    ) -> dict:
+    async def check_domain_verification(self, domain_id: str, tenant_id: str, user_id: str) -> dict:
         """Check domain verification status."""
         domain = await self.domain_repository.get_domain_by_id(domain_id, tenant_id)
         if not domain:
@@ -355,17 +325,11 @@ class DomainService:
         await self._check_domain_permission(domain, user_id)
 
         # Get pending verifications
-        pending_verifications = await self.domain_repository.get_pending_verifications(
-            tenant_id
-        )
-        domain_verifications = [
-            v for v in pending_verifications if v.domain_id == domain_id
-        ]
+        pending_verifications = await self.domain_repository.get_pending_verifications(tenant_id)
+        domain_verifications = [v for v in pending_verifications if v.domain_id == domain_id]
 
         if not domain_verifications:
-            return {
-                "verified": domain.verification_status == VerificationStatus.VERIFIED
-            }
+            return {"verified": domain.verification_status == VerificationStatus.VERIFIED}
 
         # Check each pending verification
         verification_results = []
@@ -397,19 +361,13 @@ class DomainService:
 
         # Check if domain is verified
         if domain.verification_status != VerificationStatus.VERIFIED:
-            raise ValidationError(
-                "Domain must be verified before requesting SSL certificate"
-            )
+            raise ValidationError("Domain must be verified before requesting SSL certificate")
 
-        ssl_certificate = await self._request_ssl_certificate(
-            domain, user_id, certificate_authority
-        )
+        ssl_certificate = await self._request_ssl_certificate(domain, user_id, certificate_authority)
 
         return {"ssl_certificate": ssl_certificate}
 
-    async def renew_ssl_certificate(
-        self, certificate_id: str, tenant_id: str, user_id: str
-    ) -> dict:
+    async def renew_ssl_certificate(self, certificate_id: str, tenant_id: str, user_id: str) -> dict:
         """Renew SSL certificate."""
         # Implementation would depend on certificate authority
         # For now, return a placeholder
@@ -425,23 +383,15 @@ class DomainService:
         """Get domains expiring within specified days."""
         return await self.domain_repository.get_expiring_domains(tenant_id, days_ahead)
 
-    async def get_expiring_ssl_certificates(
-        self, tenant_id: str, days_ahead: int = 30
-    ) -> list:
+    async def get_expiring_ssl_certificates(self, tenant_id: str, days_ahead: int = 30) -> list:
         """Get SSL certificates expiring within specified days."""
-        return await self.domain_repository.get_expiring_ssl_certificates(
-            tenant_id, days_ahead
-        )
+        return await self.domain_repository.get_expiring_ssl_certificates(tenant_id, days_ahead)
 
     # Background Processing
 
-    async def process_pending_verifications(
-        self, tenant_id: Optional[str] = None
-    ) -> int:
+    async def process_pending_verifications(self, tenant_id: Optional[str] = None) -> int:
         """Process pending domain verifications."""
-        pending_verifications = await self.domain_repository.get_pending_verifications(
-            tenant_id
-        )
+        pending_verifications = await self.domain_repository.get_pending_verifications(tenant_id)
         processed_count = 0
 
         for verification in pending_verifications:
@@ -449,17 +399,13 @@ class DomainService:
                 await self._check_verification(verification)
                 processed_count += 1
             except Exception as e:
-                logger.error(
-                    f"Failed to check verification {verification.verification_id}: {e}"
-                )
+                logger.error(f"Failed to check verification {verification.verification_id}: {e}")
 
         return processed_count
 
     async def sync_dns_records(self, tenant_id: Optional[str] = None) -> int:
         """Synchronize DNS records with providers."""
-        records_needing_sync = await self.domain_repository.get_records_needing_sync(
-            tenant_id
-        )
+        records_needing_sync = await self.domain_repository.get_records_needing_sync(tenant_id)
         synced_count = 0
 
         for record in records_needing_sync:
@@ -602,9 +548,7 @@ class DomainService:
 
         return created_records
 
-    async def _initiate_domain_verification(
-        self, domain, user_id: str, method: str = "DNS"
-    ):
+    async def _initiate_domain_verification(self, domain, user_id: str, method: str = "DNS"):
         """Initiate domain verification process."""
         verification_token = str(uuid4())
 
@@ -614,10 +558,8 @@ class DomainService:
             "verification_token": verification_token,
             "verification_value": f"dotmac-verification={verification_token}",
             "status": VerificationStatus.PENDING,
-            "expires_at": datetime.now(timezone.utc)
-            + timedelta(days=7),  # 7 day expiry
-            "next_check": datetime.now(timezone.utc)
-            + timedelta(minutes=5),  # Check in 5 minutes
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=7),  # 7 day expiry
+            "next_check": datetime.now(timezone.utc) + timedelta(minutes=5),  # Check in 5 minutes
         }
 
         return await self.domain_repository.create_domain_verification(
@@ -664,9 +606,7 @@ class DomainService:
             "checked_at": datetime.now(timezone.utc),
         }
 
-    async def _request_ssl_certificate(
-        self, domain, user_id: str, certificate_authority: str = "letsencrypt"
-    ):
+    async def _request_ssl_certificate(self, domain, user_id: str, certificate_authority: str = "letsencrypt"):
         """Request SSL certificate for domain."""
         certificate_data = {
             "domain_id": domain.domain_id,
@@ -675,8 +615,7 @@ class DomainService:
             "issuer": certificate_authority,
             "certificate_authority": certificate_authority,
             "issued_at": datetime.now(timezone.utc),
-            "expires_at": datetime.now(timezone.utc)
-            + timedelta(days=90),  # 90 day cert
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=90),  # 90 day cert
             "ssl_status": SSLStatus.PENDING,
             "auto_renew": True,
         }

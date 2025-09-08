@@ -11,7 +11,22 @@ from typing import Any, Optional
 
 import redis.asyncio as redis
 import websockets
-from dotmac_isp.core.settings import get_settings
+
+# Try ISP settings, fallback to default configuration
+try:
+    from dotmac_isp.core.settings import get_settings
+except ImportError:
+
+    def get_settings():
+        """Fallback settings when ISP platform not available."""
+
+        class FallbackSettings:
+            redis_url = "redis://localhost:6379"
+            websocket_url = "ws://localhost:8000/ws"
+
+        return FallbackSettings()
+
+
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 
 logger = logging.getLogger(__name__)

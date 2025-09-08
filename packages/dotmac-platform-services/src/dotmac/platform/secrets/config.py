@@ -260,8 +260,7 @@ class SecretsConfig:
                 "retry_delay": self.retry_delay,
                 **self.provider_config,
             }
-        else:
-            return self.provider_config.copy()
+        return self.provider_config.copy()
 
     def get_cache_config(self) -> dict[str, Any]:
         """Get cache-specific configuration."""

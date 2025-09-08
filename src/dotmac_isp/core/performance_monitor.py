@@ -12,11 +12,15 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
-from dotmac_isp.shared.cache import get_cache_manager
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
-from dotmac.platform.observability.core.signoz_integration import get_signoz
+from dotmac.platform.observability.metrics import (
+    MetricDefinition,
+    MetricType,
+    initialize_metrics_registry,
+)
+from dotmac_isp.shared.cache import get_cache_manager
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +98,17 @@ class OptimalPerformanceCollector:
 
     def __init__(self):
         self.cache_manager = get_cache_manager()
-        self.signoz = get_signoz()
+        # Use platform metrics instead of direct Signoz integration
+        self.metrics = initialize_metrics_registry(service_name="isp_framework")
+        # Register a generic gauge for aggregated metric values
+        self.metrics.register_metric(
+            MetricDefinition(
+                name="isp_metric_value",
+                type=MetricType.GAUGE,
+                description="Aggregated ISP performance metric value",
+                labels=["metric_name", "aggregation", "unit"],
+            )
+        )
 
         # High-performance in-memory buffers
         self.metric_buffer: list[PerformanceMetric] = []
@@ -145,9 +159,7 @@ class OptimalPerformanceCollector:
         except Exception as e:
             logger.error(f"Metrics flush error: {e}")
             # Re-add failed metrics to buffer if critical
-            critical_metrics = [
-                m for m in current_buffer if m.metric_type == MetricType.ERROR_RATE
-            ]
+            critical_metrics = [m for m in current_buffer if m.metric_type == MetricType.ERROR_RATE]
             self.metric_buffer.extend(critical_metrics[:100])  # Limit backlog
 
     async def _process_metric_batch(self, metrics: list[PerformanceMetric]) -> None:
@@ -163,9 +175,7 @@ class OptimalPerformanceCollector:
         for metric_name, metric_list in metric_groups.items():
             await self._process_metric_group(metric_name, metric_list)
 
-    async def _process_metric_group(
-        self, metric_name: str, metrics: list[PerformanceMetric]
-    ) -> None:
+    async def _process_metric_group(self, metric_name: str, metrics: list[PerformanceMetric]) -> None:
         """Process group of same-named metrics."""
         try:
             # Calculate aggregations
@@ -176,16 +186,8 @@ class OptimalPerformanceCollector:
                 "max": max(values),
                 "avg": statistics.mean(values),
                 "p50": statistics.median(values),
-                "p95": (
-                    statistics.quantiles(values, n=20)[18]
-                    if len(values) >= 20
-                    else max(values)
-                ),
-                "p99": (
-                    statistics.quantiles(values, n=100)[98]
-                    if len(values) >= 100
-                    else max(values)
-                ),
+                "p95": (statistics.quantiles(values, n=20)[18] if len(values) >= 20 else max(values)),
+                "p99": (statistics.quantiles(values, n=100)[98] if len(values) >= 100 else max(values)),
             }
 
             # Store in cache for real-time access
@@ -196,17 +198,27 @@ class OptimalPerformanceCollector:
                 cache_key,
                 {
                     "aggregation": aggregation,
-                    "raw_metrics": [
-                        m.to_dict() for m in metrics[-10:]
-                    ],  # Last 10 samples
+                    "raw_metrics": [m.to_dict() for m in metrics[-10:]],  # Last 10 samples
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 },
                 3600,  # 1 hour TTL
                 "performance_metrics",
             )
-            # Send to SignOz if available
-            if self.signoz and self.signoz.enabled:
-                await self._send_to_signoz(metric_name, aggregation, metrics[0])
+            # Record aggregated values to metrics registry
+            try:
+                for agg_key in ("avg", "p95", "p99"):
+                    if agg_key in aggregation:
+                        self.metrics.set_gauge(
+                            name="isp_metric_value",
+                            value=float(aggregation[agg_key]),
+                            labels={
+                                "metric_name": metric_name,
+                                "aggregation": agg_key,
+                                "unit": "value",
+                            },
+                        )
+            except Exception as e:
+                logger.error(f"Metrics record error: {e}")
 
             # Check performance thresholds
             await self._check_performance_thresholds(metric_name, aggregation)
@@ -214,28 +226,7 @@ class OptimalPerformanceCollector:
         except Exception as e:
             logger.error(f"Error processing metric group {metric_name}: {e}")
 
-    async def _send_to_signoz(
-        self, metric_name: str, aggregation: dict, sample_metric: PerformanceMetric
-    ) -> None:
-        """Send metrics to SignOz efficiently."""
-        try:
-            # Send key aggregations to SignOz
-            for agg_type, value in aggregation.items():
-                if agg_type in ["avg", "p95", "p99", "max"]:
-                    await asyncio.get_event_loop().run_in_executor(
-                        None,
-                        self.signoz.record_business_event,
-                        f"performance_{metric_name}_{agg_type}",
-                        "system",
-                        value,
-                        {
-                            "metric_type": sample_metric.metric_type.value,
-                            "unit": sample_metric.unit,
-                            **sample_metric.tags,
-                        },
-                    )
-        except Exception as e:
-            logger.error(f"SignOz export error: {e}")
+    # Removed Signoz export; metrics are recorded via platform metrics registry
 
     def _check_immediate_thresholds(self, metric: PerformanceMetric) -> None:
         """Check critical thresholds immediately."""
@@ -259,9 +250,7 @@ class OptimalPerformanceCollector:
             # Fire alert immediately
             asyncio.create_task(self._fire_alert(alert))
 
-    async def _check_performance_thresholds(
-        self, metric_name: str, aggregation: dict
-    ) -> None:
+    async def _check_performance_thresholds(self, metric_name: str, aggregation: dict) -> None:
         """Check performance thresholds against aggregated data."""
         # Check P95 thresholds
         p95_key = f"{metric_name}_p95"
@@ -297,9 +286,7 @@ class OptimalPerformanceCollector:
                 )
                 await self._fire_alert(alert)
 
-    def _is_threshold_exceeded(
-        self, metric: PerformanceMetric, threshold: float
-    ) -> bool:
+    def _is_threshold_exceeded(self, metric: PerformanceMetric, threshold: float) -> bool:
         """Check if metric exceeds threshold."""
         if metric.metric_type == MetricType.ERROR_RATE:
             return metric.value > threshold
@@ -310,9 +297,7 @@ class OptimalPerformanceCollector:
         else:
             return metric.value > threshold
 
-    def _determine_alert_level(
-        self, metric: PerformanceMetric, threshold: float
-    ) -> AlertLevel:
+    def _determine_alert_level(self, metric: PerformanceMetric, threshold: float) -> AlertLevel:
         """Determine appropriate alert level."""
         if metric.metric_type == MetricType.ERROR_RATE:
             if metric.value > threshold * 3:  # 3x threshold
@@ -341,23 +326,22 @@ class OptimalPerformanceCollector:
                 "performance_alerts",
             )
             # Log alert
-            log_level = (
-                logging.WARNING
-                if alert.alert_level == AlertLevel.WARNING
-                else logging.ERROR
-            )
+            log_level = logging.WARNING if alert.alert_level == AlertLevel.WARNING else logging.ERROR
             logger.log(log_level, f"🚨 Performance Alert: {alert.message}")
 
-            # Send to SignOz if available
-            if self.signoz and self.signoz.enabled:
-                await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    self.signoz.record_business_event,
-                    "performance_alert",
-                    "system",
-                    1,
-                    alert.to_dict(),
+            # Record alert occurrence as a metric event
+            try:
+                self.metrics.increment_counter(
+                    name="isp_metric_value",
+                    value=1,
+                    labels={
+                        "metric_name": "performance_alert",
+                        "aggregation": alert.alert_level.value,
+                        "unit": "count",
+                    },
                 )
+            except Exception:
+                pass
         except Exception as e:
             logger.error(f"Alert firing error: {e}")
 
@@ -392,9 +376,7 @@ class DatabasePerformanceMonitor:
         def after_execute(conn, cursor, statement, parameters, context, executemany):
             """Record query performance."""
             try:
-                duration = (
-                    time.perf_counter() - context._query_start
-                ) * 1000  # Convert to ms
+                duration = (time.perf_counter() - context._query_start) * 1000  # Convert to ms
 
                 # Extract query info
                 query_type = self._extract_query_type(statement)
@@ -433,16 +415,12 @@ class DatabasePerformanceMonitor:
                     unit="count",
                     timestamp=datetime.now(timezone.utc),
                     tags={
-                        "error_type": type(
-                            exception_context.original_exception
-                        ).__name__,
+                        "error_type": type(exception_context.original_exception).__name__,
                         "status": "error",
                     },
                     context={
                         "statement": (
-                            str(exception_context.statement)[:200]
-                            if exception_context.statement
-                            else "unknown"
+                            str(exception_context.statement)[:200] if exception_context.statement else "unknown"
                         ),
                         "error": str(exception_context.original_exception)[:500],
                     },
@@ -472,9 +450,7 @@ class DatabasePerformanceMonitor:
             words = statement.strip().upper().split()
             if len(words) > 2 and words[0] in ["SELECT", "INSERT", "UPDATE", "DELETE"]:
                 if words[0] == "SELECT":
-                    from_idx = next(
-                        (i for i, w in enumerate(words) if w == "FROM"), None
-                    )
+                    from_idx = next((i for i, w in enumerate(words) if w == "FROM"), None)
                     if from_idx and from_idx + 1 < len(words):
                         return words[from_idx + 1].split(".")[0]
                 elif words[0] in ["INSERT", "UPDATE"]:
@@ -497,9 +473,7 @@ class HTTPPerformanceMonitor:
     def __init__(self, collector: OptimalPerformanceCollector):
         self.collector = collector
 
-    def record_request(
-        self, method: str, path: str, status_code: int, duration_ms: float, **context
-    ) -> None:
+    def record_request(self, method: str, path: str, status_code: int, duration_ms: float, **context) -> None:
         """Record HTTP request performance."""
         # Request duration metric
         latency_metric = PerformanceMetric(

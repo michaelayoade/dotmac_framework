@@ -1,0 +1,139 @@
+version: '3.8'
+
+# Gate E-0c: Observability Stack
+# Depends on E-0a (OpenBao) and E-0b (Database/Cache) services
+
+services:
+  # ClickHouse (SigNoz Storage)
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: gate-e0c-clickhouse
+    ports:
+      - "9001:9000"
+      - "8124:8123"
+    networks:
+      - gate-e0c-network
+      - gate-e0a-network  # Connect to E-0a for secrets
+      - gate-e0b-network  # Connect to E-0b for data
+    external_links:
+      - gate-e0a-openbao:openbao
+      - gate-e0b-postgres:postgres
+      - gate-e0b-redis:redis
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    environment:
+      - CLICKHOUSE_DB=signoz_traces
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -qO- http://localhost:8123/ping | grep -q 'Ok'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ClickHouse Database Initializer
+  clickhouse-init:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: gate-e0c-clickhouse-init
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    networks:
+      - gate-e0c-network
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo "Waiting for ClickHouse to be ready..."
+        until wget -qO- http://clickhouse:8123/ping; do sleep 2; done
+        echo "Creating SigNoz databases..."
+        clickhouse-client -h clickhouse --port 9000 -q "
+          CREATE DATABASE IF NOT EXISTS signoz_traces;
+          CREATE DATABASE IF NOT EXISTS signoz_metrics;
+          CREATE DATABASE IF NOT EXISTS signoz_logs;
+        "
+        echo "SigNoz databases created successfully"
+    restart: "no"
+
+  # SigNoz Query Service
+  signoz-query:
+    image: signoz/query-service:0.40.0
+    container_name: gate-e0c-signoz-query
+    ports:
+      - "8081:8080"
+    networks:
+      - gate-e0c-network
+      - gate-e0a-network
+      - gate-e0b-network
+    volumes:
+      - signoz_data:/var/lib/signoz
+      - ./query-service-config.yaml:/etc/signoz/query-service.yaml:ro
+    environment:
+      - STORAGE=clickhouse
+      - CLICKHOUSE_DSN=tcp://clickhouse:9000?database=signoz_traces
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - QUERY_CONFIG_PATH=/etc/signoz/query-service.yaml
+    depends_on:
+      - clickhouse
+    external_links:
+      - gate-e0a-openbao:openbao
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # SigNoz Frontend
+  signoz-frontend:
+    image: signoz/frontend:0.40.0
+    container_name: gate-e0c-signoz-frontend
+    depends_on:
+      signoz-query:
+        condition: service_healthy
+    ports:
+      - "3302:3301"
+    networks:
+      - gate-e0c-network
+    environment:
+      - FRONTEND_API_ENDPOINT=http://signoz-query:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3301"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.88.11
+    container_name: gate-e0c-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4319:4317"   # OTLP gRPC receiver
+      - "4320:4318"   # OTLP HTTP receiver
+      - "14251:14250" # Jaeger gRPC receiver
+    networks:
+      - gate-e0c-network
+    depends_on:
+      - signoz-query
+    restart: unless-stopped
+
+networks:
+  gate-e0c-network:
+    driver: bridge
+    name: gate-e0c-network
+  gate-e0a-network:
+    external: true
+    name: gate-e0a-network
+  gate-e0b-network:
+    external: true
+    name: gate-e0b-network
+
+volumes:
+  clickhouse_data:
+    name: gate-e0c-clickhouse-data
+  signoz_data:
+    name: gate-e0c-signoz-data

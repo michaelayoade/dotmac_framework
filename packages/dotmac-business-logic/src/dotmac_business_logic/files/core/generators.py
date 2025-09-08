@@ -16,14 +16,14 @@ try:
     PANDAS_AVAILABLE = True
 except ImportError:
     PANDAS_AVAILABLE = False
-    warnings.warn("pandas not available - Excel/CSV generation will be limited")
+    warnings.warn(
+        "pandas not available - Excel/CSV generation will be limited", stacklevel=2
+    )
 
 try:
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, letter
-    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-    from reportlab.lib.units import inch
-    from reportlab.pdfgen import canvas
+    from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.platypus import (
         Paragraph,
         SimpleDocTemplate,
@@ -37,17 +37,20 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
     letter = (612, 792)  # Default letter size in points
     A4 = (595, 842)  # Default A4 size in points
-    warnings.warn("reportlab not available - PDF generation will use fallback methods")
+    warnings.warn(
+        "reportlab not available - PDF generation will use fallback methods",
+        stacklevel=2,
+    )
 
 try:
-    import openpyxl
-    from openpyxl.styles import Alignment, Font, PatternFill
-    from openpyxl.utils.dataframe import dataframe_to_rows
+    from openpyxl.styles import Font, PatternFill
 
     OPENPYXL_AVAILABLE = True
 except ImportError:
     OPENPYXL_AVAILABLE = False
-    warnings.warn("openpyxl not available - Excel generation will use CSV fallback")
+    warnings.warn(
+        "openpyxl not available - Excel generation will use CSV fallback", stacklevel=2
+    )
 
 
 @dataclass
@@ -94,7 +97,8 @@ class PDFGenerator(BaseGenerator):
         """Check if required dependencies are available."""
         if not REPORTLAB_AVAILABLE:
             warnings.warn(
-                "reportlab not available - PDF generation will create text files instead"
+                "reportlab not available - PDF generation will create text files instead",
+                stacklevel=2,
             )
 
     def generate_simple_pdf(
@@ -152,12 +156,14 @@ class PDFGenerator(BaseGenerator):
         self, content: str, output_path: Optional[Union[str, Path]]
     ) -> bytes:
         """Generate text file as fallback when reportlab unavailable."""
-        warnings.warn("PDF generation unavailable - creating text file instead")
+        warnings.warn(
+            "PDF generation unavailable - creating text file instead", stacklevel=2
+        )
 
         # Create formatted text content
         formatted_content = f"""
 {self.metadata.title}
-{'=' * len(self.metadata.title)}
+{"=" * len(self.metadata.title)}
 
 Generated: {self.metadata.created_date}
 Author: {self.metadata.author}
@@ -281,7 +287,8 @@ class ExcelGenerator(BaseGenerator):
         """Check if required dependencies are available."""
         if not OPENPYXL_AVAILABLE:
             warnings.warn(
-                "openpyxl not available - Excel generation will create CSV files instead"
+                "openpyxl not available - Excel generation will create CSV files instead",
+                stacklevel=2,
             )
 
     def generate_excel(
@@ -361,7 +368,9 @@ class ExcelGenerator(BaseGenerator):
         self, data: list[dict], output_path: Optional[Union[str, Path]]
     ) -> bytes:
         """Generate CSV as fallback for Excel."""
-        warnings.warn("Excel generation unavailable - creating CSV file instead")
+        warnings.warn(
+            "Excel generation unavailable - creating CSV file instead", stacklevel=2
+        )
 
         csv_generator = CSVGenerator(self.metadata)
         if output_path:

@@ -7,6 +7,11 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Optional
 
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from sqlalchemy import JSON, Boolean, Column, Date, Numeric, String, Text
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import UUID
+
 from dotmac_shared.sales.core.reseller_models import (
     CommissionStructure,
     ResellerTier,
@@ -16,10 +21,6 @@ from dotmac_shared.validation.common_validators import (
     CommonValidators,
     ValidationPatterns,
 )
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import JSON, Boolean, Column, Date, Numeric, String, Text
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import UUID
 
 from .base import BaseModel as DBBaseModel
 
@@ -39,12 +40,8 @@ class CommissionConfig(DBBaseModel):
     is_default = Column(Boolean, default=False)
 
     # Applicable contexts
-    reseller_type = Column(
-        SQLEnum(ResellerType), nullable=True
-    )  # Null = applies to all
-    reseller_tier = Column(
-        SQLEnum(ResellerTier), nullable=True
-    )  # Null = applies to all
+    reseller_type = Column(SQLEnum(ResellerType), nullable=True)  # Null = applies to all
+    reseller_tier = Column(SQLEnum(ResellerTier), nullable=True)  # Null = applies to all
     territory = Column(String(100), nullable=True)  # Null = applies to all
 
     # Commission structure
@@ -64,9 +61,7 @@ class CommissionConfig(DBBaseModel):
 
     # Calculation settings
     calculate_on = Column(String(50), default="revenue")  # revenue, signup, both
-    payment_frequency = Column(
-        String(20), default="monthly"
-    )  # monthly, quarterly, annual
+    payment_frequency = Column(String(20), default="monthly")  # monthly, quarterly, annual
     minimum_payout = Column(Numeric(10, 2), default=Decimal("50.00"))
 
     # Additional settings
@@ -123,21 +118,15 @@ class CommissionConfigBase(BaseModel):
     effective_from: date
     effective_until: Optional[date] = None
     calculate_on: str = Field(default="revenue", pattern=r"^(revenue|signup|both)$")
-    payment_frequency: str = Field(
-        default="monthly", pattern=r"^(monthly|quarterly|annual)$"
-    )
-    minimum_payout: Decimal = Field(
-        default=Decimal("50.00"), ge=Decimal("0.00"), le=Decimal("10000.00")
-    )
+    payment_frequency: str = Field(default="monthly", pattern=r"^(monthly|quarterly|annual)$")
+    minimum_payout: Decimal = Field(default=Decimal("50.00"), ge=Decimal("0.00"), le=Decimal("10000.00"))
     settings: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:
         """Validate commission config name with sanitization"""
-        return CommonValidators.validate_required_string(
-            v, "Commission config name", 2, 200
-        )
+        return CommonValidators.validate_required_string(v, "Commission config name", 2, 200)
 
     @field_validator("description")
     @classmethod
@@ -153,9 +142,7 @@ class CommissionConfigBase(BaseModel):
             return None
         clean_territory = v.strip().upper()
         if not ValidationPatterns.ALPHANUMERIC.match(clean_territory.replace("-", "")):
-            raise ValueError(
-                "Territory must contain only alphanumeric characters and hyphens"
-            )
+            raise ValueError("Territory must contain only alphanumeric characters and hyphens")
         if len(clean_territory) < 2 or len(clean_territory) > 10:
             raise ValueError("Territory must be between 2 and 10 characters")
         return clean_territory
@@ -215,9 +202,7 @@ class CommissionConfigBase(BaseModel):
                     try:
                         min_amount = Decimal(min_amount)
                     except Exception as e:
-                        raise ValueError(
-                            f"Tier {i+1} min_amount must be numeric"
-                        ) from e
+                        raise ValueError(f"Tier {i+1} min_amount must be numeric") from e
 
                 if min_amount < 0:
                     raise ValueError(f"Tier {i+1} min_amount must be non-negative")
@@ -278,9 +263,7 @@ class CommissionConfigBase(BaseModel):
                 if not isinstance(multiplier, (int, float, Decimal)):
                     raise ValueError(f"Performance multiplier {key} must be numeric")
                 if multiplier < 0.1 or multiplier > 10.0:
-                    raise ValueError(
-                        f"Performance multiplier {key} must be between 0.1 and 10.0"
-                    )
+                    raise ValueError(f"Performance multiplier {key} must be between 0.1 and 10.0")
 
         return v
 
@@ -316,19 +299,11 @@ class RevenueModelBase(BaseModel):
     service_type: str = Field(..., min_length=1, max_length=100)
     service_tier: Optional[str] = Field(None, max_length=50)
     base_price: Decimal = Field(..., ge=Decimal("0.00"), le=Decimal("999999.99"))
-    setup_fee: Decimal = Field(
-        default=Decimal("0.00"), ge=Decimal("0.00"), le=Decimal("99999.99")
-    )
-    recurring_fee: Decimal = Field(
-        default=Decimal("0.00"), ge=Decimal("0.00"), le=Decimal("99999.99")
-    )
-    recurring_period: str = Field(
-        default="monthly", pattern=r"^(monthly|quarterly|annual|one-time)$"
-    )
+    setup_fee: Decimal = Field(default=Decimal("0.00"), ge=Decimal("0.00"), le=Decimal("99999.99"))
+    recurring_fee: Decimal = Field(default=Decimal("0.00"), ge=Decimal("0.00"), le=Decimal("99999.99"))
+    recurring_period: str = Field(default="monthly", pattern=r"^(monthly|quarterly|annual|one-time)$")
     territory: Optional[str] = Field(None, max_length=100)
-    currency: str = Field(
-        default="USD", min_length=3, max_length=3, pattern=r"^[A-Z]{3}$"
-    )
+    currency: str = Field(default="USD", min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
     pricing_config: dict[str, Any] = Field(default_factory=dict)
     effective_from: date
     effective_until: Optional[date] = None
@@ -383,9 +358,7 @@ class RevenueModelBase(BaseModel):
             return None
         clean_territory = v.strip().upper()
         if not ValidationPatterns.ALPHANUMERIC.match(clean_territory.replace("-", "")):
-            raise ValueError(
-                "Territory must contain only alphanumeric characters and hyphens"
-            )
+            raise ValueError("Territory must contain only alphanumeric characters and hyphens")
         if len(clean_territory) < 2 or len(clean_territory) > 10:
             raise ValueError("Territory must be between 2 and 10 characters")
         return clean_territory
@@ -449,26 +422,16 @@ class RevenueModelBase(BaseModel):
                 required_fields = ["min_quantity", "discount_percentage"]
                 for field in required_fields:
                     if field not in discount:
-                        raise ValueError(
-                            f"Volume discount {i+1} missing required field: {field}"
-                        )
+                        raise ValueError(f"Volume discount {i+1} missing required field: {field}")
 
                 # Validate quantities and percentages
                 min_qty = discount.get("min_quantity", 0)
                 if not isinstance(min_qty, (int, float)) or min_qty <= 0:
-                    raise ValueError(
-                        f"Volume discount {i+1} min_quantity must be positive"
-                    )
+                    raise ValueError(f"Volume discount {i+1} min_quantity must be positive")
 
                 discount_pct = discount.get("discount_percentage", 0)
-                if (
-                    not isinstance(discount_pct, (int, float, Decimal))
-                    or discount_pct < 0
-                    or discount_pct > 100
-                ):
-                    raise ValueError(
-                        f"Volume discount {i+1} discount_percentage must be between 0 and 100"
-                    )
+                if not isinstance(discount_pct, (int, float, Decimal)) or discount_pct < 0 or discount_pct > 100:
+                    raise ValueError(f"Volume discount {i+1} discount_percentage must be between 0 and 100")
 
         # Validate promotional rates if present
         if "promotional_rates" in v:
@@ -478,14 +441,8 @@ class RevenueModelBase(BaseModel):
 
             if "discount_percentage" in promo:
                 discount = promo["discount_percentage"]
-                if (
-                    not isinstance(discount, (int, float, Decimal))
-                    or discount < 0
-                    or discount > 100
-                ):
-                    raise ValueError(
-                        "Promotional discount percentage must be between 0 and 100"
-                    )
+                if not isinstance(discount, (int, float, Decimal)) or discount < 0 or discount > 100:
+                    raise ValueError("Promotional discount percentage must be between 0 and 100")
 
         return v
 

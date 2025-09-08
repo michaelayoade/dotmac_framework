@@ -2,7 +2,6 @@
 
 from enum import Enum
 
-from dotmac_isp.shared.database.base import BaseModel
 from sqlalchemy import (
     Boolean,
     Column,
@@ -17,6 +16,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+from dotmac_isp.shared.database.base import BaseModel
 
 
 class ServiceType(str, Enum):
@@ -112,9 +113,7 @@ class ServiceInstance(BaseModel):
 
     # Relationships
     customer_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    service_plan_id = Column(
-        UUID(as_uuid=True), ForeignKey("service_plans.id"), nullable=False
-    )
+    service_plan_id = Column(UUID(as_uuid=True), ForeignKey("service_plans.id"), nullable=False)
     service_plan = relationship("ServicePlan", back_populates="service_instances")
 
     # Service status and lifecycle
@@ -149,15 +148,11 @@ class ServiceProvisioning(BaseModel):
     __tablename__ = "service_provisioning"
 
     # Service reference
-    service_instance_id = Column(
-        UUID(as_uuid=True), ForeignKey("service_instances.id"), nullable=False
-    )
+    service_instance_id = Column(UUID(as_uuid=True), ForeignKey("service_instances.id"), nullable=False)
     service_instance = relationship("ServiceInstance")
 
     # Provisioning details
-    provisioning_status = Column(
-        String(20), default="pending", nullable=False, index=True
-    )
+    provisioning_status = Column(String(20), default="pending", nullable=False, index=True)
     scheduled_date = Column(DateTime(timezone=True), nullable=True)
     started_date = Column(DateTime(timezone=True), nullable=True)
     completed_date = Column(DateTime(timezone=True), nullable=True)
@@ -191,9 +186,7 @@ class ServiceStatusHistory(BaseModel):
     __tablename__ = "service_status_history"
 
     # Service reference
-    service_instance_id = Column(
-        UUID(as_uuid=True), ForeignKey("service_instances.id"), nullable=False
-    )
+    service_instance_id = Column(UUID(as_uuid=True), ForeignKey("service_instances.id"), nullable=False)
     service_instance = relationship("ServiceInstance")
 
     # Status change details
@@ -219,9 +212,7 @@ class ServiceUsageMetric(BaseModel):
     __tablename__ = "service_usage_metrics"
 
     # Service reference
-    service_instance_id = Column(
-        UUID(as_uuid=True), ForeignKey("service_instances.id"), nullable=False
-    )
+    service_instance_id = Column(UUID(as_uuid=True), ForeignKey("service_instances.id"), nullable=False)
     service_instance = relationship("ServiceInstance")
 
     # Usage period

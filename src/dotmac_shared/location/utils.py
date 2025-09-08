@@ -25,9 +25,9 @@ def calculate_distance(coord1: Coordinates, coord2: Coordinates) -> float:
     delta_phi = math.radians(coord2.latitude - coord1.latitude)
     delta_lambda = math.radians(coord2.longitude - coord1.longitude)
 
-    a = math.sin(delta_phi / 2) * math.sin(delta_phi / 2) + math.cos(phi1) * math.cos(
-        phi2
-    ) * math.sin(delta_lambda / 2) * math.sin(delta_lambda / 2)
+    a = math.sin(delta_phi / 2) * math.sin(delta_phi / 2) + math.cos(phi1) * math.cos(phi2) * math.sin(
+        delta_lambda / 2
+    ) * math.sin(delta_lambda / 2)
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return R * c
@@ -49,9 +49,7 @@ def calculate_bearing(from_coord: Coordinates, to_coord: Coordinates) -> float:
     delta_lambda = math.radians(to_coord.longitude - from_coord.longitude)
 
     y = math.sin(delta_lambda) * math.cos(phi2)
-    x = math.cos(phi1) * math.sin(phi2) - math.sin(phi1) * math.cos(phi2) * math.cos(
-        delta_lambda
-    )
+    x = math.cos(phi1) * math.sin(phi2) - math.sin(phi1) * math.cos(phi2) * math.cos(delta_lambda)
 
     theta = math.atan2(y, x)
     return (math.degrees(theta) + 360) % 360
@@ -149,9 +147,7 @@ def calculate_center_from_coordinates(coordinates: list[Coordinates]) -> Coordin
     center_lon = math.atan2(y, x)
     center_lat = math.atan2(z, math.sqrt(x * x + y * y))
 
-    return Coordinates(
-        latitude=math.degrees(center_lat), longitude=math.degrees(center_lon)
-    )
+    return Coordinates(latitude=math.degrees(center_lat), longitude=math.degrees(center_lon))
 
 
 def calculate_bounding_box(
@@ -200,9 +196,7 @@ def calculate_route_distance(waypoints: list[Coordinates]) -> float:
     return total_distance
 
 
-def estimate_travel_time(
-    distance_meters: float, average_speed_kmh: float = 50.0, traffic_factor: float = 1.2
-) -> int:
+def estimate_travel_time(distance_meters: float, average_speed_kmh: float = 50.0, traffic_factor: float = 1.2) -> int:
     """
     Estimate travel time based on distance and average speed.
 
@@ -219,9 +213,7 @@ def estimate_travel_time(
     return int(time_hours * 60)  # Convert to minutes
 
 
-def find_nearest_coordinate(
-    target: Coordinates, candidates: list[Coordinates]
-) -> tuple[Coordinates, float]:
+def find_nearest_coordinate(target: Coordinates, candidates: list[Coordinates]) -> tuple[Coordinates, float]:
     """
     Find the nearest coordinate from a list of candidates.
 
@@ -261,11 +253,7 @@ def coordinates_within_radius(
     Returns:
         List of coordinates within radius
     """
-    return [
-        coord
-        for coord in coordinates
-        if calculate_distance(center, coord) <= radius_meters
-    ]
+    return [coord for coord in coordinates if calculate_distance(center, coord) <= radius_meters]
 
 
 def format_coordinates(coordinates: Coordinates, precision: int = 6) -> str:
@@ -279,9 +267,7 @@ def format_coordinates(coordinates: Coordinates, precision: int = 6) -> str:
     Returns:
         Formatted coordinate string
     """
-    return (
-        f"{coordinates.latitude:.{precision}f}, {coordinates.longitude:.{precision}f}"
-    )
+    return f"{coordinates.latitude:.{precision}f}, {coordinates.longitude:.{precision}f}"
 
 
 def parse_coordinates(coord_string: str) -> Coordinates:

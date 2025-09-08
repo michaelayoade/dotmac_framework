@@ -1,0 +1,13 @@
+# SigNoz Query Service Configuration
+clickhouse:
+  dsn: "tcp://clickhouse:9000?database=signoz_traces"
+  username: "default"
+  password: ""
+  database: "signoz_traces"
+  dial_timeout: "10s"
+
+storage:
+  type: "clickhouse"
+  
+server:
+  http_port: 8080

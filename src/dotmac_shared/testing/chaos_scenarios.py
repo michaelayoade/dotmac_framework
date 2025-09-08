@@ -51,9 +51,7 @@ class TenantIsolationFailureInjector(FailureInjector):
         isolation_type = failure_config.get("isolation_type", "database")
         tenant_id = failure_config.get("tenant_id")
 
-        logger.info(
-            f"Removing tenant isolation failure for {tenant_id}: {isolation_type}"
-        )
+        logger.info(f"Removing tenant isolation failure for {tenant_id}: {isolation_type}")
         await asyncio.sleep(0.1)  # Simulate cleanup time
 
         return {
@@ -66,9 +64,7 @@ class TenantIsolationFailureInjector(FailureInjector):
         tenant_id = failure_config.get("tenant_id")
         isolation_type = failure_config.get("isolation_type", "database")
 
-        logger.info(
-            f"Injecting tenant isolation failure for {tenant_id}: {isolation_type}"
-        )
+        logger.info(f"Injecting tenant isolation failure for {tenant_id}: {isolation_type}")
 
         if isolation_type == "database":
             # Simulate database tenant partition failure
@@ -85,9 +81,7 @@ class TenantIsolationFailureInjector(FailureInjector):
             "reason": f"Unknown isolation type: {isolation_type}",
         }
 
-    async def _inject_database_isolation_failure(
-        self, tenant_id: str
-    ) -> dict[str, Any]:
+    async def _inject_database_isolation_failure(self, tenant_id: str) -> dict[str, Any]:
         """Simulate database tenant isolation failure"""
         # In real implementation, this would manipulate database connections
         # or modify tenant routing to cause cross-tenant data access
@@ -231,9 +225,7 @@ class BillingResilienceFailureInjector(FailureInjector):
         billing_component = failure_config.get("component")
         failure_severity = failure_config.get("severity", "partial")
 
-        logger.info(
-            f"Injecting billing failure: {billing_component} - {failure_severity}"
-        )
+        logger.info(f"Injecting billing failure: {billing_component} - {failure_severity}")
 
         if billing_component == "payment_processing":
             return await self._inject_payment_failure(failure_severity)
@@ -256,9 +248,7 @@ class BillingResilienceFailureInjector(FailureInjector):
             "status": "injected",
             "failure_type": "payment_processing_failure",
             "severity": severity,
-            "impact": "revenue_loss_risk"
-            if severity == "complete"
-            else "delayed_payments",
+            "impact": "revenue_loss_risk" if severity == "complete" else "delayed_payments",
         }
 
     async def _inject_invoice_failure(self, severity: str) -> dict[str, Any]:
@@ -313,17 +303,13 @@ class DotMacChaosScenarios:
         )
 
         # Test database isolation
-        await experiment.start_experiment(
-            {"tenant_id": tenant_id, "isolation_type": "database"}
-        )
+        await experiment.start_experiment({"tenant_id": tenant_id, "isolation_type": "database"})
 
         # Validate isolation maintained
         await asyncio.sleep(2)
 
         # Test cache isolation
-        await experiment.inject_additional_failure(
-            {"tenant_id": tenant_id, "isolation_type": "cache"}
-        )
+        await experiment.inject_additional_failure({"tenant_id": tenant_id, "isolation_type": "cache"})
 
         await asyncio.sleep(1)
 
@@ -348,9 +334,7 @@ class DotMacChaosScenarios:
                 failure_injector=self.isp_injector,
             )
 
-            await experiment.start_experiment(
-                {"service_type": service_type, "failure_mode": failure_mode}
-            )
+            await experiment.start_experiment({"service_type": service_type, "failure_mode": failure_mode})
 
             # Let failure run for a bit
             await asyncio.sleep(random.uniform(1, 3))
@@ -378,9 +362,7 @@ class DotMacChaosScenarios:
                 failure_injector=self.billing_injector,
             )
 
-            await experiment.start_experiment(
-                {"component": component, "severity": severity}
-            )
+            await experiment.start_experiment({"component": component, "severity": severity})
 
             await asyncio.sleep(random.uniform(2, 4))
 
@@ -388,9 +370,7 @@ class DotMacChaosScenarios:
 
         return experiments
 
-    async def run_multi_tenant_database_partition_scenario(
-        self, tenant_ids: list[str]
-    ) -> ChaosExperiment:
+    async def run_multi_tenant_database_partition_scenario(self, tenant_ids: list[str]) -> ChaosExperiment:
         """Test database partition failures across multiple tenants"""
         experiment = ChaosExperiment(
             name="multi_tenant_database_partition",
@@ -409,9 +389,7 @@ class DotMacChaosScenarios:
 
         # Inject tenant-specific isolation failures
         for tenant_id in tenant_ids:
-            await experiment.inject_additional_failure(
-                {"tenant_id": tenant_id, "isolation_type": "database"}
-            )
+            await experiment.inject_additional_failure({"tenant_id": tenant_id, "isolation_type": "database"})
             await asyncio.sleep(0.5)
 
         # Let the chaos run
@@ -433,36 +411,24 @@ class DotMacChaosScenarios:
 
         # Run tenant isolation scenario
         tenant_result = await self.run_tenant_isolation_scenario(tenant_id)
-        results["experiments"].append(
-            {"name": "tenant_isolation", "result": tenant_result}
-        )
+        results["experiments"].append({"name": "tenant_isolation", "result": tenant_result})
 
         # Run ISP service disruption scenarios
         isp_results = await self.run_isp_service_disruption_scenario()
-        results["experiments"].append(
-            {"name": "isp_service_disruption", "result": isp_results}
-        )
+        results["experiments"].append({"name": "isp_service_disruption", "result": isp_results})
 
         # Run billing resilience scenarios
         billing_results = await self.run_billing_resilience_scenario()
-        results["experiments"].append(
-            {"name": "billing_resilience", "result": billing_results}
-        )
+        results["experiments"].append({"name": "billing_resilience", "result": billing_results})
 
         # Run multi-tenant database scenario
-        database_result = await self.run_multi_tenant_database_partition_scenario(
-            [tenant_id]
-        )
-        results["experiments"].append(
-            {"name": "database_partition", "result": database_result}
-        )
+        database_result = await self.run_multi_tenant_database_partition_scenario([tenant_id])
+        results["experiments"].append({"name": "database_partition", "result": database_result})
 
         results["test_end"] = utc_now().isoformat()
         results["total_duration"] = (utc_now() - start_time).total_seconds()
 
-        logger.info(
-            f"Comprehensive resilience test completed in {results['total_duration']:.2f}s"
-        )
+        logger.info(f"Comprehensive resilience test completed in {results['total_duration']:.2f}s")
 
         return results
 
@@ -470,17 +436,13 @@ class DotMacChaosScenarios:
         self, concurrent_users: int = 100, duration_minutes: int = 10
     ) -> dict[str, Any]:
         """Combine load testing with chaos engineering"""
-        logger.info(
-            f"Starting load + chaos scenario: {concurrent_users} users for {duration_minutes} minutes"
-        )
+        logger.info(f"Starting load + chaos scenario: {concurrent_users} users for {duration_minutes} minutes")
 
         start_time = utc_now()
         end_time = start_time + timedelta(minutes=duration_minutes)
 
         # Start background load simulation
-        load_task = asyncio.create_task(
-            self._simulate_user_load(concurrent_users, duration_minutes)
-        )
+        load_task = asyncio.create_task(self._simulate_user_load(concurrent_users, duration_minutes))
 
         chaos_experiments = []
 
@@ -544,21 +506,15 @@ class DotMacChaosScenarios:
             "total_experiments": len(chaos_experiments),
         }
 
-    async def _simulate_user_load(
-        self, concurrent_users: int, duration_minutes: int
-    ) -> dict[str, Any]:
+    async def _simulate_user_load(self, concurrent_users: int, duration_minutes: int) -> dict[str, Any]:
         """Simulate concurrent user load"""
-        logger.info(
-            f"Simulating {concurrent_users} concurrent users for {duration_minutes} minutes"
-        )
+        logger.info(f"Simulating {concurrent_users} concurrent users for {duration_minutes} minutes")
 
         # In real implementation, this would generate actual API calls
         # For now, simulate with delays
         tasks = []
         for _i in range(concurrent_users):
-            task = asyncio.create_task(
-                self._simulate_single_user_session(duration_minutes)
-            )
+            task = asyncio.create_task(self._simulate_single_user_session(duration_minutes))
             tasks.append(task)
 
         results = await asyncio.gather(*tasks, return_exceptions=True)

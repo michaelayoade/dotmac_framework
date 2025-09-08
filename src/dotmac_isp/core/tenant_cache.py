@@ -73,9 +73,7 @@ class TenantCacheService:
             logger.error(f"Failed to get key {key}: {str(e)}")
             return None
 
-    async def set(
-        self, key: str, value: Union[str, int, float], ex: Optional[int] = None
-    ) -> bool:
+    async def set(self, key: str, value: Union[str, int, float], ex: Optional[int] = None) -> bool:
         """Set value with tenant namespace."""
         try:
             namespaced_key = self._get_namespaced_key(key)
@@ -206,9 +204,7 @@ def initialize_tenant_cache() -> TenantCacheService:
     if not tenant_namespace.endswith(":"):
         tenant_namespace += ":"
 
-    logger.info(
-        f"Initializing tenant cache for {tenant_id} with namespace {tenant_namespace}"
-    )
+    logger.info(f"Initializing tenant cache for {tenant_id} with namespace {tenant_namespace}")
 
     _tenant_cache = TenantCacheService(redis_url, tenant_namespace)
     return _tenant_cache

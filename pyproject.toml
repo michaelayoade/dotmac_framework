@@ -1,3 +1,7 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
 name = "dotmac-framework"
 version = "0.1.0"
@@ -22,7 +26,7 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
-packages = [{include = "dotmac_isp", from = "src"}, {include = "dotmac_management", from = "src"}, {include = "dotmac_shared", from = "src"}]
+
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
@@ -38,6 +42,8 @@ redis = ">=5.0.0"
 
 # Core Foundation Packages  
 dotmac-core = {path = "packages/dotmac-core", develop = true}
+dotmac-service-kernel = {path = "packages/dotmac-service-kernel", develop = true}
+dotmac-workflows = {path = "packages/dotmac-workflows", develop = true}
 
 # Infrastructure Packages
 dotmac-communications = {path = "packages/dotmac-communications", develop = true}
@@ -186,15 +192,11 @@ dotmac = "dotmac_isp.cli:main"
 dotmac-migrate = "dotmac_shared.database.migrate:main"
 dotmac-admin = "dotmac_management.cli:main"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
     "src/dotmac_shared/*/tests",
-    "src/dotmac_management/*/tests",
+    "src/dotmac_management/*/tests"
 ]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
@@ -229,6 +231,8 @@ filterwarnings = [
 [tool.ruff]
 target-version = "py39"
 line-length = 120
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -248,7 +252,7 @@ ignore = [
     "S108",  # probable insecure usage of temp file/directory
     "S110",  # try-except-pass (acceptable in some contexts)
     "BLE001", # blind except Exception (will be refactored later)
-    "S602",  # subprocess shell=true (needed for some deployment scripts)
+    "S602",  # subprocess shell = "true (needed for some deployment scripts)"
     "B008",  # FastAPI Depends() call in default args is intentional
     "B028",  # No explicit stacklevel argument found (not always necessary)
     "T201",  # print statements (allowed in scripts and utilities)
@@ -286,10 +290,10 @@ exclude = [
     "deployment",
     ".security",
     "templates",
-    "docker/test-services",
+    "docker/test-services"
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "*/__init__.py" = ["F401", "F403"]  # Allow unused imports and star imports for package exports
 "src/*/migrations/*" = ["E501"]  # Allow long lines in migrations
 "scripts/*" = ["T201", "S602", "S110"]  # Allow prints, subprocess, and try-except-pass in scripts
@@ -372,7 +376,6 @@ exclude = [
 "**/observability_integration.py" = ["BLE001"]  # Observability needs broad exception catching
 "**/performance_benchmarking_example.py" = ["BLE001"]  # Benchmarking handles various error conditions
 
-
 # CI/CD Ready Ignore Patterns - Architectural False Positives  
 "**/*adapter*.py" = ["F401", "BLE001"]  # Adapter pattern files
 "**/*handler*.py" = ["ANN001", "BLE001", "E402"]  # Handler pattern files
@@ -424,12 +427,12 @@ exclude = [
 [tool.black]
 line-length = 100
 target-version = ['py39', 'py310', 'py311', 'py312']
-include = '\.pyi?$'
+include = "\\.pyi?$"
 extend-exclude = '''
 /(
     migrations
     | node_modules
-    | .venv
+    | \\.venv
 )/
 '''
 
@@ -481,7 +484,7 @@ exclude_lines = [
     "def __repr__",
     "raise AssertionError",
     "raise NotImplementedError",
-    "if __name__ == .__main__.:",
+    "if __name__ == \"__main__\":",
     "if TYPE_CHECKING:",
     "class .*\\(Protocol\\):",
     "@(abc\\.)?abstractmethod"

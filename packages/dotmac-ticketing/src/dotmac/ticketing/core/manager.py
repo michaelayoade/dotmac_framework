@@ -4,7 +4,7 @@ Core ticket management system.
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy import and_, asc, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +19,23 @@ from .models import (
     TicketStatus,
     TicketUpdate,
 )
+from ..integrations.adapters import (
+    CommunicationServiceProtocol,
+    MonitoringServiceProtocol,
+    get_communication_service,
+    get_monitoring_service,
+)
+from .security import (
+    audit_tenant_access,
+    rate_limit,
+    sanitize_search_query,
+    validate_tenant_id,
+    validate_ticket_id,
+    validate_user_id,
+    assert_tenant,
+    assert_tenant_list,
+    create_tenant_context,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +43,21 @@ logger = logging.getLogger(__name__)
 class TicketManager:
     """Core ticket management system."""
 
-    def __init__(self, db_session_factory=None, config: dict[str, Any] | None = None):
+    def __init__(
+        self, 
+        db_session_factory=None, 
+        config: dict[str, Any] | None = None,
+        communication_service: Optional[CommunicationServiceProtocol] = None,
+        monitoring_service: Optional[MonitoringServiceProtocol] = None,
+    ):
         """Initialize ticket manager."""
         self.db_session_factory = db_session_factory
         self.config = config or {}
         self._ticket_number_counter = 1000
+
+        # Optional integrations with fallbacks
+        self.communication_service = communication_service or get_communication_service()
+        self.monitoring_service = monitoring_service or get_monitoring_service()
 
         # SLA configurations (in minutes)
         self.sla_config = {
@@ -51,6 +78,8 @@ class TicketManager:
         tenant_prefix = tenant_id[:3].upper() if tenant_id else "TKT"
         return f"{tenant_prefix}-{timestamp}"
 
+    @audit_tenant_access("create_ticket")
+    @rate_limit("tenant_id")
     async def create_ticket(
         self,
         db: AsyncSession,
@@ -59,6 +88,9 @@ class TicketManager:
         customer_id: str | None = None,
     ) -> Ticket:
         """Create a new ticket."""
+        # Validate inputs
+        tenant_id = validate_tenant_id(tenant_id)
+        customer_id = validate_user_id(customer_id)
         try:
             # Generate ticket number
             ticket_number = self.generate_ticket_number(tenant_id)
@@ -105,10 +137,17 @@ class TicketManager:
             logger.error(f"Error creating ticket: {str(e)}")
             raise
 
+    @audit_tenant_access("get_ticket")
     async def get_ticket(
         self, db: AsyncSession, tenant_id: str, ticket_id: str
     ) -> Ticket | None:
         """Get ticket by ID."""
+        # Validate inputs
+        tenant_id = validate_tenant_id(tenant_id)
+        ticket_id = validate_ticket_id(ticket_id)
+        
+        # Create tenant context for assertion
+        ctx = create_tenant_context(tenant_id)
         query = (
             select(Ticket)
             .where(and_(Ticket.id == ticket_id, Ticket.tenant_id == tenant_id))
@@ -120,7 +159,13 @@ class TicketManager:
         )
 
         result = await db.execute(query)
-        return result.scalar_one_or_none()
+        ticket = result.scalar_one_or_none()
+        
+        # Defense-in-depth: assert tenant isolation
+        if ticket:
+            assert_tenant(ctx, ticket)
+        
+        return ticket
 
     async def get_ticket_by_number(
         self, db: AsyncSession, tenant_id: str, ticket_number: str
@@ -245,6 +290,7 @@ class TicketManager:
             logger.error(f"Error adding comment to ticket {ticket_id}: {str(e)}")
             raise
 
+    @audit_tenant_access("list_tickets")
     async def list_tickets(
         self,
         db: AsyncSession,
@@ -256,6 +302,16 @@ class TicketManager:
         sort_order: str = "desc",
     ) -> tuple[list[Ticket], int]:
         """List tickets with filtering, pagination, and sorting."""
+        # Validate inputs
+        tenant_id = validate_tenant_id(tenant_id)
+        
+        # Sanitize search query if present
+        if filters and "search" in filters:
+            filters["search"] = sanitize_search_query(filters["search"])
+        
+        # Validate pagination parameters
+        page = max(1, min(page, 1000))  # Limit to reasonable range
+        page_size = max(1, min(page_size, 500))  # Limit page size
         try:
             # Build base query
             query = select(Ticket).where(Ticket.tenant_id == tenant_id)
@@ -320,8 +376,14 @@ class TicketManager:
             # Execute query
             result = await db.execute(query)
             tickets = result.scalars().all()
+            
+            # Defense-in-depth: assert all tickets belong to correct tenant
+            ticket_list = list(tickets)
+            if ticket_list:
+                ctx = create_tenant_context(tenant_id)
+                assert_tenant_list(ctx, ticket_list)
 
-            return list(tickets), total_count
+            return ticket_list, total_count
 
         except Exception as e:
             logger.error(f"Error listing tickets: {str(e)}")
@@ -431,18 +493,105 @@ class TicketManager:
 
     async def _trigger_ticket_created_events(self, ticket: Ticket):
         """Trigger events when ticket is created."""
-        # This would integrate with event system, notifications, etc.
         logger.info(f"Ticket created events triggered for {ticket.ticket_number}")
+        
+        # Record monitoring event
+        self.monitoring_service.record_event(
+            event_type="ticket_created",
+            service="dotmac-ticketing",
+            details={
+                "ticket_number": ticket.ticket_number,
+                "tenant_id": ticket.tenant_id,
+                "priority": ticket.priority,
+                "category": ticket.category,
+            }
+        )
+        
+        # Send notification if communication service is available
+        if hasattr(self.communication_service, 'send_notification'):
+            try:
+                await self.communication_service.send_notification(
+                    recipient=ticket.customer_email or "support@example.com",
+                    subject=f"Support Ticket Created - #{ticket.ticket_number}",
+                    template="ticket_created",
+                    context={
+                        "ticket": ticket,
+                        "ticket_number": ticket.ticket_number,
+                        "title": ticket.title,
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send creation notification: {e}")
 
     async def _trigger_ticket_updated_events(self, ticket: Ticket, old_status: str):
         """Trigger events when ticket is updated."""
         logger.info(f"Ticket updated events triggered for {ticket.ticket_number}")
+        
+        # Record monitoring event
+        self.monitoring_service.record_event(
+            event_type="ticket_updated",
+            service="dotmac-ticketing",
+            details={
+                "ticket_number": ticket.ticket_number,
+                "tenant_id": ticket.tenant_id,
+                "old_status": old_status,
+                "new_status": ticket.status,
+            }
+        )
+        
+        # Send notification for status changes
+        if hasattr(self.communication_service, 'send_notification') and ticket.customer_email:
+            try:
+                await self.communication_service.send_notification(
+                    recipient=ticket.customer_email,
+                    subject=f"Update on your support ticket - #{ticket.ticket_number}",
+                    template="ticket_updated",
+                    context={
+                        "ticket": ticket,
+                        "ticket_number": ticket.ticket_number,
+                        "old_status": old_status,
+                        "new_status": ticket.status,
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send update notification: {e}")
 
     async def _trigger_comment_added_events(
         self, ticket: Ticket, comment: TicketComment
     ):
         """Trigger events when comment is added."""
         logger.info(f"Comment added events triggered for ticket {ticket.ticket_number}")
+        
+        # Record monitoring event
+        self.monitoring_service.record_event(
+            event_type="comment_added",
+            service="dotmac-ticketing", 
+            details={
+                "ticket_number": ticket.ticket_number,
+                "tenant_id": ticket.tenant_id,
+                "author_type": comment.author_type,
+                "is_internal": comment.is_internal,
+            }
+        )
+        
+        # Send notification for non-internal comments
+        if (not comment.is_internal and 
+            hasattr(self.communication_service, 'send_notification') and 
+            ticket.customer_email):
+            try:
+                await self.communication_service.send_notification(
+                    recipient=ticket.customer_email,
+                    subject=f"New response to your support ticket - #{ticket.ticket_number}",
+                    template="comment_added",
+                    context={
+                        "ticket": ticket,
+                        "ticket_number": ticket.ticket_number,
+                        "comment": comment,
+                        "comment_author": comment.author_name,
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send comment notification: {e}")
 
 
 class GlobalTicketManager:

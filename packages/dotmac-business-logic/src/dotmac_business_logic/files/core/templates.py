@@ -713,7 +713,7 @@ class TemplateEngine:
         """Generate cache key for template and context."""
         # Create a hash of the context for cache key
         context_str = str(sorted(context.items()))
-        context_hash = hashlib.md5(context_str.encode()).hexdigest()[:8]
+        context_hash = hashlib.sha256(context_str.encode()).hexdigest()[:8]
 
         cache_key_parts = [template_name, context_hash]
         if tenant_id:

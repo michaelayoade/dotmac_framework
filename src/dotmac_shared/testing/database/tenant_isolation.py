@@ -116,9 +116,7 @@ class TenantIsolationTester:
         results = []
 
         # First, create test data for each tenant
-        await self._setup_tenant_test_data(
-            model_class, tenant_contexts, test_data_per_tenant
-        )
+        await self._setup_tenant_test_data(model_class, tenant_contexts, test_data_per_tenant)
 
         # Test isolation for each tenant
         for tenant_context in tenant_contexts:
@@ -195,11 +193,7 @@ class TenantIsolationTester:
 
                 # Test 2: Explicit tenant filtering
                 try:
-                    tenant_records = (
-                        session.query(model_class)
-                        .filter(model_class.tenant_id == tenant_id)
-                        .all()
-                    )
+                    tenant_records = session.query(model_class).filter(model_class.tenant_id == tenant_id).all()
 
                     expected_count = len(test_data_per_tenant.get(tenant_id, []))
                     actual_count = len(tenant_records)
@@ -220,10 +214,7 @@ class TenantIsolationTester:
 
                     # Verify each record belongs to correct tenant
                     for record in tenant_records:
-                        if (
-                            hasattr(record, "tenant_id")
-                            and record.tenant_id != tenant_id
-                        ):
+                        if hasattr(record, "tenant_id") and record.tenant_id != tenant_id:
                             violations.append(
                                 IsolationViolation(
                                     violation_type=IsolationViolationType.TENANT_MISMATCH,
@@ -245,9 +236,7 @@ class TenantIsolationTester:
                     if other_tenant.tenant_id != tenant_id:
                         try:
                             cross_tenant_records = (
-                                session.query(model_class)
-                                .filter(model_class.tenant_id == other_tenant.tenant_id)
-                                .all()
+                                session.query(model_class).filter(model_class.tenant_id == other_tenant.tenant_id).all()
                             )
 
                             # This query should succeed but return no results for proper isolation
@@ -310,9 +299,7 @@ class TenantIsolationTester:
         results = []
 
         for tenant_context in tenant_contexts:
-            result = await self._test_tenant_query_isolation(
-                model_class, tenant_context, custom_queries
-            )
+            result = await self._test_tenant_query_isolation(model_class, tenant_context, custom_queries)
             results.append(result)
 
         self.test_results.extend(results)
@@ -337,9 +324,7 @@ class TenantIsolationTester:
                 for query_name, query_sql in custom_queries:
                     try:
                         # Execute the query
-                        result = session.execute(
-                            text(query_sql), {"tenant_id": tenant_id}
-                        )
+                        result = session.execute(text(query_sql), {"tenant_id": tenant_id})
                         rows = result.fetchall()
 
                         # Check if results are properly filtered
@@ -361,9 +346,7 @@ class TenantIsolationTester:
                                 )
 
                     except Exception as e:
-                        logger.warning(
-                            f"Query '{query_name}' failed for tenant {tenant_id}: {e}"
-                        )
+                        logger.warning(f"Query '{query_name}' failed for tenant {tenant_id}: {e}")
 
         except Exception as e:
             error_message = f"Query isolation test failed: {str(e)}"
@@ -409,9 +392,7 @@ class TenantIsolationTester:
 
         # First, measure baseline performance for each tenant individually
         for tenant_context in tenant_contexts:
-            baseline_time = await self._measure_tenant_performance(
-                model_class, tenant_context, load_per_tenant
-            )
+            baseline_time = await self._measure_tenant_performance(model_class, tenant_context, load_per_tenant)
             baseline_times[tenant_context.tenant_id] = baseline_time
 
         # Then, run all tenants concurrently and compare performance
@@ -428,9 +409,7 @@ class TenantIsolationTester:
             concurrent_time = concurrent_times.get(tenant_id, 0)
 
             if baseline_time > 0:
-                performance_degradation = (
-                    concurrent_time - baseline_time
-                ) / baseline_time
+                performance_degradation = (concurrent_time - baseline_time) / baseline_time
 
                 # If performance degrades by more than 50%, consider it a violation
                 if performance_degradation > 0.5:
@@ -472,9 +451,7 @@ class TenantIsolationTester:
         with self.SessionLocal() as session:
             for _i in range(operation_count):
                 # Simple read operation
-                session.query(model_class).filter(
-                    model_class.tenant_id == tenant_context.tenant_id
-                ).limit(10).all()
+                session.query(model_class).filter(model_class.tenant_id == tenant_context.tenant_id).limit(10).all()
 
         return time.time() - start_time
 
@@ -487,18 +464,13 @@ class TenantIsolationTester:
         """Measure performance when all tenants run concurrently"""
 
         async def tenant_workload(tenant_context: TenantContext):
-            return await self._measure_tenant_performance(
-                model_class, tenant_context, operation_count
-            )
+            return await self._measure_tenant_performance(model_class, tenant_context, operation_count)
 
         # Run all tenant workloads concurrently
         tasks = [tenant_workload(tc) for tc in tenant_contexts]
         execution_times = await asyncio.gather(*tasks)
 
-        return {
-            tenant_contexts[i].tenant_id: execution_times[i]
-            for i in range(len(tenant_contexts))
-        }
+        return {tenant_contexts[i].tenant_id: execution_times[i] for i in range(len(tenant_contexts))}
 
     @standard_exception_handler
     async def test_constraint_isolation(
@@ -659,10 +631,7 @@ class TenantIsolationTester:
         error_tests = sum(1 for r in self.test_results if r.result == "error")
 
         total_violations = sum(len(r.violations) for r in self.test_results)
-        critical_violations = sum(
-            len([v for v in r.violations if v.severity == "critical"])
-            for r in self.test_results
-        )
+        critical_violations = sum(len([v for v in r.violations if v.severity == "critical"]) for r in self.test_results)
 
         # Break down by test type
         type_breakdown = {}
@@ -747,22 +716,16 @@ async def comprehensive_tenant_isolation_test(
         logger.info(f"Testing isolation for {model_class.__name__}")
 
         # Data isolation tests
-        data_results = await tester.test_data_isolation(
-            model_class, tenant_contexts, test_data_per_tenant
-        )
+        data_results = await tester.test_data_isolation(model_class, tenant_contexts, test_data_per_tenant)
         all_results.extend(data_results)
 
         # Performance isolation tests
         if include_performance:
-            perf_results = await tester.test_performance_isolation(
-                model_class, tenant_contexts, 50
-            )
+            perf_results = await tester.test_performance_isolation(model_class, tenant_contexts, 50)
             all_results.extend(perf_results)
 
         # Constraint isolation tests
-        constraint_results = await tester.test_constraint_isolation(
-            model_class, tenant_contexts, test_data_per_tenant
-        )
+        constraint_results = await tester.test_constraint_isolation(model_class, tenant_contexts, test_data_per_tenant)
         all_results.extend(constraint_results)
 
     return {

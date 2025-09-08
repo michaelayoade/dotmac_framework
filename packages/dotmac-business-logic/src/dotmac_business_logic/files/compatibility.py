@@ -28,7 +28,7 @@ def safe_numpy_import():
     except ImportError:
         return None
     except Exception as e:
-        warnings.warn(f"Numpy compatibility issue: {e}", UserWarning)
+        warnings.warn(f"Numpy compatibility issue: {e}", UserWarning, stacklevel=2)
         return None
 
 
@@ -43,7 +43,7 @@ def safe_matplotlib_import():
     except ImportError:
         return None
     except Exception as e:
-        warnings.warn(f"Matplotlib compatibility issue: {e}", UserWarning)
+        warnings.warn(f"Matplotlib compatibility issue: {e}", UserWarning, stacklevel=2)
         return None
 
 

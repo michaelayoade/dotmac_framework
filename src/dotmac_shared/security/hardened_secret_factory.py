@@ -47,9 +47,7 @@ class HardenedSecretFactory:
             self._secrets_manager = None
             self._environment_validated = False
 
-    async def initialize(
-        self, deployment_context: Optional[DeploymentContext] = None
-    ) -> None:
+    async def initialize(self, deployment_context: Optional[DeploymentContext] = None) -> None:
         """
         Initialize the secrets manager based on deployment context.
 
@@ -108,13 +106,9 @@ class HardenedSecretFactory:
                 ) from e
 
             # In development, log warning but continue
-            logger.warning(
-                "Using fallback secret management in development", error=str(e)
-            )
+            logger.warning("Using fallback secret management in development", error=str(e))
 
-    def _determine_environment(
-        self, deployment_context: Optional[DeploymentContext]
-    ) -> Environment:
+    def _determine_environment(self, deployment_context: Optional[DeploymentContext]) -> Environment:
         """Determine environment from deployment context or environment variables."""
 
         # Check deployment context first
@@ -139,9 +133,7 @@ class HardenedSecretFactory:
         try:
             return Environment(env_name)
         except ValueError:
-            logger.warning(
-                f"Unknown environment '{env_name}', defaulting to development"
-            )
+            logger.warning(f"Unknown environment '{env_name}', defaulting to development")
             return Environment.DEVELOPMENT
 
     async def get_jwt_secret(self, tenant_id: Optional[UUID] = None) -> str:
@@ -243,9 +235,7 @@ class HardenedSecretFactory:
 
         return credentials
 
-    async def get_service_api_key(
-        self, service_name: str, tenant_id: Optional[UUID] = None
-    ) -> str:
+    async def get_service_api_key(self, service_name: str, tenant_id: Optional[UUID] = None) -> str:
         """
         Retrieve service API key with production enforcement.
 
@@ -282,9 +272,7 @@ class HardenedSecretFactory:
 
         return api_key
 
-    async def get_encryption_key(
-        self, purpose: str = "default", tenant_id: Optional[UUID] = None
-    ) -> str:
+    async def get_encryption_key(self, purpose: str = "default", tenant_id: Optional[UUID] = None) -> str:
         """
         Retrieve encryption key with strict production enforcement.
 
@@ -392,18 +380,12 @@ async def get_hardened_jwt_secret(tenant_id: Optional[UUID] = None) -> str:
     return await hardened_secret_factory.get_jwt_secret(tenant_id)
 
 
-async def get_hardened_db_credentials(
-    database_name: str = "main", tenant_id: Optional[UUID] = None
-) -> dict[str, str]:
+async def get_hardened_db_credentials(database_name: str = "main", tenant_id: Optional[UUID] = None) -> dict[str, str]:
     """Get database credentials with hardened security enforcement."""
-    return await hardened_secret_factory.get_database_credentials(
-        database_name, tenant_id
-    )
+    return await hardened_secret_factory.get_database_credentials(database_name, tenant_id)
 
 
-async def get_hardened_service_api_key(
-    service_name: str, tenant_id: Optional[UUID] = None
-) -> str:
+async def get_hardened_service_api_key(service_name: str, tenant_id: Optional[UUID] = None) -> str:
     """Get service API key with hardened security enforcement."""
     return await hardened_secret_factory.get_service_api_key(service_name, tenant_id)
 

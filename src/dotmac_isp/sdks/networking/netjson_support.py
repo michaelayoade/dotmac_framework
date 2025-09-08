@@ -74,9 +74,7 @@ class NetJSONRenderer:
 
         # Basic wireless configuration
         if "ssid" in wireless:
-            self.uci_commands.append(
-                f"uci set wireless.@wifi-iface[{idx}].ssid='{wireless['ssid']}'"
-            )
+            self.uci_commands.append(f"uci set wireless.@wifi-iface[{idx}].ssid='{wireless['ssid']}'")
         if "mode" in wireless:
             mode_mapping = {
                 "access_point": "ap",
@@ -85,39 +83,25 @@ class NetJSONRenderer:
                 "monitor": "monitor",
             }
             uci_mode = mode_mapping.get(wireless["mode"], wireless["mode"])
-            self.uci_commands.append(
-                f"uci set wireless.@wifi-iface[{idx}].mode='{uci_mode}'"
-            )
+            self.uci_commands.append(f"uci set wireless.@wifi-iface[{idx}].mode='{uci_mode}'")
         # Encryption settings
         if "encryption" in wireless:
             encryption = wireless["encryption"]
             protocol = encryption.get("protocol", "none")
 
             if protocol == "wpa2":
-                self.uci_commands.append(
-                    f"uci set wireless.@wifi-iface[{idx}].encryption='psk2'"
-                )
+                self.uci_commands.append(f"uci set wireless.@wifi-iface[{idx}].encryption='psk2'")
                 if "key" in encryption:
-                    self.uci_commands.append(
-                        f"uci set wireless.@wifi-iface[{idx}].key='{encryption['key']}'"
-                    )
+                    self.uci_commands.append(f"uci set wireless.@wifi-iface[{idx}].key='{encryption['key']}'")
             elif protocol == "wpa3":
-                self.uci_commands.append(
-                    f"uci set wireless.@wifi-iface[{idx}].encryption='sae'"
-                )
+                self.uci_commands.append(f"uci set wireless.@wifi-iface[{idx}].encryption='sae'")
                 if "key" in encryption:
-                    self.uci_commands.append(
-                        f"uci set wireless.@wifi-iface[{idx}].key='{encryption['key']}'"
-                    )
+                    self.uci_commands.append(f"uci set wireless.@wifi-iface[{idx}].key='{encryption['key']}'")
             elif protocol == "none":
-                self.uci_commands.append(
-                    f"uci set wireless.@wifi-iface[{idx}].encryption='none'"
-                )
+                self.uci_commands.append(f"uci set wireless.@wifi-iface[{idx}].encryption='none'")
         # Network assignment
         if "network" in interface:
-            self.uci_commands.append(
-                f"uci set wireless.@wifi-iface[{idx}].network='{interface['network']}'"
-            )
+            self.uci_commands.append(f"uci set wireless.@wifi-iface[{idx}].network='{interface['network']}'")
         # Enable the interface
         self.uci_commands.append(f"uci set wireless.@wifi-iface[{idx}].disabled='0'")
 
@@ -157,13 +141,9 @@ class NetJSONRenderer:
     def _render_system(self, system: dict[str, Any]) -> None:
         """Render system configuration."""
         if "hostname" in system:
-            self.uci_commands.append(
-                f"uci set system.@system[0].hostname='{system['hostname']}'"
-            )
+            self.uci_commands.append(f"uci set system.@system[0].hostname='{system['hostname']}'")
         if "timezone" in system:
-            self.uci_commands.append(
-                f"uci set system.@system[0].timezone='{system['timezone']}'"
-            )
+            self.uci_commands.append(f"uci set system.@system[0].timezone='{system['timezone']}'")
 
     def _render_network_settings(self, network: dict[str, Any]) -> None:
         """Render network-wide settings."""
@@ -174,9 +154,7 @@ class NetJSONRenderer:
 
         # Default gateway
         if "gateway" in network:
-            self.uci_commands.append(
-                f"uci set network.wan.gateway='{network['gateway']}'"
-            )
+            self.uci_commands.append(f"uci set network.wan.gateway='{network['gateway']}'")
 
 
 class NetJSONValidator:
@@ -201,9 +179,7 @@ class NetJSONValidator:
                 errors.append("Interfaces must be a list")
             else:
                 for idx, interface in enumerate(config["interfaces"]):
-                    interface_errors = NetJSONValidator._validate_interface(
-                        interface, idx
-                    )
+                    interface_errors = NetJSONValidator._validate_interface(interface, idx)
                     errors.extend(interface_errors)
 
         return errors
@@ -243,9 +219,7 @@ class NetJSONValidator:
                     "wpa2",
                     "wpa3",
                 ]:
-                    errors.append(
-                        f"{prefix}: invalid encryption protocol '{encryption['protocol']}'"
-                    )
+                    errors.append(f"{prefix}: invalid encryption protocol '{encryption['protocol']}'")
         return errors
 
 
@@ -326,9 +300,7 @@ class NetJSONConfigMixin:
 
         return template
 
-    async def render_netjson_to_uci(
-        self, template_id: str, variables: Optional[dict[str, Any]] = None
-    ) -> str:
+    async def render_netjson_to_uci(self, template_id: str, variables: Optional[dict[str, Any]] = None) -> str:
         """Render NetJSON template to UCI commands."""
 
         # Get template (implementation depends on storage backend)
@@ -341,8 +313,6 @@ class NetJSONConfigMixin:
         # Apply variables if provided
         if variables:
             self.netjson_template_engine.set_variables(variables)
-            netjson_config = self.netjson_template_engine.render_template(
-                netjson_config
-            )
+            netjson_config = self.netjson_template_engine.render_template(netjson_config)
         # Convert to UCI
         return self.netjson_renderer.render_openwrt_config(netjson_config)

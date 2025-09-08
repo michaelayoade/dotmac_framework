@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dotmac_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
+      POSTGRES_DB: dotmac_test
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-dotmac_admin} -d dotmac_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [mgmt-api]
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    ports:
+      - "6381:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis123}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [mgmt-api]
+
+  management-platform:
+    build:
+      context: ../../
+      dockerfile: Dockerfile.management
+    environment:
+      ENVIRONMENT: test
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://dotmac_admin:${POSTGRES_PASSWORD:-password123}@postgres:5432/dotmac_test
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      PORT: 8000
+      HOST: 0.0.0.0
+      ENABLE_OBSERVABILITY: "true"
+      ENABLE_METRICS: "true"
+      ENABLE_TRACING: "true"
+    volumes:
+      - ../../src/dotmac_management:/app/src/dotmac_management
+      - ../../src/dotmac_shared:/app/src/dotmac_shared
+      - ../../packages:/app/packages
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks: [mgmt-api]
+
+networks:
+  mgmt-api:
+    driver: bridge
+

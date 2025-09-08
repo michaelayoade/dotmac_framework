@@ -31,9 +31,7 @@ class ServiceFactory:
     - Centralized service instantiation
     """
 
-    def __init__(
-        self, db_session: Session | AsyncSession, tenant_id: str | None = None
-    ):
+    def __init__(self, db_session: Session | AsyncSession, tenant_id: str | None = None):
         """
         Initialize service factory.
 
@@ -172,9 +170,7 @@ class ServiceFactory:
         self._service_cache.clear()
         logger.debug("Cleared service cache")
 
-    def _validate_dependencies(
-        self, service_class: type[ServiceType], model_class: type | None
-    ) -> None:
+    def _validate_dependencies(self, service_class: type[ServiceType], model_class: type | None) -> None:
         """
         Validate that required dependencies are available.
 
@@ -194,11 +190,7 @@ class ServiceFactory:
             )
 
         # Check model class if service requires it
-        if (
-            hasattr(service_class, "_requires_model")
-            and service_class._requires_model
-            and not model_class
-        ):
+        if hasattr(service_class, "_requires_model") and service_class._requires_model and not model_class:
             raise ServiceDependencyError(
                 service_class.__name__,
                 "model_class",
@@ -272,9 +264,7 @@ class ServiceBuilder:
             ServiceConfigurationError: If service class not specified
         """
         if not self._service_class:
-            raise ServiceConfigurationError(
-                "ServiceBuilder", "Service class not specified"
-            )
+            raise ServiceConfigurationError("ServiceBuilder", "Service class not specified")
 
         return self.factory.create_service(
             service_class=self._service_class,

@@ -44,9 +44,7 @@ class DeploymentAwareServiceFactory:
 
         # Register any existing services with the registry
         for name, service in self._services.items():
-            registry.register(
-                name, service, "factory_service", f"Service from factory: {name}"
-            )
+            registry.register(name, service, "factory_service", f"Service from factory: {name}")
 
         logger.info("Created service registry from factory")
         return registry

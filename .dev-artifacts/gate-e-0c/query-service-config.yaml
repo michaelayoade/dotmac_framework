@@ -1,0 +1,18 @@
+# SigNoz Query Service Configuration Override
+# Forces ClickHouse connection to use Docker network hostname
+
+clickhouse:
+  host: clickhouse
+  port: 9000
+  database: signoz_traces
+  user: default
+  password: ""
+  secure: false
+  
+storage:
+  type: clickhouse
+  
+# Optional: Disable any localhost fallback
+server:
+  host: 0.0.0.0
+  port: 8080

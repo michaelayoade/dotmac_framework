@@ -144,9 +144,7 @@ def standard_exception_handler(func: Callable) -> Callable:
             DuplicateEntityError,
             DatabaseError,
         ) as e:
-            status_code = EXCEPTION_STATUS_MAP.get(
-                type(e), status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            status_code = EXCEPTION_STATUS_MAP.get(type(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
             error_code = ERROR_CODE_MAP.get(type(e), "UNKNOWN_ERROR")
 
             # Enhanced logging with context
@@ -224,9 +222,7 @@ def standard_exception_handler(func: Callable) -> Callable:
 # === Application-Level Exception Handlers ===
 
 
-async def handle_http_exception(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def handle_http_exception(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Handle HTTP exceptions with standardized format."""
     return JSONResponse(
         status_code=exc.status_code,
@@ -238,15 +234,11 @@ async def handle_http_exception(
     )
 
 
-async def handle_validation_exception(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
+async def handle_validation_exception(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Handle FastAPI validation errors."""
     field_errors = {}
     for error in exc.errors():
-        field_name = ".".join(
-            str(loc) for loc in error["loc"][1:]
-        )  # Skip 'body' prefix
+        field_name = ".".join(str(loc) for loc in error["loc"][1:])  # Skip 'body' prefix
         field_errors[field_name] = error["msg"]
 
     return JSONResponse(
@@ -290,9 +282,7 @@ def billing_exception_handler(func: Callable) -> Callable:
             return await func(*args, **kwargs)
         except ValueError as e:
             if "payment" in str(e).lower():
-                raise CustomValidationError(
-                    f"Payment validation failed: {str(e)}"
-                ) from e
+                raise CustomValidationError(f"Payment validation failed: {str(e)}") from e
             raise
 
     return wrapper
@@ -308,9 +298,7 @@ def auth_exception_handler(func: Callable) -> Callable:
             return await func(*args, **kwargs)
         except KeyError as e:
             if "token" in str(e).lower():
-                raise AuthenticationError(
-                    "Invalid or missing authentication token"
-                ) from e
+                raise AuthenticationError("Invalid or missing authentication token") from e
             raise
 
     return wrapper

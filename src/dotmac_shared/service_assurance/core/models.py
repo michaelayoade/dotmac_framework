@@ -272,9 +272,7 @@ class ServiceProbe(TenantModel, StatusMixin, AuditMixin):
     consecutive_failures = Column(Integer, default=0, nullable=False)
 
     # Relationships
-    results = relationship(
-        "ProbeResult", back_populates="probe", cascade="all, delete-orphan"
-    )
+    results = relationship("ProbeResult", back_populates="probe", cascade="all, delete-orphan")
     sla_policy = relationship("SLAPolicy", back_populates="probes")
 
     __table_args__ = (
@@ -291,9 +289,7 @@ class ProbeResult(TenantModel, AuditMixin):
 
     # Result identification
     result_id = Column(String(100), nullable=False, unique=True, index=True)
-    probe_id = Column(
-        UUID(as_uuid=True), ForeignKey("sa_probes.id"), nullable=False, index=True
-    )
+    probe_id = Column(UUID(as_uuid=True), ForeignKey("sa_probes.id"), nullable=False, index=True)
 
     # Result data
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
@@ -327,9 +323,7 @@ class AlarmRule(TenantModel, StatusMixin, AuditMixin):
     match_criteria = Column(JSON, nullable=False)
 
     # Alarm configuration
-    severity = Column(
-        SQLEnum(AlarmSeverity), default=AlarmSeverity.WARNING, nullable=False
-    )
+    severity = Column(SQLEnum(AlarmSeverity), default=AlarmSeverity.WARNING, nullable=False)
     alarm_type = Column(SQLEnum(AlarmType), default=AlarmType.SYSTEM, nullable=False)
     auto_clear = Column(Boolean, default=False, nullable=False)
     clear_conditions = Column(JSON, nullable=True)
@@ -374,9 +368,7 @@ class Alarm(TenantModel, AuditMixin):
     source_event_id = Column(String(100), nullable=True, index=True)
 
     # Status tracking
-    status = Column(
-        SQLEnum(AlarmStatus), default=AlarmStatus.ACTIVE, nullable=False, index=True
-    )
+    status = Column(SQLEnum(AlarmStatus), default=AlarmStatus.ACTIVE, nullable=False, index=True)
     acknowledged = Column(Boolean, default=False, nullable=False)
     acknowledged_by = Column(String(200), nullable=True)
     acknowledged_at = Column(DateTime, nullable=True)
@@ -438,9 +430,7 @@ class FlowCollector(TenantModel, StatusMixin, AuditMixin):
     bytes_received = Column(Integer, default=0, nullable=False)
 
     # Relationships
-    flow_records = relationship(
-        "FlowRecord", back_populates="collector", cascade="all, delete-orphan"
-    )
+    flow_records = relationship("FlowRecord", back_populates="collector", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("ix_flow_collectors_tenant_type", "tenant_id", "flow_type"),
@@ -553,9 +543,7 @@ class SLAViolation(TenantModel, AuditMixin):
 
     # Violation identification
     violation_id = Column(String(100), nullable=False, unique=True, index=True)
-    probe_id = Column(
-        UUID(as_uuid=True), ForeignKey("sa_probes.id"), nullable=False, index=True
-    )
+    probe_id = Column(UUID(as_uuid=True), ForeignKey("sa_probes.id"), nullable=False, index=True)
     policy_id = Column(
         UUID(as_uuid=True),
         ForeignKey("sa_sla_policies.id"),

@@ -147,9 +147,7 @@ class MetricsCollector:
 
         return sorted(points, key=lambda p: p.timestamp)
 
-    def get_current_value(
-        self, name: str, experiment_id: Optional[str] = None
-    ) -> Optional[float]:
+    def get_current_value(self, name: str, experiment_id: Optional[str] = None) -> Optional[float]:
         """Get the most recent value for a metric"""
         history = self.get_metric_history(name, experiment_id=experiment_id)
         return history[-1].value if history else None
@@ -191,9 +189,7 @@ class MetricsCollector:
                 for exp_id, exp_metrics in list(self.experiment_metrics.items()):
                     for metric_name, points in exp_metrics.items():
                         # Filter out old points
-                        exp_metrics[metric_name] = [
-                            p for p in points if p.timestamp >= cutoff_time
-                        ]
+                        exp_metrics[metric_name] = [p for p in points if p.timestamp >= cutoff_time]
 
                     # Remove empty experiment metrics
                     if not any(exp_metrics.values()):
@@ -248,9 +244,7 @@ class AlertManager:
         self.active_alerts[alert.id] = alert
         self.alert_history.append(alert)
 
-        logger.warning(
-            f"CHAOS ALERT [{alert.severity}]: {alert.title} - {alert.message}"
-        )
+        logger.warning(f"CHAOS ALERT [{alert.severity}]: {alert.title} - {alert.message}")
 
         # Notify all handlers
         for handler in self.alert_handlers:
@@ -409,9 +403,7 @@ class ChaosMonitor:
         self.experiment_monitors[experiment_id] = monitor
         return monitor
 
-    def get_experiment_monitor(
-        self, experiment_id: str
-    ) -> Optional["ExperimentMonitor"]:
+    def get_experiment_monitor(self, experiment_id: str) -> Optional["ExperimentMonitor"]:
         """Get monitor for a specific experiment"""
         return self.experiment_monitors.get(experiment_id)
 
@@ -438,9 +430,7 @@ class ChaosMonitor:
         # Add key metric summaries
         key_metrics = ["error_rate", "response_time_p99", "availability", "throughput"]
         for metric in key_metrics:
-            summary = self.metrics_collector.get_metric_summary(
-                metric, since=utc_now() - timedelta(minutes=5)
-            )
+            summary = self.metrics_collector.get_metric_summary(metric, since=utc_now() - timedelta(minutes=5))
             health[f"{metric}_summary"] = summary
 
         return health
@@ -471,16 +461,12 @@ class ExperimentMonitor:
                 self.record_metric(f"baseline_{metric}", current)
                 self.metrics_snapshot[f"baseline_{metric}"] = current
 
-    def record_metric(
-        self, name: str, value: float, tags: Optional[dict[str, str]] = None
-    ):
+    def record_metric(self, name: str, value: float, tags: Optional[dict[str, str]] = None):
         """Record a metric for this experiment"""
         tags = tags or {}
         tags["experiment_id"] = self.experiment_id
 
-        self.chaos_monitor.record_metric(
-            name, value, tags, experiment_id=self.experiment_id
-        )
+        self.chaos_monitor.record_metric(name, value, tags, experiment_id=self.experiment_id)
 
     async def monitor_failure_injection(self, failure_type: str):
         """Monitor during failure injection"""
@@ -569,8 +555,6 @@ class ExperimentMonitor:
         # Get alerts for this experiment
         alerts = self.chaos_monitor.alert_manager.get_active_alerts(self.experiment_id)
         summary["active_alerts"] = len(alerts)
-        summary["alert_details"] = [
-            alert.to_dict() for alert in alerts[-5:]
-        ]  # Last 5 alerts
+        summary["alert_details"] = [alert.to_dict() for alert in alerts[-5:]]  # Last 5 alerts
 
         return summary

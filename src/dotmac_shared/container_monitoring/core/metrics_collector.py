@@ -140,12 +140,17 @@ class MetricsCollector:
         self,
         collection_interval: int = 60,
         metrics_retention_hours: int = 24,
-        enable_prometheus: bool = True,
+        enable_prometheus: bool = False,
         custom_metrics_endpoints: Optional[list[str]] = None,
     ):
         self.collection_interval = collection_interval
         self.metrics_retention_hours = metrics_retention_hours
-        self.enable_prometheus = enable_prometheus
+        # Disable legacy Prometheus scraping regardless of flag
+        if enable_prometheus:
+            logging.getLogger(__name__).info(
+                "Prometheus scraping is deprecated and disabled; using SigNoz/OTLP only"
+            )
+        self.enable_prometheus = False
         self.custom_metrics_endpoints = custom_metrics_endpoints or []
 
         self.docker_client = docker.from_env()
@@ -176,9 +181,7 @@ class MetricsCollector:
                 self._collect_database_metrics(container),
             ]
 
-            system_metrics, app_metrics, db_metrics = await asyncio.gather(
-                *metrics_tasks, return_exceptions=True
-            )
+            system_metrics, app_metrics, db_metrics = await asyncio.gather(*metrics_tasks, return_exceptions=True)
 
             # Handle results
             if isinstance(system_metrics, SystemMetrics):
@@ -189,9 +192,7 @@ class MetricsCollector:
             if isinstance(app_metrics, ApplicationMetrics):
                 snapshot.application_metrics = app_metrics
             elif isinstance(app_metrics, Exception):
-                self.logger.error(
-                    f"Application metrics collection failed: {app_metrics}"
-                )
+                self.logger.error(f"Application metrics collection failed: {app_metrics}")
 
             if isinstance(db_metrics, list):
                 snapshot.database_metrics = db_metrics
@@ -211,9 +212,7 @@ class MetricsCollector:
 
         return snapshot
 
-    async def _collect_system_metrics(
-        self, container: docker.models.containers.Container
-    ) -> SystemMetrics:
+    async def _collect_system_metrics(self, container: docker.models.containers.Container) -> SystemMetrics:
         """Collect system-level metrics"""
         try:
             # Get container stats
@@ -227,9 +226,7 @@ class MetricsCollector:
             memory_stats = stats["memory_stats"]
             memory_usage = memory_stats.get("usage", 0)
             memory_limit = memory_stats.get("limit", 0)
-            memory_percent = (
-                (memory_usage / memory_limit * 100) if memory_limit > 0 else 0
-            )
+            memory_percent = (memory_usage / memory_limit * 100) if memory_limit > 0 else 0
 
             # Network metrics
             network_stats = stats.get("networks", {})
@@ -268,9 +265,7 @@ class MetricsCollector:
             self.logger.error(f"Failed to collect system metrics: {e}")
             raise
 
-    async def _collect_application_metrics(
-        self, container: docker.models.containers.Container
-    ) -> ApplicationMetrics:
+    async def _collect_application_metrics(self, container: docker.models.containers.Container) -> ApplicationMetrics:
         """Collect application-level metrics"""
         app_metrics = ApplicationMetrics()
 
@@ -279,21 +274,11 @@ class MetricsCollector:
             container_ip = self._get_container_ip(container)
             ports = self._get_port_mappings(container)
 
-            # Try to collect Prometheus metrics if enabled
-            if self.enable_prometheus:
-                prometheus_metrics = await self._collect_prometheus_metrics(
-                    container_ip, ports
-                )
-                if prometheus_metrics:
-                    app_metrics = self._parse_prometheus_metrics(
-                        prometheus_metrics, app_metrics
-                    )
+            # Prometheus scraping disabled (SigNoz-only)
 
             # Try custom metrics endpoints
             for endpoint in self.custom_metrics_endpoints:
-                custom_metrics = await self._collect_custom_metrics(
-                    container_ip, ports, endpoint
-                )
+                custom_metrics = await self._collect_custom_metrics(container_ip, ports, endpoint)
                 if custom_metrics:
                     app_metrics.custom_metrics.update(custom_metrics)
 
@@ -306,9 +291,7 @@ class MetricsCollector:
 
         return app_metrics
 
-    async def _collect_database_metrics(
-        self, container: docker.models.containers.Container
-    ) -> list[DatabaseMetrics]:
+    async def _collect_database_metrics(self, container: docker.models.containers.Container) -> list[DatabaseMetrics]:
         """Collect database performance metrics"""
         db_metrics_list = []
 
@@ -319,9 +302,7 @@ class MetricsCollector:
 
             for db_name, db_config in db_configs.items():
                 try:
-                    db_metrics = await self._collect_single_db_metrics(
-                        db_name, db_config, container
-                    )
+                    db_metrics = await self._collect_single_db_metrics(db_name, db_config, container)
                     if db_metrics:
                         db_metrics_list.append(db_metrics)
                 except Exception as e:
@@ -332,9 +313,7 @@ class MetricsCollector:
 
         return db_metrics_list
 
-    async def _collect_prometheus_metrics(
-        self, container_ip: str, ports: list[int]
-    ) -> Optional[str]:
+    async def _collect_prometheus_metrics(self, container_ip: str, ports: list[int]) -> Optional[str]:
         """Collect Prometheus metrics from container"""
         if not HTTP_CLIENT_AVAILABLE:
             return None
@@ -351,18 +330,13 @@ class MetricsCollector:
 
                         if response.status_code == 200:
                             content_type = response.headers.get("content-type", "")
-                            if (
-                                "text/plain" in content_type
-                                or "prometheus" in content_type
-                            ):
+                            if "text/plain" in content_type or "prometheus" in content_type:
                                 return response.text
                     except httpx.RequestError:
                         continue
         return None
 
-    def _parse_prometheus_metrics(
-        self, metrics_text: str, app_metrics: ApplicationMetrics
-    ) -> ApplicationMetrics:
+    def _parse_prometheus_metrics(self, metrics_text: str, app_metrics: ApplicationMetrics) -> ApplicationMetrics:
         """Parse Prometheus metrics text"""
         try:
             for family in text_string_to_metric_families(metrics_text):
@@ -373,9 +347,7 @@ class MetricsCollector:
                     # Map common metrics to ApplicationMetrics fields
                     if "http_requests_total" in metric_name:
                         app_metrics.request_count += int(metric_value)
-                    elif (
-                        "http_request_duration" in metric_name and "avg" in metric_name
-                    ):
+                    elif "http_request_duration" in metric_name and "avg" in metric_name:
                         app_metrics.response_time_avg = metric_value
                     elif "http_request_duration" in metric_name and "95" in metric_name:
                         app_metrics.response_time_p95 = metric_value
@@ -451,9 +423,7 @@ class MetricsCollector:
         container: docker.models.containers.Container,
     ) -> Optional[DatabaseMetrics]:
         """Collect metrics for a single database"""
-        db_metrics = DatabaseMetrics(
-            database_type=db_name, database_name=db_config.get("database", db_name)
-        )
+        db_metrics = DatabaseMetrics(database_type=db_name, database_name=db_config.get("database", db_name))
 
         try:
             if db_name == "postgresql":
@@ -481,9 +451,7 @@ class MetricsCollector:
 
         return db_metrics
 
-    async def _collect_redis_metrics(
-        self, db_config: dict[str, str], db_metrics: DatabaseMetrics
-    ) -> DatabaseMetrics:
+    async def _collect_redis_metrics(self, db_config: dict[str, str], db_metrics: DatabaseMetrics) -> DatabaseMetrics:
         """Collect Redis specific metrics"""
         # This would be implemented with actual Redis client
         # For now, return placeholder metrics
@@ -495,9 +463,7 @@ class MetricsCollector:
 
         return db_metrics
 
-    async def _collect_mysql_metrics(
-        self, db_config: dict[str, str], db_metrics: DatabaseMetrics
-    ) -> DatabaseMetrics:
+    async def _collect_mysql_metrics(self, db_config: dict[str, str], db_metrics: DatabaseMetrics) -> DatabaseMetrics:
         """Collect MySQL specific metrics"""
         # This would be implemented with actual MySQL client
         # For now, return placeholder metrics
@@ -520,31 +486,19 @@ class MetricsCollector:
         self._metrics_cache[container_id].append(snapshot)
 
         # Implement retention policy
-        cutoff_time = datetime.now(timezone.utc) - timedelta(
-            hours=self.metrics_retention_hours
-        )
-        self._metrics_cache[container_id] = [
-            s for s in self._metrics_cache[container_id] if s.timestamp > cutoff_time
-        ]
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=self.metrics_retention_hours)
+        self._metrics_cache[container_id] = [s for s in self._metrics_cache[container_id] if s.timestamp > cutoff_time]
 
-    def get_metrics_history(
-        self, container_id: str, hours: int = 1
-    ) -> list[MetricsSnapshot]:
+    def get_metrics_history(self, container_id: str, hours: int = 1) -> list[MetricsSnapshot]:
         """Get historical metrics for container"""
         if container_id not in self._metrics_cache:
             return []
 
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
-        return [
-            snapshot
-            for snapshot in self._metrics_cache[container_id]
-            if snapshot.timestamp > cutoff_time
-        ]
+        return [snapshot for snapshot in self._metrics_cache[container_id] if snapshot.timestamp > cutoff_time]
 
     # Helper methods (reused from health_monitor.py)
-    def _extract_isp_id(
-        self, container: docker.models.containers.Container
-    ) -> Optional[UUID]:
+    def _extract_isp_id(self, container: docker.models.containers.Container) -> Optional[UUID]:
         """Extract ISP/tenant ID from container labels"""
         try:
             labels = container.labels or {}
@@ -552,21 +506,17 @@ class MetricsCollector:
                 return UUID(labels["isp.tenant.id"])
             elif "dotmac.tenant.id" in labels:
                 return UUID(labels["dotmac.tenant.id"])
-        except (ValueError, KeyError):
+        except (ValueError, KeyError) as e:
+            logger.debug(f"Could not extract tenant ID from container labels: {e}")
             pass
         return None
 
-    def _calculate_uptime_seconds(
-        self, container: docker.models.containers.Container
-    ) -> float:
+    def _calculate_uptime_seconds(self, container: docker.models.containers.Container) -> float:
         """Calculate container uptime in seconds"""
         try:
             started_at = container.attrs["State"]["StartedAt"]
             start_time = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
-            uptime = (
-                datetime.now(timezone.utc).replace(tzinfo=start_time.tzinfo)
-                - start_time
-            )
+            uptime = datetime.now(timezone.utc).replace(tzinfo=start_time.tzinfo) - start_time
             return uptime.total_seconds()
         except (KeyError, ValueError):
             return 0.0
@@ -577,18 +527,14 @@ class MetricsCollector:
             cpu_stats = stats["cpu_stats"]
             precpu_stats = stats["precpu_stats"]
 
-            cpu_delta = (
-                cpu_stats["cpu_usage"]["total_usage"]
-                - precpu_stats["cpu_usage"]["total_usage"]
-            )
-            system_delta = (
-                cpu_stats["system_cpu_usage"] - precpu_stats["system_cpu_usage"]
-            )
+            cpu_delta = cpu_stats["cpu_usage"]["total_usage"] - precpu_stats["cpu_usage"]["total_usage"]
+            system_delta = cpu_stats["system_cpu_usage"] - precpu_stats["system_cpu_usage"]
 
             if system_delta > 0 and cpu_delta > 0:
                 cpu_count = len(cpu_stats["cpu_usage"]["percpu_usage"])
                 return (cpu_delta / system_delta) * cpu_count * 100.0
-        except (KeyError, ZeroDivisionError):
+        except (KeyError, ZeroDivisionError) as e:
+            logger.debug(f"Could not calculate CPU usage: {e}")
             pass
         return 0.0
 
@@ -599,13 +545,12 @@ class MetricsCollector:
             for network in networks.values():
                 if network.get("IPAddress"):
                     return network["IPAddress"]
-        except KeyError:
+        except KeyError as e:
+            logger.debug(f"Could not extract container IP address: {e}")
             pass
         return "localhost"
 
-    def _get_port_mappings(
-        self, container: docker.models.containers.Container
-    ) -> list[int]:
+    def _get_port_mappings(self, container: docker.models.containers.Container) -> list[int]:
         """Get exposed port mappings"""
         try:
             ports = container.attrs["NetworkSettings"]["Ports"]

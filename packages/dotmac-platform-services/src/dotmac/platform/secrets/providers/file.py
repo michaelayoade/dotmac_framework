@@ -102,8 +102,7 @@ class FileProvider(WritableSecretsProvider):
 
             if isinstance(value, dict):
                 return value
-            else:
-                return {"value": value}
+            return {"value": value}
         except SecretNotFoundError:
             raise
         except Exception as e:
@@ -159,8 +158,7 @@ class FileProvider(WritableSecretsProvider):
                 del current[parts[-1]]
                 self._save_secrets(secrets)
                 return True
-            else:
-                raise SecretNotFoundError(secret_path, "file")
+            raise SecretNotFoundError(secret_path, "file")
 
         except SecretNotFoundError:
             raise

@@ -89,9 +89,7 @@ class EndpointSecurityValidator:
             # Find all endpoint functions
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    endpoint_info = self._analyze_endpoint_security(
-                        node, source, file_path
-                    )
+                    endpoint_info = self._analyze_endpoint_security(node, source, file_path)
                     if endpoint_info:
                         results.append(endpoint_info)
 
@@ -117,14 +115,10 @@ class EndpointSecurityValidator:
         has_authorization = self._has_authorization(func_node, source)
 
         # Calculate security score
-        score = self._calculate_security_score(
-            has_auth, has_validation, has_authorization
-        )
+        score = self._calculate_security_score(has_auth, has_validation, has_authorization)
 
         # Identify issues
-        issues = self._identify_security_issues(
-            has_auth, has_validation, has_authorization, method
-        )
+        issues = self._identify_security_issues(has_auth, has_validation, has_authorization, method)
 
         return SecurityValidationResult(
             endpoint_path=path,
@@ -154,9 +148,7 @@ class EndpointSecurityValidator:
                     "OPTIONS",
                 ]:
                     return method, "/"
-            elif isinstance(decorator, ast.Call) and isinstance(
-                decorator.func, ast.Attribute
-            ):
+            elif isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Attribute):
                 # @router.get("/path")
                 method = decorator.func.attr.upper()
                 if method in [
@@ -203,18 +195,13 @@ class EndpointSecurityValidator:
                 annotation_str = ast.dump(arg.annotation)
 
                 # Check for Pydantic patterns
-                if any(
-                    pattern in annotation_str for pattern in self.validation_patterns
-                ):
+                if any(pattern in annotation_str for pattern in self.validation_patterns):
                     return True
 
                 # Check for common request model naming patterns
                 if isinstance(arg.annotation, ast.Name):
                     name = arg.annotation.id
-                    if any(
-                        suffix in name
-                        for suffix in ["Request", "Create", "Update", "Model", "Schema"]
-                    ):
+                    if any(suffix in name for suffix in ["Request", "Create", "Update", "Model", "Schema"]):
                         return True
 
         # Check for Query, Path, Body parameters
@@ -229,19 +216,13 @@ class EndpointSecurityValidator:
         """Check if endpoint has authorization beyond basic authentication."""
         # Check for authorization decorators
         for decorator in func_node.decorator_list:
-            if any(
-                pattern in ast.dump(decorator)
-                for pattern in self.authorization_patterns
-            ):
+            if any(pattern in ast.dump(decorator) for pattern in self.authorization_patterns):
                 return True
 
         # Check function parameters for authorization dependencies
         for arg in func_node.args.args:
             if hasattr(arg, "annotation") and arg.annotation:
-                if any(
-                    pattern in ast.dump(arg.annotation)
-                    for pattern in self.authorization_patterns
-                ):
+                if any(pattern in ast.dump(arg.annotation) for pattern in self.authorization_patterns):
                     return True
 
         return False
@@ -250,9 +231,7 @@ class EndpointSecurityValidator:
         """Check if code string contains authentication patterns."""
         return any(pattern in code_str for pattern in self.auth_patterns)
 
-    def _calculate_security_score(
-        self, has_auth: bool, has_validation: bool, has_authorization: bool
-    ) -> float:
+    def _calculate_security_score(self, has_auth: bool, has_validation: bool, has_authorization: bool) -> float:
         """Calculate security score (0-100)."""
         score = 0.0
 
@@ -287,9 +266,7 @@ class EndpointSecurityValidator:
 
         return issues
 
-    def validate_routers_security(
-        self, router_paths: list[str]
-    ) -> SecurityValidationReport:
+    def validate_routers_security(self, router_paths: list[str]) -> SecurityValidationReport:
         """Validate security of multiple router files."""
         all_results = []
 
@@ -302,9 +279,7 @@ class EndpointSecurityValidator:
         total_endpoints = len(all_results)
         secure_endpoints = sum(1 for r in all_results if r.security_score >= 80.0)
         insecure_endpoints = total_endpoints - secure_endpoints
-        security_percentage = (
-            (secure_endpoints / total_endpoints * 100) if total_endpoints > 0 else 0
-        )
+        security_percentage = (secure_endpoints / total_endpoints * 100) if total_endpoints > 0 else 0
 
         # Identify critical issues
         critical_issues = []
@@ -314,9 +289,7 @@ class EndpointSecurityValidator:
 
         no_validation_count = sum(1 for r in all_results if not r.has_input_validation)
         if no_validation_count > 0:
-            critical_issues.append(
-                f"{no_validation_count} endpoints lack input validation"
-            )
+            critical_issues.append(f"{no_validation_count} endpoints lack input validation")
 
         # Generate recommendations
         recommendations = self._generate_recommendations(all_results)
@@ -331,40 +304,26 @@ class EndpointSecurityValidator:
             recommendations=recommendations,
         )
 
-    def _generate_recommendations(
-        self, results: list[SecurityValidationResult]
-    ) -> list[str]:
+    def _generate_recommendations(self, results: list[SecurityValidationResult]) -> list[str]:
         """Generate security recommendations."""
         recommendations = []
 
         # Authentication recommendations
         no_auth = [r for r in results if not r.has_authentication]
         if no_auth:
-            recommendations.append(
-                f"Add authentication to {len(no_auth)} endpoints using Depends(authenticate_user)"
-            )
+            recommendations.append(f"Add authentication to {len(no_auth)} endpoints using Depends(authenticate_user)")
         # Validation recommendations
         no_validation = [r for r in results if not r.has_input_validation]
         if no_validation:
-            recommendations.append(
-                f"Add input validation to {len(no_validation)} endpoints using Pydantic models"
-            )
+            recommendations.append(f"Add input validation to {len(no_validation)} endpoints using Pydantic models")
         # Authorization recommendations
-        no_authz = [
-            r for r in results if r.has_authentication and not r.has_authorization
-        ]
+        no_authz = [r for r in results if r.has_authentication and not r.has_authorization]
         if no_authz:
-            recommendations.append(
-                f"Add role-based authorization to {len(no_authz)} sensitive endpoints"
-            )
+            recommendations.append(f"Add role-based authorization to {len(no_authz)} sensitive endpoints")
         # Specific endpoint recommendations
-        delete_endpoints = [
-            r for r in results if r.method == "DELETE" and r.security_score < 100
-        ]
+        delete_endpoints = [r for r in results if r.method == "DELETE" and r.security_score < 100]
         if delete_endpoints:
-            recommendations.append(
-                f"Review {len(delete_endpoints)} DELETE endpoints for proper authorization"
-            )
+            recommendations.append(f"Review {len(delete_endpoints)} DELETE endpoints for proper authorization")
         return recommendations
 
     def print_security_report(self, report: SecurityValidationReport):
@@ -382,9 +341,7 @@ class EndpointSecurityValidator:
         worst_endpoints = sorted(report.endpoints, key=lambda x: x.security_score)[:5]
         if worst_endpoints:
             for endpoint in worst_endpoints:
-                logger.warning(
-                    f"Low security score endpoint: {endpoint.path} (score: {endpoint.security_score})"
-                )
+                logger.warning(f"Low security score endpoint: {endpoint.path} (score: {endpoint.security_score})")
 
 
 def validate_endpoint_security(

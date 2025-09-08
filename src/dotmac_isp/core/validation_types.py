@@ -54,9 +54,7 @@ class ValidationIssue(BaseModel):
     )
     current_value: Optional[str] = Field(None, description="Current field value")
     expected_value: Optional[str] = Field(None, description="Expected field value")
-    validation_rule: Optional[str] = Field(
-        None, description="The validation rule applied"
-    )
+    validation_rule: Optional[str] = Field(None, description="The validation rule applied")
 
 
 class ValidationRule(BaseModel):
@@ -65,38 +63,22 @@ class ValidationRule(BaseModel):
     rule_id: str = Field(..., description="Unique identifier for this rule")
     name: str = Field(..., description="Human-readable name for the rule")
     description: str = Field(..., description="Description of what this rule validates")
-    severity: ValidationSeverity = Field(
-        ..., description="Default severity for violations"
-    )
+    severity: ValidationSeverity = Field(..., description="Default severity for violations")
     category: ValidationCategory = Field(..., description="Category of validation")
-    field_patterns: list[str] = Field(
-        ..., description="Regex patterns for field matching"
-    )
+    field_patterns: list[str] = Field(..., description="Regex patterns for field matching")
     required: bool = Field(default=False, description="Is this field required")
     min_length: Optional[int] = Field(None, description="Minimum field length")
     max_length: Optional[int] = Field(None, description="Maximum field length")
     expected_pattern: Optional[str] = Field(None, description="Expected regex pattern")
-    allowed_values: list[str] = Field(
-        default_factory=list, description="List of allowed values"
-    )
-    forbidden_patterns: list[str] = Field(
-        default_factory=list, description="List of forbidden regex patterns"
-    )
-    entropy_threshold: Optional[float] = Field(
-        None, description="Minimum entropy for security fields"
-    )
-    validator_function: Optional[str] = Field(
-        None, description="Custom validator function name"
-    )
+    allowed_values: list[str] = Field(default_factory=list, description="List of allowed values")
+    forbidden_patterns: list[str] = Field(default_factory=list, description="List of forbidden regex patterns")
+    entropy_threshold: Optional[float] = Field(None, description="Minimum entropy for security fields")
+    validator_function: Optional[str] = Field(None, description="Custom validator function name")
     compliance_frameworks: list[ComplianceFramework] = Field(
         default_factory=list, description="Applicable compliance frameworks"
     )
-    applies_to_environments: list[str] = Field(
-        default_factory=list, description="Environments this rule applies to"
-    )
-    applies_to_services: list[str] = Field(
-        default_factory=list, description="Services this rule applies to"
-    )
+    applies_to_environments: list[str] = Field(default_factory=list, description="Environments this rule applies to")
+    applies_to_services: list[str] = Field(default_factory=list, description="Services this rule applies to")
 
 
 class ValidationResult(BaseModel):
@@ -104,18 +86,14 @@ class ValidationResult(BaseModel):
 
     is_valid: bool = Field(..., description="Overall validation result")
     issues: list[ValidationIssue] = Field(..., description="List of validation issues")
-    total_checks: int = Field(
-        ..., description="Total number of validation checks performed"
-    )
+    total_checks: int = Field(..., description="Total number of validation checks performed")
     passed_checks: int = Field(..., description="Number of checks that passed")
     failed_checks: int = Field(..., description="Number of checks that failed")
     critical_issues: int = Field(..., description="Number of critical issues")
     error_issues: int = Field(..., description="Number of error issues")
     warning_issues: int = Field(..., description="Number of warning issues")
     info_issues: int = Field(..., description="Number of info issues")
-    compliance_status: dict = Field(
-        default_factory=dict, description="Compliance status by framework"
-    )
+    compliance_status: dict = Field(default_factory=dict, description="Compliance status by framework")
     validation_timestamp: str = Field(..., description="When validation was performed")
     environment: Optional[str] = Field(None, description="Environment validated")
     service: Optional[str] = Field(None, description="Service validated")

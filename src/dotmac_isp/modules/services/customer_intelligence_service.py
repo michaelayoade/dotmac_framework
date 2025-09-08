@@ -20,9 +20,7 @@ class CustomerServiceIntelligenceService:
 
     async def get_proactive_notifications(self, customer_id: UUID) -> dict[str, Any]:
         """Get proactive service status notifications for customer."""
-        services = await self.service_provisioning.list_customer_services(
-            customer_id, skip=0, limit=100
-        )
+        services = await self.service_provisioning.list_customer_services(customer_id, skip=0, limit=100)
         notifications = []
         service_summary = {
             "total_services": len(services),
@@ -66,9 +64,7 @@ class CustomerServiceIntelligenceService:
                             "service_id": str(service.id),
                             "service_name": service.service_plan.name,
                             "action_required": False,
-                            "scheduled_date": (
-                                datetime.now(timezone.utc) + timedelta(days=7)
-                            ).isoformat(),
+                            "scheduled_date": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
                             "created_at": datetime.now(timezone.utc).isoformat(),
                         }
                     )
@@ -97,9 +93,7 @@ class CustomerServiceIntelligenceService:
 
     async def get_usage_insights(self, customer_id: UUID) -> dict[str, Any]:
         """Get usage insights for customer optimization."""
-        services = await self.service_provisioning.list_customer_services(
-            customer_id, skip=0, limit=100
-        )
+        services = await self.service_provisioning.list_customer_services(customer_id, skip=0, limit=100)
         insights = []
 
         # Simple usage-based insights (demo logic)
@@ -136,9 +130,7 @@ class CustomerServiceIntelligenceService:
             "usage_insights": insights,
             "summary": {
                 "total_insights": len(insights),
-                "potential_monthly_impact": (
-                    "$20 savings" if insights else "No recommendations"
-                ),
+                "potential_monthly_impact": ("$20 savings" if insights else "No recommendations"),
             },
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }

@@ -1,9 +1,13 @@
 """Database health monitoring utilities."""
 
-from .checker import DatabaseHealthChecker, HealthCheckResult, HealthStatus
+from dotmac.core.db_toolkit.health.checker import (
+    DatabaseHealthChecker,
+    HealthCheckResult,
+    HealthStatus,
+)
 
 __all__ = [
     "DatabaseHealthChecker",
-    "HealthStatus",
     "HealthCheckResult",
+    "HealthStatus",
 ]

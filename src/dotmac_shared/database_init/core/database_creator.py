@@ -79,12 +79,8 @@ class DatabaseCreator:
             database="postgres",  # Connect to default postgres database
         )
 
-    @retry(
-        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
-    async def create_isp_database(
-        self, isp_id: UUID, db_config: Optional[DatabaseConfig] = None
-    ) -> DatabaseInstance:
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    async def create_isp_database(self, isp_id: UUID, db_config: Optional[DatabaseConfig] = None) -> DatabaseInstance:
         """
         Create a new database for an ISP container.
 
@@ -115,19 +111,13 @@ class DatabaseCreator:
 
             try:
                 # Check if database already exists
-                existing_db = await admin_conn.fetchval(
-                    "SELECT 1 FROM pg_database WHERE datname = $1", database_name
-                )
+                existing_db = await admin_conn.fetchval("SELECT 1 FROM pg_database WHERE datname = $1", database_name)
 
                 if existing_db:
-                    self.logger.warning(
-                        "Database already exists", database_name=database_name
-                    )
+                    self.logger.warning("Database already exists", database_name=database_name)
                     # For existing databases, we'll return existing instance
                     # In production, you might want to handle this differently
-                    return await self._get_existing_database_instance(
-                        isp_id, database_name, admin_conn
-                    )
+                    return await self._get_existing_database_instance(isp_id, database_name, admin_conn)
 
                 # Create user first
                 await self._create_database_user(admin_conn, username, password)
@@ -140,8 +130,7 @@ class DatabaseCreator:
 
                 # Create database instance object
                 connection_string = (
-                    f"postgresql://{username}:{password}@{config.host}:"
-                    f"{config.port}/{database_name}"
+                    f"postgresql://{username}:{password}@{config.host}:" f"{config.port}/{database_name}"
                 )
 
                 db_instance = DatabaseInstance(
@@ -176,31 +165,21 @@ class DatabaseCreator:
             )
             raise
 
-    async def _create_database_user(
-        self, admin_conn: asyncpg.Connection, username: str, password: str
-    ) -> None:
+    async def _create_database_user(self, admin_conn: asyncpg.Connection, username: str, password: str) -> None:
         """Create a database user."""
         # Check if user already exists
-        existing_user = await admin_conn.fetchval(
-            "SELECT 1 FROM pg_roles WHERE rolname = $1", username
-        )
+        existing_user = await admin_conn.fetchval("SELECT 1 FROM pg_roles WHERE rolname = $1", username)
 
         if existing_user:
             self.logger.info("Database user already exists", username=username)
             # Update password for existing user
-            await admin_conn.execute(
-                f'ALTER USER "{username}" WITH PASSWORD $1', password
-            )
+            await admin_conn.execute(f'ALTER USER "{username}" WITH PASSWORD $1', password)
         else:
             # Create new user
-            await admin_conn.execute(
-                f'CREATE USER "{username}" WITH PASSWORD $1 LOGIN CREATEDB', password
-            )
+            await admin_conn.execute(f'CREATE USER "{username}" WITH PASSWORD $1 LOGIN CREATEDB', password)
             self.logger.info("Database user created", username=username)
 
-    async def _create_database(
-        self, admin_conn: asyncpg.Connection, database_name: str, owner: str
-    ) -> None:
+    async def _create_database(self, admin_conn: asyncpg.Connection, database_name: str, owner: str) -> None:
         """Create a database."""
         await admin_conn.execute(
             f'CREATE DATABASE "{database_name}" OWNER "{owner}" '
@@ -208,15 +187,11 @@ class DatabaseCreator:
         )
 
         # Grant all privileges to owner
-        await admin_conn.execute(
-            f'GRANT ALL PRIVILEGES ON DATABASE "{database_name}" TO "{owner}"'
-        )
+        await admin_conn.execute(f'GRANT ALL PRIVILEGES ON DATABASE "{database_name}" TO "{owner}"')
 
         self.logger.info("Database created", database_name=database_name)
 
-    async def _configure_database(
-        self, database_name: str, username: str, password: str
-    ) -> None:
+    async def _configure_database(self, database_name: str, username: str, password: str) -> None:
         """Configure database extensions and permissions."""
         # Connect to the new database to configure it
         db_conn = await asyncpg.connect(
@@ -237,24 +212,16 @@ class DatabaseCreator:
 
             for extension in extensions:
                 try:
-                    await db_conn.execute(
-                        f'CREATE EXTENSION IF NOT EXISTS "{extension}"'
-                    )
+                    await db_conn.execute(f'CREATE EXTENSION IF NOT EXISTS "{extension}"')
                     self.logger.debug("Extension created", extension=extension)
                 except Exception as e:
                     # Some extensions might not be available, log but continue
-                    self.logger.warning(
-                        "Could not create extension", extension=extension, error=str(e)
-                    )
+                    self.logger.warning("Could not create extension", extension=extension, error=str(e))
 
             # Set up database-level configurations
-            await db_conn.execute(
-                "ALTER DATABASE $1 SET timezone TO 'UTC'", database_name
-            )
+            await db_conn.execute("ALTER DATABASE $1 SET timezone TO 'UTC'", database_name)
 
-            self.logger.info(
-                "Database configured successfully", database_name=database_name
-            )
+            self.logger.info("Database configured successfully", database_name=database_name)
 
         finally:
             await db_conn.close()
@@ -265,10 +232,7 @@ class DatabaseCreator:
         """Get details for an existing database."""
         # This would typically retrieve stored credentials
         # For now, we'll raise an error for existing databases
-        raise ValueError(
-            f"Database {database_name} already exists. "
-            "Cannot recreate without explicit force flag."
-        )
+        raise ValueError(f"Database {database_name} already exists. " "Cannot recreate without explicit force flag.")
 
     async def delete_isp_database(self, db_instance: DatabaseInstance) -> bool:
         """
@@ -298,14 +262,10 @@ class DatabaseCreator:
                 )
 
                 # Drop database
-                await admin_conn.execute(
-                    f'DROP DATABASE IF EXISTS "{db_instance.database_name}"'
-                )
+                await admin_conn.execute(f'DROP DATABASE IF EXISTS "{db_instance.database_name}"')
 
                 # Drop user
-                await admin_conn.execute(
-                    f'DROP USER IF EXISTS "{db_instance.username}"'
-                )
+                await admin_conn.execute(f'DROP USER IF EXISTS "{db_instance.username}"')
 
                 self.logger.info(
                     "ISP database deleted successfully",
@@ -335,17 +295,14 @@ class DatabaseCreator:
             try:
                 # Query for databases starting with 'isp_'
                 databases = await admin_conn.fetch(
-                    "SELECT datname, datowner FROM pg_database "
-                    "WHERE datname LIKE 'isp_%' ORDER BY datname"
+                    "SELECT datname, datowner FROM pg_database " "WHERE datname LIKE 'isp_%' ORDER BY datname"
                 )
 
                 result = {"databases": [], "total_count": len(databases)}
 
                 for db in databases:
                     # Get owner name
-                    owner = await admin_conn.fetchval(
-                        "SELECT rolname FROM pg_roles WHERE oid = $1", db["datowner"]
-                    )
+                    owner = await admin_conn.fetchval("SELECT rolname FROM pg_roles WHERE oid = $1", db["datowner"])
 
                     result["databases"].append({"name": db["datname"], "owner": owner})
 
@@ -355,9 +312,7 @@ class DatabaseCreator:
                 await admin_conn.close()
 
         except Exception as e:
-            self.logger.error(
-                "Failed to list ISP databases", error=str(e), exc_info=True
-            )
+            self.logger.error("Failed to list ISP databases", error=str(e), exc_info=True)
             raise
 
     async def validate_database_connection(self, db_instance: DatabaseInstance) -> bool:

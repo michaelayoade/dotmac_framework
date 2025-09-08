@@ -68,7 +68,7 @@
 
 **Production Operations Now Available:**
 - ✅ **Complete deployment automation** - One-command production deployment
-- ✅ **Comprehensive monitoring** - Prometheus + Grafana + AlertManager stack
+- ✅ **Comprehensive monitoring** - SigNoz (OTLP) unified stack
 - ✅ **Security hardening** - Full security implementation and validation
 - ✅ **Backup & disaster recovery** - Automated backup and recovery systems
 - ✅ **Performance optimization** - Database, cache, and application tuning

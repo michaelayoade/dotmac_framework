@@ -12,20 +12,11 @@ This package provides integrated communication capabilities:
 from typing import Optional
 
 try:
-    from .notifications import (
-        NotificationRequest,
-        NotificationResponse,
-        NotificationTemplate,
-    )
-    from .notifications import (
-        NotificationStatus as DeliveryStatus,
-    )
-    from .notifications import (
-        NotificationType as NotificationChannel,
-    )
-    from .notifications import (
-        UnifiedNotificationService as NotificationService,
-    )
+    from .notifications import NotificationRequest, NotificationResponse
+    from .notifications import NotificationStatus as DeliveryStatus
+    from .notifications import NotificationTemplate
+    from .notifications import NotificationType as NotificationChannel
+    from .notifications import UnifiedNotificationService as NotificationService
 
     # Backwards compatibility aliases
     EmailNotifier = SMSNotifier = PushNotifier = WebhookNotifier = NotificationService
@@ -38,23 +29,12 @@ except ImportError as e:
     DeliveryStatus = NotificationChannel = NotificationRequest = NotificationResponse = None
 
 try:
-    from .websockets import (
-        AuthManager as WebSocketAuthManager,
-    )
-    from .websockets import (
-        BroadcastManager,
-        ChannelManager,
-        WebSocketConfig,
-    )
-    from .websockets import (
-        SessionManager as ConnectionManager,
-    )
-    from .websockets import (
-        WebSocketGateway as WebSocketManager,
-    )
-    from .websockets import (
-        WebSocketSession as ConnectionState,
-    )
+    from .websockets import AuthManager as WebSocketAuthManager
+    from .websockets import BroadcastManager, ChannelManager
+    from .websockets import SessionManager as ConnectionManager
+    from .websockets import WebSocketConfig
+    from .websockets import WebSocketGateway as WebSocketManager
+    from .websockets import WebSocketSession as ConnectionState
 except ImportError as e:
     import warnings
 
@@ -216,23 +196,29 @@ class CommunicationsService:
         """Get notifications service."""
         if self._notifications is None:
             if NotificationService:
-                try:
-                    self._notifications = NotificationService()
-                except Exception:
-                    # Fallback for services requiring config
-                    self._notifications = NotificationService
+                # UnifiedNotificationService doesn't require config, just instantiate
+                self._notifications = NotificationService()
         return self._notifications
 
     @property
     def websockets(self):
         """Get websockets manager."""
         if self._websockets is None:
-            if WebSocketManager:
+            if WebSocketManager and WebSocketConfig:
                 try:
-                    self._websockets = WebSocketManager()
-                except Exception:
-                    # Fallback for services requiring config
-                    self._websockets = WebSocketManager
+                    # Create WebSocketConfig from our config
+                    websocket_config_dict = (
+                        self.config.get("websockets", {}) if isinstance(self.config, dict)
+                        else self.config.websockets if hasattr(self.config, 'websockets')
+                        else {}
+                    )
+                    ws_config = WebSocketConfig(**websocket_config_dict)
+                    self._websockets = WebSocketManager(ws_config)
+                except Exception as e:
+                    import warnings
+                    warnings.warn(f"Failed to create WebSocket manager: {e}")
+                    # Create a stub that won't break when used
+                    self._websockets = None
         return self._websockets
 
     @property
@@ -241,12 +227,38 @@ class CommunicationsService:
         if self._events is None:
             if EventBus:
                 try:
-                    from .events.adapters import create_memory_bus
+                    # Select adapter based on config
+                    if isinstance(self.config, dict):
+                        events_config = self.config.get("events", {})
+                        adapter = events_config.get("default_adapter", "memory")
+                    elif hasattr(self.config, 'events') and self.config.events:
+                        events_config = self.config.events
+                        adapter = getattr(events_config, 'default_adapter', 'memory')
+                    else:
+                        events_config = {}
+                        adapter = "memory"
 
-                    self._events = create_memory_bus()
-                except Exception:
-                    # Fallback for abstract base class
-                    self._events = EventBus
+                    if adapter == "memory":
+                        from .events.adapters import create_memory_bus
+                        self._events = create_memory_bus(events_config)
+                    elif adapter == "redis":
+                        try:
+                            from .events.adapters import create_redis_bus
+                            self._events = create_redis_bus(events_config)
+                        except ImportError:
+                            import warnings
+                            warnings.warn("Redis adapter not available, falling back to memory")
+                            from .events.adapters import create_memory_bus
+                            self._events = create_memory_bus(events_config)
+                    else:
+                        import warnings
+                        warnings.warn(f"Unknown adapter {adapter}, using memory")
+                        from .events.adapters import create_memory_bus
+                        self._events = create_memory_bus(events_config)
+                except Exception as e:
+                    import warnings
+                    warnings.warn(f"Failed to create event bus: {e}")
+                    self._events = None
         return self._events
 
     @property
@@ -274,11 +286,28 @@ class CommunicationsService:
 
             await asyncio.gather(*cleanup_tasks, return_exceptions=True)
 
-    def get_health_status(self):
+    async def get_health_status(self):
         """Get health status of all services."""
         if self.observability:
-            return self.observability.get_health_status()
+            return await self.observability.get_health_status()
         return {"healthy": True, "services": "observability_not_available"}
+
+    def get_health_status_sync(self):
+        """Get health status synchronously (runs async version)."""
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If we're already in an async context, schedule as task
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, self.get_health_status())
+                    return future.result(timeout=30)
+            else:
+                return loop.run_until_complete(self.get_health_status())
+        except RuntimeError:
+            # No event loop, create new one
+            return asyncio.run(self.get_health_status())
 
     def get_metrics(self):
         """Get metrics from all services."""
@@ -297,17 +326,18 @@ def create_notification_service(config: Optional[dict] = None):
     if not NotificationService:
         raise ImportError("Notification service not available")
 
-    config = config or get_default_config().get("notifications", {})
-    return NotificationService(config)
+    # UnifiedNotificationService doesn't take config, just return instance
+    return NotificationService()
 
 
 def create_websocket_manager(config: Optional[dict] = None):
     """Create a standalone websocket manager."""
-    if not WebSocketManager:
+    if not WebSocketManager or not WebSocketConfig:
         raise ImportError("WebSocket manager not available")
 
     config = config or get_default_config().get("websockets", {})
-    return WebSocketManager(config)
+    ws_config = WebSocketConfig(**config)
+    return WebSocketManager(ws_config)
 
 
 def create_event_bus(config: Optional[dict] = None):
@@ -316,4 +346,19 @@ def create_event_bus(config: Optional[dict] = None):
         raise ImportError("Event bus not available")
 
     config = config or get_default_config().get("events", {})
-    return EventBus(config)
+    adapter = config.get("default_adapter", "memory")
+
+    if adapter == "memory":
+        from .events.adapters import create_memory_bus
+        return create_memory_bus(config)
+    elif adapter == "redis":
+        try:
+            from .events.adapters import create_redis_bus
+            return create_redis_bus(config)
+        except ImportError:
+            import warnings
+            warnings.warn("Redis adapter not available, falling back to memory")
+            from .events.adapters import create_memory_bus
+            return create_memory_bus(config)
+    else:
+        raise ValueError(f"Unknown event adapter: {adapter}")

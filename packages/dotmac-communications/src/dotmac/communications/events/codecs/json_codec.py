@@ -49,22 +49,25 @@ class JsonCodec:
         """Content type identifier for JSON codec."""
         return "application/json"
 
-    def encode(self, event: Event) -> bytes:
+    def encode(self, event: Event | dict[str, Any]) -> bytes:
         """
         Encode an event to JSON bytes.
 
         Args:
-            event: Event to encode
+            event: Event object or dict to encode
 
         Returns:
             JSON-encoded event as bytes
         """
-        # Validate payload schema if validator is configured
-        if self.schema_validator:
-            self.schema_validator(event.topic, event.payload)
-
-        # Convert event to dictionary
-        event_dict = event.to_dict()
+        # Handle both Event objects and plain dicts
+        if hasattr(event, 'to_dict'):
+            # Validate payload schema if validator is configured
+            if self.schema_validator:
+                self.schema_validator(event.topic, event.payload)
+            event_dict = event.to_dict()
+        else:
+            # Plain dict - use as-is
+            event_dict = event
 
         # Serialize to JSON with custom encoder for datetime/UUID
         json_str = json.dumps(
@@ -78,18 +81,18 @@ class JsonCodec:
 
         return json_str.encode("utf-8")
 
-    def decode(self, data: bytes) -> Event:
+    def decode(self, data: bytes) -> Event | dict[str, Any]:
         """
-        Decode JSON bytes to an event.
+        Decode JSON bytes to an event or dictionary.
 
         Args:
             data: JSON bytes to decode
 
         Returns:
-            Decoded Event object
+            Decoded Event object if data represents an event, otherwise the raw dictionary
 
         Raises:
-            ValueError: If data is not valid JSON or event structure
+            ValueError: If data is not valid JSON
         """
         try:
             # Decode bytes to string and parse JSON
@@ -100,14 +103,13 @@ class JsonCodec:
             if not isinstance(event_dict, dict):
                 raise ValueError("Event data must be a JSON object")
 
-            if "topic" not in event_dict:
-                raise ValueError("Event must have a 'topic' field")
-
-            if "payload" not in event_dict:
-                raise ValueError("Event must have a 'payload' field")
-
-            # Create event from dictionary
-            return Event.from_dict(event_dict)
+            # Check if this looks like an Event object
+            if "topic" in event_dict and "payload" in event_dict:
+                # Create event from dictionary
+                return Event.from_dict(event_dict)
+            else:
+                # Return as plain dictionary for general use
+                return event_dict
 
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON data: {e}") from e

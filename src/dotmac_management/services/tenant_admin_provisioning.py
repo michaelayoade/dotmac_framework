@@ -9,16 +9,16 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
-from dotmac_management.models.tenant import CustomerTenant
-from dotmac_shared.core.error_utils import service_operation
-from dotmac_shared.core.logging import get_logger
-from dotmac_shared.security.secrets import SecretsManager
-from dotmac_shared.validation.common_validators import CommonValidators
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from dotmac.communications.notifications import (
     UnifiedNotificationService as NotificationService,
 )
+from dotmac_management.models.tenant import CustomerTenant
+from dotmac_shared.core.error_utils import service_operation
+from dotmac_shared.core.logging import get_logger
+from dotmac_shared.security.secrets import SecretsManager
+from dotmac_shared.validation.common_validators import CommonValidators
 
 logger = get_logger(__name__)
 
@@ -88,9 +88,7 @@ class TenantAdminProvisioningService:
             logger.error(f"Failed to create tenant admin for {tenant.tenant_id}: {e}")
             raise
 
-    async def _generate_admin_credentials(
-        self, tenant: CustomerTenant
-    ) -> AdminCredentials:
+    async def _generate_admin_credentials(self, tenant: CustomerTenant) -> AdminCredentials:
         """Generate secure admin credentials"""
 
         # Use provided admin info from tenant signup
@@ -104,19 +102,13 @@ class TenantAdminProvisioningService:
             username=username,
             email=email,
             password=password,
-            first_name=tenant.admin_name.split(" ")[0]
-            if " " in tenant.admin_name
-            else tenant.admin_name,
-            last_name=" ".join(tenant.admin_name.split(" ")[1:])
-            if " " in tenant.admin_name
-            else "",
+            first_name=tenant.admin_name.split(" ")[0] if " " in tenant.admin_name else tenant.admin_name,
+            last_name=" ".join(tenant.admin_name.split(" ")[1:]) if " " in tenant.admin_name else "",
             tenant_id=tenant.tenant_id,
         )
 
     @service_operation("tenant_admin")
-    async def _create_isp_admin_user(
-        self, tenant: CustomerTenant, admin_creds: AdminCredentials
-    ) -> dict[str, Any]:
+    async def _create_isp_admin_user(self, tenant: CustomerTenant, admin_creds: AdminCredentials) -> dict[str, Any]:
         """Create admin user in ISP instance via API"""
 
         # Hash password for storage
@@ -172,9 +164,7 @@ class TenantAdminProvisioningService:
 
             return response.json()["data"]
 
-    async def _send_admin_welcome_email(
-        self, tenant: CustomerTenant, admin_creds: AdminCredentials
-    ):
+    async def _send_admin_welcome_email(self, tenant: CustomerTenant, admin_creds: AdminCredentials):
         """Send welcome email with admin credentials"""
 
         portal_url = f"https://{tenant.subdomain}.{self._get_domain_suffix()}"
@@ -203,13 +193,9 @@ class TenantAdminProvisioningService:
             },
         )
 
-        logger.info(
-            f"Welcome email sent to {admin_creds.email} for tenant {tenant.tenant_id}"
-        )
+        logger.info(f"Welcome email sent to {admin_creds.email} for tenant {tenant.tenant_id}")
 
-    async def _generate_initial_jwt(
-        self, tenant: CustomerTenant, admin_user: dict[str, Any]
-    ) -> str:
+    async def _generate_initial_jwt(self, tenant: CustomerTenant, admin_user: dict[str, Any]) -> str:
         """Generate JWT token for immediate admin access"""
 
         from dotmac.platform.auth.core.jwt_service import JWTService
@@ -230,9 +216,7 @@ class TenantAdminProvisioningService:
         }
 
         # Generate token valid for 24 hours for initial setup
-        return await jwt_service.create_access_token(
-            data=payload, expires_delta=timedelta(hours=24)
-        )
+        return await jwt_service.create_access_token(data=payload, expires_delta=timedelta(hours=24))
 
     async def _get_isp_instance_url(self, tenant: CustomerTenant) -> str:
         """Get ISP instance URL from tenant configuration"""
@@ -254,9 +238,7 @@ class TenantAdminProvisioningService:
             "token_type": "service",
         }
 
-        return await jwt_service.create_access_token(
-            data=payload, expires_delta=timedelta(hours=1)
-        )
+        return await jwt_service.create_access_token(data=payload, expires_delta=timedelta(hours=1))
 
     def _generate_secure_password(self) -> str:
         """Generate secure password for admin account"""

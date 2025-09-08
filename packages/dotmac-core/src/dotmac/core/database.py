@@ -1,10 +1,12 @@
-from pydantic import BaseModel
-
 """
 Core database utilities for DotMac Framework.
 
 Consolidates database foundation classes from dotmac-database package
 with production-ready patterns and error handling.
+
+Note: This module defines DBBaseModel (SQLAlchemy base) which is distinct from
+Pydantic's BaseModel. Use DBBaseModel for database models and import Pydantic's
+BaseModel directly when needed for schemas.
 """
 
 import re
@@ -16,7 +18,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.sql import func
 
-from .types import GUID
+from dotmac.core.types import GUID
 
 
 class Base(DeclarativeBase):
@@ -67,7 +69,17 @@ class UUIDMixin:
 
 
 class TableNamingMixin:
-    """Mixin for consistent table naming conventions."""
+    """
+    Mixin for consistent table naming conventions.
+
+    Automatically converts CamelCase class names to snake_case table names.
+
+    Note: You can override the automatic naming by explicitly setting __tablename__
+    in your model class:
+
+    class MyModel(DBBaseModel):
+        __tablename__ = "custom_table_name"  # Overrides auto-generated name
+    """
 
     @declared_attr.directive
     def __tablename__(cls) -> str:
@@ -102,7 +114,7 @@ class AuditMixin:
         return self.deleted_at is not None
 
 
-class BaseModel(Base, UUIDMixin, TimestampMixin, TableNamingMixin, AuditMixin):
+class DBBaseModel(Base, UUIDMixin, TimestampMixin, TableNamingMixin, AuditMixin):
     """
     Base model with all common mixins applied.
 
@@ -143,7 +155,7 @@ class TenantMixin:
         return args
 
 
-class TenantBaseModel(BaseModel, TenantMixin):
+class TenantBaseModel(DBBaseModel, TenantMixin):
     """Base model for tenant-isolated data."""
 
     __abstract__ = True
@@ -152,7 +164,7 @@ class TenantBaseModel(BaseModel, TenantMixin):
 # Make database toolkit components available
 # Import everything from the db_toolkit directory
 try:
-    from .db_toolkit import (
+    from dotmac.core.db_toolkit import (
         AsyncRepository,
         BaseRepository,
         DatabaseHealthChecker,

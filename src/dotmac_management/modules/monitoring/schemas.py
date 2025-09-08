@@ -58,19 +58,13 @@ class ServiceComponentBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Component name")
     component_type: str = Field(..., description="Component type")
     description: Optional[str] = Field(None, description="Component description")
-    endpoint_url: Optional[str] = Field(
-        None, max_length=500, description="Health check endpoint URL"
-    )
-    check_interval: int = Field(
-        60, ge=10, le=3600, description="Check interval in seconds"
-    )
+    endpoint_url: Optional[str] = Field(None, max_length=500, description="Health check endpoint URL")
+    check_interval: int = Field(60, ge=10, le=3600, description="Check interval in seconds")
     timeout_seconds: int = Field(30, ge=1, le=300, description="Timeout in seconds")
     retry_count: int = Field(3, ge=0, le=10, description="Number of retries")
     is_critical: bool = Field(False, description="Critical component flag")
     is_active: bool = Field(True, description="Active monitoring flag")
-    configuration: Optional[dict[str, Any]] = Field(
-        None, description="Component configuration"
-    )
+    configuration: Optional[dict[str, Any]] = Field(None, description="Component configuration")
     tags: Optional[list[str]] = Field(None, description="Component tags")
 
 
@@ -114,9 +108,7 @@ class HealthCheckBase(BaseModel):
     """Base health check schema."""
 
     status: HealthCheckStatus = Field(..., description="Health check status")
-    response_time_ms: Optional[float] = Field(
-        None, ge=0, description="Response time in milliseconds"
-    )
+    response_time_ms: Optional[float] = Field(None, ge=0, description="Response time in milliseconds")
     status_code: Optional[int] = Field(None, description="HTTP status code")
     error_message: Optional[str] = Field(None, description="Error message if any")
     details: Optional[dict[str, Any]] = Field(None, description="Additional details")
@@ -128,9 +120,7 @@ class HealthCheckCreate(HealthCheckBase):
     """Schema for creating health checks."""
 
     component_id: UUID = Field(..., description="Component ID")
-    check_timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Check timestamp"
-    )
+    check_timestamp: datetime = Field(default_factory=datetime.utcnow, description="Check timestamp")
 
 
 class HealthCheckResponse(HealthCheckBase):
@@ -151,9 +141,7 @@ class HealthCheckResponse(HealthCheckBase):
 class SystemMetricBase(BaseModel):
     """Base system metric schema."""
 
-    metric_name: str = Field(
-        ..., min_length=1, max_length=100, description="Metric name"
-    )
+    metric_name: str = Field(..., min_length=1, max_length=100, description="Metric name")
     metric_value: float = Field(..., description="Metric value")
     unit: Optional[str] = Field(None, max_length=20, description="Unit of measurement")
     source: Optional[str] = Field(None, max_length=100, description="Metric source")
@@ -166,9 +154,7 @@ class SystemMetricBase(BaseModel):
 class SystemMetricCreate(SystemMetricBase):
     """Schema for creating system metrics."""
 
-    timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Metric timestamp"
-    )
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Metric timestamp")
 
 
 class SystemMetricResponse(SystemMetricBase):
@@ -194,24 +180,14 @@ class PerformanceMetricBase(BaseModel):
         pattern=r"^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$",
         description="HTTP method",
     )
-    response_time_ms: float = Field(
-        ..., ge=0, description="Response time in milliseconds"
-    )
+    response_time_ms: float = Field(..., ge=0, description="Response time in milliseconds")
     status_code: int = Field(..., ge=100, le=599, description="HTTP status code")
     user_id: Optional[UUID] = Field(None, description="User ID")
     session_id: Optional[str] = Field(None, max_length=100, description="Session ID")
-    request_size_bytes: Optional[int] = Field(
-        None, ge=0, description="Request size in bytes"
-    )
-    response_size_bytes: Optional[int] = Field(
-        None, ge=0, description="Response size in bytes"
-    )
-    database_query_count: Optional[int] = Field(
-        None, ge=0, description="Database query count"
-    )
-    database_query_time_ms: Optional[float] = Field(
-        None, ge=0, description="Database query time"
-    )
+    request_size_bytes: Optional[int] = Field(None, ge=0, description="Request size in bytes")
+    response_size_bytes: Optional[int] = Field(None, ge=0, description="Response size in bytes")
+    database_query_count: Optional[int] = Field(None, ge=0, description="Database query count")
+    database_query_time_ms: Optional[float] = Field(None, ge=0, description="Database query time")
     cache_hits: int = Field(0, ge=0, description="Cache hits count")
     cache_misses: int = Field(0, ge=0, description="Cache misses count")
     errors: Optional[list[dict[str, Any]]] = Field(None, description="Error details")
@@ -221,9 +197,7 @@ class PerformanceMetricBase(BaseModel):
 class PerformanceMetricCreate(PerformanceMetricBase):
     """Schema for creating performance metrics."""
 
-    timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Metric timestamp"
-    )
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Metric timestamp")
 
 
 class PerformanceMetricResponse(PerformanceMetricBase):
@@ -247,18 +221,12 @@ class MonitoringAlertBase(BaseModel):
     severity: AlertSeverity = Field(..., description="Alert severity")
     title: str = Field(..., min_length=1, max_length=200, description="Alert title")
     description: Optional[str] = Field(None, description="Alert description")
-    condition: str = Field(
-        ..., min_length=1, max_length=500, description="Alert condition"
-    )
+    condition: str = Field(..., min_length=1, max_length=500, description="Alert condition")
     threshold: Optional[float] = Field(None, description="Alert threshold")
     current_value: Optional[float] = Field(None, description="Current metric value")
     is_active: bool = Field(True, description="Active alert flag")
-    notification_channels: Optional[list[str]] = Field(
-        None, description="Notification channels"
-    )
-    escalation_policy: Optional[dict[str, Any]] = Field(
-        None, description="Escalation policy"
-    )
+    notification_channels: Optional[list[str]] = Field(None, description="Notification channels")
+    escalation_policy: Optional[dict[str, Any]] = Field(None, description="Escalation policy")
     metadata: Optional[dict[str, Any]] = Field(None, description="Additional metadata")
 
 
@@ -310,23 +278,13 @@ class MonitoringDashboardBase(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=100, description="Dashboard name")
     description: Optional[str] = Field(None, description="Dashboard description")
-    dashboard_type: str = Field(
-        ..., min_length=1, max_length=50, description="Dashboard type"
-    )
-    layout_config: Optional[dict[str, Any]] = Field(
-        None, description="Layout configuration"
-    )
-    widget_config: Optional[dict[str, Any]] = Field(
-        None, description="Widget configuration"
-    )
-    refresh_interval: int = Field(
-        60, ge=10, le=3600, description="Refresh interval in seconds"
-    )
+    dashboard_type: str = Field(..., min_length=1, max_length=50, description="Dashboard type")
+    layout_config: Optional[dict[str, Any]] = Field(None, description="Layout configuration")
+    widget_config: Optional[dict[str, Any]] = Field(None, description="Widget configuration")
+    refresh_interval: int = Field(60, ge=10, le=3600, description="Refresh interval in seconds")
     is_public: bool = Field(False, description="Public dashboard flag")
     is_default: bool = Field(False, description="Default dashboard flag")
-    access_permissions: Optional[list[str]] = Field(
-        None, description="Access permissions"
-    )
+    access_permissions: Optional[list[str]] = Field(None, description="Access permissions")
     filters: Optional[dict[str, Any]] = Field(None, description="Dashboard filters")
 
 
@@ -368,27 +326,15 @@ class MonitoringDashboardResponse(MonitoringDashboardBase):
 class MetricThresholdBase(BaseModel):
     """Base metric threshold schema."""
 
-    metric_name: str = Field(
-        ..., min_length=1, max_length=100, description="Metric name"
-    )
-    threshold_type: str = Field(
-        ..., min_length=1, max_length=50, description="Threshold type"
-    )
+    metric_name: str = Field(..., min_length=1, max_length=100, description="Metric name")
+    threshold_type: str = Field(..., min_length=1, max_length=50, description="Threshold type")
     warning_threshold: Optional[float] = Field(None, description="Warning threshold")
     critical_threshold: Optional[float] = Field(None, description="Critical threshold")
-    comparison_operator: str = Field(
-        ..., pattern=r"^(gt|gte|lt|lte|eq|ne)$", description="Comparison operator"
-    )
-    evaluation_period: int = Field(
-        300, ge=60, le=3600, description="Evaluation period in seconds"
-    )
+    comparison_operator: str = Field(..., pattern=r"^(gt|gte|lt|lte|eq|ne)$", description="Comparison operator")
+    evaluation_period: int = Field(300, ge=60, le=3600, description="Evaluation period in seconds")
     is_active: bool = Field(True, description="Active threshold flag")
-    notification_config: Optional[dict[str, Any]] = Field(
-        None, description="Notification configuration"
-    )
-    escalation_config: Optional[dict[str, Any]] = Field(
-        None, description="Escalation configuration"
-    )
+    notification_config: Optional[dict[str, Any]] = Field(None, description="Notification configuration")
+    escalation_config: Optional[dict[str, Any]] = Field(None, description="Escalation configuration")
 
 
 class MetricThresholdCreate(MetricThresholdBase):
@@ -432,26 +378,14 @@ class MonitoringOverviewResponse(BaseModel):
     total_components: int = Field(..., ge=0, description="Total monitored components")
     healthy_components: int = Field(..., ge=0, description="Healthy components count")
     degraded_components: int = Field(..., ge=0, description="Degraded components count")
-    unhealthy_components: int = Field(
-        ..., ge=0, description="Unhealthy components count"
-    )
+    unhealthy_components: int = Field(..., ge=0, description="Unhealthy components count")
     active_alerts: int = Field(..., ge=0, description="Active alerts count")
     critical_alerts: int = Field(..., ge=0, description="Critical alerts count")
-    system_uptime: float = Field(
-        ..., ge=0, le=100, description="Overall system uptime percentage"
-    )
-    average_response_time: float = Field(
-        ..., ge=0, description="Average response time in ms"
-    )
-    recent_events: list[dict[str, Any]] = Field(
-        ..., description="Recent monitoring events"
-    )
-    component_status: dict[str, Any] = Field(
-        ..., description="Component status breakdown"
-    )
-    performance_metrics: dict[str, float] = Field(
-        ..., description="Key performance metrics"
-    )
+    system_uptime: float = Field(..., ge=0, le=100, description="Overall system uptime percentage")
+    average_response_time: float = Field(..., ge=0, description="Average response time in ms")
+    recent_events: list[dict[str, Any]] = Field(..., description="Recent monitoring events")
+    component_status: dict[str, Any] = Field(..., description="Component status breakdown")
+    performance_metrics: dict[str, float] = Field(..., description="Key performance metrics")
 
 
 class SystemHealthResponse(BaseModel):
@@ -460,13 +394,9 @@ class SystemHealthResponse(BaseModel):
     overall_status: HealthCheckStatus = Field(..., description="Overall system health")
     timestamp: datetime = Field(..., description="Health check timestamp")
     uptime_seconds: int = Field(..., ge=0, description="System uptime in seconds")
-    component_checks: list[dict[str, Any]] = Field(
-        ..., description="Individual component checks"
-    )
+    component_checks: list[dict[str, Any]] = Field(..., description="Individual component checks")
     failed_checks: list[dict[str, Any]] = Field(..., description="Failed health checks")
-    performance_summary: dict[str, float] = Field(
-        ..., description="Performance summary"
-    )
+    performance_summary: dict[str, float] = Field(..., description="Performance summary")
     resource_usage: dict[str, float] = Field(..., description="Resource usage metrics")
 
 
@@ -476,15 +406,9 @@ class AlertSummaryResponse(BaseModel):
     total_alerts: int = Field(..., ge=0, description="Total alerts")
     active_alerts: int = Field(..., ge=0, description="Active alerts")
     resolved_alerts: int = Field(..., ge=0, description="Resolved alerts")
-    alerts_by_severity: dict[str, int] = Field(
-        ..., description="Alerts grouped by severity"
-    )
-    alerts_by_component: dict[str, int] = Field(
-        ..., description="Alerts grouped by component"
-    )
-    recent_alerts: list[dict[str, Any]] = Field(
-        ..., description="Recent alert activity"
-    )
+    alerts_by_severity: dict[str, int] = Field(..., description="Alerts grouped by severity")
+    alerts_by_component: dict[str, int] = Field(..., description="Alerts grouped by component")
+    recent_alerts: list[dict[str, Any]] = Field(..., description="Recent alert activity")
     alert_trends: dict[str, Any] = Field(..., description="Alert trend data")
 
 
@@ -495,25 +419,13 @@ class PerformanceReportResponse(BaseModel):
     report_period_end: datetime = Field(..., description="Report period end")
     total_requests: int = Field(..., ge=0, description="Total requests processed")
     average_response_time: float = Field(..., ge=0, description="Average response time")
-    p95_response_time: float = Field(
-        ..., ge=0, description="95th percentile response time"
-    )
-    p99_response_time: float = Field(
-        ..., ge=0, description="99th percentile response time"
-    )
+    p95_response_time: float = Field(..., ge=0, description="95th percentile response time")
+    p99_response_time: float = Field(..., ge=0, description="99th percentile response time")
     error_rate: float = Field(..., ge=0, le=100, description="Error rate percentage")
-    throughput_rps: float = Field(
-        ..., ge=0, description="Throughput in requests per second"
-    )
-    endpoint_metrics: list[dict[str, Any]] = Field(
-        ..., description="Per-endpoint metrics"
-    )
-    database_metrics: dict[str, float] = Field(
-        ..., description="Database performance metrics"
-    )
-    cache_metrics: dict[str, float] = Field(
-        ..., description="Cache performance metrics"
-    )
+    throughput_rps: float = Field(..., ge=0, description="Throughput in requests per second")
+    endpoint_metrics: list[dict[str, Any]] = Field(..., description="Per-endpoint metrics")
+    database_metrics: dict[str, float] = Field(..., description="Database performance metrics")
+    cache_metrics: dict[str, float] = Field(..., description="Cache performance metrics")
 
 
 # === REQUEST SCHEMAS ===
@@ -522,12 +434,8 @@ class PerformanceReportResponse(BaseModel):
 class HealthCheckRequest(BaseModel):
     """Schema for health check requests."""
 
-    component_ids: Optional[list[UUID]] = Field(
-        None, description="Specific component IDs to check"
-    )
-    include_details: bool = Field(
-        True, description="Include detailed check information"
-    )
+    component_ids: Optional[list[UUID]] = Field(None, description="Specific component IDs to check")
+    include_details: bool = Field(True, description="Include detailed check information")
     force_check: bool = Field(False, description="Force immediate check bypass cache")
 
 
@@ -540,22 +448,16 @@ class AlertActionRequest(BaseModel):
         description="Action to perform",
     )
     notes: Optional[str] = Field(None, description="Action notes")
-    snooze_duration_minutes: Optional[int] = Field(
-        None, ge=1, le=1440, description="Snooze duration"
-    )
+    snooze_duration_minutes: Optional[int] = Field(None, ge=1, le=1440, description="Snooze duration")
 
 
 class MetricQueryRequest(BaseModel):
     """Schema for metric query requests."""
 
-    metric_names: list[str] = Field(
-        ..., min_length=1, description="Metric names to query"
-    )
+    metric_names: list[str] = Field(..., min_length=1, description="Metric names to query")
     time_range_start: datetime = Field(..., description="Query time range start")
     time_range_end: datetime = Field(..., description="Query time range end")
-    aggregation: Optional[str] = Field(
-        "avg", pattern=r"^(avg|sum|min|max|count)$", description="Aggregation function"
-    )
+    aggregation: Optional[str] = Field("avg", pattern=r"^(avg|sum|min|max|count)$", description="Aggregation function")
     group_by: Optional[list[str]] = Field(None, description="Group by dimensions")
     filters: Optional[dict[str, Any]] = Field(None, description="Query filters")
 
@@ -564,9 +466,7 @@ class MetricQueryResponse(BaseModel):
     """Schema for metric query responses."""
 
     query_id: str = Field(..., description="Query ID")
-    metric_data: dict[str, list[dict[str, Any]]] = Field(
-        ..., description="Metric data by name"
-    )
+    metric_data: dict[str, list[dict[str, Any]]] = Field(..., description="Metric data by name")
     query_metadata: dict[str, Any] = Field(..., description="Query execution metadata")
     total_data_points: int = Field(..., ge=0, description="Total data points returned")
 

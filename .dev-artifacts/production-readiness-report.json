@@ -1,0 +1,82 @@
+{
+  "timestamp": "2025-09-07T18:08:26.245383",
+  "readiness_status": "NEEDS WORK - Several critical issues",
+  "critical_score": 70.0,
+  "overall_score": 69.23076923076923,
+  "total_checks": 13,
+  "passed_checks": 9,
+  "failed_checks": 4,
+  "critical_issues": 3,
+  "summary": {
+    "critical_passed": 7,
+    "critical_total": 10,
+    "non_critical_passed": 2,
+    "non_critical_total": 3
+  },
+  "failed_validations": [
+    {
+      "check": "Environment Variables",
+      "critical": true,
+      "details": "Default values detected: SECRET_KEY, JWT_SECRET_KEY",
+      "recommendations": [
+        "Set all required environment variables",
+        "Replace default values with secure secrets",
+        "Use strong passwords and random keys"
+      ]
+    },
+    {
+      "check": "Monitoring Setup",
+      "critical": true,
+      "details": "Alert rules not configured",
+      "recommendations": [
+        "Run monitoring setup generator",
+        "Configure Prometheus metrics collection",
+        "Set up Grafana dashboards",
+        "Define alert rules for critical metrics"
+      ]
+    },
+    {
+      "check": "Database Configuration",
+      "critical": true,
+      "details": "Workflow models not included in migrations",
+      "recommendations": [
+        "Create workflow orchestration database migrations",
+        "Update alembic env.py to include workflow models",
+        "Test database migration procedures"
+      ]
+    },
+    {
+      "check": "Scaling Readiness",
+      "critical": false,
+      "details": "Scaling runbook missing; Resource limits not configured in docker-compose",
+      "recommendations": [
+        "Create scaling runbook with procedures",
+        "Configure resource limits in docker-compose",
+        "Set up horizontal scaling procedures",
+        "Document auto-scaling strategies"
+      ]
+    }
+  ],
+  "recommendations": [
+    "Update alembic env.py to include workflow models",
+    "Replace default values with secure secrets",
+    "Set all required environment variables",
+    "Configure Prometheus metrics collection",
+    "Configure resource limits in docker-compose",
+    "Run monitoring setup generator",
+    "Set up horizontal scaling procedures",
+    "Create workflow orchestration database migrations",
+    "Create scaling runbook with procedures",
+    "Use strong passwords and random keys",
+    "Test database migration procedures",
+    "Document auto-scaling strategies",
+    "Define alert rules for critical metrics",
+    "Set up Grafana dashboards"
+  ],
+  "next_steps": [
+    "Focus on critical issues first",
+    "Assign owners to failed validations",
+    "Set target completion dates",
+    "Re-run validation after fixes"
+  ]
+}

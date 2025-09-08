@@ -8,16 +8,6 @@ These models extend the shared billing models with ISP-specific functionality.
 from datetime import datetime
 from uuid import uuid4
 
-from dotmac_business_logic.billing.core.models import BillingPlan as SharedBillingPlan
-from dotmac_business_logic.billing.core.models import Customer as SharedCustomer
-from dotmac_business_logic.billing.core.models import Invoice as SharedInvoice
-from dotmac_business_logic.billing.core.models import (
-    InvoiceLineItem as SharedInvoiceLineItem,
-)
-from dotmac_business_logic.billing.core.models import Payment as SharedPayment
-from dotmac_business_logic.billing.core.models import Subscription as SharedSubscription
-from dotmac_business_logic.billing.core.models import UsageRecord as SharedUsageRecord
-from dotmac_isp.shared.database.base import BaseModel
 from sqlalchemy import (
     Boolean,
     Column,
@@ -31,6 +21,17 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as SQLAuuid
 from sqlalchemy.orm import relationship
+
+from dotmac_business_logic.billing.core.models import BillingPlan as SharedBillingPlan
+from dotmac_business_logic.billing.core.models import Customer as SharedCustomer
+from dotmac_business_logic.billing.core.models import Invoice as SharedInvoice
+from dotmac_business_logic.billing.core.models import (
+    InvoiceLineItem as SharedInvoiceLineItem,
+)
+from dotmac_business_logic.billing.core.models import Payment as SharedPayment
+from dotmac_business_logic.billing.core.models import Subscription as SharedSubscription
+from dotmac_business_logic.billing.core.models import UsageRecord as SharedUsageRecord
+from dotmac_isp.shared.database.base import BaseModel
 
 
 class BillingCustomer(SharedCustomer, BaseModel):
@@ -51,15 +52,9 @@ class BillingCustomer(SharedCustomer, BaseModel):
     bandwidth_package = Column(String(100), nullable=True)
 
     # Override relationship to use ISP-specific models
-    subscriptions = relationship(
-        "Subscription", back_populates="customer", cascade="all, delete-orphan"
-    )
-    invoices = relationship(
-        "Invoice", back_populates="customer", cascade="all, delete-orphan"
-    )
-    payments = relationship(
-        "Payment", back_populates="customer", cascade="all, delete-orphan"
-    )
+    subscriptions = relationship("Subscription", back_populates="customer", cascade="all, delete-orphan")
+    invoices = relationship("Invoice", back_populates="customer", cascade="all, delete-orphan")
+    payments = relationship("Payment", back_populates="customer", cascade="all, delete-orphan")
 
 
 class BillingPlan(SharedBillingPlan, BaseModel):
@@ -84,9 +79,7 @@ class BillingPlan(SharedBillingPlan, BaseModel):
     # Service features
     static_ip_included = Column(Boolean, default=False)
     email_accounts_included = Column(Integer, default=0)
-    tech_support_level = Column(
-        String(20), default="basic"
-    )  # basic, premium, enterprise
+    tech_support_level = Column(String(20), default="basic")  # basic, premium, enterprise
 
     # Override relationship
     subscriptions = relationship("Subscription", back_populates="billing_plan")
@@ -117,18 +110,12 @@ class Subscription(SharedSubscription, BaseModel):
     support_incidents = Column(Integer, default=0)
 
     # Relationships
-    customer_id = Column(
-        SQLAuuid(as_uuid=True), ForeignKey("billing_customers.id"), nullable=False
-    )
-    billing_plan_id = Column(
-        SQLAuuid(as_uuid=True), ForeignKey("billing_plans.id"), nullable=False
-    )
+    customer_id = Column(SQLAuuid(as_uuid=True), ForeignKey("billing_customers.id"), nullable=False)
+    billing_plan_id = Column(SQLAuuid(as_uuid=True), ForeignKey("billing_plans.id"), nullable=False)
 
     customer = relationship("BillingCustomer", back_populates="subscriptions")
     billing_plan = relationship("BillingPlan", back_populates="subscriptions")
-    usage_records = relationship(
-        "UsageRecord", back_populates="subscription", cascade="all, delete-orphan"
-    )
+    usage_records = relationship("UsageRecord", back_populates="subscription", cascade="all, delete-orphan")
     invoices = relationship("Invoice", back_populates="subscription")
 
 
@@ -158,23 +145,15 @@ class Invoice(SharedInvoice, BaseModel):
     # Payment tracking
     autopay_enabled = Column(Boolean, default=False)
     payment_failed_attempts = Column(Integer, default=0)
-    collection_status = Column(
-        String(20), default="current"
-    )  # current, past_due, collections
+    collection_status = Column(String(20), default="current")  # current, past_due, collections
 
     # Relationships
-    customer_id = Column(
-        SQLAuuid(as_uuid=True), ForeignKey("billing_customers.id"), nullable=False
-    )
-    subscription_id = Column(
-        SQLAuuid(as_uuid=True), ForeignKey("billing_subscriptions.id"), nullable=True
-    )
+    customer_id = Column(SQLAuuid(as_uuid=True), ForeignKey("billing_customers.id"), nullable=False)
+    subscription_id = Column(SQLAuuid(as_uuid=True), ForeignKey("billing_subscriptions.id"), nullable=True)
 
     customer = relationship("BillingCustomer", back_populates="invoices")
     subscription = relationship("Subscription", back_populates="invoices")
-    line_items = relationship(
-        "InvoiceLineItem", back_populates="invoice", cascade="all, delete-orphan"
-    )
+    line_items = relationship("InvoiceLineItem", back_populates="invoice", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="invoice")
 
 
@@ -188,12 +167,8 @@ class InvoiceLineItem(SharedInvoiceLineItem, BaseModel):
     __tablename__ = "billing_invoice_line_items"
 
     # ISP-specific fields
-    service_type = Column(
-        String(50), nullable=True
-    )  # monthly_service, usage, equipment, fees
-    service_identifier = Column(
-        String(100), nullable=True
-    )  # account number, service ID
+    service_type = Column(String(50), nullable=True)  # monthly_service, usage, equipment, fees
+    service_identifier = Column(String(100), nullable=True)  # account number, service ID
     usage_period_start = Column(DateTime, nullable=True)
     usage_period_end = Column(DateTime, nullable=True)
     usage_quantity = Column(Numeric(12, 4), nullable=True)
@@ -206,9 +181,7 @@ class InvoiceLineItem(SharedInvoiceLineItem, BaseModel):
     proration_factor = Column(Numeric(5, 4), nullable=True)
 
     # Relationship
-    invoice_id = Column(
-        SQLAuuid(as_uuid=True), ForeignKey("billing_invoices.id"), nullable=False
-    )
+    invoice_id = Column(SQLAuuid(as_uuid=True), ForeignKey("billing_invoices.id"), nullable=False)
     invoice = relationship("Invoice", back_populates="line_items")
 
 
@@ -241,12 +214,8 @@ class Payment(SharedPayment, BaseModel):
     ach_return_reason = Column(String(200), nullable=True)
 
     # Relationships
-    customer_id = Column(
-        SQLAuuid(as_uuid=True), ForeignKey("billing_customers.id"), nullable=False
-    )
-    invoice_id = Column(
-        SQLAuuid(as_uuid=True), ForeignKey("billing_invoices.id"), nullable=True
-    )
+    customer_id = Column(SQLAuuid(as_uuid=True), ForeignKey("billing_customers.id"), nullable=False)
+    invoice_id = Column(SQLAuuid(as_uuid=True), ForeignKey("billing_invoices.id"), nullable=True)
 
     customer = relationship("BillingCustomer", back_populates="payments")
     invoice = relationship("Invoice", back_populates="payments")
@@ -280,9 +249,7 @@ class UsageRecord(SharedUsageRecord, BaseModel):
     quality_score = Column(Numeric(3, 2), nullable=True)  # Data quality 0-1
 
     # Relationship
-    subscription_id = Column(
-        SQLAuuid(as_uuid=True), ForeignKey("billing_subscriptions.id"), nullable=False
-    )
+    subscription_id = Column(SQLAuuid(as_uuid=True), ForeignKey("billing_subscriptions.id"), nullable=False)
     subscription = relationship("Subscription", back_populates="usage_records")
 
 
@@ -297,22 +264,14 @@ class CreditNote(BaseModel):
     credit_note_number = Column(String(50), nullable=False, unique=True, index=True)
 
     # Relationships
-    customer_id = Column(
-        SQLAuuid(as_uuid=True), ForeignKey("billing_customers.id"), nullable=False
-    )
-    invoice_id = Column(
-        SQLAuuid(as_uuid=True), ForeignKey("billing_invoices.id"), nullable=True
-    )
+    customer_id = Column(SQLAuuid(as_uuid=True), ForeignKey("billing_customers.id"), nullable=False)
+    invoice_id = Column(SQLAuuid(as_uuid=True), ForeignKey("billing_invoices.id"), nullable=True)
 
     # Credit details
     reason = Column(String(500), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
-    credit_type = Column(
-        String(30), nullable=False
-    )  # service_credit, refund, adjustment
-    status = Column(
-        String(20), nullable=False, default="pending"
-    )  # pending, applied, voided
+    credit_type = Column(String(30), nullable=False)  # service_credit, refund, adjustment
+    status = Column(String(20), nullable=False, default="pending")  # pending, applied, voided
 
     # Service-specific
     service_period_start = Column(DateTime, nullable=True)
@@ -343,9 +302,7 @@ class TaxRate(BaseModel):
     # Tax configuration
     name = Column(String(100), nullable=False)
     rate = Column(Numeric(8, 6), nullable=False)  # Tax rate as decimal
-    tax_type = Column(
-        String(30), nullable=False
-    )  # sales, vat, gst, utility, regulatory
+    tax_type = Column(String(30), nullable=False)  # sales, vat, gst, utility, regulatory
     jurisdiction = Column(String(100), nullable=False)  # state, county, city
 
     # Geographic scope
@@ -354,9 +311,7 @@ class TaxRate(BaseModel):
     zip_codes = Column(JSONB, default=list)  # List of applicable ZIP codes
 
     # Service applicability
-    applies_to_services = Column(
-        JSONB, default=list
-    )  # Service types this tax applies to
+    applies_to_services = Column(JSONB, default=list)  # Service types this tax applies to
     applies_to_equipment = Column(Boolean, default=True)
     applies_to_installation = Column(Boolean, default=True)
 

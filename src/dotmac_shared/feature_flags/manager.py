@@ -156,17 +156,13 @@ class FeatureFlagManager:
 
         try:
             enabled = flag.is_enabled_for_context(evaluation_context)
-            logger.debug(
-                f"Flag {flag_key} evaluation: {enabled} for context: {context}"
-            )
+            logger.debug(f"Flag {flag_key} evaluation: {enabled} for context: {context}")
             return enabled
         except Exception as e:
             logger.error(f"Error evaluating flag {flag_key}: {e}")
             return False
 
-    async def get_variant(
-        self, flag_key: str, context: dict[str, Any]
-    ) -> Optional[str]:
+    async def get_variant(self, flag_key: str, context: dict[str, Any]) -> Optional[str]:
         """Get A/B test variant for flag and context"""
         flag = await self._get_flag(flag_key)
         if not flag:
@@ -184,9 +180,7 @@ class FeatureFlagManager:
             logger.error(f"Error getting variant for flag {flag_key}: {e}")
             return None
 
-    async def get_payload(
-        self, flag_key: str, context: dict[str, Any]
-    ) -> Optional[dict[str, Any]]:
+    async def get_payload(self, flag_key: str, context: dict[str, Any]) -> Optional[dict[str, Any]]:
         """Get feature payload for flag and context"""
         flag = await self._get_flag(flag_key)
         if not flag:
@@ -209,10 +203,7 @@ class FeatureFlagManager:
         # Check cache first
         if flag_key in self._cache:
             timestamp = self._cache_timestamps.get(flag_key)
-            if (
-                timestamp
-                and (datetime.utcnow() - timestamp).total_seconds() < self.cache_ttl
-            ):
+            if timestamp and (datetime.utcnow() - timestamp).total_seconds() < self.cache_ttl:
                 return self._cache[flag_key]
 
         # Load from storage
@@ -305,16 +296,13 @@ class FeatureFlagManager:
             end_percentage=end_percentage,
             start_date=start_date,
             end_date=end_date,
-            increment_percentage=(end_percentage - start_percentage)
-            / (duration_hours // increment_hours),
+            increment_percentage=(end_percentage - start_percentage) / (duration_hours // increment_hours),
             increment_interval_hours=increment_hours,
         )
 
         return await self.update_flag(flag)
 
-    async def stop_gradual_rollout(
-        self, flag_key: str, final_percentage: Optional[float] = None
-    ) -> bool:
+    async def stop_gradual_rollout(self, flag_key: str, final_percentage: Optional[float] = None) -> bool:
         """Stop gradual rollout and set final percentage"""
         flag = await self._get_flag(flag_key)
         if not flag or flag.strategy != RolloutStrategy.GRADUAL:
@@ -363,9 +351,7 @@ class FeatureFlagManager:
 
             override_flag = FeatureFlag(key=flag_key, name=f"Override {flag_key}")
 
-        override_flag.strategy = (
-            RolloutStrategy.ALL_ON if enabled else RolloutStrategy.ALL_OFF
-        )
+        override_flag.strategy = RolloutStrategy.ALL_ON if enabled else RolloutStrategy.ALL_OFF
         override_flag.status = FeatureFlagStatus.ACTIVE
 
         # Apply override

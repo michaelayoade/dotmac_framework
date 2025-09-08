@@ -100,8 +100,6 @@ class MetricsRepository(BaseRepository):
         """Delete metric by ID."""
         return True
 
-    async def find_metrics_by_timerange(
-        self, tenant_id: str, start_time: str, end_time: str
-    ) -> list[dict[str, Any]]:
+    async def find_metrics_by_timerange(self, tenant_id: str, start_time: str, end_time: str) -> list[dict[str, Any]]:
         """Find metrics by time range."""
         return []

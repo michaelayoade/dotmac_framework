@@ -55,9 +55,9 @@ class AuthResult:
     def success_result(
         cls,
         user_info: UserInfo,
-        token_type: str = "jwt",
+        token_type: str = "jwt",  # nosec B107 - token type identifier, not password
         expires_at: Optional[float] = None,
-        auth_method: str = "jwt",
+        auth_method: str = "jwt",  # nosec B107 - auth method identifier, not password
     ) -> "AuthResult":
         """Create successful authentication result."""
         return cls(

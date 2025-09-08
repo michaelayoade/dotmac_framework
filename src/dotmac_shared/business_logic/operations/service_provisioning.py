@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 from uuid import uuid4
 
-from ...standard_exception_handler import standard_exception_handler
+from dotmac.application import standard_exception_handler
 from ..exceptions import ErrorContext, ProvisioningError
 from ..idempotency import IdempotentOperation
 from ..sagas import CompensationHandler, SagaContext, SagaDefinition, SagaStep
@@ -104,9 +104,7 @@ class AllocateResourcesStep(SagaStep):
             "allocation_id": str(uuid4()),
             "allocated_at": datetime.utcnow().isoformat(),
             "status": "allocated",
-            "expires_if_not_configured": (
-                datetime.utcnow() + timedelta(hours=2)
-            ).isoformat(),
+            "expires_if_not_configured": (datetime.utcnow() + timedelta(hours=2)).isoformat(),
         }
 
         context.set_shared_data("allocated_resources", allocated_resources)
@@ -205,18 +203,12 @@ class ConfigureServiceStep(SagaStep):
                 "config_version": "1.0.0",
                 **allocated_resources["resources"],
             },
-            "network_settings": self._generate_network_settings(
-                service_request["service_type"]
-            ),
+            "network_settings": self._generate_network_settings(service_request["service_type"]),
             "billing_settings": {
                 "billing_period": service_request["billing_period"],
-                "next_billing_date": (datetime.utcnow() + timedelta(days=30))
-                .date()
-                .isoformat(),
+                "next_billing_date": (datetime.utcnow() + timedelta(days=30)).date().isoformat(),
                 "setup_fee": self._calculate_setup_fee(service_request["plan"]),
-                "monthly_fee": self._calculate_monthly_fee(
-                    service_request["service_type"], service_request["plan"]
-                ),
+                "monthly_fee": self._calculate_monthly_fee(service_request["service_type"], service_request["plan"]),
             },
             "configured_at": datetime.utcnow().isoformat(),
             "status": "configured",
@@ -399,9 +391,7 @@ class NotifyCustomerStep(SagaStep):
                 "activation_date": activation_result["activated_at"],
                 "access_details": activation_result["access_details"],
                 "billing_info": {
-                    "next_billing_date": service_config["billing_settings"][
-                        "next_billing_date"
-                    ],
+                    "next_billing_date": service_config["billing_settings"]["next_billing_date"],
                     "monthly_fee": service_config["billing_settings"]["monthly_fee"],
                 },
             },
@@ -431,9 +421,7 @@ class ServiceProvisioningCompensationHandler(CompensationHandler):
     """Custom compensation handler for service provisioning"""
 
     @standard_exception_handler
-    async def compensate(
-        self, context: SagaContext, failed_step: str, completed_steps: list[str]
-    ) -> None:
+    async def compensate(self, context: SagaContext, failed_step: str, completed_steps: list[str]) -> None:
         """Execute custom compensation logic"""
 
         service_request = context.get_shared_data("service_request")
@@ -458,9 +446,7 @@ class ServiceProvisioningCompensationHandler(CompensationHandler):
 
         context.set_shared_data("custom_compensation_completed", True)
 
-    async def _send_failure_notification(
-        self, context: SagaContext, service_request: dict[str, Any]
-    ) -> None:
+    async def _send_failure_notification(self, context: SagaContext, service_request: dict[str, Any]) -> None:
         """Send failure notification to customer"""
 
         failure_notification = {
@@ -521,14 +507,10 @@ class ServiceProvisioningOperation(IdempotentOperation[dict[str, Any]]):
         # Validate billing period
         valid_periods = ["monthly", "quarterly", "annual"]
         if operation_data["billing_period"] not in valid_periods:
-            raise ValueError(
-                f"Invalid billing period: {operation_data['billing_period']}"
-            )
+            raise ValueError(f"Invalid billing period: {operation_data['billing_period']}")
 
     @standard_exception_handler
-    async def execute(
-        self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None
-    ) -> dict[str, Any]:
+    async def execute(self, operation_data: dict[str, Any], context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         """Execute service provisioning via saga orchestration"""
 
         context = context or {}

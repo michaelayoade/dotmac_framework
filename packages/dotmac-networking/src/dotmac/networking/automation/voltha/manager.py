@@ -154,7 +154,9 @@ class VOLTHAManager:
         return self._connected
 
     # Device Management
-    async def get_devices(self, device_type: Optional[str] = None) -> list[VOLTHADevice]:
+    async def get_devices(
+        self, device_type: Optional[str] = None
+    ) -> list[VOLTHADevice]:
         """Get all devices, optionally filtered by type."""
         if not self._connected:
             raise VOLTHAConnectionError("Not connected to VOLTHA")

@@ -53,21 +53,11 @@ class InfrastructureType(str, Enum):
 class ResourceRequirements(BaseModel):
     """Container resource requirements specification."""
 
-    cpu_cores: float = Field(
-        default=1.0, ge=0.1, le=16.0, description="CPU cores (0.1-16.0)"
-    )
-    memory_gb: float = Field(
-        default=2.0, ge=0.5, le=64.0, description="Memory in GB (0.5-64.0)"
-    )
-    storage_gb: float = Field(
-        default=10.0, ge=1.0, le=500.0, description="Storage in GB (1.0-500.0)"
-    )
-    max_connections: int = Field(
-        default=100, ge=10, le=2000, description="Maximum database connections"
-    )
-    max_concurrent_requests: int = Field(
-        default=50, ge=5, le=1000, description="Maximum concurrent HTTP requests"
-    )
+    cpu_cores: float = Field(default=1.0, ge=0.1, le=16.0, description="CPU cores (0.1-16.0)")
+    memory_gb: float = Field(default=2.0, ge=0.5, le=64.0, description="Memory in GB (0.5-64.0)")
+    storage_gb: float = Field(default=10.0, ge=1.0, le=500.0, description="Storage in GB (1.0-500.0)")
+    max_connections: int = Field(default=100, ge=10, le=2000, description="Maximum database connections")
+    max_concurrent_requests: int = Field(default=50, ge=5, le=1000, description="Maximum concurrent HTTP requests")
 
     @field_validator("cpu_cores")
     @classmethod
@@ -105,50 +95,36 @@ class ResourceRequirements(BaseModel):
 class NetworkConfig(BaseModel):
     """Network configuration for container deployment."""
 
-    domain: Optional[str] = Field(
-        default=None, description="Custom domain for the ISP instance"
-    )
-    subdomain: Optional[str] = Field(
-        default=None, description="Subdomain prefix (auto-generated if not provided)"
-    )
+    domain: Optional[str] = Field(default=None, description="Custom domain for the ISP instance")
+    subdomain: Optional[str] = Field(default=None, description="Subdomain prefix (auto-generated if not provided)")
     ssl_enabled: bool = Field(default=True, description="Enable SSL/TLS certificates")
     port_mapping: dict[int, int] = Field(
         default_factory=lambda: {8000: 80, 8443: 443},
         description="Port mapping (internal:external)",
     )
-    allowed_origins: list[str] = Field(
-        default_factory=list, description="CORS allowed origins"
-    )
+    allowed_origins: list[str] = Field(default_factory=list, description="CORS allowed origins")
 
     @field_validator("domain")
     @classmethod
     def validate_domain(cls, v):
         """Validate domain format."""
         if v and not v.replace(".", "").replace("-", "").isalnum():
-            raise ValueError(
-                "Domain must contain only alphanumeric characters, dots, and hyphens"
-            )
+            raise ValueError("Domain must contain only alphanumeric characters, dots, and hyphens")
         return v
 
 
 class DatabaseConfig(BaseModel):
     """Database configuration for ISP instance."""
 
-    create_dedicated_db: bool = Field(
-        default=True, description="Create dedicated database instance"
-    )
+    create_dedicated_db: bool = Field(default=True, description="Create dedicated database instance")
     database_size: str = Field(
         default="standard",
         pattern="^(minimal|standard|large|xlarge)$",
         description="Database size tier",
     )
     backup_enabled: bool = Field(default=True, description="Enable automated backups")
-    replication_enabled: bool = Field(
-        default=False, description="Enable database replication"
-    )
-    connection_pool_size: int = Field(
-        default=20, ge=5, le=100, description="Database connection pool size"
-    )
+    replication_enabled: bool = Field(default=False, description="Enable database replication")
+    connection_pool_size: int = Field(default=20, ge=5, le=100, description="Database connection pool size")
 
 
 class FeatureFlags(BaseModel):
@@ -194,12 +170,8 @@ class ISPConfig(BaseModel):
         pattern="^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$",
         description="Tenant identifier (3-50 chars, alphanumeric + hyphens)",
     )
-    display_name: str = Field(
-        ..., min_length=1, max_length=100, description="Human-readable display name"
-    )
-    plan_type: PlanType = Field(
-        default=PlanType.STANDARD, description="Service plan type"
-    )
+    display_name: str = Field(..., min_length=1, max_length=100, description="Human-readable display name")
+    plan_type: PlanType = Field(default=PlanType.STANDARD, description="Service plan type")
 
     # Configuration objects
     network_config: NetworkConfig = Field(default_factory=NetworkConfig)
@@ -207,17 +179,11 @@ class ISPConfig(BaseModel):
     feature_flags: Optional[FeatureFlags] = Field(default=None)
 
     # Environment-specific settings
-    environment_variables: dict[str, str] = Field(
-        default_factory=dict, description="Additional environment variables"
-    )
-    secrets: dict[str, str] = Field(
-        default_factory=dict, description="Secret values (will be stored securely)"
-    )
+    environment_variables: dict[str, str] = Field(default_factory=dict, description="Additional environment variables")
+    secrets: dict[str, str] = Field(default_factory=dict, description="Secret values (will be stored securely)")
 
     # Branding and customization
-    branding_config: dict[str, Any] = Field(
-        default_factory=dict, description="Branding and UI customization settings"
-    )
+    branding_config: dict[str, Any] = Field(default_factory=dict, description="Branding and UI customization settings")
 
     @model_validator(mode="before")
     @classmethod
@@ -225,9 +191,7 @@ class ISPConfig(BaseModel):
         """Set default values based on other fields."""
         if isinstance(values, dict):
             if not values.get("feature_flags"):
-                values["feature_flags"] = FeatureFlags.from_plan_type(
-                    values.get("plan_type", PlanType.STANDARD)
-                )
+                values["feature_flags"] = FeatureFlags.from_plan_type(values.get("plan_type", PlanType.STANDARD))
 
             # Set default subdomain if not provided
             network_config = values.get("network_config", NetworkConfig())
@@ -243,9 +207,7 @@ class ProvisioningRequest(BaseModel):
 
     request_id: UUID = Field(default_factory=uuid4)
     isp_id: UUID = Field(..., description="Unique ISP instance identifier")
-    customer_count: int = Field(
-        ..., ge=1, le=50000, description="Expected number of customers (1-50,000)"
-    )
+    customer_count: int = Field(..., ge=1, le=50000, description="Expected number of customers (1-50,000)")
     config: ISPConfig = Field(..., description="ISP Framework configuration")
 
     # Resource overrides
@@ -260,9 +222,7 @@ class ProvisioningRequest(BaseModel):
         description="Preferred infrastructure type",
     )
     region: str = Field(default="us-east-1", description="Deployment region")
-    availability_zone: Optional[str] = Field(
-        default=None, description="Specific availability zone"
-    )
+    availability_zone: Optional[str] = Field(default=None, description="Specific availability zone")
 
     # Timing and behavior
     provisioning_timeout: int = Field(
@@ -271,21 +231,13 @@ class ProvisioningRequest(BaseModel):
         le=1800,
         description="Provisioning timeout in seconds (2-30 minutes)",
     )
-    enable_rollback: bool = Field(
-        default=True, description="Enable automatic rollback on failure"
-    )
+    enable_rollback: bool = Field(default=True, description="Enable automatic rollback on failure")
 
     # Metadata
-    requested_by: Optional[str] = Field(
-        default=None, description="User or system requesting provisioning"
-    )
-    tags: dict[str, str] = Field(
-        default_factory=dict, description="Custom tags for resource management"
-    )
+    requested_by: Optional[str] = Field(default=None, description="User or system requesting provisioning")
+    tags: dict[str, str] = Field(default_factory=dict, description="Custom tags for resource management")
 
-    model_config = ConfigDict(
-        json_encoders={UUID: str, datetime: lambda v: v.isoformat()}
-    )
+    model_config = ConfigDict(json_encoders={UUID: str, datetime: lambda v: v.isoformat()})
 
 
 class ContainerHealth(BaseModel):
@@ -364,9 +316,7 @@ class ProvisioningResult(BaseModel):
     admin_dashboard_url: Optional[str] = None
     api_documentation_url: Optional[str] = None
 
-    model_config = ConfigDict(
-        json_encoders={UUID: str, datetime: lambda v: v.isoformat()}
-    )
+    model_config = ConfigDict(json_encoders={UUID: str, datetime: lambda v: v.isoformat()})
 
     def add_log(self, message: str, level: str = "INFO") -> None:
         """Add a log entry with timestamp."""

@@ -129,7 +129,11 @@ class ContainerTestUtils:
         """Wait for container to become healthy."""
         start_time = time.time()
 
-        async with httpx.AsyncClient(verify=False) as client:
+        # Use environment variable to control SSL verification in tests
+        import os
+        verify_ssl = os.getenv("TEST_VERIFY_SSL", "true").lower() == "true"
+
+        async with httpx.AsyncClient(verify=verify_ssl) as client:
             while time.time() - start_time < timeout:
                 try:
                     response = await client.get(
@@ -274,7 +278,11 @@ class ApiTestUtils:
         """Wait for API to become ready."""
         start_time = time.time()
 
-        async with httpx.AsyncClient(verify=False) as client:
+        # Use environment variable to control SSL verification in tests
+        import os
+        verify_ssl = os.getenv("TEST_VERIFY_SSL", "true").lower() == "true"
+
+        async with httpx.AsyncClient(verify=verify_ssl) as client:
             while time.time() - start_time < timeout:
                 try:
                     response = await client.get(f"{base_url}/health", timeout=10)
@@ -295,7 +303,11 @@ class ApiTestUtils:
         """Verify tenant API isolation."""
         results = {"isolated": True, "cross_tenant_access": []}
 
-        async with httpx.AsyncClient(verify=False) as client:
+        # Use environment variable to control SSL verification in tests
+        import os
+        verify_ssl = os.getenv("TEST_VERIFY_SSL", "true").lower() == "true"
+
+        async with httpx.AsyncClient(verify=verify_ssl) as client:
             try:
                 # Try to access tenant B API with tenant A token
                 response = await client.get(

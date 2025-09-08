@@ -252,20 +252,7 @@ monitoring:
     max_files: 5
     compress: false # No compression in dev
 
-  prometheus:
-    enabled: true
-    port: 9090
-    scrape_interval: 30s
-    retention: 7d
-    external_labels:
-      environment: development
-      cluster: dotmac-dev
-
-  grafana:
-    enabled: true
-    port: 3000
-    admin_password: admin # Simple password for dev
-    auto_provisioning: true
+  # Monitoring is provided by SigNoz (OTLP)
 
   alerting:
     enabled: false # Disabled in development

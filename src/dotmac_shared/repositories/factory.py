@@ -54,9 +54,7 @@ class RepositoryFactory:
         if tenant_id and hasattr(model, "tenant_id"):
             return AsyncTenantRepository(db, model, tenant_id)
         elif force_tenant and hasattr(model, "tenant_id"):
-            raise ValueError(
-                f"Tenant ID required for tenant-aware model {model.__name__}"
-            )
+            raise ValueError(f"Tenant ID required for tenant-aware model {model.__name__}")
         else:
             return AsyncBaseRepository(db, model, tenant_id)
 
@@ -82,9 +80,7 @@ class RepositoryFactory:
         if tenant_id and issubclass(model_class, BaseModel):
             return SyncTenantRepository(db, model_class, tenant_id)
         elif force_tenant and issubclass(model_class, BaseModel):
-            raise ValueError(
-                f"Tenant ID required for tenant-aware model {model_class.__name__}"
-            )
+            raise ValueError(f"Tenant ID required for tenant-aware model {model_class.__name__}")
         else:
             return SyncBaseRepository(db, model_class, tenant_id)
 
@@ -114,13 +110,9 @@ def create_repository(
         Appropriate repository instance
     """
     if isinstance(db, AsyncSession):
-        return RepositoryFactory.create_async_repository(
-            db, model, tenant_id, force_tenant
-        )
+        return RepositoryFactory.create_async_repository(db, model, tenant_id, force_tenant)
     elif isinstance(db, Session):
-        return RepositoryFactory.create_sync_repository(
-            db, model, tenant_id, force_tenant
-        )
+        return RepositoryFactory.create_sync_repository(db, model, tenant_id, force_tenant)
     else:
         raise ValueError(f"Unsupported database session type: {type(db)}")
 

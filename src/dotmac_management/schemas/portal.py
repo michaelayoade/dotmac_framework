@@ -18,9 +18,7 @@ class TenantProfile(BaseModel):
     is_active: bool = Field(..., description="Whether tenant is active")
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
 class TenantProfileUpdate(BaseModel):
@@ -157,9 +155,7 @@ class PortalDashboard(BaseModel):
     subscription: dict[str, Any] = Field(..., description="Subscription information")
     users: dict[str, Any] = Field(..., description="User information")
     billing: dict[str, Any] = Field(..., description="Billing information")
-    infrastructure: dict[str, Any] = Field(
-        ..., description="Infrastructure information"
-    )
+    infrastructure: dict[str, Any] = Field(..., description="Infrastructure information")
     recent_activity: list[ActivityItem] = Field(..., description="Recent activity")
     last_updated: datetime = Field(..., description="Last update timestamp")
 
@@ -167,9 +163,7 @@ class PortalDashboard(BaseModel):
 class SupportTicket(BaseModel):
     """Support ticket schema."""
 
-    subject: str = Field(
-        ..., min_length=5, max_length=200, description="Ticket subject"
-    )
+    subject: str = Field(..., min_length=5, max_length=200, description="Ticket subject")
     description: str = Field(..., min_length=20, description="Ticket description")
     category: str = Field(..., description="Ticket category")
     priority: str = Field(default="normal", description="Ticket priority")
@@ -193,24 +187,16 @@ class NotificationSettings(BaseModel):
 
     email_enabled: bool = Field(default=True, description="Email notifications enabled")
     sms_enabled: bool = Field(default=False, description="SMS notifications enabled")
-    default_channel: str = Field(
-        default="email", description="Default notification channel"
-    )
+    default_channel: str = Field(default="email", description="Default notification channel")
     digest_frequency: str = Field(default="daily", description="Digest frequency")
 
 
 class SecuritySettings(BaseModel):
     """Security settings schema."""
 
-    two_factor_required: bool = Field(
-        default=False, description="Two-factor authentication required"
-    )
-    session_timeout_minutes: int = Field(
-        default=30, description="Session timeout in minutes"
-    )
-    password_policy: str = Field(
-        default="standard", description="Password policy level"
-    )
+    two_factor_required: bool = Field(default=False, description="Two-factor authentication required")
+    session_timeout_minutes: int = Field(default=30, description="Session timeout in minutes")
+    password_policy: str = Field(default="standard", description="Password policy level")
     ip_whitelist: Optional[list[str]] = Field(None, description="IP whitelist")
 
 
@@ -229,22 +215,16 @@ class InfrastructureSettings(BaseModel):
     auto_scaling_enabled: bool = Field(default=True, description="Auto-scaling enabled")
     backup_enabled: bool = Field(default=True, description="Backup enabled")
     monitoring_level: str = Field(default="standard", description="Monitoring level")
-    maintenance_window: Optional[str] = Field(
-        None, description="Preferred maintenance window"
-    )
+    maintenance_window: Optional[str] = Field(None, description="Preferred maintenance window")
 
 
 class ServiceConfiguration(BaseModel):
     """Service configuration schema."""
 
-    notifications: Optional[NotificationSettings] = Field(
-        None, description="Notification settings"
-    )
+    notifications: Optional[NotificationSettings] = Field(None, description="Notification settings")
     security: Optional[SecuritySettings] = Field(None, description="Security settings")
     billing: Optional[BillingSettings] = Field(None, description="Billing settings")
-    infrastructure: Optional[InfrastructureSettings] = Field(
-        None, description="Infrastructure settings"
-    )
+    infrastructure: Optional[InfrastructureSettings] = Field(None, description="Infrastructure settings")
 
 
 class ApiKey(BaseModel):
@@ -265,9 +245,7 @@ class ApiKeyCreate(BaseModel):
 
     name: str = Field(..., min_length=3, max_length=100, description="API key name")
     permissions: list[str] = Field(..., description="API key permissions")
-    expires_in_days: Optional[int] = Field(
-        None, gt=0, le=365, description="Expiration in days"
-    )
+    expires_in_days: Optional[int] = Field(None, gt=0, le=365, description="Expiration in days")
 
 
 class ApiKeyResponse(BaseModel):
@@ -290,9 +268,7 @@ class WebhookEndpoint(BaseModel):
     events: list[str] = Field(..., description="Subscribed events")
     secret: Optional[str] = Field(None, description="Webhook secret")
     is_active: bool = Field(..., description="Whether webhook is active")
-    last_triggered: Optional[datetime] = Field(
-        None, description="Last trigger timestamp"
-    )
+    last_triggered: Optional[datetime] = Field(None, description="Last trigger timestamp")
     created_at: datetime = Field(..., description="Creation timestamp")
 
 
@@ -337,12 +313,8 @@ class BackupCreate(BaseModel):
 
     backup_type: str = Field(..., description="Type of backup to create")
     include_data: bool = Field(default=True, description="Include data in backup")
-    include_config: bool = Field(
-        default=True, description="Include configuration in backup"
-    )
-    retention_days: int = Field(
-        default=30, ge=1, le=365, description="Retention period in days"
-    )
+    include_config: bool = Field(default=True, description="Include configuration in backup")
+    retention_days: int = Field(default=30, ge=1, le=365, description="Retention period in days")
 
 
 class AuditLog(BaseModel):
@@ -352,9 +324,7 @@ class AuditLog(BaseModel):
     user_id: UUID = Field(..., description="User who performed the action")
     action: str = Field(..., description="Action performed")
     resource_type: str = Field(..., description="Type of resource affected")
-    resource_id: Optional[str] = Field(
-        None, description="Identifier of affected resource"
-    )
+    resource_id: Optional[str] = Field(None, description="Identifier of affected resource")
     details: dict[str, Any] = Field(..., description="Action details")
     ip_address: Optional[str] = Field(None, description="IP address")
     user_agent: Optional[str] = Field(None, description="User agent")
@@ -407,17 +377,11 @@ class TenantSettings(BaseModel):
     """Tenant settings schema."""
 
     general: dict[str, Any] = Field(..., description="General settings")
-    notifications: NotificationSettings = Field(
-        ..., description="Notification settings"
-    )
+    notifications: NotificationSettings = Field(..., description="Notification settings")
     security: SecuritySettings = Field(..., description="Security settings")
     billing: BillingSettings = Field(..., description="Billing settings")
-    infrastructure: InfrastructureSettings = Field(
-        ..., description="Infrastructure settings"
-    )
-    integrations: dict[str, Any] = Field(
-        default_factory=dict, description="Integration settings"
-    )
+    infrastructure: InfrastructureSettings = Field(..., description="Infrastructure settings")
+    integrations: dict[str, Any] = Field(default_factory=dict, description="Integration settings")
 
 
 class QuotaUsage(BaseModel):
@@ -428,9 +392,7 @@ class QuotaUsage(BaseModel):
     limit: float = Field(..., description="Limit amount")
     unit: str = Field(..., description="Unit of measurement")
     percentage: float = Field(..., description="Usage percentage")
-    warning_threshold: float = Field(
-        default=80.0, description="Warning threshold percentage"
-    )
+    warning_threshold: float = Field(default=80.0, description="Warning threshold percentage")
 
 
 class QuotaOverview(BaseModel):

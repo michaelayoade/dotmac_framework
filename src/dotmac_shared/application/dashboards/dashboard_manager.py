@@ -63,14 +63,10 @@ class DashboardManager:
             dashboard_configs = await self._load_dashboard_configs(platform_type)
 
             # Apply template variables
-            variables = self._prepare_template_variables(
-                platform_type, tenant_id, custom_variables
-            )
+            variables = self._prepare_template_variables(platform_type, tenant_id, custom_variables)
 
             # Process Signoz dashboards
-            signoz_results = await self._process_signoz_dashboards(
-                dashboard_configs.get("signoz", []), variables
-            )
+            signoz_results = await self._process_signoz_dashboards(dashboard_configs.get("signoz", []), variables)
             results["signoz_dashboards"] = signoz_results
 
             # Process alert rules
@@ -88,9 +84,7 @@ class DashboardManager:
 
         return results
 
-    async def _load_dashboard_configs(
-        self, platform_type: str
-    ) -> dict[str, list[dict]]:
+    async def _load_dashboard_configs(self, platform_type: str) -> dict[str, list[dict]]:
         """Load dashboard configuration files for platform type."""
         configs = {"signoz": []}
 
@@ -119,9 +113,7 @@ class DashboardManager:
         """Prepare template variables for dashboard generation."""
         variables = {
             "platform_type": platform_type,
-            "service_name": f"dotmac-{platform_type}"
-            if platform_type == "management"
-            else "isp-framework",
+            "service_name": f"dotmac-{platform_type}" if platform_type == "management" else "isp-framework",
             "environment": os.getenv("ENVIRONMENT", "production"),
             "cluster_name": os.getenv("CLUSTER_NAME", "dotmac-cluster"),
             "namespace": os.getenv("KUBERNETES_NAMESPACE", "default"),
@@ -132,9 +124,7 @@ class DashboardManager:
                 {
                     "tenant_id": tenant_id,
                     "tenant_namespace": f"tenant-{tenant_id.lower().replace('_', '-')}",
-                    "service_name": f"isp-{tenant_id}"
-                    if platform_type == "isp"
-                    else variables["service_name"],
+                    "service_name": f"isp-{tenant_id}" if platform_type == "isp" else variables["service_name"],
                 }
             )
 
@@ -152,15 +142,11 @@ class DashboardManager:
         for config in dashboard_configs:
             try:
                 # Apply template variable substitution
-                processed_config = self._substitute_template_variables(
-                    config, variables
-                )
+                processed_config = self._substitute_template_variables(config, variables)
 
                 # Add tenant-specific modifications if needed
                 if variables.get("tenant_id"):
-                    processed_config = self._customize_for_tenant(
-                        processed_config, variables
-                    )
+                    processed_config = self._customize_for_tenant(processed_config, variables)
 
                 results.append(
                     {
@@ -177,9 +163,7 @@ class DashboardManager:
 
         return results
 
-    async def _process_alert_rules(
-        self, platform_type: str, variables: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    async def _process_alert_rules(self, platform_type: str, variables: dict[str, Any]) -> list[dict[str, Any]]:
         """Process and prepare alert rules."""
         results = []
 
@@ -191,9 +175,7 @@ class DashboardManager:
                     prometheus_alerts = yaml.safe_load(f)
 
                 # Apply template substitution
-                processed_prometheus = self._substitute_template_variables(
-                    prometheus_alerts, variables
-                )
+                processed_prometheus = self._substitute_template_variables(prometheus_alerts, variables)
 
                 results.append(
                     {
@@ -211,15 +193,10 @@ class DashboardManager:
 
                 # Apply template substitution and filter by platform
                 filtered_alerts = [
-                    alert
-                    for alert in signoz_alerts
-                    if self._alert_applies_to_platform(alert, platform_type)
+                    alert for alert in signoz_alerts if self._alert_applies_to_platform(alert, platform_type)
                 ]
 
-                processed_signoz = [
-                    self._substitute_template_variables(alert, variables)
-                    for alert in filtered_alerts
-                ]
+                processed_signoz = [self._substitute_template_variables(alert, variables) for alert in filtered_alerts]
 
                 results.append(
                     {
@@ -235,19 +212,12 @@ class DashboardManager:
 
         return results
 
-    def _substitute_template_variables(
-        self, config: Any, variables: dict[str, Any]
-    ) -> Any:
+    def _substitute_template_variables(self, config: Any, variables: dict[str, Any]) -> Any:
         """Recursively substitute template variables in configuration."""
         if isinstance(config, dict):
-            return {
-                key: self._substitute_template_variables(value, variables)
-                for key, value in config.items()
-            }
+            return {key: self._substitute_template_variables(value, variables) for key, value in config.items()}
         elif isinstance(config, list):
-            return [
-                self._substitute_template_variables(item, variables) for item in config
-            ]
+            return [self._substitute_template_variables(item, variables) for item in config]
         elif isinstance(config, str):
             # Simple template variable substitution
             for key, value in variables.items():
@@ -258,9 +228,7 @@ class DashboardManager:
         else:
             return config
 
-    def _customize_for_tenant(
-        self, config: dict[str, Any], variables: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _customize_for_tenant(self, config: dict[str, Any], variables: dict[str, Any]) -> dict[str, Any]:
         """Customize dashboard configuration for specific tenant."""
         tenant_id = variables.get("tenant_id")
         if not tenant_id:
@@ -278,17 +246,12 @@ class DashboardManager:
             if "list" in templating:
                 # Add tenant filter as default
                 for variable in templating["list"]:
-                    if (
-                        variable.get("name") == "tenant"
-                        and "defaultValue" not in variable
-                    ):
+                    if variable.get("name") == "tenant" and "defaultValue" not in variable:
                         variable["defaultValue"] = tenant_id
 
         return config
 
-    def _alert_applies_to_platform(
-        self, alert: dict[str, Any], platform_type: str
-    ) -> bool:
+    def _alert_applies_to_platform(self, alert: dict[str, Any], platform_type: str) -> bool:
         """Check if an alert rule applies to the given platform type."""
         labels = alert.get("labels", {})
         service = labels.get("service", "")
@@ -308,9 +271,7 @@ class DashboardManager:
 
         try:
             # Provision dashboards
-            results = await self.provision_dashboards_for_platform(
-                platform_type, tenant_id
-            )
+            results = await self.provision_dashboards_for_platform(platform_type, tenant_id)
 
             # Create export directory
             export_dir = Path(export_path)
@@ -370,9 +331,7 @@ async def provision_platform_dashboards(
         Provisioning results dictionary
     """
     dashboard_manager = DashboardManager()
-    return await dashboard_manager.provision_dashboards_for_platform(
-        platform_type, tenant_id, custom_variables
-    )
+    return await dashboard_manager.provision_dashboards_for_platform(platform_type, tenant_id, custom_variables)
 
 
 async def export_platform_dashboards(
@@ -390,6 +349,4 @@ async def export_platform_dashboards(
         Export results dictionary
     """
     dashboard_manager = DashboardManager()
-    return await dashboard_manager.export_dashboard_configs(
-        platform_type, export_path, tenant_id
-    )
+    return await dashboard_manager.export_dashboard_configs(platform_type, export_path, tenant_id)

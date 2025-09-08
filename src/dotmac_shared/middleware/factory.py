@@ -42,9 +42,7 @@ class MiddlewareResult:
         self.response_headers = response_headers or {}
 
     @classmethod
-    def continue_processing(
-        cls, data: dict[str, Any] | None = None
-    ) -> "MiddlewareResult":
+    def continue_processing(cls, data: dict[str, Any] | None = None) -> "MiddlewareResult":
         """Continue with normal request processing."""
         return cls(action="continue", data=data)
 
@@ -64,9 +62,7 @@ class MiddlewareResult:
         )
 
     @classmethod
-    def cache_hit(
-        cls, cached_data: dict[str, Any], cache_headers: dict[str, str] | None = None
-    ) -> "MiddlewareResult":
+    def cache_hit(cls, cached_data: dict[str, Any], cache_headers: dict[str, str] | None = None) -> "MiddlewareResult":
         """Return cached result."""
         headers = cache_headers or {}
         headers["X-Cache-Hit"] = "true"
@@ -88,9 +84,7 @@ class MiddlewareProcessor:
         """
         raise NotImplementedError
 
-    def get_response_headers(
-        self, request: Request, result: MiddlewareResult | None = None
-    ) -> dict[str, str]:
+    def get_response_headers(self, request: Request, result: MiddlewareResult | None = None) -> dict[str, str]:
         """Get response headers to add.
 
         Args:
@@ -148,9 +142,7 @@ class MiddlewareFactory:
                     request.state.request_id = request_id
 
                 # Check exempt paths
-                if exempt_paths and any(
-                    request.url.path.startswith(path) for path in exempt_paths
-                ):
+                if exempt_paths and any(request.url.path.startswith(path) for path in exempt_paths):
                     logger.debug(f"{name}: Skipping exempt path {request.url.path}")
                     return await call_next(request)
 
@@ -159,25 +151,19 @@ class MiddlewareFactory:
                     return await call_next(request)
 
                 # Process request
-                logger.debug(
-                    f"{name}: Processing request {request.method} {request.url.path}"
-                )
+                logger.debug(f"{name}: Processing request {request.method} {request.url.path}")
                 result = await processor.process_request(request)
 
                 # Handle early returns
                 if result and result.action in ["early_return", "cache_hit"]:
-                    response = JSONResponse(
-                        status_code=result.response_status, content=result.data
-                    )
+                    response = JSONResponse(status_code=result.response_status, content=result.data)
 
                     # Add result headers
                     for key, value in result.response_headers.items():
                         response.headers[key] = value
 
                     # Add standard headers
-                    MiddlewareFactory._add_standard_headers(
-                        response, request, name, start_time, request_id
-                    )
+                    MiddlewareFactory._add_standard_headers(response, request, name, start_time, request_id)
 
                     logger.info(f"{name}: Early return with {result.action}")
                     return response
@@ -191,9 +177,7 @@ class MiddlewareFactory:
                     response.headers[key] = value
 
                 # Add standard headers
-                MiddlewareFactory._add_standard_headers(
-                    response, request, name, start_time, request_id
-                )
+                MiddlewareFactory._add_standard_headers(response, request, name, start_time, request_id)
 
                 logger.debug(f"{name}: Request completed successfully")
                 return response
@@ -210,9 +194,7 @@ class MiddlewareFactory:
                     for key, value in e.headers.items():
                         response.headers[key] = value
 
-                MiddlewareFactory._add_standard_headers(
-                    response, request, name, start_time, request_id
-                )
+                MiddlewareFactory._add_standard_headers(response, request, name, start_time, request_id)
                 return response
 
             except Exception as e:
@@ -226,9 +208,7 @@ class MiddlewareFactory:
                     },
                 )
 
-                MiddlewareFactory._add_standard_headers(
-                    response, request, name, start_time, request_id
-                )
+                MiddlewareFactory._add_standard_headers(response, request, name, start_time, request_id)
                 return response
 
         # Set middleware name for debugging
@@ -286,32 +266,20 @@ class MiddlewareFactory:
         """
 
         class SimpleProcessor(MiddlewareProcessor):
-            async def process_request(
-                self, request: Request
-            ) -> MiddlewareResult | None:
-                result = (
-                    await process_fn(request)
-                    if asyncio.iscoroutinefunction(process_fn)
-                    else process_fn(request)
-                )
+            async def process_request(self, request: Request) -> MiddlewareResult | None:
+                result = await process_fn(request) if asyncio.iscoroutinefunction(process_fn) else process_fn(request)
                 return MiddlewareResult.continue_processing(result) if result else None
 
-            def get_response_headers(
-                self, request: Request, result: MiddlewareResult | None = None
-            ) -> dict[str, str]:
+            def get_response_headers(self, request: Request, result: MiddlewareResult | None = None) -> dict[str, str]:
                 if response_headers_fn and result and result.data:
                     return response_headers_fn(request, result.data)
                 return {}
 
             def is_exempt_path(self, path: str) -> bool:
-                return exempt_paths and any(
-                    path.startswith(exempt_path) for exempt_path in exempt_paths
-                )
+                return exempt_paths and any(path.startswith(exempt_path) for exempt_path in exempt_paths)
 
         processor = SimpleProcessor()
-        return MiddlewareFactory.create_processor_middleware(
-            processor, name, exempt_paths
-        )
+        return MiddlewareFactory.create_processor_middleware(processor, name, exempt_paths)
 
     @staticmethod
     def create_caching_middleware(
@@ -335,9 +303,7 @@ class MiddlewareFactory:
         """
 
         class CachingProcessor(MiddlewareProcessor):
-            async def process_request(
-                self, request: Request
-            ) -> MiddlewareResult | None:
+            async def process_request(self, request: Request) -> MiddlewareResult | None:
                 cache_key = cache_key_fn(request)
                 if not cache_key:
                     return None
@@ -351,9 +317,7 @@ class MiddlewareFactory:
                 request.state.cache_key = cache_key
                 return None
 
-            def get_response_headers(
-                self, request: Request, result: MiddlewareResult | None = None
-            ) -> dict[str, str]:
+            def get_response_headers(self, request: Request, result: MiddlewareResult | None = None) -> dict[str, str]:
                 return {"X-Cache-TTL": str(ttl_seconds)}
 
         processor = CachingProcessor()
@@ -364,11 +328,7 @@ class MiddlewareFactory:
             response = await base_middleware(request, call_next)
 
             # Set cache on successful response
-            if (
-                hasattr(request.state, "cache_key")
-                and response.status_code == 200
-                and hasattr(response, "body")
-            ):
+            if hasattr(request.state, "cache_key") and response.status_code == 200 and hasattr(response, "body"):
                 try:
                     # This is a simplified version - in practice you'd need to handle JSON serialization
                     cache_set_fn(request.state.cache_key, {"cached": True})

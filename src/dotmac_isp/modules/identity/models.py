@@ -6,12 +6,13 @@ SQLAlchemy models for users, customers, and identity-related entities.
 import uuid
 from enum import Enum
 
-from dotmac_isp.shared.database.base import Base, BaseModel
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+from dotmac_isp.shared.database.base import Base, BaseModel
 
 
 class AccountStatus(str, Enum):
@@ -69,9 +70,7 @@ class User(BaseModel):
     password_changed_at = Column(DateTime(timezone=True), nullable=True)
 
     # Portal and permissions
-    portal_type = Column(
-        String(50), nullable=True
-    )  # admin, customer, reseller, technician
+    portal_type = Column(String(50), nullable=True)  # admin, customer, reseller, technician
     permissions = Column(JSONB, nullable=True, default=list)
     preferences = Column(JSONB, nullable=True, default=dict)
 
@@ -88,9 +87,7 @@ class Customer(BaseModel):
     __tablename__ = "customers"
 
     # Link to user account
-    user_id = Column(
-        UUID(as_uuid=False), ForeignKey("identity_users.id"), nullable=True
-    )
+    user_id = Column(UUID(as_uuid=False), ForeignKey("identity_users.id"), nullable=True)
 
     # Customer-specific fields
     customer_number = Column(String(50), nullable=False, unique=True, index=True)
@@ -138,14 +135,10 @@ class PortalAccess(BaseModel):
     __tablename__ = "portal_access"
 
     # User reference
-    user_id = Column(
-        UUID(as_uuid=False), ForeignKey("identity_users.id"), nullable=False
-    )
+    user_id = Column(UUID(as_uuid=False), ForeignKey("identity_users.id"), nullable=False)
 
     # Portal configuration
-    portal_type = Column(
-        String(50), nullable=False
-    )  # admin, customer, reseller, technician
+    portal_type = Column(String(50), nullable=False)  # admin, customer, reseller, technician
     access_level = Column(String(20), default="standard")  # standard, advanced, limited
 
     # Access control
@@ -198,9 +191,7 @@ class AuthenticationLog(Base):
 
     __tablename__ = "authentication_logs"
 
-    id = Column(
-        UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4())
-    )
+    id = Column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
 
     # Authentication attempt details
     email = Column(String(255), nullable=True, index=True)
@@ -231,9 +222,7 @@ class PasswordResetToken(Base):
 
     __tablename__ = "password_reset_tokens"
 
-    id = Column(
-        UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4())
-    )
+    id = Column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
 
     # Token details
     token = Column(String(255), nullable=False, unique=True, index=True)
@@ -256,9 +245,7 @@ class AuthToken(Base):
 
     __tablename__ = "auth_tokens"
 
-    id = Column(
-        UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4())
-    )
+    id = Column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
     token = Column(String(255), nullable=False, unique=True, index=True)
     user_id = Column(UUID(as_uuid=False), nullable=False, index=True)
     tenant_id = Column(String(36), nullable=False, index=True)
@@ -280,9 +267,7 @@ class LoginAttempt(Base):
 
     __tablename__ = "login_attempts"
 
-    id = Column(
-        UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4())
-    )
+    id = Column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
 
     # Attempt details
     email = Column(String(255), nullable=True, index=True)
@@ -306,9 +291,7 @@ class UserRole(BaseModel):
     __tablename__ = "user_roles"
 
     # References
-    user_id = Column(
-        UUID(as_uuid=False), ForeignKey("identity_users.id"), nullable=False
-    )
+    user_id = Column(UUID(as_uuid=False), ForeignKey("identity_users.id"), nullable=False)
     role = Column(SQLEnum(Role), nullable=False)
 
     # Assignment details

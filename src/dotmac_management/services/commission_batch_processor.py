@@ -18,15 +18,14 @@ from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Optional
 
-from dotmac_management.models.commission_config import CommissionConfig
-from dotmac_shared.core.logging import get_logger
-
 from dotmac.database.base import get_db_session
 from dotmac.tasks.decorators import (
     TaskExecutionContext,
     background_task,
     scheduled_task,
 )
+from dotmac_management.models.commission_config import CommissionConfig
+from dotmac_shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -139,9 +138,7 @@ class CommissionBatchProcessor:
         """
         async with TaskExecutionContext(
             task_name="process_commission_batch",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
             metadata={"batch_id": batch_id, "record_count": len(transaction_data)},
         ) as ctx:
             start_time = time.time()
@@ -164,34 +161,22 @@ class CommissionBatchProcessor:
 
             try:
                 # Step 1: Validate and prepare data
-                await ctx.update_progress(
-                    10, "Validating and preparing transaction data"
-                )
-                validated_data = await self._validate_and_prepare_data(
-                    transaction_data, partner_filter, date_range
-                )
+                await ctx.update_progress(10, "Validating and preparing transaction data")
+                validated_data = await self._validate_and_prepare_data(transaction_data, partner_filter, date_range)
 
                 if not validated_data:
-                    raise ValueError(
-                        "No valid transaction data after filtering and validation"
-                    )
+                    raise ValueError("No valid transaction data after filtering and validation")
 
                 # Step 2: Load commission configurations
                 await ctx.update_progress(20, "Loading commission configurations")
-                commission_configs = await self._load_commission_configurations(
-                    validated_data
-                )
+                commission_configs = await self._load_commission_configurations(validated_data)
 
                 # Step 3: Split data into processing batches
                 await ctx.update_progress(25, "Splitting data into processing batches")
-                processing_batches = self._split_into_processing_batches(
-                    validated_data, self.config.batch_size
-                )
+                processing_batches = self._split_into_processing_batches(validated_data, self.config.batch_size)
 
                 # Step 4: Process batches in parallel
-                await ctx.update_progress(
-                    30, f"Processing {len(processing_batches)} batches in parallel"
-                )
+                await ctx.update_progress(30, f"Processing {len(processing_batches)} batches in parallel")
 
                 batch_results = []
                 processed_count = 0
@@ -199,19 +184,14 @@ class CommissionBatchProcessor:
                 # Process batches with controlled concurrency
                 semaphore = asyncio.Semaphore(self.config.max_concurrent_batches)
 
-                async def process_single_batch(
-                    batch_data: list[dict], batch_index: int
-                ):
+                async def process_single_batch(batch_data: list[dict], batch_index: int):
                     async with semaphore:
                         return await self._process_single_batch(
                             batch_data, commission_configs, f"{batch_id}_{batch_index}"
                         )
 
                 # Create tasks for all batches
-                batch_tasks = [
-                    process_single_batch(batch_data, i)
-                    for i, batch_data in enumerate(processing_batches)
-                ]
+                batch_tasks = [process_single_batch(batch_data, i) for i, batch_data in enumerate(processing_batches)]
 
                 # Process batches and update progress
                 for completed_task in asyncio.as_completed(batch_tasks):
@@ -243,15 +223,11 @@ class CommissionBatchProcessor:
                 # Step 6: Validation and reconciliation
                 if self.config.enable_validation:
                     await ctx.update_progress(95, "Running validation checks")
-                    batch_result.validation_results = (
-                        await self._validate_batch_results(batch_result, validated_data)
-                    )
+                    batch_result.validation_results = await self._validate_batch_results(batch_result, validated_data)
 
                 # Step 7: Generate partner summaries
                 await ctx.update_progress(98, "Generating partner summaries")
-                batch_result.partner_summaries = await self._generate_partner_summaries(
-                    batch_results
-                )
+                batch_result.partner_summaries = await self._generate_partner_summaries(batch_results)
 
                 # Final processing time calculation
                 batch_result.processing_time_seconds = time.time() - start_time
@@ -326,22 +302,16 @@ class CommissionBatchProcessor:
         """
         async with TaskExecutionContext(
             task_name="process_monthly_commission_batch",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
             metadata={"year": year, "month": month},
         ) as ctx:
             batch_id = f"monthly_{year}_{month:02d}_{int(time.time())}"
 
-            await ctx.update_progress(
-                5, f"Starting monthly commission processing for {year}-{month:02d}"
-            )
+            await ctx.update_progress(5, f"Starting monthly commission processing for {year}-{month:02d}")
 
             # Step 1: Load transaction data for the month
             await ctx.update_progress(15, "Loading transaction data")
-            transaction_data = await self._load_monthly_transaction_data(
-                year, month, partner_ids
-            )
+            transaction_data = await self._load_monthly_transaction_data(year, month, partner_ids)
 
             if not transaction_data:
                 return {
@@ -351,9 +321,7 @@ class CommissionBatchProcessor:
                     "total_records": 0,
                 }
 
-            await ctx.update_progress(
-                25, f"Found {len(transaction_data)} transactions to process"
-            )
+            await ctx.update_progress(25, f"Found {len(transaction_data)} transactions to process")
 
             # Step 2: Process the batch
             batch_result = await self.process_commission_batch(
@@ -364,18 +332,12 @@ class CommissionBatchProcessor:
                     f"{year}-{month:02d}-01",
                     f"{year}-{month:02d}-{self._get_days_in_month(year, month):02d}",
                 ),
-                task_context={
-                    "progress_callback": lambda pct, msg: ctx.update_progress(
-                        int(25 + (pct * 0.7)), msg
-                    )
-                },
+                task_context={"progress_callback": lambda pct, msg: ctx.update_progress(int(25 + (pct * 0.7)), msg)},
             )
 
             # Step 3: Generate monthly reports
             await ctx.update_progress(95, "Generating monthly commission reports")
-            monthly_reports = await self._generate_monthly_reports(
-                batch_result, year, month
-            )
+            monthly_reports = await self._generate_monthly_reports(batch_result, year, month)
 
             await ctx.update_progress(100, "Monthly commission processing completed")
 
@@ -389,13 +351,9 @@ class CommissionBatchProcessor:
                 "processing_summary": {
                     "total_partners": len(batch_result.partner_summaries),
                     "total_transactions": batch_result.total_records,
-                    "total_commission_amount": str(
-                        batch_result.total_commission_amount
-                    ),
-                    "processing_time_minutes": batch_result.processing_time_seconds
-                    / 60,
-                    "success_rate": batch_result.successful_calculations
-                    / batch_result.total_records
+                    "total_commission_amount": str(batch_result.total_commission_amount),
+                    "processing_time_minutes": batch_result.processing_time_seconds / 60,
+                    "success_rate": batch_result.successful_calculations / batch_result.total_records
                     if batch_result.total_records > 0
                     else 0,
                 },
@@ -407,9 +365,7 @@ class CommissionBatchProcessor:
         queue="commission_scheduled",
         tags=["commission", "scheduled", "monthly"],
     )
-    async def auto_process_monthly_commissions(
-        self, task_context: Optional[dict] = None
-    ) -> dict[str, Any]:
+    async def auto_process_monthly_commissions(self, task_context: Optional[dict] = None) -> dict[str, Any]:
         """
         Automatically process previous month's commissions.
 
@@ -424,9 +380,7 @@ class CommissionBatchProcessor:
             prev_year = now.year
             prev_month = now.month - 1
 
-        return await self.process_monthly_commission_batch(
-            year=prev_year, month=prev_month, task_context=task_context
-        )
+        return await self.process_monthly_commission_batch(year=prev_year, month=prev_month, task_context=task_context)
 
     @background_task(
         name="reconcile_commission_calculations",
@@ -455,13 +409,9 @@ class CommissionBatchProcessor:
         """
         async with TaskExecutionContext(
             task_name="reconcile_commission_calculations",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
         ) as ctx:
-            await ctx.update_progress(
-                10, f"Starting reconciliation for batch {batch_id}"
-            )
+            await ctx.update_progress(10, f"Starting reconciliation for batch {batch_id}")
 
             # Load batch results
             batch_data = await self._load_batch_results(batch_id)
@@ -484,23 +434,17 @@ class CommissionBatchProcessor:
             # Perform reconciliation logic
             if external_data:
                 reconciliation_result.update(
-                    await self._reconcile_against_external_data(
-                        batch_data, external_data, tolerance_percentage
-                    )
+                    await self._reconcile_against_external_data(batch_data, external_data, tolerance_percentage)
                 )
             else:
                 reconciliation_result.update(
-                    await self._reconcile_internal_calculations(
-                        batch_data, tolerance_percentage
-                    )
+                    await self._reconcile_internal_calculations(batch_data, tolerance_percentage)
                 )
 
             await ctx.update_progress(80, "Generating reconciliation report")
 
             # Generate detailed reconciliation report
-            reconciliation_report = await self._generate_reconciliation_report(
-                reconciliation_result
-            )
+            reconciliation_report = await self._generate_reconciliation_report(reconciliation_result)
             reconciliation_result["report"] = reconciliation_report
 
             await ctx.update_progress(100, "Reconciliation completed")
@@ -521,9 +465,7 @@ class CommissionBatchProcessor:
         for transaction in transaction_data:
             try:
                 # Basic validation
-                if not all(
-                    key in transaction for key in ["id", "partner_id", "amount", "date"]
-                ):
+                if not all(key in transaction for key in ["id", "partner_id", "amount", "date"]):
                     continue
 
                 # Partner filter
@@ -562,32 +504,22 @@ class CommissionBatchProcessor:
             for partner_id in partner_ids:
                 # Check cache first
                 if partner_id in self._commission_config_cache:
-                    commission_configs[partner_id] = self._commission_config_cache[
-                        partner_id
-                    ]
+                    commission_configs[partner_id] = self._commission_config_cache[partner_id]
                     continue
 
                 # Load from database
-                config = (
-                    db.query(CommissionConfig)
-                    .filter_by(partner_id=partner_id, is_active=True)
-                    .first()
-                )
+                config = db.query(CommissionConfig).filter_by(partner_id=partner_id, is_active=True).first()
 
                 if config:
                     commission_configs[partner_id] = config
                     self._commission_config_cache[partner_id] = config
                 else:
                     # Use default configuration
-                    commission_configs[
-                        partner_id
-                    ] = self._get_default_commission_config(partner_id)
+                    commission_configs[partner_id] = self._get_default_commission_config(partner_id)
 
         return commission_configs
 
-    def _split_into_processing_batches(
-        self, data: list[dict[str, Any]], batch_size: int
-    ) -> list[list[dict[str, Any]]]:
+    def _split_into_processing_batches(self, data: list[dict[str, Any]], batch_size: int) -> list[list[dict[str, Any]]]:
         """Split data into processing batches."""
         batches = []
         for i in range(0, len(data), batch_size):
@@ -619,9 +551,7 @@ class CommissionBatchProcessor:
                     continue
 
                 # Calculate commission
-                calculation_result = await self._calculate_commission(
-                    transaction, config
-                )
+                calculation_result = await self._calculate_commission(transaction, config)
                 results.append(calculation_result)
 
             except Exception as e:
@@ -650,18 +580,14 @@ class CommissionBatchProcessor:
         # Determine commission rate based on configuration
         if config.commission_tiers:
             # Tiered commission calculation
-            commission_rate, tier_name = self._get_tiered_commission_rate(
-                base_amount, config
-            )
+            commission_rate, tier_name = self._get_tiered_commission_rate(base_amount, config)
         else:
             # Flat rate commission
             commission_rate = config.commission_rate
             tier_name = None
 
         # Calculate commission amount
-        commission_amount = (base_amount * commission_rate / 100).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        commission_amount = (base_amount * commission_rate / 100).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         return CommissionCalculationResult(
             transaction_id=transaction["id"],
@@ -677,9 +603,7 @@ class CommissionBatchProcessor:
             },
         )
 
-    def _get_tiered_commission_rate(
-        self, amount: Decimal, config: CommissionConfig
-    ) -> tuple[Decimal, Optional[str]]:
+    def _get_tiered_commission_rate(self, amount: Decimal, config: CommissionConfig) -> tuple[Decimal, Optional[str]]:
         """Get commission rate based on tiered configuration."""
         for tier in sorted(config.commission_tiers, key=lambda t: t.min_amount):
             if amount >= tier.min_amount:
@@ -728,15 +652,11 @@ class CommissionBatchProcessor:
         # Validate commission amounts are reasonable
         if batch_result.total_commission_amount <= 0:
             validation_result["amount_validation"] = False
-            validation_result["validation_errors"].append(
-                "Total commission amount is zero or negative"
-            )
+            validation_result["validation_errors"].append("Total commission amount is zero or negative")
 
         return validation_result
 
-    async def _generate_partner_summaries(
-        self, batch_results: list[dict[str, Any]]
-    ) -> dict[str, dict[str, Any]]:
+    async def _generate_partner_summaries(self, batch_results: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
         """Generate summary statistics per partner."""
         partner_summaries = defaultdict(
             lambda: {
@@ -766,9 +686,7 @@ class CommissionBatchProcessor:
         final_summaries = {}
         for partner_id, summary in partner_summaries.items():
             if total_rates[partner_id]:
-                summary["average_commission_rate"] = sum(total_rates[partner_id]) / len(
-                    total_rates[partner_id]
-                )
+                summary["average_commission_rate"] = sum(total_rates[partner_id]) / len(total_rates[partner_id])
 
             summary["commission_tiers_used"] = list(summary["commission_tiers_used"])
             final_summaries[partner_id] = dict(summary)
@@ -778,12 +696,8 @@ class CommissionBatchProcessor:
     def _update_processing_stats(self, batch_result: BatchProcessingResult):
         """Update global processing statistics."""
         self._processing_stats["total_batches_processed"] += 1
-        self._processing_stats[
-            "total_records_processed"
-        ] += batch_result.processed_records
-        self._processing_stats[
-            "total_commission_calculated"
-        ] += batch_result.total_commission_amount
+        self._processing_stats["total_records_processed"] += batch_result.processed_records
+        self._processing_stats["total_commission_calculated"] += batch_result.total_commission_amount
 
         # Update average processing time
         current_avg = self._processing_stats["average_processing_time"]
@@ -794,9 +708,7 @@ class CommissionBatchProcessor:
 
         # Update error rate
         if batch_result.total_records > 0:
-            batch_error_rate = (
-                batch_result.failed_calculations / batch_result.total_records
-            )
+            batch_error_rate = batch_result.failed_calculations / batch_result.total_records
             total_processed = self._processing_stats["total_records_processed"]
             current_error_rate = self._processing_stats["error_rate"]
 
@@ -853,15 +765,11 @@ class CommissionBatchProcessor:
         """Reconcile against external data source."""
         return {"matching_records": 0, "discrepancies": []}
 
-    async def _reconcile_internal_calculations(
-        self, batch_data: dict, tolerance: float
-    ) -> dict[str, Any]:
+    async def _reconcile_internal_calculations(self, batch_data: dict, tolerance: float) -> dict[str, Any]:
         """Reconcile internal calculations."""
         return {"matching_records": 0, "discrepancies": []}
 
-    async def _generate_reconciliation_report(
-        self, reconciliation_result: dict
-    ) -> dict[str, Any]:
+    async def _generate_reconciliation_report(self, reconciliation_result: dict) -> dict[str, Any]:
         """Generate detailed reconciliation report."""
         return {
             "report_generated_at": datetime.now(timezone.utc).isoformat(),
@@ -872,9 +780,7 @@ class CommissionBatchProcessor:
         """Get current processing statistics."""
         return {
             **self._processing_stats,
-            "total_commission_calculated": str(
-                self._processing_stats["total_commission_calculated"]
-            ),
+            "total_commission_calculated": str(self._processing_stats["total_commission_calculated"]),
             "cache_size": len(self._commission_config_cache),
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }

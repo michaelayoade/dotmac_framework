@@ -89,6 +89,7 @@ class Event:
     headers: Optional[dict[str, str]] = None
     tenant_id: Optional[str] = None
     metadata: Optional[EventMetadata] = None
+    event_id: Optional[str] = None
 
     def __post_init__(self) -> None:
         """Initialize default values after creation."""
@@ -217,13 +218,13 @@ class MessageCodec(Protocol):
     """Protocol for encoding and decoding event messages."""
 
     @abstractmethod
-    def encode(self, event: Event) -> bytes:
-        """Encode an event to bytes for transport."""
+    def encode(self, event: Event | dict[str, Any]) -> bytes:
+        """Encode an event or dictionary to bytes for transport."""
         ...
 
     @abstractmethod
-    def decode(self, data: bytes) -> Event:
-        """Decode bytes to an event."""
+    def decode(self, data: bytes) -> Event | dict[str, Any]:
+        """Decode bytes to an event or dictionary."""
         ...
 
     @property

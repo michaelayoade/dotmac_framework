@@ -9,7 +9,7 @@ import asyncio
 import logging
 from datetime import datetime
 
-from ..observability import MonitoringStack
+from .monitoring import MonitoringStack
 from .rollout_strategies import MetricsCollector, RolloutOrchestrator
 
 
@@ -265,41 +265,6 @@ class SigNozIstioTrafficManager:
         """Configure SigNoz-specific monitoring for traffic split."""
         try:
             # Create SigNoz dashboard for the rollout
-            dashboard_config = {
-                "title": f"Rollout Monitoring - {service_name}",
-                "panels": [
-                    {
-                        "title": "Traffic Distribution",
-                        "type": "graph",
-                        "targets": [
-                            {
-                                "expr": f'sum by (service_version) (rate(signoz_calls_total{{service_name="{service_name}"}}[5m]))',
-                                "legendFormat": "{{service_version}}",
-                            }
-                        ],
-                    },
-                    {
-                        "title": "Error Rate by Version",
-                        "type": "graph",
-                        "targets": [
-                            {
-                                "expr": f'rate(signoz_calls_total{{service_name="{service_name}",status_code=~"5.."}}[5m]) / rate(signoz_calls_total{{service_name="{service_name}"}}[5m])',
-                                "legendFormat": "Error Rate - {{service_version}}",
-                            }
-                        ],
-                    },
-                    {
-                        "title": "Response Time P95 by Version",
-                        "type": "graph",
-                        "targets": [
-                            {
-                                "expr": f'histogram_quantile(0.95, rate(signoz_latency_bucket{{service_name="{service_name}"}}[5m]))',
-                                "legendFormat": "P95 Latency - {{service_version}}",
-                            }
-                        ],
-                    },
-                ],
-            }
 
             # In a real implementation, this would call SigNoz API to create the dashboard
             self.logger.info(

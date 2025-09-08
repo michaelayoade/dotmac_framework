@@ -5,13 +5,11 @@ from uuid import UUID
 
 from pydantic import ConfigDict, Field
 
-from .base_schemas import TenantModel
+from dotmac.core.schemas.base_schemas import TenantModel
 
 
 class ISPBaseSchema(TenantModel):
     """Base schema for all ISP module operations."""
-
-    pass
 
 
 class ISPCreateSchema(ISPBaseSchema):
@@ -24,7 +22,6 @@ class ISPUpdateSchema(TenantModel):
     """Base schema for ISP resource updates."""
 
     # Most update schemas have optional fields
-    pass
 
 
 class ISPResponseSchema(ISPBaseSchema):

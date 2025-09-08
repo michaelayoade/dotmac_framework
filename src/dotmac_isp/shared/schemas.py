@@ -164,9 +164,7 @@ class NetworkDeviceBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     device_type: str = Field(..., min_length=1, max_length=100)
     ip_address: Optional[str] = Field(None, pattern=r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
-    mac_address: Optional[str] = Field(
-        None, pattern=r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
-    )
+    mac_address: Optional[str] = Field(None, pattern=r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$")
     status: str = Field(default="active")
 
 

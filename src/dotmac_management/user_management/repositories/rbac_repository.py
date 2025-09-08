@@ -7,12 +7,12 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_shared.common.exceptions import standard_exception_handler
 from sqlalchemy import and_, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from dotmac.platform.observability.logging import get_logger
+from dotmac_shared.common.exceptions import standard_exception_handler
 
 from ..models.rbac_models import (
     PermissionModel,
@@ -40,9 +40,7 @@ class RoleRepository(BaseRepository[RoleModel]):
         super().__init__(db_session, RoleModel, tenant_id)
 
     @standard_exception_handler
-    async def create_role(
-        self, role_data: RoleCreateSchema, created_by: Optional[UUID] = None
-    ) -> RoleModel:
+    async def create_role(self, role_data: RoleCreateSchema, created_by: Optional[UUID] = None) -> RoleModel:
         """
         Create new role with permissions.
 
@@ -62,21 +60,15 @@ class RoleRepository(BaseRepository[RoleModel]):
         # Assign permissions if provided
         if role_data.permission_ids:
             for permission_id in role_data.permission_ids:
-                await self._assign_permission_to_role(
-                    role.id, permission_id, created_by
-                )
+                await self._assign_permission_to_role(role.id, permission_id, created_by)
 
-        logger.info(
-            f"Created role {role.name} with {len(role_data.permission_ids or [])} permissions"
-        )
+        logger.info(f"Created role {role.name} with {len(role_data.permission_ids or [])} permissions")
         return role
 
     @standard_exception_handler
     async def get_role_by_name(self, name: str) -> Optional[RoleModel]:
         """Get role by name within tenant."""
-        query = select(RoleModel).where(
-            and_(RoleModel.name == name, RoleModel.tenant_id == self.tenant_id)
-        )
+        query = select(RoleModel).where(and_(RoleModel.name == name, RoleModel.tenant_id == self.tenant_id))
 
         result = await self.db_session.execute(query)
         return result.scalar_one_or_none()
@@ -87,9 +79,7 @@ class RoleRepository(BaseRepository[RoleModel]):
         query = (
             select(RoleModel)
             .options(
-                selectinload(RoleModel.permissions).selectinload(
-                    RolePermissionModel.permission
-                ),
+                selectinload(RoleModel.permissions).selectinload(RolePermissionModel.permission),
                 selectinload(RoleModel.child_roles),
                 selectinload(RoleModel.parent_role),
             )
@@ -100,9 +90,7 @@ class RoleRepository(BaseRepository[RoleModel]):
         return result.scalar_one_or_none()
 
     @standard_exception_handler
-    async def search_roles(
-        self, search_params: RoleSearchSchema
-    ) -> tuple[list[RoleModel], int]:
+    async def search_roles(self, search_params: RoleSearchSchema) -> tuple[list[RoleModel], int]:
         """
         Search roles with filters and pagination.
 
@@ -167,9 +155,7 @@ class RoleRepository(BaseRepository[RoleModel]):
         query = query.offset(offset).limit(search_params.page_size)
 
         # Load permissions count
-        query = query.options(
-            selectinload(RoleModel.permissions), selectinload(RoleModel.user_roles)
-        )
+        query = query.options(selectinload(RoleModel.permissions), selectinload(RoleModel.user_roles))
 
         result = await self.db_session.execute(query)
         roles = result.scalars().all()
@@ -177,9 +163,7 @@ class RoleRepository(BaseRepository[RoleModel]):
         return list(roles), total_count
 
     @standard_exception_handler
-    async def get_user_roles(
-        self, user_id: UUID, include_expired: bool = False
-    ) -> list[RoleModel]:
+    async def get_user_roles(self, user_id: UUID, include_expired: bool = False) -> list[RoleModel]:
         """Get all active roles for a user."""
         query = (
             select(RoleModel)
@@ -292,9 +276,7 @@ class PermissionRepository(BaseRepository[PermissionModel]):
         return result.scalar_one_or_none()
 
     @standard_exception_handler
-    async def search_permissions(
-        self, search_params: PermissionSearchSchema
-    ) -> tuple[list[PermissionModel], int]:
+    async def search_permissions(self, search_params: PermissionSearchSchema) -> tuple[list[PermissionModel], int]:
         """Search permissions with filters and pagination."""
         query = select(PermissionModel)
         count_query = select(func.count(PermissionModel.id))
@@ -310,32 +292,22 @@ class PermissionRepository(BaseRepository[PermissionModel]):
             filters.append(search_filter)
 
         if search_params.permission_type is not None:
-            filters.append(
-                PermissionModel.permission_type == search_params.permission_type
-            )
+            filters.append(PermissionModel.permission_type == search_params.permission_type)
 
         if search_params.scope is not None:
             filters.append(PermissionModel.scope == search_params.scope)
 
         if search_params.resource is not None:
-            filters.append(
-                PermissionModel.resource.ilike(f"%{search_params.resource}%")
-            )
+            filters.append(PermissionModel.resource.ilike(f"%{search_params.resource}%"))
 
         if search_params.is_active is not None:
             filters.append(PermissionModel.is_active == search_params.is_active)
 
         if search_params.is_system_permission is not None:
-            filters.append(
-                PermissionModel.is_system_permission
-                == search_params.is_system_permission
-            )
+            filters.append(PermissionModel.is_system_permission == search_params.is_system_permission)
 
         if search_params.parent_permission_id is not None:
-            filters.append(
-                PermissionModel.parent_permission_id
-                == search_params.parent_permission_id
-            )
+            filters.append(PermissionModel.parent_permission_id == search_params.parent_permission_id)
 
         # Apply filters
         if filters:
@@ -347,9 +319,7 @@ class PermissionRepository(BaseRepository[PermissionModel]):
         total_count = count_result.scalar()
 
         # Apply sorting
-        sort_column = getattr(
-            PermissionModel, search_params.sort_by, PermissionModel.name
-        )
+        sort_column = getattr(PermissionModel, search_params.sort_by, PermissionModel.name)
         if search_params.sort_order == "desc":
             query = query.order_by(sort_column.desc())
         else:
@@ -426,9 +396,7 @@ class RolePermissionRepository(BaseRepository[RolePermissionModel]):
         return role_permission
 
     @standard_exception_handler
-    async def revoke_permission_from_role(
-        self, role_id: UUID, permission_id: UUID
-    ) -> bool:
+    async def revoke_permission_from_role(self, role_id: UUID, permission_id: UUID) -> bool:
         """Revoke permission from role."""
         query = delete(RolePermissionModel).where(
             and_(
@@ -548,9 +516,7 @@ class UserRoleRepository(BaseRepository[UserRoleModel]):
         """Revoke role from user."""
         query = (
             update(UserRoleModel)
-            .where(
-                and_(UserRoleModel.user_id == user_id, UserRoleModel.role_id == role_id)
-            )
+            .where(and_(UserRoleModel.user_id == user_id, UserRoleModel.role_id == role_id))
             .values(is_active=False, updated_at=datetime.now(timezone.utc))
         )
 
@@ -558,13 +524,9 @@ class UserRoleRepository(BaseRepository[UserRoleModel]):
         return result.rowcount > 0
 
     @standard_exception_handler
-    async def get_user_role(
-        self, user_id: UUID, role_id: UUID
-    ) -> Optional[UserRoleModel]:
+    async def get_user_role(self, user_id: UUID, role_id: UUID) -> Optional[UserRoleModel]:
         """Get specific user-role assignment."""
-        query = select(UserRoleModel).where(
-            and_(UserRoleModel.user_id == user_id, UserRoleModel.role_id == role_id)
-        )
+        query = select(UserRoleModel).where(and_(UserRoleModel.user_id == user_id, UserRoleModel.role_id == role_id))
 
         result = await self.db_session.execute(query)
         return result.scalar_one_or_none()

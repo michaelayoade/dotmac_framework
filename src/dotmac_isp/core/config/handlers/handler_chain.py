@@ -119,9 +119,7 @@ class ConfigurationHandlerChain:
         if position == -1:
             # Add before validation handler (which should be last)
             current = self._chain
-            while current._next_handler and not isinstance(
-                current._next_handler, ValidationHandler
-            ):
+            while current._next_handler and not isinstance(current._next_handler, ValidationHandler):
                 current = current._next_handler
 
             # Insert before validation
@@ -136,9 +134,7 @@ class ConfigurationHandlerChain:
         """Get list of supported file extensions."""
         return [".json", ".env", ".environment", ".yaml", ".yml"]
 
-    def validate_configuration_files(
-        self, config_paths: list[Path]
-    ) -> dict[Path, bool]:
+    def validate_configuration_files(self, config_paths: list[Path]) -> dict[Path, bool]:
         """
         Validate that configuration files can be handled.
 

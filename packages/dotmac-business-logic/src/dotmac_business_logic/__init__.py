@@ -26,6 +26,7 @@ Usage:
     # File operations
     from dotmac_business_logic.files import TemplateEngine, DocumentGenerator
 """
+
 __version__ = "1.0.0"
 __author__ = "DotMac Framework Team"
 __email__ = "support@dotmac.dev"

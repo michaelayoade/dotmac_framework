@@ -90,7 +90,8 @@ Built on DRY principles with shared `dotmac-core` utilities:
 - ✅ **Security**: Encrypted credentials, audit logging, access control
 - ✅ **Integration**: REST APIs, webhook notifications, event streaming
 """
-from typing import Optional
+
+from typing import Any, Optional
 
 try:
     from .ipam import (
@@ -104,7 +105,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM not available: {e}")
+    warnings.warn(f"IPAM not available: {e}", stacklevel=2)
     IPAMService = SubnetManager = IPAllocationManager = None
     DHCPManager = DNSManager = NetworkPlanner = None
 
@@ -120,7 +121,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"Device automation not available: {e}")
+    warnings.warn(f"Device automation not available: {e}", stacklevel=2)
     DeviceManager = SSHProvisioner = ConfigurationManager = None
     DeviceInventory = TemplateEngine = None
 
@@ -136,7 +137,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"SNMP monitoring not available: {e}")
+    warnings.warn(f"SNMP monitoring not available: {e}", stacklevel=2)
     SNMPCollector = NetworkMonitor = InterfaceMonitor = None
     DeviceHealthMonitor = MetricsCollector = None
 
@@ -152,7 +153,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"RADIUS not available: {e}")
+    warnings.warn(f"RADIUS not available: {e}", stacklevel=2)
     RADIUSServer = AuthManager = SessionManager = None
     AccountingManager = CoAManager = None
 
@@ -167,7 +168,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"Advanced protocols not available: {e}")
+    warnings.warn(f"Advanced protocols not available: {e}", stacklevel=2)
     VOLTHAManager = FiberManager = TopologyDiscovery = None
     ProtocolAdapter = None
 
@@ -175,29 +176,74 @@ __version__ = "1.0.0"
 __author__ = "DotMac Team"
 __email__ = "dev@dotmac.com"
 
+# Convenience imports for most commonly used classes
+# Allows: from dotmac.networking import IPAMService, SSHProvisioner, etc.
+
+
+# Core service factory
+def create_networking_service(config: Optional[dict] = None) -> "NetworkingService":
+    """Create a fully configured networking service."""
+    return NetworkingService(config=config)
+
+
+# Convenience access to key services (when available)
+def get_ipam_service(config: Optional[dict] = None) -> Optional["IPAMService"]:
+    """Get IPAM service if available."""
+    if IPAMService:
+        return IPAMService(config=config)
+    return None
+
+
+def get_radius_server(config: Optional[dict] = None) -> Optional["RADIUSServer"]:
+    """Get RADIUS server if available."""
+    if RADIUSServer:
+        return RADIUSServer(config=config)
+    return None
+
+
+def get_ssh_provisioner(config: Optional[dict] = None) -> Optional["SSHProvisioner"]:
+    """Get SSH provisioner if available."""
+    if SSHProvisioner:
+        return SSHProvisioner(config=config)
+    return None
+
+
+def get_snmp_collector(config: Optional[dict] = None) -> Optional["SNMPCollector"]:
+    """Get SNMP collector if available."""
+    if SNMPCollector:
+        return SNMPCollector(config=config)
+    return None
+
+
+# Most commonly used classes - exported at package root for clean imports
+# Usage: from dotmac.networking import IPAMService, SSHProvisioner, SNMPCollector, DeviceManager
 __all__ = [
-    # IPAM
-    "IPAMService",
+    # ⭐ Most Used - Primary ISP Services (exported first for clean imports)
+    "IPAMService",  # IP address management
+    "SSHProvisioner",  # Device configuration automation
+    "SNMPCollector",  # Network monitoring
+    "DeviceManager",  # Device lifecycle management
+    "RADIUSServer",  # Authentication service
+    "AuthManager",  # RADIUS authentication (alias)
+    # Core Services
+    "NetworkingService",
+    "create_networking_service",
+    # IPAM - IP Address Management
     "SubnetManager",
     "IPAllocationManager",
     "DHCPManager",
     "DNSManager",
     "NetworkPlanner",
     # Device Automation
-    "DeviceManager",
-    "SSHProvisioner",
     "ConfigurationManager",
     "DeviceInventory",
     "TemplateEngine",
     # SNMP Monitoring
-    "SNMPCollector",
     "NetworkMonitor",
     "InterfaceMonitor",
     "DeviceHealthMonitor",
     "MetricsCollector",
-    # RADIUS
-    "RADIUSServer",
-    "AuthManager",
+    # RADIUS Authentication
     "SessionManager",
     "AccountingManager",
     "CoAManager",
@@ -206,6 +252,14 @@ __all__ = [
     "FiberManager",
     "TopologyDiscovery",
     "ProtocolAdapter",
+    # Convenience Factory Functions
+    "get_ipam_service",
+    "get_radius_server",
+    "get_ssh_provisioner",
+    "get_snmp_collector",
+    # Configuration
+    "get_default_config",
+    "DEFAULT_CONFIG",
     # Version
     "__version__",
 ]
@@ -246,7 +300,7 @@ DEFAULT_CONFIG = {
 }
 
 
-def get_default_config():
+def get_default_config() -> dict[str, Any]:
     """Get default networking configuration."""
     return DEFAULT_CONFIG.copy()
 
@@ -288,8 +342,3 @@ class NetworkingService:
         if self._radius is None and RADIUSServer:
             self._radius = RADIUSServer(self.config.get("radius", {}))
         return self._radius
-
-
-def create_networking_service(config: Optional[dict] = None) -> NetworkingService:
-    """Create a configured networking service."""
-    return NetworkingService(config)

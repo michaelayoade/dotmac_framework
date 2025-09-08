@@ -13,9 +13,10 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import uuid4
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from dotmac_shared.provisioning.core.models import ISPConfig, ProvisioningRequest
 from dotmac_shared.provisioning.core.provisioner import ContainerProvisioner
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.application_registry import ApplicationTemplate, get_application_registry
 from ..core.multi_app_config import (
@@ -142,9 +143,7 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
         self.app_registry = get_application_registry()
         self.container_provisioner = ContainerProvisioner()
 
-        logger.info(
-            "Enhanced tenant provisioning service with multi-app support initialized"
-        )
+        logger.info("Enhanced tenant provisioning service with multi-app support initialized")
 
     async def provision_multi_app_tenant(
         self, config: MultiAppTenantConfig, user_id: str
@@ -157,9 +156,7 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
         """
 
         start_time = asyncio.get_event_loop().time()
-        logger.info(
-            f"Starting enhanced multi-app provisioning for tenant {config.tenant_id}"
-        )
+        logger.info(f"Starting enhanced multi-app provisioning for tenant {config.tenant_id}")
 
         result = MultiAppProvisioningResult(
             tenant_id=config.tenant_id,
@@ -173,28 +170,20 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
 
             # Stage 2-8: Use existing provisioning service for infrastructure
             # Convert multi-app config to legacy format for base provisioning
-            legacy_request = self._convert_to_legacy_provisioning_request(
-                config, user_id
-            )
+            legacy_request = self._convert_to_legacy_provisioning_request(config, user_id)
 
             # Call existing provisioning service workflow
-            base_provisioning_result = await super().provision_tenant(
-                legacy_request, user_id
-            )
+            base_provisioning_result = await super().provision_tenant(legacy_request, user_id)
 
             # Store base provisioning results
             result.billing_result = base_provisioning_result.get("billing_result")
-            result.infrastructure_result = base_provisioning_result.get(
-                "infrastructure_result"
-            )
+            result.infrastructure_result = base_provisioning_result.get("infrastructure_result")
             result.dns_result = base_provisioning_result.get("dns_result")
             result.monitoring_result = base_provisioning_result.get("monitoring_result")
 
             # Check if base provisioning succeeded
             if not base_provisioning_result.get("success", False):
-                result.error_message = (
-                    f"Base provisioning failed: {base_provisioning_result.get('error')}"
-                )
+                result.error_message = f"Base provisioning failed: {base_provisioning_result.get('error')}"
                 result.stage = MultiAppProvisioningStage.FAILED.value
                 return result
 
@@ -210,9 +199,7 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
             await self._deploy_applications_in_order(config, deployment_order, result)
 
             # Stage 11: Configure inter-application networking
-            result.stage = (
-                MultiAppProvisioningStage.CONFIGURING_INTER_APP_NETWORKING.value
-            )
+            result.stage = MultiAppProvisioningStage.CONFIGURING_INTER_APP_NETWORKING.value
             await self._configure_inter_app_networking(config, result)
 
             # Stage 12: Final validation and completion
@@ -244,9 +231,7 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
             return result
 
         except Exception as e:
-            logger.error(
-                "Multi-app provisioning failed for tenant %s: %s", config.tenant_id, e
-            )
+            logger.error("Multi-app provisioning failed for tenant %s: %s", config.tenant_id, e)
             result.success = False
             result.stage = MultiAppProvisioningStage.FAILED.value
             result.error_message = str(e)
@@ -279,16 +264,12 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
                 )
             # Get existing tenant info (would integrate with existing tenant repo)
             # For now, create minimal config
-            temp_config = MultiAppTenantConfig(
-                tenant_id=tenant_id, applications=[app_deployment]
-            )
+            temp_config = MultiAppTenantConfig(tenant_id=tenant_id, applications=[app_deployment])
             # Deploy using existing container provisioner
             result = await self._deploy_single_application_with_existing_provisioner(
                 temp_config, app_deployment, template
             )
-            logger.info(
-                f"Application addition result for {tenant_id}: {result.success}"
-            )
+            logger.info(f"Application addition result for {tenant_id}: {result.success}")
             return result
 
         except Exception as e:
@@ -324,9 +305,7 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
                     f"Application type not found: {app_deployment.app_type}",
                     ProvisioningStage.VALIDATING,
                 )
-        logger.info(
-            f"Multi-app configuration validation passed for tenant {config.tenant_id}"
-        )
+        logger.info(f"Multi-app configuration validation passed for tenant {config.tenant_id}")
 
     def _convert_to_legacy_provisioning_request(
         self, config: MultiAppTenantConfig, user_id: str
@@ -344,9 +323,7 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
             # Add other required fields based on existing schema
         )
 
-    async def _deploy_shared_services(
-        self, config: MultiAppTenantConfig, result: MultiAppProvisioningResult
-    ) -> None:
+    async def _deploy_shared_services(self, config: MultiAppTenantConfig, result: MultiAppProvisioningResult) -> None:
         """Deploy shared services (PostgreSQL, Redis, etc.) using existing provisioner."""
 
         logger.info(f"Deploying shared services for tenant {config.tenant_id}")
@@ -368,9 +345,7 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
     ) -> None:
         """Deploy applications using existing container provisioner."""
 
-        logger.info(
-            f"Deploying applications in order for tenant {config.tenant_id}: {deployment_order}"
-        )
+        logger.info(f"Deploying applications in order for tenant {config.tenant_id}: {deployment_order}")
 
         for app_type in deployment_order:
             app_deployments = config.get_applications_by_type(app_type)
@@ -378,22 +353,14 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
             for app_deployment in app_deployments:
                 template = self.app_registry.get_application(app_deployment.app_type)
 
-                app_result = (
-                    await self._deploy_single_application_with_existing_provisioner(
-                        config, app_deployment, template
-                    )
+                app_result = await self._deploy_single_application_with_existing_provisioner(
+                    config, app_deployment, template
                 )
                 result.application_results.append(app_result)
 
                 # Stop if core application fails
-                if (
-                    not app_result.success
-                    and template
-                    and template.category.value == "core"
-                ):
-                    logger.error(
-                        f"Critical application {app_deployment.app_type} failed, stopping deployment"
-                    )
+                if not app_result.success and template and template.category.value == "core":
+                    logger.error(f"Critical application {app_deployment.app_type} failed, stopping deployment")
                     break
 
     async def _deploy_single_application_with_existing_provisioner(
@@ -407,9 +374,7 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
         deployment_name = app_deployment.get_deployment_name(config.tenant_id)
         start_time = datetime.now(timezone.utc)
 
-        logger.info(
-            f"Deploying {app_deployment.app_type}:{app_deployment.instance_name} using existing provisioner"
-        )
+        logger.info(f"Deploying {app_deployment.app_type}:{app_deployment.instance_name} using existing provisioner")
 
         try:
             # Create provisioning request for existing provisioner
@@ -426,24 +391,15 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
                 # Add other required fields
             )
             # Use existing container provisioner
-            provisioning_result = await self.container_provisioner.provision_container(
-                provisioning_request
-            )
+            provisioning_result = await self.container_provisioner.provision_container(provisioning_request)
 
             if provisioning_result.success:
                 # Generate endpoint
                 instance_name = app_deployment.instance_name
                 tenant_id = config.tenant_id
-                base_domain = (
-                    config.network_config.base_domain
-                    if config.network_config
-                    else "dotmac.cloud"
-                )
+                base_domain = config.network_config.base_domain if config.network_config else "dotmac.cloud"
 
-                endpoint = (
-                    app_deployment.custom_domain
-                    or f"https://{instance_name}.{tenant_id}.{base_domain}"
-                )
+                endpoint = app_deployment.custom_domain or f"https://{instance_name}.{tenant_id}.{base_domain}"
                 health_url = f"{endpoint}{template.health_check_path}"
 
                 # Create port mapping
@@ -468,14 +424,11 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
                     instance_name=app_deployment.instance_name,
                     status=ApplicationStatus.FAILED,
                     deployment_name=deployment_name,
-                    error_message=provisioning_result.error_message
-                    or "Provisioning failed",
+                    error_message=provisioning_result.error_message or "Provisioning failed",
                     deployment_time=start_time,
                 )
         except Exception as e:
-            logger.error(
-                f"Failed to deploy {deployment_name} using existing provisioner: {e}"
-            )
+            logger.error(f"Failed to deploy {deployment_name} using existing provisioner: {e}")
             return ApplicationDeploymentResult(
                 app_type=app_deployment.app_type,
                 instance_name=app_deployment.instance_name,
@@ -504,28 +457,18 @@ class EnhancedTenantProvisioningService(TenantProvisioningService):
                 "ports": app_result.ports,
             }
 
-        logger.info(
-            f"Service registry configured for tenant {config.tenant_id}: {list(service_registry.keys())}"
-        )
+        logger.info(f"Service registry configured for tenant {config.tenant_id}: {list(service_registry.keys())}")
 
         # This would integrate with existing networking infrastructure
         # For now, log the configuration
-        logger.info(
-            f"Inter-app networking configured for {len(successful_apps)} applications"
-        )
+        logger.info(f"Inter-app networking configured for {len(successful_apps)} applications")
 
-    def _validate_core_applications_success(
-        self, result: MultiAppProvisioningResult
-    ) -> bool:
+    def _validate_core_applications_success(self, result: MultiAppProvisioningResult) -> bool:
         """Validate that all core applications deployed successfully."""
 
         for app_result in result.application_results:
             template = self.app_registry.get_application(app_result.app_type)
-            if (
-                template
-                and template.category.value == "core"
-                and not app_result.success
-            ):
+            if template and template.category.value == "core" and not app_result.success:
                 return False
 
         return True

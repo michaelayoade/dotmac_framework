@@ -20,7 +20,7 @@ import yaml
 
 from ..gateway import UnifiedAPIGateway
 from ..mesh import ServiceMesh
-from ..observability import MonitoringStack
+from .monitoring import MonitoringStack
 
 
 class DeploymentStrategy(str, Enum):
@@ -359,7 +359,7 @@ class DockerOrchestrator(ContainerOrchestrator):
 
         # Calculate canary replicas
         canary_replicas = max(1, int(spec.replicas * spec.canary_percentage / 100))
-        main_replicas = spec.replicas - canary_replicas
+        spec.replicas - canary_replicas
 
         # Deploy canary version
         canary_spec = DeploymentSpec(**spec.__dict__)
@@ -1047,15 +1047,195 @@ class DeploymentAutomation:
 
     async def _register_with_service_mesh(self, spec: DeploymentSpec):
         """Register service with service mesh."""
-        # This would register the service with your service mesh
-        # Implementation depends on your service mesh solution
-        pass
+        try:
+            # Get service mesh provider from environment or config
+            mesh_provider = os.getenv('SERVICE_MESH_PROVIDER', 'istio').lower()
+            
+            if mesh_provider == 'istio':
+                await self._register_with_istio(spec)
+            elif mesh_provider == 'linkerd':
+                await self._register_with_linkerd(spec)
+            elif mesh_provider == 'consul':
+                await self._register_with_consul_connect(spec)
+            else:
+                logging.warning(f"Unknown service mesh provider: {mesh_provider}")
+                
+        except Exception as e:
+            logging.error(f"Service mesh registration failed for {spec.name}: {e}")
+            # Don't fail deployment, but log the issue
+    
+    async def _register_with_istio(self, spec: DeploymentSpec):
+        """Register service with Istio service mesh."""
+        import tempfile
+        import subprocess
+        
+        # Create Istio ServiceEntry and VirtualService
+        istio_config = {
+            'apiVersion': 'networking.istio.io/v1beta1',
+            'kind': 'ServiceEntry',
+            'metadata': {
+                'name': f"{spec.name}-service-entry",
+                'namespace': os.getenv('KUBERNETES_NAMESPACE', 'default')
+            },
+            'spec': {
+                'hosts': [spec.name],
+                'ports': [{'number': port, 'name': 'http', 'protocol': 'HTTP'} 
+                         for port in spec.ports],
+                'location': 'MESH_EXTERNAL',
+                'resolution': 'DNS'
+            }
+        }
+        
+        # Apply configuration using kubectl
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(istio_config, f)
+            f.flush()
+            
+            result = subprocess.run(
+                ['kubectl', 'apply', '-f', f.name],
+                capture_output=True, text=True
+            )
+            
+            if result.returncode == 0:
+                logging.info(f"Successfully registered {spec.name} with Istio")
+            else:
+                logging.error(f"Failed to register with Istio: {result.stderr}")
+        
+        os.unlink(f.name)
+    
+    async def _register_with_linkerd(self, spec: DeploymentSpec):
+        """Register service with Linkerd service mesh."""
+        # Linkerd registration typically happens via annotations
+        # This would patch the deployment with Linkerd annotations
+        logging.info(f"Linkerd registration for {spec.name} would add linkerd.io/inject annotation")
+    
+    async def _register_with_consul_connect(self, spec: DeploymentSpec):
+        """Register service with Consul Connect service mesh."""
+        # This would register the service in Consul's service registry
+        logging.info(f"Consul Connect registration for {spec.name} would register in Consul catalog")
 
     async def _configure_gateway_routes(self, spec: DeploymentSpec):
         """Configure API gateway routes for the service."""
-        # This would configure routes in your API gateway
-        # Implementation depends on your gateway solution
-        pass
+        try:
+            # Get gateway provider from environment or config
+            gateway_provider = os.getenv('API_GATEWAY_PROVIDER', 'nginx').lower()
+            
+            if gateway_provider == 'nginx':
+                await self._configure_nginx_routes(spec)
+            elif gateway_provider == 'traefik':
+                await self._configure_traefik_routes(spec)
+            elif gateway_provider == 'istio-gateway':
+                await self._configure_istio_gateway_routes(spec)
+            elif gateway_provider == 'envoy':
+                await self._configure_envoy_routes(spec)
+            else:
+                logging.warning(f"Unknown API gateway provider: {gateway_provider}")
+                
+        except Exception as e:
+            logging.error(f"Gateway route configuration failed for {spec.name}: {e}")
+            # Don't fail deployment, but log the issue
+    
+    async def _configure_nginx_routes(self, spec: DeploymentSpec):
+        """Configure NGINX Ingress routes."""
+        import subprocess
+        
+        # Create NGINX Ingress configuration
+        ingress_config = {
+            'apiVersion': 'networking.k8s.io/v1',
+            'kind': 'Ingress',
+            'metadata': {
+                'name': f"{spec.name}-ingress",
+                'namespace': os.getenv('KUBERNETES_NAMESPACE', 'default'),
+                'annotations': {
+                    'nginx.ingress.kubernetes.io/rewrite-target': '/',
+                    'nginx.ingress.kubernetes.io/ssl-redirect': 'true'
+                }
+            },
+            'spec': {
+                'rules': [{
+                    'host': f"{spec.name}.{os.getenv('DOMAIN_SUFFIX', 'local')}",
+                    'http': {
+                        'paths': [{
+                            'path': '/',
+                            'pathType': 'Prefix',
+                            'backend': {
+                                'service': {
+                                    'name': spec.name,
+                                    'port': {'number': spec.ports[0] if spec.ports else 8000}
+                                }
+                            }
+                        }]
+                    }
+                }]
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(ingress_config, f)
+            f.flush()
+            
+            result = subprocess.run(
+                ['kubectl', 'apply', '-f', f.name],
+                capture_output=True, text=True
+            )
+            
+            if result.returncode == 0:
+                logging.info(f"Successfully configured NGINX routes for {spec.name}")
+            else:
+                logging.error(f"Failed to configure NGINX routes: {result.stderr}")
+        
+        os.unlink(f.name)
+    
+    async def _configure_traefik_routes(self, spec: DeploymentSpec):
+        """Configure Traefik IngressRoute."""
+        import subprocess
+        
+        # Create Traefik IngressRoute
+        traefik_config = {
+            'apiVersion': 'traefik.containo.us/v1alpha1',
+            'kind': 'IngressRoute',
+            'metadata': {
+                'name': f"{spec.name}-route",
+                'namespace': os.getenv('KUBERNETES_NAMESPACE', 'default')
+            },
+            'spec': {
+                'entryPoints': ['web', 'websecure'],
+                'routes': [{
+                    'match': f"Host(`{spec.name}.{os.getenv('DOMAIN_SUFFIX', 'local')}`)",
+                    'kind': 'Rule',
+                    'services': [{
+                        'name': spec.name,
+                        'port': spec.ports[0] if spec.ports else 8000
+                    }]
+                }]
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(traefik_config, f)
+            f.flush()
+            
+            result = subprocess.run(
+                ['kubectl', 'apply', '-f', f.name],
+                capture_output=True, text=True
+            )
+            
+            if result.returncode == 0:
+                logging.info(f"Successfully configured Traefik routes for {spec.name}")
+            else:
+                logging.error(f"Failed to configure Traefik routes: {result.stderr}")
+        
+        os.unlink(f.name)
+    
+    async def _configure_istio_gateway_routes(self, spec: DeploymentSpec):
+        """Configure Istio Gateway and VirtualService."""
+        # This would create Istio Gateway and VirtualService resources
+        logging.info(f"Istio Gateway configuration for {spec.name} would create Gateway and VirtualService resources")
+    
+    async def _configure_envoy_routes(self, spec: DeploymentSpec):
+        """Configure Envoy Proxy routes."""
+        # This would configure Envoy proxy with route configuration
+        logging.info(f"Envoy route configuration for {spec.name} would update Envoy config")
 
 
 class DeploymentAutomationFactory:

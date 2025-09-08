@@ -1,0 +1,335 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "DotMac Ticketing - SLA Dashboard",
+    "tags": ["dotmac", "ticketing", "sla"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Open Tickets by Priority",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "COUNT(tickets{status=\"open\", priority=\"critical\"})",
+            "legendFormat": "Critical",
+            "refId": "A"
+          },
+          {
+            "expr": "COUNT(tickets{status=\"open\", priority=\"urgent\"})",
+            "legendFormat": "Urgent", 
+            "refId": "B"
+          },
+          {
+            "expr": "COUNT(tickets{status=\"open\", priority=\"high\"})",
+            "legendFormat": "High",
+            "refId": "C"
+          },
+          {
+            "expr": "COUNT(tickets{status=\"open\", priority=\"normal\"})",
+            "legendFormat": "Normal",
+            "refId": "D"
+          },
+          {
+            "expr": "COUNT(tickets{status=\"open\", priority=\"low\"})",
+            "legendFormat": "Low",
+            "refId": "E"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow", 
+                  "value": 10
+                },
+                {
+                  "color": "red",
+                  "value": 50
+                }
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "SLA Breaches by Team (Last 24h)",
+        "type": "table",
+        "targets": [
+          {
+            "rawSql": "SELECT assigned_team, COUNT(*) as breaches FROM tickets WHERE sla_breach_time < NOW() AND created_at > NOW() - INTERVAL '24 hours' GROUP BY assigned_team ORDER BY breaches DESC;",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Tickets Due in Next 4 Hours", 
+        "type": "table",
+        "targets": [
+          {
+            "rawSql": "SELECT ticket_number, title, priority, assigned_team, sla_breach_time, EXTRACT(EPOCH FROM (sla_breach_time - NOW()))/3600 as hours_remaining FROM tickets WHERE sla_breach_time BETWEEN NOW() AND NOW() + INTERVAL '4 hours' AND status IN ('open', 'in_progress') ORDER BY sla_breach_time ASC;",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 2
+                },
+                {
+                  "color": "red", 
+                  "value": 1
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "SLA Compliance Rate (7 days)",
+        "type": "gauge",
+        "targets": [
+          {
+            "rawSql": "SELECT ROUND((COUNT(CASE WHEN resolved_at <= sla_breach_time THEN 1 END) * 100.0 / COUNT(*)), 2) as compliance_rate FROM tickets WHERE status IN ('resolved', 'closed') AND created_at > NOW() - INTERVAL '7 days';",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "max": 100,
+            "min": 0,
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 80
+                },
+                {
+                  "color": "green",
+                  "value": 95
+                }
+              ]
+            },
+            "unit": "percent"
+          }
+        },
+        "options": {
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 5,
+        "title": "Average Resolution Time by Priority (7 days)",
+        "type": "bargauge",
+        "targets": [
+          {
+            "rawSql": "SELECT priority, AVG(EXTRACT(EPOCH FROM (resolved_at - created_at))/3600) as avg_resolution_hours FROM tickets WHERE status IN ('resolved', 'closed') AND created_at > NOW() - INTERVAL '7 days' GROUP BY priority ORDER BY CASE priority WHEN 'critical' THEN 1 WHEN 'urgent' THEN 2 WHEN 'high' THEN 3 WHEN 'normal' THEN 4 WHEN 'low' THEN 5 END;",
+            "format": "table", 
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 24
+                },
+                {
+                  "color": "red",
+                  "value": 72
+                }
+              ]
+            },
+            "unit": "h"
+          }
+        },
+        "options": {
+          "displayMode": "basic",
+          "orientation": "horizontal",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showUnfilled": true
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 16
+        }
+      },
+      {
+        "id": 6,
+        "title": "Ticket Volume Trend (30 days)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "rawSql": "SELECT DATE_TRUNC('day', created_at) as time, COUNT(*) as tickets_created FROM tickets WHERE created_at > NOW() - INTERVAL '30 days' GROUP BY DATE_TRUNC('day', created_at) ORDER BY time;",
+            "format": "time_series",
+            "refId": "A"
+          },
+          {
+            "rawSql": "SELECT DATE_TRUNC('day', resolved_at) as time, COUNT(*) as tickets_resolved FROM tickets WHERE resolved_at > NOW() - INTERVAL '30 days' GROUP BY DATE_TRUNC('day', resolved_at) ORDER BY time;",
+            "format": "time_series",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": true,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            }
+          }
+        },
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 16
+        }
+      }
+    ],
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "refresh": "5m"
+  }
+}

@@ -5,7 +5,7 @@ Provides structured exception hierarchy for business rule violations,
 idempotency conflicts, and saga orchestration failures.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
@@ -29,7 +29,7 @@ class ErrorContext:
     tenant_id: Optional[str] = None
     user_id: Optional[str] = None
     correlation_id: Optional[str] = None
-    metadata: dict[str, Any] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class BusinessLogicError(Exception):
@@ -168,9 +168,7 @@ class SagaError(BusinessLogicError):
             message=message,
             error_code="SAGA_ORCHESTRATION_ERROR",
             context=context,
-            severity=ErrorSeverity.CRITICAL
-            if compensation_failed
-            else ErrorSeverity.HIGH,
+            severity=ErrorSeverity.CRITICAL if compensation_failed else ErrorSeverity.HIGH,
             details={
                 "saga_id": saga_id,
                 "step_name": step_name,

@@ -200,9 +200,7 @@ if SQLALCHEMY_AVAILABLE:
 
         # Lead classification
         lead_source = Column(SQLEnum(LeadSource), nullable=False, index=True)
-        lead_status = Column(
-            SQLEnum(LeadStatus), default=LeadStatus.NEW, nullable=False, index=True
-        )
+        lead_status = Column(SQLEnum(LeadStatus), default=LeadStatus.NEW, nullable=False, index=True)
         customer_type = Column(SQLEnum(CustomerType), nullable=True, index=True)
 
         # Qualification
@@ -288,9 +286,7 @@ if SQLALCHEMY_AVAILABLE:
         description = Column(Text, nullable=True)
 
         # Customer information
-        lead_id = Column(
-            UUID(as_uuid=True), ForeignKey("sales_leads.id"), nullable=True, index=True
-        )
+        lead_id = Column(UUID(as_uuid=True), ForeignKey("sales_leads.id"), nullable=True, index=True)
         customer_id = Column(UUID(as_uuid=True), nullable=True, index=True)
         account_name = Column(String(300), nullable=False)
         contact_name = Column(String(200), nullable=True)
@@ -374,9 +370,7 @@ if SQLALCHEMY_AVAILABLE:
             foreign_keys="[SalesActivity.opportunity_id]",
             back_populates="opportunity",
         )
-        quotes = relationship(
-            "Quote", back_populates="opportunity", cascade="all, delete-orphan"
-        )
+        quotes = relationship("Quote", back_populates="opportunity", cascade="all, delete-orphan")
 
         __table_args__ = (
             Index(
@@ -400,10 +394,7 @@ if SQLALCHEMY_AVAILABLE:
         @hybrid_property
         def is_overdue(self) -> bool:
             """Check if opportunity is overdue."""
-            return (
-                self.opportunity_status == OpportunityStatus.ACTIVE
-                and date.today() > self.expected_close_date
-            )
+            return self.opportunity_status == OpportunityStatus.ACTIVE and date.today() > self.expected_close_date
 
         @hybrid_property
         def age_days(self) -> int:
@@ -423,9 +414,7 @@ if SQLALCHEMY_AVAILABLE:
         description = Column(Text, nullable=True)
 
         # References
-        lead_id = Column(
-            UUID(as_uuid=True), ForeignKey("sales_leads.id"), nullable=True, index=True
-        )
+        lead_id = Column(UUID(as_uuid=True), ForeignKey("sales_leads.id"), nullable=True, index=True)
         opportunity_id = Column(
             UUID(as_uuid=True),
             ForeignKey("sales_opportunities.id"),
@@ -481,9 +470,7 @@ if SQLALCHEMY_AVAILABLE:
 
         # Relationships
         lead = relationship("Lead", foreign_keys=[lead_id], back_populates="activities")
-        opportunity = relationship(
-            "Opportunity", foreign_keys=[opportunity_id], back_populates="activities"
-        )
+        opportunity = relationship("Opportunity", foreign_keys=[opportunity_id], back_populates="activities")
 
         __table_args__ = (
             Index("ix_activities_type_date", "activity_type", "scheduled_date"),
@@ -494,10 +481,7 @@ if SQLALCHEMY_AVAILABLE:
         @hybrid_property
         def is_overdue(self) -> bool:
             """Check if activity is overdue."""
-            return (
-                self.activity_status == ActivityStatus.PLANNED
-                and datetime.now() > self.scheduled_date
-            )
+            return self.activity_status == ActivityStatus.PLANNED and datetime.now() > self.scheduled_date
 
         @hybrid_property
         def days_until_scheduled(self) -> int:
@@ -531,9 +515,7 @@ if SQLALCHEMY_AVAILABLE:
         customer_email = Column(String(255), nullable=True)
 
         # Quote details
-        quote_status = Column(
-            SQLEnum(QuoteStatus), default=QuoteStatus.DRAFT, nullable=False, index=True
-        )
+        quote_status = Column(SQLEnum(QuoteStatus), default=QuoteStatus.DRAFT, nullable=False, index=True)
         quote_date = Column(Date, nullable=False, default=date.today)
         valid_until = Column(Date, nullable=False)
 
@@ -564,9 +546,7 @@ if SQLALCHEMY_AVAILABLE:
 
         # Revision tracking
         revision_number = Column(Integer, default=1, nullable=False)
-        parent_quote_id = Column(
-            UUID(as_uuid=True), ForeignKey("sales_quotes.id"), nullable=True
-        )
+        parent_quote_id = Column(UUID(as_uuid=True), ForeignKey("sales_quotes.id"), nullable=True)
 
         # Documents and presentation
         quote_document_url = Column(String(500), nullable=True)
@@ -580,9 +560,7 @@ if SQLALCHEMY_AVAILABLE:
 
         # Relationships
         opportunity = relationship("Opportunity", back_populates="quotes")
-        line_items = relationship(
-            "QuoteLineItem", back_populates="quote", cascade="all, delete-orphan"
-        )
+        line_items = relationship("QuoteLineItem", back_populates="quote", cascade="all, delete-orphan")
         parent_quote = relationship("Quote", remote_side="Quote.id")
 
         __table_args__ = (
@@ -786,9 +764,7 @@ if SQLALCHEMY_AVAILABLE:
         custom_fields = Column(JSON, nullable=True)
 
         __table_args__ = (
-            Index(
-                "ix_territories_tenant_code", "tenant_id", "territory_code", unique=True
-            ),
+            Index("ix_territories_tenant_code", "tenant_id", "territory_code", unique=True),
             Index("ix_territories_manager", "territory_manager"),
         )
 

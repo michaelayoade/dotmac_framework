@@ -10,7 +10,13 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_isp.shared.base_repository import BaseTenantRepository
+# Try ISP base repository, fallback to local base repository
+try:
+    from dotmac_isp.shared.base_repository import BaseTenantRepository
+except ImportError:
+    from dotmac_business_logic.billing.repositories.base_repository import (
+        BaseTenantRepository,
+    )
 from sqlalchemy import and_, desc, extract, func, or_
 from sqlalchemy.orm import Session, joinedload
 

@@ -277,9 +277,13 @@ async def mock_tenant_provisioning_service(mock_coolify_client):
 @pytest.fixture(scope="function")
 async def http_client():
     """HTTP client for API testing."""
+    # For test environment, use proper SSL verification or test certificates
+    import os
+    verify_ssl = os.getenv("TEST_VERIFY_SSL", "true").lower() == "true"
+
     async with httpx.AsyncClient(
         timeout=30.0,
-        verify=False,  # Ignore SSL for test environments
+        verify=verify_ssl,  # Configurable SSL verification for tests
     ) as client:
         yield client
 

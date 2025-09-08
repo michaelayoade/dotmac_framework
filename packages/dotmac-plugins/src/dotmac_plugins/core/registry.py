@@ -22,7 +22,7 @@ class PluginRegistry:
     Provides plugin discovery, dependency resolution, and lifecycle management.
     """
 
-    def __init__(self, timezone):
+    def __init__(self):
         # Main plugin storage: domain -> name -> plugin
         self._plugins: dict[str, dict[str, BasePlugin]] = defaultdict(dict)
 
@@ -54,7 +54,7 @@ class PluginRegistry:
         Raises:
             PluginError: If plugin already exists or registration fails
         """
-        async with self._lock.writer:
+        async with self._lock:
             plugin_key = f"{plugin.domain}.{plugin.name}"
 
             # Check if plugin already exists
@@ -101,7 +101,7 @@ class PluginRegistry:
         Returns:
             The unregistered plugin, or None if not found
         """
-        async with self._lock.writer:
+        async with self._lock:
             plugin_key = f"{domain}.{name}"
 
             # Get plugin before removal
@@ -162,7 +162,7 @@ class PluginRegistry:
         Returns:
             Plugin instance or None if not found
         """
-        async with self._lock.reader:
+        async with self._lock:
             return self._plugins.get(domain, {}).get(name)
 
     async def get_plugin_by_key(self, plugin_key: str) -> Optional[BasePlugin]:
@@ -202,7 +202,7 @@ class PluginRegistry:
         Returns:
             List of matching plugins
         """
-        async with self._lock.reader:
+        async with self._lock:
             matching_plugins = []
 
             # Determine domains to search
@@ -246,7 +246,7 @@ class PluginRegistry:
         Returns:
             List of plugins in the domain
         """
-        async with self._lock.reader:
+        async with self._lock:
             return list(self._plugins.get(domain, {}).values())
 
     async def list_all_plugins(self) -> list[BasePlugin]:
@@ -256,7 +256,7 @@ class PluginRegistry:
         Returns:
             List of all plugins
         """
-        async with self._lock.reader:
+        async with self._lock:
             all_plugins = []
             for domain_plugins in self._plugins.values():
                 all_plugins.extend(domain_plugins.values())
@@ -269,7 +269,7 @@ class PluginRegistry:
         Returns:
             List of domain names
         """
-        async with self._lock.reader:
+        async with self._lock:
             return list(self._plugins.keys())
 
     # Plugin metadata and information
@@ -286,7 +286,7 @@ class PluginRegistry:
             Plugin metadata or None if not found
         """
         plugin_key = f"{domain}.{name}"
-        async with self._lock.reader:
+        async with self._lock:
             return self._metadata.get(plugin_key)
 
     async def plugin_exists(self, domain: str, name: str) -> bool:
@@ -300,7 +300,7 @@ class PluginRegistry:
         Returns:
             True if plugin exists
         """
-        async with self._lock.reader:
+        async with self._lock:
             return name in self._plugins.get(domain, {})
 
     async def get_plugin_count(self) -> int:
@@ -310,7 +310,7 @@ class PluginRegistry:
         Returns:
             Number of plugins
         """
-        async with self._lock.reader:
+        async with self._lock:
             return sum(len(domain_plugins) for domain_plugins in self._plugins.values())
 
     async def get_plugin_count_by_domain(self) -> dict[str, int]:
@@ -320,7 +320,7 @@ class PluginRegistry:
         Returns:
             Dict mapping domain names to plugin counts
         """
-        async with self._lock.reader:
+        async with self._lock:
             return {domain: len(plugins) for domain, plugins in self._plugins.items()}
 
     # Dependency management
@@ -337,7 +337,7 @@ class PluginRegistry:
             Set of dependency plugin keys
         """
         plugin_key = f"{domain}.{name}"
-        async with self._lock.reader:
+        async with self._lock:
             return self._dependencies.get(plugin_key, set()).copy()
 
     async def get_plugin_dependents(self, domain: str, name: str) -> set[str]:
@@ -352,7 +352,7 @@ class PluginRegistry:
             Set of dependent plugin keys
         """
         plugin_key = f"{domain}.{name}"
-        async with self._lock.reader:
+        async with self._lock:
             return self._dependents.get(plugin_key, set()).copy()
 
     async def validate_dependencies(self) -> dict[str, list[str]]:
@@ -362,7 +362,7 @@ class PluginRegistry:
         Returns:
             Dict mapping plugin keys to lists of missing dependencies
         """
-        async with self._lock.reader:
+        async with self._lock:
             missing_deps = {}
 
             for plugin_key, dependencies in self._dependencies.items():
@@ -385,7 +385,7 @@ class PluginRegistry:
         Returns:
             Dict with registry statistics and health information
         """
-        async with self._lock.reader:
+        async with self._lock:
             total_plugins = await self.get_plugin_count()
             domain_counts = await self.get_plugin_count_by_domain()
 
@@ -451,7 +451,8 @@ class PluginRegistry:
                 del self._dependents[dep_key]
 
         # Remove from dependents (this plugin as a dependency)
-        del self._dependents[plugin_key]
+        if plugin_key in self._dependents:
+            del self._dependents[plugin_key]
 
     async def _notify_plugin_registered(self, plugin: BasePlugin) -> None:
         """Notify callbacks of plugin registration."""
@@ -482,7 +483,7 @@ class PluginRegistry:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         # Cleanup registry on exit
-        async with self._lock.writer:
+        async with self._lock:
             self._plugins.clear()
             self._metadata.clear()
             self._dependencies.clear()

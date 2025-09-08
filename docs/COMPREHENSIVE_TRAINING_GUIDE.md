@@ -368,19 +368,18 @@ groups:
           summary: "Service {{ $labels.instance }} is down"
 ```
 
-**Lab 2: Setting Up Monitoring**
+**Lab 2: Setting Up Monitoring (SigNoz)**
 ```bash
-# Deploy monitoring stack
-helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
-  --namespace monitoring --create-namespace
+# Deploy SigNoz stack (example; refer to official charts)
+helm repo add signoz https://charts.signoz.io
+helm install signoz signoz/signoz --namespace platform-observability --create-namespace
 
-# Import DotMac dashboards
-curl -X POST http://grafana:3000/api/dashboards/import \
-  -H "Content-Type: application/json" \
-  -d @monitoring/dashboards/dotmac-overview.json
+# Verify OTLP collector endpoints
+kubectl get svc -n platform-observability | grep -E "(otel-collector|query-service|frontend)"
 
-# Configure alerts
-kubectl apply -f monitoring/alerts/
+# Provision default dashboards via platform API
+python -c "from dotmac.platform.observability.dashboards.manager import provision_platform_dashboards;\
+print(provision_platform_dashboards('signoz'))"
 ```
 
 ### Module 3: Backup & Recovery (Week 3)

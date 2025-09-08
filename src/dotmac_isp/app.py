@@ -5,6 +5,22 @@ import logging
 import os
 from typing import Optional
 
+from fastapi import FastAPI
+
+from dotmac.platform.auth.edge_validation import EdgeAuthMiddleware, EdgeJWTValidator
+from dotmac.platform.auth.service_auth import (
+    ServiceAuthMiddleware,
+    configure_service_auth,
+)
+from dotmac.platform.observability import (
+    create_default_config,
+    initialize_metrics_registry,
+    initialize_otel,
+    initialize_tenant_metrics,
+)
+
+# Import new observability and auth systems
+from dotmac.platform.tenant import TenantIdentityResolver, TenantMiddleware
 from dotmac_shared.application import (
     DeploymentContext,
     DeploymentMode,
@@ -14,22 +30,6 @@ from dotmac_shared.application import (
     create_isp_framework_app,
 )
 from dotmac_shared.application.config import FeatureConfig
-from dotmac_shared.auth.edge_validation import EdgeAuthMiddleware, EdgeJWTValidator
-from dotmac_shared.auth.service_tokens import (
-    ServiceAuthMiddleware,
-    configure_service_auth,
-)
-from dotmac_shared.observability import (
-    create_default_config,
-    initialize_metrics_registry,
-    initialize_otel,
-    initialize_tenant_metrics,
-)
-
-# Import new observability and auth systems
-from dotmac_shared.tenant.identity import TenantIdentityResolver
-from dotmac_shared.tenant.middleware import TenantMiddleware
-from fastapi import FastAPI
 
 logger = logging.getLogger(__name__)
 
@@ -97,12 +97,14 @@ async def create_app(tenant_config: Optional[TenantConfig] = None) -> FastAPI:
             "deployment.mode": "tenant_container" if tenant_config else "development",
             "tenant.id": tenant_config.tenant_id if tenant_config else "dev",
         },
+        tracing_exporters=["otlp"] if environment == "production" else ["console"],
+        metrics_exporters=["otlp"] if environment == "production" else ["console"],
     )
     otel_bootstrap = initialize_otel(otel_config)
 
     # 2. Initialize metrics registry
     logger.info("Initializing ISP metrics registry...")
-    metrics_registry = initialize_metrics_registry(service_name, enable_prometheus=True)
+    metrics_registry = initialize_metrics_registry(service_name, enable_prometheus=False)
 
     if otel_bootstrap and otel_bootstrap.get_meter():
         metrics_registry.set_otel_meter(otel_bootstrap.get_meter())
@@ -118,9 +120,7 @@ async def create_app(tenant_config: Optional[TenantConfig] = None) -> FastAPI:
 
     # 4. Configure service authentication
     logger.info("Configuring ISP service authentication...")
-    service_signing_secret = os.getenv(
-        "SERVICE_SIGNING_SECRET", "dev-secret-key-change-in-production"
-    )
+    service_signing_secret = os.getenv("SERVICE_SIGNING_SECRET", "dev-secret-key-change-in-production")
     service_token_manager = configure_service_auth(service_signing_secret)
 
     # Register ISP service capabilities
@@ -165,9 +165,7 @@ async def create_app(tenant_config: Optional[TenantConfig] = None) -> FastAPI:
     # 6. Configure edge JWT validation for ISP routes
     logger.info("Configuring ISP edge JWT validation...")
     jwt_secret = os.getenv("JWT_SECRET", "dev-jwt-secret-change-in-production")
-    edge_validator = EdgeJWTValidator(
-        jwt_secret=jwt_secret, tenant_resolver=tenant_resolver
-    )
+    edge_validator = EdgeJWTValidator(jwt_secret=jwt_secret, tenant_resolver=tenant_resolver)
 
     # ISP-specific route sensitivity patterns
     edge_validator.configure_sensitivity_patterns(
@@ -207,13 +205,9 @@ async def create_app(tenant_config: Optional[TenantConfig] = None) -> FastAPI:
         required_operations=[],
     )
 
-    app.add_middleware(
-        EdgeAuthMiddleware, validator=edge_validator, service_name=service_name
-    )
+    app.add_middleware(EdgeAuthMiddleware, validator=edge_validator, service_name=service_name)
 
-    app.add_middleware(
-        TenantMiddleware, resolver=tenant_resolver, service_name=service_name
-    )
+    app.add_middleware(TenantMiddleware, resolver=tenant_resolver, service_name=service_name)
 
     # Store components in app state
     app.state.otel_bootstrap = otel_bootstrap
@@ -229,9 +223,7 @@ async def create_app(tenant_config: Optional[TenantConfig] = None) -> FastAPI:
     return app
 
 
-async def create_tenant_app(
-    tenant_id: str, partner_id: str = "default", plan_type: str = "standard"
-) -> "FastAPI":
+async def create_tenant_app(tenant_id: str, partner_id: str = "default", plan_type: str = "standard") -> "FastAPI":
     """
     Create a tenant-specific ISP Framework instance.
 

@@ -1,0 +1,157 @@
+# Gate E-0b: Observability Infrastructure Layer  
+# Dependencies: Gate E-0a (postgres, redis, openbao)
+# Purpose: Metrics, tracing, and logging infrastructure with fixed configuration
+
+version: '3.8'
+
+services:
+  # ===== OBSERVABILITY FOUNDATION =====
+  
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: dotmac-clickhouse
+    environment:
+      CLICKHOUSE_DB: signoz_metrics
+      CLICKHOUSE_USER: signoz
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ports:
+      - "9000:9000"  # Native protocol
+      - "8123:8123"  # HTTP interface
+    networks:
+      - dotmac-network
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # SignOz OpenTelemetry Collector with fixed configuration
+  signoz-collector:
+    image: signoz/signoz-otel-collector:0.88.11
+    container_name: dotmac-signoz-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./config/signoz/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      # Observability bootstrap environment
+      OTEL_LOG_LEVEL: info
+      OTEL_COLLECTOR_LOG_LEVEL: info
+    ports:
+      - "4317:4317"   # OTLP gRPC (primary endpoint for applications)
+      - "4318:4318"   # OTLP HTTP
+      - "8889:8889"   # Metrics endpoint
+    networks:
+      - dotmac-network
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8889/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # SignOz Query Service
+  signoz-query:
+    image: signoz/query-service:0.40.0
+    container_name: dotmac-signoz-query
+    environment:
+      ClickHouseUrl: tcp://clickhouse:9000
+      CLICKHOUSE_USER: signoz
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      STORAGE: clickhouse
+      TELEMETRY_ENABLED: "false"
+      # Performance settings
+      QUERY_TIMEOUT: 30s
+      MAX_IDLE_CONNS: 5
+    volumes:
+      - signoz_data:/var/lib/signoz
+    ports:
+      - "8080:8080"
+    networks:
+      - dotmac-network
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      signoz-collector:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # SignOz Frontend  
+  signoz-frontend:
+    image: signoz/frontend:0.40.0
+    container_name: dotmac-signoz-frontend
+    environment:
+      QUERY_SERVICE_URL: http://signoz-query:8080
+      FRONTEND_API_ENDPOINT: http://signoz-query:8080
+    ports:
+      - "3301:3301"
+    networks:
+      - dotmac-network
+    depends_on:
+      signoz-query:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3301/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+volumes:
+  clickhouse_data:
+    name: dotmac-clickhouse-data
+  signoz_data:
+    name: dotmac-signoz-data
+
+networks:
+  dotmac-network:
+    external: true
+    name: dotmac-network

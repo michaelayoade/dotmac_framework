@@ -10,10 +10,10 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Optional
 
-from dotmac_shared.core.logging import get_logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotmac.application import standard_exception_handler
+from dotmac_shared.core.logging import get_logger
 
 from .commission_automation import CommissionAutomationEngine
 from .commission_system import CommissionService
@@ -143,9 +143,7 @@ class RealtimeUsageBillingEngine:
 
         # Check time threshold
         oldest_metric = min(tenant_buffer, key=lambda x: x["tracked_at"])
-        age_seconds = (
-            datetime.now(timezone.utc) - oldest_metric["tracked_at"]
-        ).total_seconds()
+        age_seconds = (datetime.now(timezone.utc) - oldest_metric["tracked_at"]).total_seconds()
         if age_seconds >= self.billing_thresholds["time_threshold"]:
             return True
 
@@ -199,9 +197,7 @@ class RealtimeUsageBillingEngine:
                 reseller_id=reseller_id,
                 commission_type="usage_based",
                 base_amount=total_cost,
-                service_period_start=min(
-                    item["tracked_at"] for item in tenant_buffer
-                ).date(),
+                service_period_start=min(item["tracked_at"] for item in tenant_buffer).date(),
                 service_period_end=datetime.now(timezone.utc).date(),
                 customer_id=tenant_id,
                 additional_data={
@@ -301,20 +297,14 @@ class RealtimeUsageBillingEngine:
         return billing_run
 
     @standard_exception_handler
-    async def get_usage_billing_analytics(
-        self, reseller_id: str, days: int = 30
-    ) -> dict[str, Any]:
+    async def get_usage_billing_analytics(self, reseller_id: str, days: int = 30) -> dict[str, Any]:
         """
         Get usage billing analytics leveraging existing commission reporting.
 
         Uses existing commission_system.py for DRY analytics generation.
         """
         # Get commission summary using existing service (DRY)
-        commission_summary = (
-            await self.commission_service.get_reseller_commission_summary(
-                reseller_id, last_n_months=1
-            )
-        )
+        commission_summary = await self.commission_service.get_reseller_commission_summary(reseller_id, last_n_months=1)
 
         # Filter for usage-based commissions
         usage_commissions = []
@@ -323,9 +313,7 @@ class RealtimeUsageBillingEngine:
         for commission in commission_summary.get("recent_commissions", []):
             if commission.get("commission_type") == "usage_based":
                 usage_commissions.append(commission)
-                total_usage_revenue += Decimal(
-                    str(commission.get("commission_amount", 0))
-                )
+                total_usage_revenue += Decimal(str(commission.get("commission_amount", 0)))
 
         # Usage breakdown by metric type
         usage_breakdown = {}
@@ -351,9 +339,7 @@ class RealtimeUsageBillingEngine:
             "usage_breakdown": usage_breakdown,
             "avg_daily_revenue": float(total_usage_revenue / days) if days > 0 else 0,
             "commission_summary": commission_summary,  # Include existing summary
-            "top_usage_types": sorted(
-                usage_breakdown.items(), key=lambda x: x[1]["total_cost"], reverse=True
-            )[:5],
+            "top_usage_types": sorted(usage_breakdown.items(), key=lambda x: x[1]["total_cost"], reverse=True)[:5],
         }
 
     async def cleanup(self):
@@ -385,9 +371,7 @@ class UsageBillingIntegrationService:
         await self.usage_engine.initialize()
 
     @standard_exception_handler
-    async def track_api_usage(
-        self, tenant_id: str, endpoint: str, requests: int
-    ) -> dict[str, Any]:
+    async def track_api_usage(self, tenant_id: str, endpoint: str, requests: int) -> dict[str, Any]:
         """Track API usage for billing."""
         return await self.usage_engine.track_usage(
             tenant_id=tenant_id,
@@ -397,9 +381,7 @@ class UsageBillingIntegrationService:
         )
 
     @standard_exception_handler
-    async def track_bandwidth_usage(
-        self, tenant_id: str, bytes_transferred: int
-    ) -> dict[str, Any]:
+    async def track_bandwidth_usage(self, tenant_id: str, bytes_transferred: int) -> dict[str, Any]:
         """Track bandwidth usage for billing."""
         gb_transferred = bytes_transferred / (1024**3)  # Convert to GB
         return await self.usage_engine.track_usage(
@@ -407,23 +389,15 @@ class UsageBillingIntegrationService:
         )
 
     @standard_exception_handler
-    async def track_storage_usage(
-        self, tenant_id: str, bytes_stored: int
-    ) -> dict[str, Any]:
+    async def track_storage_usage(self, tenant_id: str, bytes_stored: int) -> dict[str, Any]:
         """Track storage usage for billing."""
         gb_stored = bytes_stored / (1024**3)  # Convert to GB
-        return await self.usage_engine.track_usage(
-            tenant_id=tenant_id, metric_type="storage_gb", value=gb_stored
-        )
+        return await self.usage_engine.track_usage(tenant_id=tenant_id, metric_type="storage_gb", value=gb_stored)
 
     @standard_exception_handler
-    async def track_user_activity(
-        self, tenant_id: str, active_users: int
-    ) -> dict[str, Any]:
+    async def track_user_activity(self, tenant_id: str, active_users: int) -> dict[str, Any]:
         """Track active user count for billing."""
-        return await self.usage_engine.track_usage(
-            tenant_id=tenant_id, metric_type="active_users", value=active_users
-        )
+        return await self.usage_engine.track_usage(tenant_id=tenant_id, metric_type="active_users", value=active_users)
 
     async def get_realtime_usage_summary(self, tenant_id: str) -> dict[str, Any]:
         """Get real-time usage summary for tenant."""
@@ -449,17 +423,10 @@ class UsageBillingIntegrationService:
 
         return {
             "tenant_id": tenant_id,
-            "current_usage": {
-                k: {"value": v["value"], "cost": float(v["cost"])}
-                for k, v in usage_summary.items()
-            },
+            "current_usage": {k: {"value": v["value"], "cost": float(v["cost"])} for k, v in usage_summary.items()},
             "pending_cost": float(total_cost),
             "buffered_metrics": len(buffered_usage),
-            "oldest_metric": min(
-                item["tracked_at"] for item in buffered_usage
-            ).isoformat()
-            if buffered_usage
-            else None,
+            "oldest_metric": min(item["tracked_at"] for item in buffered_usage).isoformat() if buffered_usage else None,
         }
 
 

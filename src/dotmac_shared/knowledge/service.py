@@ -34,9 +34,7 @@ logger = logging.getLogger(__name__)
 class KnowledgeService:
     """Knowledge base business logic service."""
 
-    def __init__(
-        self, db_session_factory=None, config: Optional[dict[str, Any]] = None
-    ):
+    def __init__(self, db_session_factory=None, config: Optional[dict[str, Any]] = None):
         """Initialize knowledge service."""
         self.db_session_factory = db_session_factory
         self.config = config or {}
@@ -65,18 +63,14 @@ class KnowledgeService:
         """Create a new knowledge base article."""
         try:
             # Check for slug uniqueness
-            existing_slug = await self._check_slug_exists(
-                db, tenant_id, article_data.slug
-            )
+            existing_slug = await self._check_slug_exists(db, tenant_id, article_data.slug)
             if existing_slug:
                 # Generate unique slug
                 base_slug = article_data.slug
                 counter = 1
                 while existing_slug:
                     article_data.slug = f"{base_slug}-{counter}"
-                    existing_slug = await self._check_slug_exists(
-                        db, tenant_id, article_data.slug
-                    )
+                    existing_slug = await self._check_slug_exists(db, tenant_id, article_data.slug)
                     counter += 1
 
             # Create article
@@ -230,9 +224,7 @@ class KnowledgeService:
         """Search articles with advanced filtering and ranking."""
         try:
             # Build base query
-            query = select(KnowledgeArticle).where(
-                KnowledgeArticle.tenant_id == tenant_id
-            )
+            query = select(KnowledgeArticle).where(KnowledgeArticle.tenant_id == tenant_id)
 
             # Apply status filter
             if search_params.status:
@@ -244,31 +236,21 @@ class KnowledgeService:
 
             # Apply article type filter
             if search_params.article_type:
-                query = query.where(
-                    KnowledgeArticle.article_type == search_params.article_type
-                )
+                query = query.where(KnowledgeArticle.article_type == search_params.article_type)
 
             # Apply tag filter
             if search_params.tags:
                 # Check if article tags array overlaps with search tags
                 tag_conditions = []
                 for tag in search_params.tags:
-                    tag_conditions.append(
-                        func.json_array_elements_text(KnowledgeArticle.tags).op("@>")(
-                            [tag]
-                        )
-                    )
+                    tag_conditions.append(func.json_array_elements_text(KnowledgeArticle.tags).op("@>")([tag]))
                 query = query.where(or_(*tag_conditions))
 
             # Apply text search
             search_conditions = []
             relevance_score = None
 
-            if (
-                search_params.query
-                and len(search_params.query.strip())
-                >= self.search_config["min_search_length"]
-            ):
+            if search_params.query and len(search_params.query.strip()) >= self.search_config["min_search_length"]:
                 search_query = search_params.query.strip()
 
                 # Full-text search using PostgreSQL
@@ -292,9 +274,7 @@ class KnowledgeService:
                 relevance_score = func.ts_rank(search_vector, search_query_ts)
 
                 # Also search in tags (simpler text matching)
-                tag_search = func.array_to_string(KnowledgeArticle.tags, " ").ilike(
-                    f"%{search_query}%"
-                )
+                tag_search = func.array_to_string(KnowledgeArticle.tags, " ").ilike(f"%{search_query}%")
                 search_conditions.append(tag_search)
 
                 # Combine search conditions with OR
@@ -312,9 +292,7 @@ class KnowledgeService:
                 order_column = desc(relevance_score)
             else:
                 # Sort by specified column
-                sort_column = getattr(
-                    KnowledgeArticle, search_params.sort_by, KnowledgeArticle.created_at
-                )
+                sort_column = getattr(KnowledgeArticle, search_params.sort_by, KnowledgeArticle.created_at)
                 if search_params.sort_order.lower() == "asc":
                     order_column = asc(sort_column)
                 else:
@@ -331,26 +309,20 @@ class KnowledgeService:
             articles = result.scalars().all()
 
             # Convert to response models
-            article_responses = [
-                ArticleResponse.model_validate(article) for article in articles
-            ]
+            article_responses = [ArticleResponse.model_validate(article) for article in articles]
 
             # Generate search metadata
             search_metadata = {
                 "total_results": total_count,
                 "page": search_params.page,
                 "page_size": search_params.page_size,
-                "total_pages": (total_count + search_params.page_size - 1)
-                // search_params.page_size,
-                "has_next_page": (search_params.page * search_params.page_size)
-                < total_count,
+                "total_pages": (total_count + search_params.page_size - 1) // search_params.page_size,
+                "has_next_page": (search_params.page * search_params.page_size) < total_count,
                 "search_query": search_params.query,
                 "search_time_ms": 0,  # Would be measured in production
             }
 
-            logger.info(
-                f"Search completed: {total_count} results for query '{search_params.query}'"
-            )
+            logger.info(f"Search completed: {total_count} results for query '{search_params.query}'")
 
             return article_responses, total_count, search_metadata
 
@@ -433,9 +405,7 @@ class KnowledgeService:
 
             await db.commit()
 
-            logger.info(
-                f"Recorded vote on article {article.slug}: helpful={is_helpful}"
-            )
+            logger.info(f"Recorded vote on article {article.slug}: helpful={is_helpful}")
 
             return True
 
@@ -482,9 +452,7 @@ class KnowledgeService:
         """Get articles related to the given article."""
         try:
             # Get the source article
-            source_article = await self._get_article_for_update(
-                db, tenant_id, article_id
-            )
+            source_article = await self._get_article_for_update(db, tenant_id, article_id)
             if not source_article:
                 return []
 
@@ -532,9 +500,7 @@ class KnowledgeService:
 
             if not settings:
                 # Create default settings
-                settings = CustomerPortalSettings(
-                    customer_id=customer_id, tenant_id=tenant_id
-                )
+                settings = CustomerPortalSettings(customer_id=customer_id, tenant_id=tenant_id)
                 db.add(settings)
                 await db.commit()
                 await db.refresh(settings)
@@ -567,9 +533,7 @@ class KnowledgeService:
 
             if not settings:
                 # Create new settings
-                settings = CustomerPortalSettings(
-                    customer_id=customer_id, tenant_id=tenant_id
-                )
+                settings = CustomerPortalSettings(customer_id=customer_id, tenant_id=tenant_id)
                 db.add(settings)
 
             # Update fields
@@ -593,9 +557,7 @@ class KnowledgeService:
 
     # Private helper methods
 
-    async def _check_slug_exists(
-        self, db: AsyncSession, tenant_id: str, slug: str
-    ) -> bool:
+    async def _check_slug_exists(self, db: AsyncSession, tenant_id: str, slug: str) -> bool:
         """Check if slug already exists for tenant."""
         query = select(func.count(KnowledgeArticle.id)).where(
             and_(KnowledgeArticle.tenant_id == tenant_id, KnowledgeArticle.slug == slug)
@@ -603,9 +565,7 @@ class KnowledgeService:
         result = await db.execute(query)
         return result.scalar() > 0
 
-    async def _get_article_for_update(
-        self, db: AsyncSession, tenant_id: str, article_id: str
-    ):
+    async def _get_article_for_update(self, db: AsyncSession, tenant_id: str, article_id: str):
         """Get article for update operations."""
         query = select(KnowledgeArticle).where(
             and_(
@@ -627,9 +587,7 @@ class KnowledgeService:
             await db.execute(stmt)
             await db.commit()
         except Exception as e:
-            logger.warning(
-                f"Failed to increment view count for article {article_id}: {e}"
-            )
+            logger.warning(f"Failed to increment view count for article {article_id}: {e}")
 
     async def _render_content_html(self, content: str) -> str:
         """Render markdown content to HTML."""
@@ -641,9 +599,7 @@ class KnowledgeService:
             html_content = html.escape(content)
 
             # Simple markdown-like transformations
-            html_content = re.sub(
-                r"\*\*(.*?)\*\*", r"<strong>\1</strong>", html_content
-            )
+            html_content = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", html_content)
             html_content = re.sub(r"\*(.*?)\*", r"<em>\1</em>", html_content)
             html_content = re.sub(r"\n\n", r"</p><p>", html_content)
             html_content = f"<p>{html_content}</p>"
@@ -654,14 +610,9 @@ class KnowledgeService:
             logger.error(f"Error rendering HTML content: {e}")
             return content  # Return original content if rendering fails
 
-    async def _handle_status_change(
-        self, article: KnowledgeArticle, new_status: ArticleStatus
-    ):
+    async def _handle_status_change(self, article: KnowledgeArticle, new_status: ArticleStatus):
         """Handle article status changes."""
-        if (
-            new_status == ArticleStatus.PUBLISHED
-            and article.status != ArticleStatus.PUBLISHED
-        ):
+        if new_status == ArticleStatus.PUBLISHED and article.status != ArticleStatus.PUBLISHED:
             article.published_at = datetime.now(timezone.utc)
         elif new_status != ArticleStatus.PUBLISHED:
             # If moving away from published, clear published_at
@@ -673,9 +624,7 @@ class KnowledgeService:
         logger.info(f"Article created events triggered for {article.slug}")
         # In production, this would integrate with event system
 
-    async def _trigger_comment_added_events(
-        self, article: KnowledgeArticle, comment: ArticleComment
-    ):
+    async def _trigger_comment_added_events(self, article: KnowledgeArticle, comment: ArticleComment):
         """Trigger events when comment is added."""
         logger.info(f"Comment added events triggered for article {article.slug}")
         # In production, this would send notifications to article authors/subscribers
@@ -732,9 +681,7 @@ class KnowledgeAnalyticsService:
                     analytics.traffic_sources = {}
 
                 source_type = self._categorize_referrer(referrer)
-                analytics.traffic_sources[source_type] = (
-                    analytics.traffic_sources.get(source_type, 0) + 1
-                )
+                analytics.traffic_sources[source_type] = analytics.traffic_sources.get(source_type, 0) + 1
 
             await db.commit()
 

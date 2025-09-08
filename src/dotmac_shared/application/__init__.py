@@ -66,8 +66,7 @@ try:
 
 except ImportError as e:
     warnings.warn(
-        f"Could not import from dotmac.application: {e}. "
-        "Please install the dotmac-application package.",
+        f"Could not import from dotmac.application: {e}. " "Please install the dotmac-application package.",
         ImportWarning,
         stacklevel=2,
     )

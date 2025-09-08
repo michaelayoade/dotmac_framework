@@ -38,9 +38,9 @@ except ImportError:
     MODELS_AVAILABLE = False
     IPNetwork = IPAllocation = IPReservation = None
     NetworkType = AllocationStatus = ReservationStatus = None
-    IPAMError = (
-        NetworkNotFoundError
-    ) = AllocationNotFoundError = ReservationNotFoundError = Exception
+    IPAMError = NetworkNotFoundError = AllocationNotFoundError = (
+        ReservationNotFoundError
+    ) = Exception
 
 
 class IPAMRepository:

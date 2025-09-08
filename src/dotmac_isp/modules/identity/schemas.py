@@ -4,12 +4,13 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
+from pydantic import BaseModel, EmailStr, Field
+
 from dotmac_isp.modules.identity.models import AccountStatus, CustomerType
 from dotmac_isp.sdks.identity.schemas import CustomerCreate as SDKCustomerCreate
 from dotmac_isp.sdks.identity.schemas import CustomerResponse as SDKCustomerResponse
 from dotmac_isp.sdks.identity.schemas import CustomerUpdate as SDKCustomerUpdate
 from dotmac_isp.shared.schemas import AddressSchema, ContactSchema, TenantModelSchema
-from pydantic import BaseModel, EmailStr, Field
 
 
 class UserBase(ContactSchema):
@@ -127,13 +128,9 @@ class CustomerResponseAPI(TenantModelSchema):
     """API schema for customer responses - includes portal_id as primary identifier."""
 
     # Primary identifier - Portal ID
-    portal_id: str = Field(
-        ..., description="Primary portal identifier for the customer"
-    )
+    portal_id: str = Field(..., description="Primary portal identifier for the customer")
     # Generated password for portal access (only returned on creation)
-    portal_password: Optional[str] = Field(
-        None, description="Generated password for portal access"
-    )
+    portal_password: Optional[str] = Field(None, description="Generated password for portal access")
     # Core fields from SDK
     customer_id: UUID
     customer_number: str

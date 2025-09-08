@@ -24,6 +24,7 @@ Usage:
         # Send email logic
         return {"message_id": "123", "status": "sent"}
 """
+
 __version__ = "1.0.0"
 
 # Core classes

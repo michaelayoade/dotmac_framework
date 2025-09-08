@@ -35,7 +35,7 @@ try:
 
     _manager_available = True
 except ImportError as e:
-    warnings.warn(f"Secrets manager not available: {e}")
+    warnings.warn(f"Secrets manager not available: {e}", stacklevel=2)
     SecretsManager = SecretsConfig = None
     create_default_config = create_openbao_config = create_production_config = None
     _manager_available = False
@@ -50,7 +50,7 @@ try:
     create_vault_provider = create_openbao_provider
     _providers_available = True
 except ImportError as e:
-    warnings.warn(f"Secrets providers not available: {e}")
+    warnings.warn(f"Secrets providers not available: {e}", stacklevel=2)
     SecretsProvider = WritableSecretsProvider = None
     OpenBaoProvider = VaultProvider = None
     create_openbao_provider = create_vault_provider = None
@@ -63,7 +63,7 @@ try:
 
     _basic_providers_available = True
 except ImportError as e:
-    warnings.warn(f"Basic providers not available: {e}")
+    warnings.warn(f"Basic providers not available: {e}", stacklevel=2)
     EnvironmentProvider = FileProvider = None
     _basic_providers_available = False
 
@@ -73,7 +73,7 @@ try:
 
     _encryption_available = True
 except ImportError as e:
-    warnings.warn(f"Field encryption not available: {e}")
+    warnings.warn(f"Field encryption not available: {e}", stacklevel=2)
     FieldEncryption = EncryptedField = DataClassification = None
     _encryption_available = False
 
@@ -90,7 +90,7 @@ try:
 
     _rotation_available = True
 except ImportError as e:
-    warnings.warn(f"Secrets rotation not available: {e}")
+    warnings.warn(f"Secrets rotation not available: {e}", stacklevel=2)
     RotationScheduler = RotationRule = RotationResult = None
     RotationStatus = DefaultRotationPolicy = JWTRotationPolicy = None
     _rotation_available = False
@@ -101,7 +101,7 @@ try:
 
     _cache_available = True
 except ImportError as e:
-    warnings.warn(f"Secrets caching not available: {e}")
+    warnings.warn(f"Secrets caching not available: {e}", stacklevel=2)
     SecretCache = InMemoryCache = RedisCache = NullCache = None
     _cache_available = False
 
@@ -116,7 +116,7 @@ try:
 
     _validators_available = True
 except ImportError as e:
-    warnings.warn(f"Secret validators not available: {e}")
+    warnings.warn(f"Secret validators not available: {e}", stacklevel=2)
     SecretValidator = JWTValidator = DatabaseCredentialsValidator = None
     PolicyValidator = None
     _validators_available = False
@@ -146,7 +146,7 @@ try:
 
     _types_available = True
 except ImportError as e:
-    warnings.warn(f"Secrets types/exceptions not available: {e}")
+    warnings.warn(f"Secrets types/exceptions not available: {e}", stacklevel=2)
     SecretKind = Environment = JWTKeypair = DatabaseCredentials = None
     SecretPolicy = SecretMetadata = SecretValue = None
     SecretsProviderError = SecretNotFoundError = SecretValidationError = None
@@ -162,7 +162,7 @@ _secrets_service_registry: dict[str, Any] = {}
 def initialize_secrets_service(config: dict[str, Any]) -> None:
     """Initialize secrets management services with configuration."""
     if not _manager_available:
-        warnings.warn("Secrets manager not available, skipping initialization")
+        warnings.warn("Secrets manager not available, skipping initialization", stacklevel=2)
         return
 
     # Create primary secrets manager
@@ -291,12 +291,11 @@ def create_secret_cache(cache_type: str = "memory", **kwargs) -> Any | None:
     if cache_type.lower() == "redis":
         redis_url = kwargs.get("redis_url", os.getenv("REDIS_URL", "redis://localhost:6379"))
         return RedisCache(redis_url=redis_url, **kwargs)
-    elif cache_type.lower() == "memory":
+    if cache_type.lower() == "memory":
         return InMemoryCache(**kwargs)
-    elif cache_type.lower() == "null":
+    if cache_type.lower() == "null":
         return NullCache()
-    else:
-        raise ValueError(f"Unknown cache type: {cache_type}")
+    raise ValueError(f"Unknown cache type: {cache_type}")
 
 
 # Utility functions
@@ -343,19 +342,19 @@ __email__ = "dev@dotmac.com"
 __all__ = [
     # Version
     "__version__",
-    # Service management
-    "initialize_secrets_service",
-    "get_secrets_service",
-    "is_secrets_service_available",
-    # Factory functions
-    "create_secrets_manager",
-    "create_vault_provider",
     "create_field_encryption",
     "create_rotation_scheduler",
     "create_secret_cache",
+    # Factory functions
+    "create_secrets_manager",
+    "create_vault_provider",
     # Utilities
     "get_current_environment",
+    "get_secrets_service",
+    # Service management
+    "initialize_secrets_service",
     "is_production_environment",
+    "is_secrets_service_available",
     "validate_production_config",
 ]
 
@@ -363,82 +362,82 @@ __all__ = [
 if _manager_available:
     __all__.extend(
         [
-            "SecretsManager",
             "SecretsConfig",
+            "SecretsManager",
         ]
     )
 
 if _providers_available:
     __all__.extend(
         [
-            "SecretsProvider",
-            "WritableSecretsProvider",
-            "VaultProvider",
             "EnvironmentProvider",
             "FileProvider",
+            "SecretsProvider",
+            "VaultProvider",
+            "WritableSecretsProvider",
         ]
     )
 
 if _encryption_available:
     __all__.extend(
         [
-            "FieldEncryption",
-            "EncryptedField",
             "DataClassification",
+            "EncryptedField",
+            "FieldEncryption",
         ]
     )
 
 if _rotation_available:
     __all__.extend(
         [
-            "RotationScheduler",
-            "RotationRule",
-            "RotationResult",
-            "RotationStatus",
             "DefaultRotationPolicy",
             "JWTRotationPolicy",
+            "RotationResult",
+            "RotationRule",
+            "RotationScheduler",
+            "RotationStatus",
         ]
     )
 
 if _cache_available:
     __all__.extend(
         [
-            "SecretCache",
             "InMemoryCache",
-            "RedisCache",
             "NullCache",
+            "RedisCache",
+            "SecretCache",
         ]
     )
 
 if _validators_available:
     __all__.extend(
         [
-            "SecretValidator",
-            "JWTValidator",
             "DatabaseCredentialsValidator",
+            "JWTValidator",
             "PolicyValidator",
+            "SecretValidator",
         ]
     )
 
 if _types_available:
     __all__.extend(
         [
-            "SecretKind",
+            "ConfigurationError",
+            "DatabaseCredentials",
             "Environment",
             "JWTKeypair",
-            "DatabaseCredentials",
-            "SecretPolicy",
-            "SecretMetadata",
-            "SecretValue",
-            "SecretsProviderError",
-            "SecretNotFoundError",
-            "SecretValidationError",
-            "ProviderConnectionError",
             "ProviderAuthenticationError",
             "ProviderAuthorizationError",
+            "ProviderConnectionError",
             "SecretExpiredError",
+            "SecretKind",
+            "SecretMetadata",
+            "SecretNotFoundError",
+            "SecretPolicy",
+            "SecretValidationError",
+            "SecretValue",
             "SecretsManagerError",
-            "ConfigurationError",
+            "SecretsProviderError",
         ]
     )
 

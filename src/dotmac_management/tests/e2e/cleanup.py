@@ -203,6 +203,11 @@ class DatabaseCleaner:
 
             for table in tables:
                 try:
+                    # Use table name validation to prevent SQL injection
+                    if not table.replace('_', '').isalnum():
+                        logger.warning(f"Skipping invalid table name: {table}")
+                        continue
+
                     result = session.execute(
                         text(f"DELETE FROM {table} WHERE tenant_id = :tenant_id"),
                         {"tenant_id": tenant_id},
@@ -314,6 +319,10 @@ class DatabaseCleaner:
         for table in common_tables:
             try:
                 # Check for cross-contamination in tenant A database
+                # Validate table name to prevent SQL injection
+                if not table.replace('_', '').isalnum():
+                    continue
+
                 cross_data_a = tenant_a_session.execute(
                     text(f"SELECT COUNT(*) FROM {table} WHERE tenant_id = :tenant_id"),
                     {"tenant_id": tenant_b_id},
@@ -327,6 +336,10 @@ class DatabaseCleaner:
                     )
 
                 # Check for cross-contamination in tenant B database
+                # Validate table name to prevent SQL injection
+                if not table.replace('_', '').isalnum():
+                    continue
+
                 cross_data_b = tenant_b_session.execute(
                     text(f"SELECT COUNT(*) FROM {table} WHERE tenant_id = :tenant_id"),
                     {"tenant_id": tenant_a_id},

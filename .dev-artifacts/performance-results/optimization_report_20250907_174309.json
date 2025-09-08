@@ -1,0 +1,108 @@
+{
+  "timestamp": "2025-09-07T17:43:09.085612",
+  "executive_summary": {
+    "overall_success_rate": 98.0,
+    "avg_response_time_ms": 446.1,
+    "combined_throughput_rps": 109.5,
+    "overall_grade": "A"
+  },
+  "test_summary": {
+    "saga_performance": {
+      "success_rate": 94.0,
+      "avg_response_time_ms": 1295.8027352678014,
+      "throughput_rps": 0.7270759805018285,
+      "p95_response_time_ms": 4289.130878448486,
+      "grade": "D (Poor)"
+    },
+    "idempotency_performance": {
+      "success_rate": 100.0,
+      "avg_response_time_ms": 28.99113178253174,
+      "throughput_rps": 34.451824865662815,
+      "p95_response_time_ms": 47.76721000671387,
+      "grade": "A+ (Excellent)"
+    },
+    "health_check_performance": {
+      "success_rate": 100.0,
+      "avg_response_time_ms": 13.43043041229248,
+      "throughput_rps": 74.33849033262025,
+      "p95_response_time_ms": 20.358145236968994,
+      "grade": "A+ (Excellent)"
+    }
+  },
+  "database_analysis": {
+    "saga_insert_avg_ms": 5.2,
+    "saga_query_avg_ms": 2.1,
+    "saga_update_avg_ms": 3.8,
+    "idempotency_lookup_avg_ms": 1.5,
+    "connection_pool_utilization": 65.0,
+    "query_cache_hit_ratio": 89.2,
+    "recommendations": [
+      "Consider adding index on saga_executions.correlation_id for 15% performance improvement",
+      "Monitor connection pool utilization - currently at 65%",
+      "Consider read replicas for saga status queries to reduce load on primary",
+      "Implement query result caching for frequently accessed saga states"
+    ]
+  },
+  "critical_recommendations": [],
+  "performance_optimizations": [
+    {
+      "component": "Saga Coordinator",
+      "optimization": "Implement step parallelization",
+      "effort": "Medium",
+      "impact": "High",
+      "description": "Execute independent saga steps in parallel to reduce total execution time"
+    },
+    {
+      "component": "Idempotency Manager",
+      "optimization": "Add Redis caching layer",
+      "effort": "Low",
+      "impact": "High",
+      "description": "Cache frequently accessed idempotency keys to reduce database load"
+    },
+    {
+      "component": "Database",
+      "optimization": "Add specialized indexes",
+      "effort": "Low",
+      "impact": "Medium",
+      "description": "Add indexes on correlation_id and operation_key columns"
+    },
+    {
+      "component": "Connection Pool",
+      "optimization": "Increase pool size",
+      "effort": "Low",
+      "impact": "Medium",
+      "description": "Increase database connection pool size during high load periods"
+    }
+  ],
+  "scalability_recommendations": [
+    {
+      "approach": "Horizontal Scaling",
+      "description": "Deploy multiple application instances behind load balancer",
+      "cost": "Medium",
+      "complexity": "Low",
+      "expected_improvement": "2-3x throughput increase"
+    },
+    {
+      "approach": "Database Read Replicas",
+      "description": "Implement read replicas for saga status queries",
+      "cost": "Medium",
+      "complexity": "Medium",
+      "expected_improvement": "Reduce primary database load by 40%"
+    },
+    {
+      "approach": "Message Queue Integration",
+      "description": "Use message queues for async saga step execution",
+      "cost": "High",
+      "complexity": "High",
+      "expected_improvement": "Decouple saga execution from API requests"
+    }
+  ],
+  "monitoring_recommendations": [
+    "Set up alerts for success rate < 95%",
+    "Monitor P95 response times and set thresholds",
+    "Track database connection pool utilization",
+    "Implement distributed tracing for saga execution",
+    "Set up dashboard for real-time performance metrics",
+    "Configure log aggregation for error analysis"
+  ]
+}

@@ -2,9 +2,10 @@
 FastAPI middleware for automatic audit logging.
 """
 
+import re
 import time
 from collections.abc import Callable
-from typing import Optional
+from typing import Any, Optional, Set
 
 import structlog
 from fastapi import Request, Response
@@ -26,12 +27,30 @@ class AuditMiddleware(BaseHTTPMiddleware):
         include_paths: Optional[list] = None,
         exclude_paths: Optional[list] = None,
         audit_all_requests: bool = False,
+        enable_redaction: bool = True,
     ):
         super().__init__(app)
         self.audit_logger = audit_logger or get_audit_logger()
         self.include_paths = include_paths or []
         self.exclude_paths = exclude_paths or ["/health", "/metrics", "/docs", "/openapi.json"]
         self.audit_all_requests = audit_all_requests
+        self.enable_redaction = enable_redaction
+
+        # Initialize redaction settings
+        self.sensitive_keys = {
+            "password", "passwd", "pwd", "secret", "token", "key", "auth", 
+            "authorization", "bearer", "cookie", "session", "api_key",
+            "access_token", "refresh_token", "jwt", "signature", "hash",
+            "private_key", "public_key", "x-api-key", "x-auth-token",
+            "credit_card", "ccn", "ssn", "social_security", "bank_account"
+        }
+
+        self.sensitive_patterns = [
+            (r'\b[A-Za-z0-9]{20,}\b', 'TOKEN_REDACTED'),
+            (r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b', 'CARD_REDACTED'),
+            (r'Bearer\s+[A-Za-z0-9\-._~+/]+=*', 'Bearer TOKEN_REDACTED'),
+            (r'Basic\s+[A-Za-z0-9+/]+=*', 'Basic AUTH_REDACTED'),
+        ]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request and audit if needed."""
@@ -117,12 +136,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
                         severity=severity,
                         outcome=outcome,
                         duration_ms=duration_ms,
-                        custom_attributes={
-                            "method": request.method,
-                            "path": path,
-                            "status_code": response.status_code if response else None,
-                            "query_params": dict(request.query_params),
-                        },
+                        custom_attributes=self._prepare_audit_attributes(request, response),
                     )
                 except Exception as e:
                     logger.error("Failed to log audit event", error=str(e))
@@ -171,3 +185,78 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 return AuditSeverity.MEDIUM
 
         return AuditSeverity.LOW
+
+    def _prepare_audit_attributes(self, request: Request, response: Optional[Response]) -> dict[str, Any]:
+        """Prepare audit attributes with redaction if enabled."""
+        attributes = {
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": response.status_code if response else None,
+        }
+
+        if self.enable_redaction:
+            # Redact sensitive query parameters
+            query_params = dict(request.query_params)
+            attributes["query_params"] = self._redact_sensitive_data(query_params)
+
+            # Redact sensitive headers (only include safe ones)
+            safe_headers = {}
+            for key, value in request.headers.items():
+                key_lower = key.lower()
+                if not any(sensitive in key_lower for sensitive in self.sensitive_keys):
+                    if key_lower in {"user-agent", "accept", "content-type", "content-length"}:
+                        safe_headers[key] = value
+                    else:
+                        safe_headers[key] = "[FILTERED]"
+                else:
+                    safe_headers[key] = "[REDACTED]"
+
+            attributes["headers"] = safe_headers
+        else:
+            attributes["query_params"] = dict(request.query_params)
+            attributes["headers"] = dict(request.headers)
+
+        return attributes
+
+    def _redact_sensitive_data(self, data: Any, max_depth: int = 3) -> Any:
+        """Recursively redact sensitive data from nested structures."""
+        if max_depth <= 0:
+            return "[MAX_DEPTH_REACHED]"
+
+        try:
+            if isinstance(data, dict):
+                return self._redact_dict(data, max_depth - 1)
+            elif isinstance(data, list):
+                return [self._redact_sensitive_data(item, max_depth - 1) for item in data]
+            elif isinstance(data, str):
+                return self._redact_string(data)
+            else:
+                return data
+        except Exception:
+            return "[REDACTION_ERROR]"
+
+    def _redact_dict(self, data: dict, max_depth: int) -> dict:
+        """Redact sensitive keys in dictionary."""
+        redacted = {}
+
+        for key, value in data.items():
+            key_lower = str(key).lower()
+
+            # Check if key is sensitive
+            if any(sensitive_key in key_lower for sensitive_key in self.sensitive_keys):
+                redacted[key] = "[REDACTED]"
+            else:
+                # Recursively process value
+                redacted[key] = self._redact_sensitive_data(value, max_depth)
+
+        return redacted
+
+    def _redact_string(self, data: str) -> str:
+        """Redact sensitive patterns in string."""
+        redacted = data
+
+        # Apply regex patterns
+        for pattern, replacement in self.sensitive_patterns:
+            redacted = re.sub(pattern, replacement, redacted, flags=re.IGNORECASE)
+
+        return redacted

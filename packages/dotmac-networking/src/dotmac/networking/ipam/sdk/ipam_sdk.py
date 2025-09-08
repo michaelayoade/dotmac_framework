@@ -11,18 +11,9 @@ try:
         IPAMError,
         NetworkNotFoundError,
     )
-    from ..core.schemas import (
-        AllocationCreate,
-        AllocationResponse,
-        IPAvailability,
-        NetworkCreate,
-        NetworkResponse,
-        NetworkUpdate,
-        NetworkUtilization,
-        ReservationCreate,
-        ReservationResponse,
-    )
     from ..services.ipam_service import IPAMService
+
+    # Schema imports removed - not used in SDK implementation
 
     SERVICES_AVAILABLE = True
 except ImportError:

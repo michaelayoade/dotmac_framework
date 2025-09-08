@@ -50,4 +50,4 @@ class DescriptionMixin:
     description = Column(Text, nullable=True)
 
 
-__all__ = ["ISPModelMixin", "TimestampMixin", "TenantMixin", "StatusMixin", "DescriptionMixin"]
+__all__ = ["DescriptionMixin", "ISPModelMixin", "StatusMixin", "TenantMixin", "TimestampMixin"]

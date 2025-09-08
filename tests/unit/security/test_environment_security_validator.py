@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 import pytest
+
 from dotmac_shared.security.environment_security_validator import (
     ComplianceReport,
     Environment,
@@ -28,7 +29,7 @@ from dotmac_shared.security.environment_security_validator import (
 
 class TestEnvironment:
     """Test Environment enum from security validator."""
-    
+
     def test_environment_values(self):
         """Test environment values."""
         assert Environment.DEVELOPMENT == "development"
@@ -38,7 +39,7 @@ class TestEnvironment:
 
 class TestSecurityLevel:
     """Test SecurityLevel enum."""
-    
+
     def test_security_levels(self):
         """Test security level values."""
         assert SecurityLevel.MINIMAL == "minimal"
@@ -49,7 +50,7 @@ class TestSecurityLevel:
 
 class TestViolationSeverity:
     """Test ViolationSeverity enum."""
-    
+
     def test_violation_severities(self):
         """Test violation severity values."""
         assert ViolationSeverity.LOW == "low"
@@ -60,7 +61,7 @@ class TestViolationSeverity:
 
 class TestSecurityViolation:
     """Test SecurityViolation model."""
-    
+
     def test_violation_creation(self):
         """Test security violation creation."""
         violation = SecurityViolation(
@@ -70,17 +71,17 @@ class TestSecurityViolation:
             component="authentication",
             recommendation="Use complex password with minimum 12 characters"
         )
-        
+
         assert violation.violation_type == "weak_password"
         assert violation.severity == ViolationSeverity.HIGH
         assert "strength requirements" in violation.description
         assert violation.component == "authentication"
         assert "complex password" in violation.recommendation
-    
+
     def test_violation_with_metadata(self):
         """Test security violation with metadata."""
         metadata = {"password_length": 6, "has_special_chars": False}
-        
+
         violation = SecurityViolation(
             violation_type="password_policy",
             severity=ViolationSeverity.MEDIUM,
@@ -89,14 +90,14 @@ class TestSecurityViolation:
             recommendation="Enforce password complexity",
             metadata=metadata
         )
-        
+
         assert violation.metadata == metadata
         assert violation.metadata["password_length"] == 6
 
 
 class TestSecurityValidationResult:
     """Test SecurityValidationResult model."""
-    
+
     def test_validation_result_success(self):
         """Test successful validation result."""
         result = SecurityValidationResult(
@@ -108,13 +109,13 @@ class TestSecurityValidationResult:
             total_checks=25,
             validation_timestamp=datetime.now()
         )
-        
+
         assert result.environment == Environment.PRODUCTION
         assert result.security_level == SecurityLevel.ENHANCED
         assert result.compliance_score == 95
         assert len(result.violations) == 0
         assert result.is_compliant is True  # No violations = compliant
-    
+
     def test_validation_result_with_violations(self):
         """Test validation result with violations."""
         violations = [
@@ -126,7 +127,7 @@ class TestSecurityValidationResult:
                 recommendation="Enable HTTPS enforcement"
             )
         ]
-        
+
         result = SecurityValidationResult(
             environment=Environment.PRODUCTION,
             security_level=SecurityLevel.STANDARD,
@@ -136,7 +137,7 @@ class TestSecurityValidationResult:
             total_checks=25,
             validation_timestamp=datetime.now()
         )
-        
+
         assert result.compliance_score == 78
         assert len(result.violations) == 1
         assert result.violations[0].severity == ViolationSeverity.HIGH
@@ -145,7 +146,7 @@ class TestSecurityValidationResult:
 
 class TestSecurityAuditLog:
     """Test SecurityAuditLog model."""
-    
+
     def test_audit_log_creation(self):
         """Test audit log creation."""
         audit_log = SecurityAuditLog(
@@ -156,12 +157,12 @@ class TestSecurityAuditLog:
             details={"validation_type": "comprehensive", "checks_run": 25},
             timestamp=datetime.now()
         )
-        
+
         assert audit_log.environment == Environment.PRODUCTION
         assert audit_log.action == "security_validation"
         assert audit_log.component == "environment_validator"
         assert "validation_type" in audit_log.details
-    
+
     def test_audit_log_with_violation(self):
         """Test audit log with security violation."""
         violation_details = {
@@ -169,7 +170,7 @@ class TestSecurityAuditLog:
             "severity": "high",
             "component": "database"
         }
-        
+
         audit_log = SecurityAuditLog(
             environment=Environment.STAGING,
             action="violation_detected",
@@ -177,102 +178,102 @@ class TestSecurityAuditLog:
             details=violation_details,
             timestamp=datetime.now()
         )
-        
+
         assert audit_log.action == "violation_detected"
         assert audit_log.details["severity"] == "high"
 
 
 class TestEnvironmentSecurityValidator:
     """Test EnvironmentSecurityValidator class."""
-    
+
     @pytest.fixture
     def validator(self):
         return EnvironmentSecurityValidator(
             environment=Environment.PRODUCTION,
             security_level=SecurityLevel.ENHANCED
         )
-    
+
     @pytest.fixture
     def dev_validator(self):
         return EnvironmentSecurityValidator(
             environment=Environment.DEVELOPMENT,
             security_level=SecurityLevel.MINIMAL
         )
-    
+
     def test_validator_initialization(self, validator):
         """Test validator initialization."""
         assert validator.environment == Environment.PRODUCTION
         assert validator.security_level == SecurityLevel.ENHANCED
         assert validator.required_compliance_score == 90  # High for production
         assert len(validator.security_policies) > 0
-    
+
     def test_dev_validator_initialization(self, dev_validator):
         """Test development validator initialization."""
         assert dev_validator.environment == Environment.DEVELOPMENT
         assert dev_validator.security_level == SecurityLevel.MINIMAL
         assert dev_validator.required_compliance_score == 60  # Lower for dev
-    
+
     @pytest.mark.asyncio
     async def test_validate_secrets_management_production(self, validator):
         """Test secrets management validation in production."""
         # Mock OpenBao client availability
         with patch('dotmac_shared.security.secrets_policy.OpenBaoClient') as mock_client:
             mock_client.return_value.health_check = AsyncMock(return_value=True)
-            
+
             result = await validator.validate_secrets_management()
-            
+
             assert result.passed is True
             assert "OpenBao available" in result.details
-    
+
     @pytest.mark.asyncio
     async def test_validate_secrets_management_missing_vault(self, validator):
         """Test secrets management validation with missing vault."""
         with patch('dotmac_shared.security.secrets_policy.OpenBaoClient') as mock_client:
             mock_client.return_value.health_check = AsyncMock(return_value=False)
-            
+
             result = await validator.validate_secrets_management()
-            
+
             assert result.passed is False
             assert any(v.violation_type == "vault_unavailable" for v in result.violations)
-    
+
     @pytest.mark.asyncio
     async def test_validate_csrf_protection(self, validator):
         """Test CSRF protection validation."""
         result = await validator.validate_csrf_protection()
-        
+
         # Should pass basic CSRF validation
         assert result.passed is True
         assert "CSRF configuration" in result.details
-    
+
     @pytest.mark.asyncio
     async def test_validate_https_enforcement_production(self, validator):
         """Test HTTPS enforcement validation in production."""
         # Mock config that requires HTTPS
         with patch.dict('os.environ', {'REQUIRE_HTTPS': 'true'}):
             result = await validator.validate_https_enforcement()
-            
+
             assert result.passed is True
             assert "HTTPS enforced" in result.details
-    
+
     @pytest.mark.asyncio
     async def test_validate_https_enforcement_missing(self, validator):
         """Test HTTPS enforcement validation when missing."""
         with patch.dict('os.environ', {'REQUIRE_HTTPS': 'false'}):
             result = await validator.validate_https_enforcement()
-            
+
             assert result.passed is False
             assert any(v.violation_type == "https_not_enforced" for v in result.violations)
             assert any(v.severity == ViolationSeverity.HIGH for v in result.violations)
-    
+
     @pytest.mark.asyncio
     async def test_validate_authentication_security(self, validator):
         """Test authentication security validation."""
         result = await validator.validate_authentication_security()
-        
+
         # Basic validation should include JWT, session, and password policies
         assert result.passed is not None
         assert "Authentication security" in result.details
-    
+
     @pytest.mark.asyncio
     async def test_validate_database_security(self, validator):
         """Test database security validation."""
@@ -284,30 +285,30 @@ class TestEnvironmentSecurityValidator:
                 'connection_pooling': True,
                 'query_logging': True
             }
-            
+
             result = await validator.validate_database_security()
-            
+
             assert result.passed is True
             assert "Database security validated" in result.details
-    
+
     @pytest.mark.asyncio
     async def test_validate_api_security(self, validator):
         """Test API security validation."""
         result = await validator.validate_api_security()
-        
+
         # Should validate rate limiting, input validation, etc.
         assert result.passed is not None
         assert "API security" in result.details
-    
+
     @pytest.mark.asyncio
     async def test_validate_logging_monitoring(self, validator):
         """Test logging and monitoring validation."""
         result = await validator.validate_logging_monitoring()
-        
+
         # Should check for proper logging configuration
         assert result.passed is not None
         assert "Logging and monitoring" in result.details
-    
+
     @pytest.mark.asyncio
     async def test_comprehensive_security_validation(self, validator):
         """Test comprehensive security validation."""
@@ -318,14 +319,14 @@ class TestEnvironmentSecurityValidator:
                     mock_secrets.return_value = Mock(passed=True, violations=[], score=100)
                     mock_csrf.return_value = Mock(passed=True, violations=[], score=100)
                     mock_https.return_value = Mock(passed=True, violations=[], score=100)
-                    
+
                     result = await validator.validate_comprehensive_security()
-                    
+
                     assert isinstance(result, SecurityValidationResult)
                     assert result.environment == Environment.PRODUCTION
                     assert result.security_level == SecurityLevel.ENHANCED
                     assert result.compliance_score >= 90  # Should meet production requirements
-    
+
     @pytest.mark.asyncio
     async def test_comprehensive_validation_with_failures(self, validator):
         """Test comprehensive validation with some failures."""
@@ -336,19 +337,19 @@ class TestEnvironmentSecurityValidator:
             component="test",
             recommendation="Fix test issue"
         )
-        
+
         with patch.object(validator, 'validate_secrets_management') as mock_secrets:
             with patch.object(validator, 'validate_csrf_protection') as mock_csrf:
                 # Mock one failure and one success
                 mock_secrets.return_value = Mock(passed=False, violations=[violation], score=60)
                 mock_csrf.return_value = Mock(passed=True, violations=[], score=100)
-                
+
                 result = await validator.validate_comprehensive_security()
-                
+
                 assert result.compliance_score < 90  # Should not meet production requirements
                 assert len(result.violations) > 0
                 assert result.is_compliant is False
-    
+
     def test_calculate_compliance_score(self, validator):
         """Test compliance score calculation."""
         violations = [
@@ -356,36 +357,36 @@ class TestEnvironmentSecurityValidator:
             SecurityViolation("test2", ViolationSeverity.HIGH, "High severity", "test", "fix"),
             SecurityViolation("test3", ViolationSeverity.MEDIUM, "Medium severity", "test", "fix"),
         ]
-        
+
         score = validator.calculate_compliance_score(violations, total_checks=10)
-        
+
         # Score should be reduced based on violation severities
         assert isinstance(score, int)
         assert 0 <= score <= 100
         assert score < 100  # Should be reduced due to violations
-    
+
     def test_calculate_compliance_score_no_violations(self, validator):
         """Test compliance score with no violations."""
         score = validator.calculate_compliance_score([], total_checks=10)
         assert score == 100
-    
+
     def test_get_required_compliance_score(self):
         """Test required compliance score for different environments."""
         prod_validator = EnvironmentSecurityValidator(
             Environment.PRODUCTION, SecurityLevel.ENHANCED
         )
         assert prod_validator.required_compliance_score == 90
-        
+
         dev_validator = EnvironmentSecurityValidator(
             Environment.DEVELOPMENT, SecurityLevel.MINIMAL
         )
         assert dev_validator.required_compliance_score == 60
-        
+
         staging_validator = EnvironmentSecurityValidator(
             Environment.STAGING, SecurityLevel.STANDARD
         )
         assert staging_validator.required_compliance_score == 80
-    
+
     @pytest.mark.asyncio
     async def test_generate_compliance_report(self, validator):
         """Test compliance report generation."""
@@ -399,7 +400,7 @@ class TestEnvironmentSecurityValidator:
                 "Enable HTTPS"
             )
         ]
-        
+
         validation_result = SecurityValidationResult(
             environment=Environment.PRODUCTION,
             security_level=SecurityLevel.ENHANCED,
@@ -409,16 +410,16 @@ class TestEnvironmentSecurityValidator:
             total_checks=25,
             validation_timestamp=datetime.now()
         )
-        
+
         report = await validator.generate_compliance_report(validation_result)
-        
+
         assert isinstance(report, ComplianceReport)
         assert report.environment == Environment.PRODUCTION
         assert report.compliance_score == 85
         assert len(report.violations_by_severity) > 0
         assert ViolationSeverity.HIGH in report.violations_by_severity
         assert report.recommendations is not None
-    
+
     @pytest.mark.asyncio
     async def test_audit_security_event(self, validator):
         """Test security event auditing."""
@@ -427,27 +428,27 @@ class TestEnvironmentSecurityValidator:
             "compliance_score": 95,
             "violations_found": 2
         }
-        
+
         await validator.audit_security_event("security_validation", event_details)
-        
+
         # Should create audit log (test that no exception is raised)
         assert True  # If we reach here, audit logging didn't fail
-    
+
     def test_is_compliant(self, validator):
         """Test compliance determination logic."""
         # Test with score above threshold
         assert validator.is_compliant(95) is True
-        
+
         # Test with score below threshold
         assert validator.is_compliant(85) is False
-        
+
         # Test with score exactly at threshold
         assert validator.is_compliant(90) is True
 
 
 class TestComplianceReport:
     """Test ComplianceReport model."""
-    
+
     def test_compliance_report_creation(self):
         """Test compliance report creation."""
         violations_by_severity = {
@@ -455,7 +456,7 @@ class TestComplianceReport:
             ViolationSeverity.MEDIUM: 1,
             ViolationSeverity.LOW: 0
         }
-        
+
         report = ComplianceReport(
             environment=Environment.PRODUCTION,
             security_level=SecurityLevel.ENHANCED,
@@ -468,7 +469,7 @@ class TestComplianceReport:
             recommendations=["Enable HTTPS", "Fix password policy"],
             next_validation_due=datetime.now() + timedelta(days=30)
         )
-        
+
         assert report.environment == Environment.PRODUCTION
         assert report.compliance_score == 88
         assert report.is_compliant is False
@@ -478,7 +479,7 @@ class TestComplianceReport:
 
 class TestSecurityMetrics:
     """Test SecurityMetrics model."""
-    
+
     def test_security_metrics_creation(self):
         """Test security metrics creation."""
         metrics = SecurityMetrics(
@@ -493,7 +494,7 @@ class TestSecurityMetrics:
             last_validation=datetime.now(),
             trend_direction="improving"
         )
-        
+
         assert metrics.environment == Environment.PRODUCTION
         assert metrics.total_validations == 100
         assert metrics.passed_validations == 95
@@ -504,7 +505,7 @@ class TestSecurityMetrics:
 
 class TestSecurityValidationIntegration:
     """Test security validation integration scenarios."""
-    
+
     @pytest.mark.asyncio
     async def test_multi_environment_validation(self):
         """Test validation across multiple environments."""
@@ -513,27 +514,27 @@ class TestSecurityValidationIntegration:
             (Environment.STAGING, SecurityLevel.STANDARD),
             (Environment.PRODUCTION, SecurityLevel.ENHANCED)
         ]
-        
+
         results = []
         for env, level in environments:
             validator = EnvironmentSecurityValidator(env, level)
-            
+
             # Mock basic validations
             with patch.object(validator, 'validate_secrets_management') as mock_secrets:
                 mock_secrets.return_value = Mock(passed=True, violations=[], score=100)
-                
+
                 result = await validator.validate_comprehensive_security()
                 results.append(result)
-        
+
         # Production should have highest requirements
         prod_result = results[2]  # Production result
         assert prod_result.security_level == SecurityLevel.ENHANCED
-        
+
         # All environments should have some validation results
         for result in results:
             assert isinstance(result, SecurityValidationResult)
             assert result.environment in [env for env, _ in environments]
-    
+
     @pytest.mark.asyncio
     async def test_security_policy_enforcement(self):
         """Test security policy enforcement across different scenarios."""
@@ -541,7 +542,7 @@ class TestSecurityValidationIntegration:
             Environment.PRODUCTION,
             SecurityLevel.MAXIMUM
         )
-        
+
         # Test with various mock conditions
         test_scenarios = [
             {"vault_available": True, "https_enabled": True, "expected_pass": True},
@@ -549,15 +550,15 @@ class TestSecurityValidationIntegration:
             {"vault_available": True, "https_enabled": False, "expected_pass": False},
             {"vault_available": False, "https_enabled": False, "expected_pass": False},
         ]
-        
+
         for scenario in test_scenarios:
             with patch('dotmac_shared.security.secrets_policy.OpenBaoClient') as mock_vault:
                 with patch.dict('os.environ', {'REQUIRE_HTTPS': str(scenario["https_enabled"]).lower()}):
                     mock_vault.return_value.health_check = AsyncMock(return_value=scenario["vault_available"])
-                    
+
                     secrets_result = await validator.validate_secrets_management()
                     https_result = await validator.validate_https_enforcement()
-                    
+
                     overall_pass = secrets_result.passed and https_result.passed
                     assert overall_pass == scenario["expected_pass"]
 
@@ -570,7 +571,7 @@ async def test_security_validator_comprehensive_workflow():
         environment=Environment.PRODUCTION,
         security_level=SecurityLevel.ENHANCED
     )
-    
+
     # Mock all validation methods to return realistic results
     with patch.object(validator, 'validate_secrets_management') as mock_secrets:
         with patch.object(validator, 'validate_csrf_protection') as mock_csrf:
@@ -581,21 +582,21 @@ async def test_security_validator_comprehensive_workflow():
                     mock_csrf.return_value = Mock(passed=True, violations=[], score=100)
                     mock_https.return_value = Mock(passed=True, violations=[], score=100)
                     mock_auth.return_value = Mock(passed=True, violations=[], score=90)
-                    
+
                     # Run comprehensive validation
                     result = await validator.validate_comprehensive_security()
-                    
+
                     # Verify results
                     assert isinstance(result, SecurityValidationResult)
                     assert result.environment == Environment.PRODUCTION
                     assert result.compliance_score >= validator.required_compliance_score
                     assert result.is_compliant is True
-                    
+
                     # Generate compliance report
                     report = await validator.generate_compliance_report(result)
                     assert isinstance(report, ComplianceReport)
                     assert report.is_compliant is True
-                    
+
                     # Test audit logging
                     await validator.audit_security_event(
                         "comprehensive_validation_completed",

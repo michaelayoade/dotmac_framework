@@ -91,18 +91,17 @@ class EnvironmentProvider(BaseProvider):
         # Handle different secret types based on path patterns
         if normalized_path.startswith("jwt/"):
             return await self._get_jwt_secret(normalized_path)
-        elif normalized_path.startswith("databases/"):
+        if normalized_path.startswith("databases/"):
             return await self._get_database_secret(normalized_path)
-        elif normalized_path.startswith("service-signing/"):
+        if normalized_path.startswith("service-signing/"):
             return await self._get_service_signing_secret(normalized_path)
-        elif normalized_path.startswith("encryption-keys/"):
+        if normalized_path.startswith("encryption-keys/"):
             return await self._get_encryption_key_secret(normalized_path)
-        elif normalized_path.startswith("webhooks/"):
+        if normalized_path.startswith("webhooks/"):
             return await self._get_webhook_secret(normalized_path)
-        elif normalized_path.startswith("secrets/symmetric/"):
+        if normalized_path.startswith("secrets/symmetric/"):
             return await self._get_symmetric_secret(normalized_path)
-        else:
-            return await self._get_custom_secret(normalized_path)
+        return await self._get_custom_secret(normalized_path)
 
     async def _get_jwt_secret(self, path: str) -> SecretData:
         """Get JWT keypair from environment"""

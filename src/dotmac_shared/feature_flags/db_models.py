@@ -179,9 +179,7 @@ class FeatureFlagModel(BaseModel):
         for variant_data in self.ab_test["variants"]:
             variants.append(ABTestVariant(**variant_data))
 
-        return ABTestConfig(
-            variants=variants, control_variant=self.ab_test["control_variant"]
-        )
+        return ABTestConfig(variants=variants, control_variant=self.ab_test["control_variant"])
 
     @staticmethod
     def _serialize_ab_test(config):
@@ -201,9 +199,7 @@ class FeatureFlagAuditModel(BaseModel):
     __tablename__ = "feature_flag_audit"
 
     flag_key = Column(String(255), nullable=False, index=True)
-    action = Column(
-        String(50), nullable=False
-    )  # created, updated, deleted, enabled, disabled
+    action = Column(String(50), nullable=False)  # created, updated, deleted, enabled, disabled
     previous_value = Column(JSON, nullable=True)
     new_value = Column(JSON, nullable=True)
     changed_by = Column(String(255), nullable=True)

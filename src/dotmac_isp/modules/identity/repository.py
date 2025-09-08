@@ -8,10 +8,11 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
-from dotmac_isp.shared.base_repository import BaseTenantRepository as BaseRepository
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+from dotmac_isp.shared.base_repository import BaseTenantRepository as BaseRepository
 
 from .models import AuthenticationLog, Customer, Role, User, UserRole, UserSession
 
@@ -138,9 +139,7 @@ class CustomerRepository(BaseRepository[Customer]):
         try:
             stmt = (
                 select(Customer)
-                .where(
-                    and_(Customer.tenant_id == self.tenant_id, Customer.email == email)
-                )
+                .where(and_(Customer.tenant_id == self.tenant_id, Customer.email == email))
                 .options(selectinload(Customer.user))
             )
 
@@ -155,11 +154,7 @@ class CustomerRepository(BaseRepository[Customer]):
         try:
             stmt = (
                 select(Customer)
-                .where(
-                    and_(
-                        Customer.tenant_id == self.tenant_id, Customer.status == status
-                    )
-                )
+                .where(and_(Customer.tenant_id == self.tenant_id, Customer.status == status))
                 .order_by(desc(Customer.created_at))
             )
 
@@ -169,9 +164,7 @@ class CustomerRepository(BaseRepository[Customer]):
             logger.error(f"Error getting customers by status {status}: {e}")
             return []
 
-    async def search_customers(
-        self, search_term: str, limit: int = 50
-    ) -> list[Customer]:
+    async def search_customers(self, search_term: str, limit: int = 50) -> list[Customer]:
         """Search customers by name, email, or customer number."""
         try:
             stmt = (

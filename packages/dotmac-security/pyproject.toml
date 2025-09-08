@@ -1,68 +1,54 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "dotmac-security"
 version = "1.0.0"
 description = "Comprehensive security services for DotMac Framework"
+authors = ["DotMac Framework <dev@dotmac.framework>"]
 readme = "README.md"
-requires-python = ">=3.9"
-authors = [
-    {name = "DotMac Framework", email = "dev@dotmac.framework"},
-]
-license = {text = "MIT"}
+license = "MIT"
+homepage = "https://github.com/dotmac-framework/dotmac-security"
+repository = "https://github.com/dotmac-framework/dotmac-security.git"
+documentation = "https://docs.dotmac.com/security"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10", 
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Security"
 ]
+packages = [{include = "dotmac", from = "src"}]
 
-dependencies = [
-    "cryptography>=41.0.0",
-    "pyjwt>=2.8.0",
-    "bcrypt>=4.0.0",
-    "python-multipart>=0.0.6",
-    "pydantic>=2.0.0",
-    "sqlalchemy>=2.0.0",
-    "redis>=5.0.0",
-    "structlog>=23.0.0",
-    "fastapi>=0.104.0",
-    "starlette>=0.27.0",
-]
+[tool.poetry.dependencies]
+python = "^3.9"
+cryptography = ">=41.0.0"
+pyjwt = ">=2.8.0"
+bcrypt = ">=4.0.0"
+python-multipart = ">=0.0.6"
+pydantic = ">=2.5.0"
+sqlalchemy = ">=2.0.0"
+redis = ">=5.0.0"
+structlog = ">=23.0.0"
+fastapi = ">=0.110.0"
+starlette = ">=0.36.0"
 
-[project.optional-dependencies]
-enterprise = [
-    "ldap3>=2.9.0",
-    "python-keycloak>=3.0.0",
-    "oauthlib>=3.2.0",
-]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.0.0",
-    "httpx>=0.24.0",
-    "factory-boy>=3.3.0",
-]
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0.0"
+pytest-asyncio = ">=0.21.0"
+pytest-cov = ">=4.0.0"
+httpx = ">=0.25.0"
+factory-boy = ">=3.3.0"
 
-[project.urls]
-Homepage = "https://github.com/dotmac/framework"
-Documentation = "https://docs.dotmac.framework"
-Repository = "https://github.com/dotmac/framework"
-Issues = "https://github.com/dotmac/framework/issues"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-"dotmac.security" = ["py.typed"]
-
+["src"]
+["py.typed"]
+[tool.pytest]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
@@ -75,28 +61,15 @@ addopts = [
     "--cov=dotmac.security",
     "--cov-report=term-missing",
     "--cov-report=html",
-    "--cov-fail-under=90",
+    "--cov-fail-under=90"
 ]
 asyncio_mode = "auto"
-markers = [
-    "unit: marks tests as unit tests",
-    "integration: marks tests as integration tests",
-    "enterprise: marks tests requiring enterprise features",
-]
+markers = ["unit: marks tests as unit tests", "integration: marks tests as integration tests", "enterprise: marks tests requiring enterprise features"]
 
+[tool.coverage]
 [tool.coverage.run]
 source = ["src/dotmac/security"]
-omit = [
-    "*/tests/*",
-    "*/conftest.py",
-    "*/__init__.py",
-]
+omit = ["*/tests/*", "*/conftest.py", "*/__init__.py"]
 
 [tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-]
+exclude_lines = ["pragma: no cover", "def __repr__", "raise AssertionError", "raise NotImplementedError", "if __name__ == .__main__.:"]

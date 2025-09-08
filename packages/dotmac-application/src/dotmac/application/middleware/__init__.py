@@ -31,9 +31,10 @@ class StandardMiddlewareStack:
 
 
 # Placeholder functions
-def apply_standard_middleware(app):
+def apply_standard_middleware(app, config=None, providers=None):
     """Apply standard middleware stack to FastAPI app."""
-    # TODO: Implement standard middleware application
+    # TODO: Implement standard middleware application with config and providers
+    # For now, just return the app
     return app
 
 

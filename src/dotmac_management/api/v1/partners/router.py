@@ -4,15 +4,15 @@ Partner management API used by the management-reseller portal.
 
 from uuid import UUID
 
+from fastapi import APIRouter, Depends
+
+from dotmac.application import standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
     StandardDependencies,
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import APIRouter, Depends
-
-from dotmac.application import standard_exception_handler
 
 from ....repositories.partner import PartnerRepository
 from .schemas import (
@@ -55,9 +55,7 @@ async def list_partners(
 
 @router.get("/{partner_id}", response_model=PartnerResponse)
 @standard_exception_handler
-async def get_partner(
-    partner_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)
-) -> PartnerResponse:
+async def get_partner(partner_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)) -> PartnerResponse:
     repo = PartnerRepository(deps.db)
     partner = await repo.get_by_id(partner_id)
     if not partner:
@@ -102,9 +100,7 @@ async def update_partner(
 
 @router.delete("/{partner_id}")
 @standard_exception_handler
-async def delete_partner(
-    partner_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)
-) -> dict[str, str]:
+async def delete_partner(partner_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)) -> dict[str, str]:
     repo = PartnerRepository(deps.db)
     partner = await repo.get_by_id(partner_id)
     if not partner:
@@ -118,9 +114,7 @@ async def delete_partner(
 
 @router.post("/{partner_id}/approve", response_model=PartnerResponse)
 @standard_exception_handler
-async def approve_partner(
-    partner_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)
-) -> PartnerResponse:
+async def approve_partner(partner_id: UUID, deps: StandardDependencies = Depends(get_standard_deps)) -> PartnerResponse:
     repo = PartnerRepository(deps.db)
     partner = await repo.approve(partner_id)
     if not partner:

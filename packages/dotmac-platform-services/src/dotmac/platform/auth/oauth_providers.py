@@ -18,7 +18,7 @@ import httpx
 from pydantic import BaseModel, HttpUrl
 from sqlalchemy import JSON, Boolean, Column, DateTime, String, Text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 from .exceptions import (
     AuthenticationError,
@@ -832,19 +832,18 @@ async def setup_oauth_provider(
 
         await db_session.commit()
         return existing_config
-    else:
-        # Create new configuration
-        new_config = OAuthProviderConfig(
-            provider=provider.value,
-            client_id=client_id,
-            client_secret=client_secret,  # Should be encrypted
-            **default_config,
-        )
+    # Create new configuration
+    new_config = OAuthProviderConfig(
+        provider=provider.value,
+        client_id=client_id,
+        client_secret=client_secret,  # Should be encrypted
+        **default_config,
+    )
 
-        db_session.add(new_config)
-        await db_session.commit()
+    db_session.add(new_config)
+    await db_session.commit()
 
-        return new_config
+    return new_config
 
 
 def generate_oauth_state() -> str:

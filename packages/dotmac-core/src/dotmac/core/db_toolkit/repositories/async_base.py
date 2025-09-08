@@ -15,8 +15,8 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
-from ...database import TenantMixin
-from ..types import (
+from dotmac.core.database import TenantMixin
+from dotmac.core.db_toolkit.types import (
     AsyncRepositoryProtocol,
     DatabaseError,
     DuplicateEntityError,
@@ -118,17 +118,21 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
                 await self.db.flush()
                 await self.db.refresh(entity)
 
-            self._logger.info(f"Created {self.model_class.__name__} with ID: {entity.id}")
+            self._logger.info("Created {self.model_class.__name__} with ID: %s", entity.id)
             return entity
 
         except IntegrityError as e:
             await self.db.rollback()
-            self._logger.error(f"Integrity error creating {self.model_class.__name__}: {e}")
-            raise DuplicateEntityError(f"Entity already exists: {e.orig}") from e
+            self._logger.error("Integrity error creating {self.model_class.__name__}: %s", e)
+            msg = f"Entity already exists: {e.orig}"
+
+            raise DuplicateEntityError(msg) from e
         except Exception as e:
             await self.db.rollback()
-            self._logger.error(f"Error creating {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to create entity: {e}") from e
+            self._logger.error("Error creating {self.model_class.__name__}: %s", e)
+            msg = f"Failed to create entity: {e}"
+
+            raise DatabaseError(msg) from e
 
     async def get_by_id(
         self,
@@ -160,8 +164,10 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
             return result.scalar_one_or_none()
 
         except Exception as e:
-            self._logger.error(f"Error getting {self.model_class.__name__} by ID {entity_id}: {e}")
-            raise DatabaseError(f"Failed to retrieve entity: {e}") from e
+            self._logger.error("Error getting {self.model_class.__name__} by ID {entity_id}: %s", e)
+            msg = f"Failed to retrieve entity: {e}"
+
+            raise DatabaseError(msg) from e
 
     async def get_by_id_or_raise(
         self,
@@ -185,7 +191,9 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
         """
         entity = await self.get_by_id(entity_id, include_deleted, relationships)
         if not entity:
-            raise EntityNotFoundError(f"{self.model_class.__name__} not found with ID: {entity_id}")
+            msg = f"{self.model_class.__name__} not found with ID: {entity_id}"
+
+            raise EntityNotFoundError(msg)
         return entity
 
     async def get_by_field(
@@ -229,7 +237,9 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
             self._logger.error(
                 f"Error getting {self.model_class.__name__} by field {field_name}: {e}"
             )
-            raise DatabaseError(f"Failed to retrieve entity: {e}") from e
+            msg = f"Failed to retrieve entity: {e}"
+
+            raise DatabaseError(msg) from e
 
     async def update(
         self,
@@ -289,17 +299,21 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
             # Return updated entity
             updated_entity = await self.get_by_id(entity_id)
             if not updated_entity:
-                raise EntityNotFoundError(f"Entity not found after update: {entity_id}")
+                msg = f"Entity not found after update: {entity_id}"
 
-            self._logger.info(f"Updated {self.model_class.__name__} with ID: {entity_id}")
+                raise EntityNotFoundError(msg)
+
+            self._logger.info("Updated {self.model_class.__name__} with ID: %s", entity_id)
             return updated_entity
 
         except EntityNotFoundError:
             raise
         except Exception as e:
             await self.db.rollback()
-            self._logger.error(f"Error updating {self.model_class.__name__} {entity_id}: {e}")
-            raise DatabaseError(f"Failed to update entity: {e}") from e
+            self._logger.error("Error updating {self.model_class.__name__} {entity_id}: %s", e)
+            msg = f"Failed to update entity: {e}"
+
+            raise DatabaseError(msg) from e
 
     async def delete(
         self,
@@ -362,15 +376,17 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
             if self.auto_commit:
                 await self.db.commit()
 
-            self._logger.info(f"Deleted {self.model_class.__name__} with ID: {entity_id}")
+            self._logger.info("Deleted {self.model_class.__name__} with ID: %s", entity_id)
             return True
 
         except EntityNotFoundError:
             raise
         except Exception as e:
             await self.db.rollback()
-            self._logger.error(f"Error deleting {self.model_class.__name__} {entity_id}: {e}")
-            raise DatabaseError(f"Failed to delete entity: {e}") from e
+            self._logger.error("Error deleting {self.model_class.__name__} {entity_id}: %s", e)
+            msg = f"Failed to delete entity: {e}"
+
+            raise DatabaseError(msg) from e
 
     async def list(self, options: QueryOptions) -> list[ModelType]:
         """
@@ -406,8 +422,10 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
             return result.scalars().all()
 
         except Exception as e:
-            self._logger.error(f"Error listing {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to list entities: {e}") from e
+            self._logger.error("Error listing {self.model_class.__name__}: %s", e)
+            msg = f"Failed to list entities: {e}"
+
+            raise DatabaseError(msg) from e
 
     async def list_paginated(self, options: QueryOptions) -> PaginationResult[ModelType]:
         """
@@ -420,7 +438,9 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
             Paginated result with metadata
         """
         if not options.pagination:
-            raise ValidationError("Pagination parameters required for paginated listing")
+            msg = "Pagination parameters required for paginated listing"
+
+            raise ValidationError(msg)
 
         try:
             # Get total count and items concurrently
@@ -446,8 +466,10 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
             )
 
         except Exception as e:
-            self._logger.error(f"Error in paginated listing {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to list entities with pagination: {e}") from e
+            self._logger.error("Error in paginated listing {self.model_class.__name__}: %s", e)
+            msg = f"Failed to list entities with pagination: {e}"
+
+            raise DatabaseError(msg) from e
 
     async def count(
         self,
@@ -483,8 +505,10 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
             return result.scalar() or 0
 
         except Exception as e:
-            self._logger.error(f"Error counting {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to count entities: {e}") from e
+            self._logger.error("Error counting {self.model_class.__name__}: %s", e)
+            msg = f"Failed to count entities: {e}"
+
+            raise DatabaseError(msg) from e
 
     async def exists(self, entity_id: UUID, include_deleted: bool = False) -> bool:
         """
@@ -512,8 +536,10 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
             return result.scalar() > 0
 
         except Exception as e:
-            self._logger.error(f"Error checking existence of {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to check entity existence: {e}") from e
+            self._logger.error("Error checking existence of {self.model_class.__name__}: %s", e)
+            msg = f"Failed to check entity existence: {e}"
+
+            raise DatabaseError(msg) from e
 
     async def bulk_create(
         self,
@@ -555,13 +581,15 @@ class AsyncRepository(Generic[ModelType], AsyncRepositoryProtocol[ModelType]):
                 for entity in entities:
                     await self.db.refresh(entity)
 
-            self._logger.info(f"Bulk created {len(entities)} {self.model_class.__name__} entities")
+            self._logger.info("Bulk created {len(entities)} %s entities", self.model_class.__name__)
             return entities
 
         except Exception as e:
             await self.db.rollback()
-            self._logger.error(f"Error bulk creating {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to bulk create entities: {e}") from e
+            self._logger.error("Error bulk creating {self.model_class.__name__}: %s", e)
+            msg = f"Failed to bulk create entities: {e}"
+
+            raise DatabaseError(msg) from e
 
     def _build_base_query(self, include_deleted: bool = False):
         """
@@ -693,10 +721,14 @@ class AsyncTenantRepository(AsyncRepository[ModelType]):
             ValidationError: If tenant_id is not provided or model doesn't support tenancy
         """
         if not tenant_id:
-            raise ValidationError("tenant_id is required for tenant repositories")
+            msg = "tenant_id is required for tenant repositories"
+
+            raise ValidationError(msg)
 
         if not issubclass(model_class, TenantMixin):
-            raise ValidationError(f"Model {model_class.__name__} must implement TenantMixin")
+            msg = f"Model {model_class.__name__} must implement TenantMixin"
+
+            raise ValidationError(msg)
 
         super().__init__(db, model_class, tenant_id, auto_commit)
 
@@ -751,8 +783,10 @@ class AsyncTenantRepository(AsyncRepository[ModelType]):
             return stats
 
         except Exception as e:
-            self._logger.error(f"Error getting tenant stats for {self.model_class.__name__}: {e}")
-            raise DatabaseError(f"Failed to get tenant statistics: {e}") from e
+            self._logger.error("Error getting tenant stats for {self.model_class.__name__}: %s", e)
+            msg = f"Failed to get tenant statistics: {e}"
+
+            raise DatabaseError(msg) from e
 
     def switch_tenant(self, new_tenant_id: str) -> AsyncTenantRepository[ModelType]:
         """

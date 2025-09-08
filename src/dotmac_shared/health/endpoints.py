@@ -261,9 +261,7 @@ async def health_check():
 
     # Return appropriate HTTP status based on health
     if health_data["status"] == "unhealthy":
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data)
 
     return health_data
 
@@ -274,9 +272,7 @@ async def detailed_health_check():
     health_data = await get_health_status(detailed=True)
 
     if health_data["status"] == "unhealthy":
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_data)
 
     return health_data
 

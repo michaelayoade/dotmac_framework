@@ -12,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Session, sessionmaker
 
-from ..types import TransactionError
+from dotmac.core.db_toolkit.types import TransactionError
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,9 @@ class DatabaseTransaction:
         """
         if session is None:
             if session_maker is None:
-                raise TransactionError("Either session or session_maker must be provided")
+                msg = "Either session or session_maker must be provided"
+
+                raise TransactionError(msg)
             session = session_maker()
             should_close = True
         else:
@@ -69,14 +71,18 @@ class DatabaseTransaction:
         except SQLAlchemyError as e:
             if session.in_transaction():
                 session.rollback()
-                logger.error(f"Database transaction rolled back due to SQLAlchemy error: {e}")
-            raise TransactionError(f"Database transaction failed: {e}") from e
+                logger.error("Database transaction rolled back due to SQLAlchemy error: %s", e)
+            msg = f"Database transaction failed: {e}"
+
+            raise TransactionError(msg) from e
 
         except Exception as e:
             if session.in_transaction():
                 session.rollback()
-                logger.error(f"Database transaction rolled back due to unexpected error: {e}")
-            raise TransactionError(f"Transaction failed with unexpected error: {e}") from e
+                logger.error("Database transaction rolled back due to unexpected error: %s", e)
+            msg = f"Transaction failed with unexpected error: {e}"
+
+            raise TransactionError(msg) from e
 
         finally:
             if should_close:
@@ -105,7 +111,9 @@ class DatabaseTransaction:
         """
         if session is None:
             if session_maker is None:
-                raise TransactionError("Either session or session_maker must be provided")
+                msg = "Either session or session_maker must be provided"
+
+                raise TransactionError(msg)
             session = session_maker()
             should_close = True
         else:
@@ -124,14 +132,22 @@ class DatabaseTransaction:
         except SQLAlchemyError as e:
             if session.in_transaction():
                 await session.rollback()
-                logger.error(f"Async database transaction rolled back due to SQLAlchemy error: {e}")
-            raise TransactionError(f"Async database transaction failed: {e}") from e
+                logger.error(
+                    "Async database transaction rolled back due to SQLAlchemy error: %s", e
+                )
+            msg = f"Async database transaction failed: {e}"
+
+            raise TransactionError(msg) from e
 
         except Exception as e:
             if session.in_transaction():
                 await session.rollback()
-                logger.error(f"Async database transaction rolled back due to unexpected error: {e}")
-            raise TransactionError(f"Async transaction failed with unexpected error: {e}") from e
+                logger.error(
+                    "Async database transaction rolled back due to unexpected error: %s", e
+                )
+            msg = f"Async transaction failed with unexpected error: {e}"
+
+            raise TransactionError(msg) from e
 
         finally:
             if should_close:
@@ -249,7 +265,7 @@ class TransactionManager:
             except (SQLAlchemyError, TransactionError) as e:
                 last_exception = e
                 if attempt == self.max_retries:
-                    logger.error(f"Operation failed after {self.max_retries} retries: {e}")
+                    logger.error("Operation failed after {self.max_retries} retries: %s", e)
                     break
 
                 delay = self.retry_delay * (self.backoff_multiplier**attempt)
@@ -295,7 +311,7 @@ class TransactionManager:
             except (SQLAlchemyError, TransactionError) as e:
                 last_exception = e
                 if attempt == self.max_retries:
-                    logger.error(f"Async operation failed after {self.max_retries} retries: {e}")
+                    logger.error("Async operation failed after {self.max_retries} retries: %s", e)
                     break
 
                 delay = self.retry_delay * (self.backoff_multiplier**attempt)
@@ -333,7 +349,7 @@ class TransactionManager:
             except (SQLAlchemyError, TransactionError) as e:
                 last_exception = e
                 if attempt == self.max_retries:
-                    logger.error(f"Transaction failed after {self.max_retries} retries: {e}")
+                    logger.error("Transaction failed after {self.max_retries} retries: %s", e)
                     break
 
                 delay = self.retry_delay * (self.backoff_multiplier**attempt)
@@ -372,7 +388,7 @@ class TransactionManager:
             except (SQLAlchemyError, TransactionError) as e:
                 last_exception = e
                 if attempt == self.max_retries:
-                    logger.error(f"Async transaction failed after {self.max_retries} retries: {e}")
+                    logger.error("Async transaction failed after {self.max_retries} retries: %s", e)
                     break
 
                 delay = self.retry_delay * (self.backoff_multiplier**attempt)

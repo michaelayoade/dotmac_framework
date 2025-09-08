@@ -4,8 +4,8 @@ Pagination helper utilities and convenience functions.
 
 from typing import Any
 
-from ..types import PaginationParams, PaginationResult, QueryOptions
-from .paginator import PaginationHelper as CorePaginationHelper
+from dotmac.core.db_toolkit.pagination.paginator import PaginationHelper as CorePaginationHelper
+from dotmac.core.db_toolkit.types import PaginationParams, PaginationResult, QueryOptions
 
 PaginationHelper = CorePaginationHelper
 
@@ -34,7 +34,7 @@ def create_query_options(
     Returns:
         QueryOptions instance
     """
-    from ..types import FilterOperator, QueryFilter, SortField, SortOrder
+    from dotmac.core.db_toolkit.types import FilterOperator, QueryFilter, SortField, SortOrder
 
     # Convert simple filters to QueryFilter objects
     query_filters = []
@@ -102,13 +102,16 @@ def validate_pagination_params(page: int, per_page: int) -> None:
         ValueError: If parameters are invalid
     """
     if page < 1:
-        raise ValueError("Page number must be >= 1")
+        msg = "Page number must be >= 1"
+        raise ValueError(msg)
 
     if per_page < 1:
-        raise ValueError("Items per page must be >= 1")
+        msg = "Items per page must be >= 1"
+        raise ValueError(msg)
 
     if per_page > 1000:
-        raise ValueError("Items per page cannot exceed 1000")
+        msg = "Items per page cannot exceed 1000"
+        raise ValueError(msg)
 
 
 def calculate_offset(page: int, per_page: int) -> int:

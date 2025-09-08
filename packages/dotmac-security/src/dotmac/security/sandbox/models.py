@@ -18,7 +18,7 @@ class PluginPermissions:
         Initialize permissions.
 
         Args:
-            permissions: Dict mapping permission categories to allowed operations
+            permissions: dict mapping permission categories to allowed operations
         """
         self.permissions = permissions or {}
         self._validate_permissions()

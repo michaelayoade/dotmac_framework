@@ -13,7 +13,7 @@ from typing import Any, Optional, Protocol
 from pydantic import BaseModel, ConfigDict, Field
 from structlog import get_logger
 
-from .exceptions import (
+from dotmac.core.exceptions import (
     TenantNotFoundError,
 )
 
@@ -208,9 +208,8 @@ class TenantManager:
         """Get current tenant context, raising error if not set."""
         context = _tenant_context.get()
         if context is None:
-            raise TenantNotFoundError(
-                "No tenant context available", error_code="TENANT_CONTEXT_REQUIRED"
-            )
+            msg = "No tenant context available"
+            raise TenantNotFoundError(msg, error_code="TENANT_CONTEXT_REQUIRED")
         return context
 
     def clear_tenant_context(self) -> None:

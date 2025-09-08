@@ -1,0 +1,139 @@
+{
+  "gate": "E",
+  "test_type": "observability_sanity_checks",
+  "timestamp": "2025-09-07 21:34:10",
+  "overall_success": false,
+  "summary": {
+    "total_checks": 13,
+    "passed_checks": 0,
+    "failed_checks": 13,
+    "pass_rate": 0.0
+  },
+  "environment": {
+    "base_urls": {
+      "management": "http://localhost:8000",
+      "isp": "http://localhost:3000",
+      "signoz": "http://localhost:3301",
+      "prometheus": "http://localhost:9090",
+      "jaeger": "http://localhost:16686"
+    },
+    "python_version": "3.12.3 (main, Aug 14 2025, 17:47:21) [GCC 13.3.0]",
+    "platform": "linux"
+  },
+  "checks": [
+    {
+      "name": "Endpoint: Management Platform Metrics",
+      "success": false,
+      "message": "Failed to connect: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /metrics (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa15700>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 4.398584365844727,
+      "details": {
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /metrics (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa15700>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+        "url": "http://localhost:8000/metrics"
+      }
+    },
+    {
+      "name": "Endpoint: Prometheus Metrics API",
+      "success": false,
+      "message": "Failed to connect: HTTPConnectionPool(host='localhost', port=9090): Max retries exceeded with url: /api/v1/query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa15c10>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 1.5692710876464844,
+      "details": {
+        "error": "HTTPConnectionPool(host='localhost', port=9090): Max retries exceeded with url: /api/v1/query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa15c10>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+        "url": "http://localhost:9090/api/v1/query"
+      }
+    },
+    {
+      "name": "Endpoint: SigNoz Health",
+      "success": false,
+      "message": "Failed to connect: HTTPConnectionPool(host='localhost', port=3301): Max retries exceeded with url: /api/v1/health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7db09f290>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 1.3973712921142578,
+      "details": {
+        "error": "HTTPConnectionPool(host='localhost', port=3301): Max retries exceeded with url: /api/v1/health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7db09f290>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+        "url": "http://localhost:3301/api/v1/health"
+      }
+    },
+    {
+      "name": "Prometheus Metrics Collection",
+      "success": false,
+      "message": "Exception during metrics check: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /metrics (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa15af0>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 0.0,
+      "details": {}
+    },
+    {
+      "name": "Trace Generation",
+      "success": false,
+      "message": "Exception during trace generation: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa16240>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 0.0,
+      "details": {}
+    },
+    {
+      "name": "SigNoz Health Check",
+      "success": false,
+      "message": "Cannot connect to SigNoz: HTTPConnectionPool(host='localhost', port=3301): Max retries exceeded with url: /api/v1/health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa165a0>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 0.0,
+      "details": {}
+    },
+    {
+      "name": "Business Metrics Collection",
+      "success": false,
+      "message": "Exception during business metrics check: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /metrics (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa16870>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 0.0,
+      "details": {}
+    },
+    {
+      "name": "Service Discovery",
+      "success": false,
+      "message": "Discovered 0 services",
+      "duration_ms": 0.0,
+      "details": {
+        "discovered_services": [],
+        "expected_services": [
+          "dotmac-management",
+          "dotmac-isp",
+          "postgres",
+          "redis"
+        ]
+      }
+    },
+    {
+      "name": "Alerting Rules",
+      "success": false,
+      "message": "Exception checking alerting rules: HTTPConnectionPool(host='localhost', port=9090): Max retries exceeded with url: /api/v1/rules (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa17860>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 0.0,
+      "details": {}
+    },
+    {
+      "name": "Dashboard: Management Observability",
+      "success": false,
+      "message": "Cannot access dashboard: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /admin/observability (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa17cb0>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 0.0,
+      "details": {
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /admin/observability (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa17cb0>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+        "url": "http://localhost:8000/admin/observability"
+      }
+    },
+    {
+      "name": "Dashboard: SigNoz Dashboard",
+      "success": false,
+      "message": "Cannot access dashboard: HTTPConnectionPool(host='localhost', port=3301): Max retries exceeded with url: /dashboard (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa17f50>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 0.0,
+      "details": {
+        "error": "HTTPConnectionPool(host='localhost', port=3301): Max retries exceeded with url: /dashboard (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa17f50>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+        "url": "http://localhost:3301/dashboard"
+      }
+    },
+    {
+      "name": "Log Aggregation",
+      "success": false,
+      "message": "Cannot verify log aggregation: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa17410>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 0.0,
+      "details": {}
+    },
+    {
+      "name": "Performance Metrics",
+      "success": false,
+      "message": "Exception checking performance metrics: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /metrics (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x76c7daa16b70>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "duration_ms": 0.0,
+      "details": {}
+    }
+  ]
+}

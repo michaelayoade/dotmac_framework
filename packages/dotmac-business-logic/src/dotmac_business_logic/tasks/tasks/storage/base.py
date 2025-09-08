@@ -282,25 +282,25 @@ class Storage(ABC):
         pass
 
 
-class StorageException(Exception):
+class StorageError(Exception):
     """Base exception for storage-related errors."""
 
     pass
 
 
-class StorageConnectionError(StorageException):
+class StorageConnectionError(StorageError):
     """Raised when storage connection fails."""
 
     pass
 
 
-class StorageTimeoutError(StorageException):
+class StorageTimeoutError(StorageError):
     """Raised when storage operation times out."""
 
     pass
 
 
-class LockAcquisitionError(StorageException):
+class LockAcquisitionError(StorageError):
     """Raised when lock acquisition fails."""
 
     pass

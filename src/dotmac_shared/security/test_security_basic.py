@@ -109,9 +109,7 @@ def test_hardened_factory_structure():
     logger.info("=== Hardened Factory Structure Test ===")
 
     try:
-        file_path = os.path.join(
-            os.path.dirname(__file__), "hardened_secret_factory.py"
-        )
+        file_path = os.path.join(os.path.dirname(__file__), "hardened_secret_factory.py")
         with open(file_path) as f:
             content = f.read()
 
@@ -145,9 +143,7 @@ def test_environment_validator_structure():
     logger.info("=== Environment Validator Structure Test ===")
 
     try:
-        file_path = os.path.join(
-            os.path.dirname(__file__), "environment_security_validator.py"
-        )
+        file_path = os.path.join(os.path.dirname(__file__), "environment_security_validator.py")
         with open(file_path) as f:
             content = f.read()
 
@@ -225,9 +221,7 @@ def test_integration_tests_structure():
     logger.info("=== Integration Tests Structure Test ===")
 
     try:
-        file_path = os.path.join(
-            os.path.dirname(__file__), "tests", "test_security_integration.py"
-        )
+        file_path = os.path.join(os.path.dirname(__file__), "tests", "test_security_integration.py")
         with open(file_path) as f:
             content = f.read()
 
@@ -301,9 +295,7 @@ def test_configuration_consistency():
     try:
         # Check that secret types are consistent
         secrets_file = os.path.join(os.path.dirname(__file__), "secrets_policy.py")
-        factory_file = os.path.join(
-            os.path.dirname(__file__), "hardened_secret_factory.py"
-        )
+        factory_file = os.path.join(os.path.dirname(__file__), "hardened_secret_factory.py")
 
         with open(secrets_file) as f:
             secrets_content = f.read()

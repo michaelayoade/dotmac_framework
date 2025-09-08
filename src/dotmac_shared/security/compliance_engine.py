@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Optional
 
-from ..observability import MonitoringStack
+from ..deployment.monitoring import MonitoringStack
 
 
 class RegulatoryFramework(str, Enum):
@@ -182,9 +182,7 @@ class AuditTrail:
             },
         )
 
-        self.logger.info(
-            f"Audit event logged: {event_type} - {resource} - {action} - {outcome}"
-        )
+        self.logger.info(f"Audit event logged: {event_type} - {resource} - {action} - {outcome}")
         return event
 
     def add_event_filter(self, filter_func: callable):
@@ -210,9 +208,7 @@ class AuditTrail:
 
         # Event type filtering
         if event_types:
-            filtered_events = [
-                e for e in filtered_events if e.event_type in event_types
-            ]
+            filtered_events = [e for e in filtered_events if e.event_type in event_types]
 
         # Compliance relevance filtering
         if compliance_relevant_only:
@@ -226,9 +222,7 @@ class AuditTrail:
         self, framework: RegulatoryFramework, start_time: datetime, end_time: datetime
     ) -> list[AuditEvent]:
         """Get compliance-relevant events for a specific period and framework."""
-        events = self.get_events(
-            start_time=start_time, end_time=end_time, compliance_relevant_only=True
-        )
+        events = self.get_events(start_time=start_time, end_time=end_time, compliance_relevant_only=True)
 
         # Filter by framework-specific requirements
         # This would be implemented based on each framework's requirements
@@ -346,33 +340,19 @@ class ComplianceEngine:
 
         # Calculate compliance metrics
         total_rules = len(self.standards[framework].rules)
-        compliant_rules = len(
-            [c for c in checks if c.status == ComplianceStatus.COMPLIANT]
-        )
-        non_compliant_rules = len(
-            [c for c in checks if c.status == ComplianceStatus.NON_COMPLIANT]
-        )
-        partially_compliant_rules = len(
-            [c for c in checks if c.status == ComplianceStatus.PARTIALLY_COMPLIANT]
-        )
-        unknown_status_rules = len(
-            [c for c in checks if c.status == ComplianceStatus.UNKNOWN]
-        )
+        compliant_rules = len([c for c in checks if c.status == ComplianceStatus.COMPLIANT])
+        non_compliant_rules = len([c for c in checks if c.status == ComplianceStatus.NON_COMPLIANT])
+        partially_compliant_rules = len([c for c in checks if c.status == ComplianceStatus.PARTIALLY_COMPLIANT])
+        unknown_status_rules = len([c for c in checks if c.status == ComplianceStatus.UNKNOWN])
 
         # Calculate overall compliance score
         if total_rules > 0:
-            overall_score = (
-                (compliant_rules + (partially_compliant_rules * 0.5))
-                / total_rules
-                * 100
-            )
+            overall_score = (compliant_rules + (partially_compliant_rules * 0.5)) / total_rules * 100
         else:
             overall_score = 0.0
 
         # Generate executive summary
-        executive_summary = self._generate_executive_summary(
-            framework, checks, overall_score
-        )
+        executive_summary = self._generate_executive_summary(framework, checks, overall_score)
 
         # Generate recommendations
         recommendations = self._generate_recommendations(checks)
@@ -398,9 +378,7 @@ class ComplianceEngine:
             risk_assessment=risk_assessment,
         )
 
-        self.logger.info(
-            f"Generated compliance report for {framework}: {overall_score:.1f}% compliant"
-        )
+        self.logger.info(f"Generated compliance report for {framework}: {overall_score:.1f}% compliant")
         return report
 
     async def _execute_rule_check(self, rule: ComplianceRule) -> ComplianceCheck:
@@ -426,9 +404,7 @@ class ComplianceEngine:
         overall_score: float,
     ) -> str:
         """Generate executive summary for compliance report."""
-        non_compliant_count = len(
-            [c for c in checks if c.status == ComplianceStatus.NON_COMPLIANT]
-        )
+        non_compliant_count = len([c for c in checks if c.status == ComplianceStatus.NON_COMPLIANT])
         high_risk_count = len([c for c in checks if c.risk_score >= 7.0])
 
         summary_parts = [
@@ -438,21 +414,13 @@ class ComplianceEngine:
         ]
 
         if overall_score >= 90:
-            summary_parts.append(
-                "Status: EXCELLENT - Organization demonstrates strong compliance posture."
-            )
+            summary_parts.append("Status: EXCELLENT - Organization demonstrates strong compliance posture.")
         elif overall_score >= 80:
-            summary_parts.append(
-                "Status: GOOD - Minor gaps identified that should be addressed."
-            )
+            summary_parts.append("Status: GOOD - Minor gaps identified that should be addressed.")
         elif overall_score >= 70:
-            summary_parts.append(
-                "Status: ADEQUATE - Several compliance gaps require attention."
-            )
+            summary_parts.append("Status: ADEQUATE - Several compliance gaps require attention.")
         else:
-            summary_parts.append(
-                "Status: NEEDS IMPROVEMENT - Significant compliance gaps require immediate attention."
-            )
+            summary_parts.append("Status: NEEDS IMPROVEMENT - Significant compliance gaps require immediate attention.")
 
         if non_compliant_count > 0:
             summary_parts.append(
@@ -460,9 +428,7 @@ class ComplianceEngine:
             )
 
         if high_risk_count > 0:
-            summary_parts.append(
-                f"Risk Alert: {high_risk_count} high-risk findings require priority attention."
-            )
+            summary_parts.append(f"Risk Alert: {high_risk_count} high-risk findings require priority attention.")
 
         return " ".join(summary_parts)
 
@@ -471,9 +437,7 @@ class ComplianceEngine:
         recommendations = []
 
         # Group by status and analyze patterns
-        non_compliant_checks = [
-            c for c in checks if c.status == ComplianceStatus.NON_COMPLIANT
-        ]
+        non_compliant_checks = [c for c in checks if c.status == ComplianceStatus.NON_COMPLIANT]
         high_risk_checks = [c for c in checks if c.risk_score >= 7.0]
 
         if non_compliant_checks:
@@ -641,31 +605,19 @@ class ComplianceEngine:
         ]
 
         # Register default standards
-        self.register_standard(
-            ComplianceStandard(
-                framework=RegulatoryFramework.GDPR, version="2018", rules=gdpr_rules
-            )
-        )
+        self.register_standard(ComplianceStandard(framework=RegulatoryFramework.GDPR, version="2018", rules=gdpr_rules))
+
+        self.register_standard(ComplianceStandard(framework=RegulatoryFramework.SOC2, version="2017", rules=soc2_rules))
 
         self.register_standard(
-            ComplianceStandard(
-                framework=RegulatoryFramework.SOC2, version="2017", rules=soc2_rules
-            )
-        )
-
-        self.register_standard(
-            ComplianceStandard(
-                framework=RegulatoryFramework.PCI_DSS, version="3.2.1", rules=pci_rules
-            )
+            ComplianceStandard(framework=RegulatoryFramework.PCI_DSS, version="3.2.1", rules=pci_rules)
         )
 
 
 # Automated Compliance Checkers
 
 
-async def gdpr_data_protection_by_design_checker(
-    rule: ComplianceRule, audit_trail: AuditTrail
-) -> ComplianceCheck:
+async def gdpr_data_protection_by_design_checker(rule: ComplianceRule, audit_trail: AuditTrail) -> ComplianceCheck:
     """Automated checker for GDPR Article 25 - Data Protection by Design."""
     findings = []
     risk_score = 0.0
@@ -677,15 +629,11 @@ async def gdpr_data_protection_by_design_checker(
     )
 
     privacy_review_events = [
-        e
-        for e in recent_events
-        if "privacy_review" in e.details or "privacy_impact_assessment" in e.details
+        e for e in recent_events if "privacy_review" in e.details or "privacy_impact_assessment" in e.details
     ]
 
     if len(recent_events) > 0 and len(privacy_review_events) == 0:
-        findings.append(
-            "Recent system changes detected without documented privacy review"
-        )
+        findings.append("Recent system changes detected without documented privacy review")
         risk_score += 3.0
 
     # Check for data minimization evidence
@@ -701,9 +649,7 @@ async def gdpr_data_protection_by_design_checker(
     ]
 
     if len(excessive_access_events) > 5:
-        findings.append(
-            "Multiple large data access events may indicate lack of data minimization"
-        )
+        findings.append("Multiple large data access events may indicate lack of data minimization")
         risk_score += 2.0
 
     # Determine compliance status
@@ -724,15 +670,11 @@ async def gdpr_data_protection_by_design_checker(
         details=details,
         findings=findings,
         risk_score=risk_score,
-        remediation_timeline="30 days"
-        if status != ComplianceStatus.COMPLIANT
-        else None,
+        remediation_timeline="30 days" if status != ComplianceStatus.COMPLIANT else None,
     )
 
 
-async def soc2_access_control_checker(
-    rule: ComplianceRule, audit_trail: AuditTrail
-) -> ComplianceCheck:
+async def soc2_access_control_checker(rule: ComplianceRule, audit_trail: AuditTrail) -> ComplianceCheck:
     """Automated checker for SOC 2 CC6.1 - Logical and Physical Access Controls."""
     findings = []
     risk_score = 0.0
@@ -757,21 +699,15 @@ async def soc2_access_control_checker(
     )
 
     unreviewed_privileged = [
-        e
-        for e in privileged_events
-        if "reviewed" not in e.details and "approved" not in e.details
+        e for e in privileged_events if "reviewed" not in e.details and "approved" not in e.details
     ]
 
     if len(unreviewed_privileged) > 0:
-        findings.append(
-            f"{len(unreviewed_privileged)} privileged operations without documented review"
-        )
+        findings.append(f"{len(unreviewed_privileged)} privileged operations without documented review")
         risk_score += 3.0
 
     # Check for access without MFA
-    auth_without_mfa = [
-        e for e in successful_auth_events if not e.details.get("mfa_used", False)
-    ]
+    auth_without_mfa = [e for e in successful_auth_events if not e.details.get("mfa_used", False)]
 
     if len(auth_without_mfa) > len(successful_auth_events) * 0.05:  # >5% without MFA
         findings.append("Authentication events without MFA detected")
@@ -795,15 +731,11 @@ async def soc2_access_control_checker(
         details=details,
         findings=findings,
         risk_score=risk_score,
-        remediation_timeline="14 days"
-        if status != ComplianceStatus.COMPLIANT
-        else None,
+        remediation_timeline="14 days" if status != ComplianceStatus.COMPLIANT else None,
     )
 
 
-async def pci_encryption_checker(
-    rule: ComplianceRule, audit_trail: AuditTrail
-) -> ComplianceCheck:
+async def pci_encryption_checker(rule: ComplianceRule, audit_trail: AuditTrail) -> ComplianceCheck:
     """Automated checker for PCI DSS Requirement 3 - Protect Stored Cardholder Data."""
     findings = []
     risk_score = 0.0
@@ -817,17 +749,12 @@ async def pci_encryption_checker(
     unencrypted_access = [
         e
         for e in data_events
-        if (
-            "cardholder" in str(e.details).lower()
-            or "payment" in str(e.details).lower()
-        )
+        if ("cardholder" in str(e.details).lower() or "payment" in str(e.details).lower())
         and not e.details.get("encrypted", False)
     ]
 
     if len(unencrypted_access) > 0:
-        findings.append(
-            f"{len(unencrypted_access)} unencrypted cardholder data access events"
-        )
+        findings.append(f"{len(unencrypted_access)} unencrypted cardholder data access events")
         risk_score += 8.0  # Critical for PCI
 
     # Check for key management events
@@ -868,9 +795,7 @@ async def pci_encryption_checker(
         details=details,
         findings=findings,
         risk_score=risk_score,
-        remediation_timeline="7 days"
-        if status == ComplianceStatus.NON_COMPLIANT
-        else "30 days",
+        remediation_timeline="7 days" if status == ComplianceStatus.NON_COMPLIANT else "30 days",
     )
 
 
@@ -884,9 +809,7 @@ class ComplianceEngineFactory:
         engine = ComplianceEngine(monitoring, audit_trail)
 
         # Register automated checkers
-        engine.register_automated_checker(
-            "gdpr_art_25", gdpr_data_protection_by_design_checker
-        )
+        engine.register_automated_checker("gdpr_art_25", gdpr_data_protection_by_design_checker)
         engine.register_automated_checker("soc2_cc6_1", soc2_access_control_checker)
         engine.register_automated_checker("pci_req_3", pci_encryption_checker)
 
@@ -904,9 +827,7 @@ class ComplianceEngineFactory:
         gdpr_standard = _create_comprehensive_gdpr_standard()
 
         engine = ComplianceEngine(monitoring, audit_trail, [gdpr_standard])
-        engine.register_automated_checker(
-            "gdpr_art_25", gdpr_data_protection_by_design_checker
-        )
+        engine.register_automated_checker("gdpr_art_25", gdpr_data_protection_by_design_checker)
 
         return engine
 

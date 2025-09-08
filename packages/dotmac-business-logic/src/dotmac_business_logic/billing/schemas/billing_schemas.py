@@ -10,7 +10,14 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
-from dotmac_billing.core.models import (
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+)
+
+from dotmac_business_logic.billing.core.models import (
     BillingCycle,
     InvoiceStatus,
     PaymentMethod,
@@ -18,12 +25,6 @@ from dotmac_billing.core.models import (
     PricingModel,
     SubscriptionStatus,
     TaxType,
-)
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    field_validator,
 )
 
 

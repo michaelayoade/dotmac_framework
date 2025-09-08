@@ -10,17 +10,60 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dotmac.core import PaginationSchema as PaginationParams
-from dotmac.core.exceptions import AuthorizationError, ValidationError
+from dotmac.core import (
+    AuthorizationError,
+    ValidationError,
+)
+
+# Import from core schemas with fallback
+try:
+    from dotmac.core.schemas.base_schemas import PaginationSchema as PaginationParams
+except ImportError:
+    from pydantic import BaseModel
+
+    class PaginationParams(BaseModel):
+        """Fallback pagination parameters."""
+        page: int = 1
+        size: int = 20
+
+        @property
+        def offset(self) -> int:
+            """Calculate offset from page and size."""
+            return (self.page - 1) * self.size
 
 logger = logging.getLogger(__name__)
 
 
-# === Placeholder functions until auth is consolidated ===
+# === Adapter Dependencies with Graceful Fallbacks ===
+
+# Try to import platform services, fallback to placeholders
+try:
+    from dotmac.platform.auth.dependencies import (
+        get_current_tenant as _platform_get_current_tenant,
+    )
+    from dotmac.platform.auth.dependencies import (
+        get_current_user as _platform_get_current_user,
+    )
+    _has_platform_auth = True
+except ImportError:
+    _platform_get_current_user = None
+    _platform_get_current_tenant = None
+    _has_platform_auth = False
+
+try:
+    from dotmac.database.session import get_db_session as _platform_get_async_db
+    _has_platform_db = True
+except ImportError:
+    _platform_get_async_db = None
+    _has_platform_db = False
 
 
 def get_current_user():
-    """Placeholder for current user - to be implemented when auth is consolidated."""
+    """Get current user with platform adapter fallback."""
+    if _has_platform_auth and _platform_get_current_user:
+        return _platform_get_current_user()
+
+    # Fallback for development/testing
     return {
         "user_id": 1,
         "email": "test@example.com",
@@ -30,29 +73,31 @@ def get_current_user():
 
 
 def get_current_tenant():
-    """Placeholder for current tenant - to be implemented when auth is consolidated."""
+    """Get current tenant with platform adapter fallback."""
+    if _has_platform_auth and _platform_get_current_tenant:
+        return _platform_get_current_tenant()
+
+    # Fallback for development/testing
     return "tenant_123"
 
 
 def get_async_db():
-    """
-    Placeholder for async database session.
-    To be implemented when database is consolidated.
-    """
+    """Get database session with platform adapter fallback."""
+    if _has_platform_db and _platform_get_async_db:
+        return _platform_get_async_db()
+
+    # Return None - services should handle this gracefully
+    # or raise configuration error at runtime
+    logger.warning("No database session available - using fallback None")
     return None
 
 
-def get_pagination_params():
-    """Placeholder for pagination params - to be implemented in core."""
-
-    # Return a simple object with pagination defaults
-    class MockPagination:
-        def __init__(self):
-            self.offset = 0
-            self.size = 10
-            self.page = 1
-
-    return MockPagination()
+def get_pagination_params(
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(20, ge=1, le=100, description="Items per page"),
+) -> PaginationParams:
+    """Get pagination parameters from query params."""
+    return PaginationParams(page=page, size=size)
 
 
 # === Core Dependencies ===

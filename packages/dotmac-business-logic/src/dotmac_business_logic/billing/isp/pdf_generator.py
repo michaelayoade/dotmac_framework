@@ -4,7 +4,21 @@ import io
 import logging
 from typing import Any, Optional
 
-from dotmac_isp.modules.billing.models import Invoice, InvoiceLineItem, Payment, Receipt
+# Try ISP billing models, fallback to local models
+try:
+    from dotmac_isp.modules.billing.models import (
+        Invoice,
+        InvoiceLineItem,
+        Payment,
+        Receipt,
+    )
+except ImportError:
+    from dotmac_business_logic.billing.isp.models import (
+        Invoice,
+        InvoiceLineItem,
+        Payment,
+        Receipt,
+    )
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import letter
@@ -381,8 +395,8 @@ class InvoicePDFGenerator:
         footer_text = f"""
         <b>Payment Instructions:</b><br/>
         Please remit payment by the due date to avoid late fees.<br/>
-        For questions about this invoice, contact us at {self.company_info['email']}<br/>
-        Tax ID: {self.company_info['tax_id']}
+        For questions about this invoice, contact us at {self.company_info["email"]}<br/>
+        Tax ID: {self.company_info["tax_id"]}
         """
 
         elements.append(Paragraph(footer_text, self.styles["Normal"]))

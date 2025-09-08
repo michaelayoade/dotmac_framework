@@ -290,13 +290,8 @@ async def example_multi_tenant_billing(db: AsyncSession):
     customer_b = await billing_service_b.customer_repo.create(customer_data_b)
 
     # Verify tenant isolation
-    await billing_service_a.customer_repo.get_multi(
-        tenant_id=tenant_a_id
-    )
-    await billing_service_b.customer_repo.get_multi(
-        tenant_id=tenant_b_id
-    )
-
+    await billing_service_a.customer_repo.get_multi(tenant_id=tenant_a_id)
+    await billing_service_b.customer_repo.get_multi(tenant_id=tenant_b_id)
 
     # Verify cross-tenant isolation
     await billing_service_a.customer_repo.get(customer_b.id, tenant_a_id)

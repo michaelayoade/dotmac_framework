@@ -19,7 +19,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
-from ..observability import MonitoringStack
+from .monitoring import MonitoringStack
 from .automation import DeploymentAutomation, DeploymentSpec, HealthCheckConfig
 
 
@@ -656,7 +656,12 @@ class DockerPipelineExecutor(PipelineExecutor):
         try:
             import xml.etree.ElementTree as ET
 
-            tree = ET.parse(coverage_file)
+            # Secure XML parsing - disable external entity processing
+            parser = ET.XMLParser()
+            parser.parser.DefaultHandler = lambda x: None
+            parser.parser.ExternalEntityRefHandler = lambda context, base, sysId, notationName: False
+
+            tree = ET.parse(coverage_file, parser)
             root = tree.getroot()
 
             coverage_element = root.find(".//coverage")

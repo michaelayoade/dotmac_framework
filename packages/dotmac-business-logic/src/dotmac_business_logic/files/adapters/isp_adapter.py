@@ -473,7 +473,7 @@ class ISPFileAdapter:
                 ),
                 "service_level": service_details.get("service_level", "Standard"),
                 "technician": service_details.get("technician", "Technical Team"),
-                "certificate_number": f'CERT-{customer_id}-{datetime.now().strftime("%Y%m%d")}',
+                "certificate_number": f"CERT-{customer_id}-{datetime.now().strftime('%Y%m%d')}",
                 "company_info": {
                     "name": "DotMac ISP Services",
                     "address": "123 Network Lane, Tech City, TC 12345",

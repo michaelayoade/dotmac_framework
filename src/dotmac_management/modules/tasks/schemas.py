@@ -55,9 +55,7 @@ class TaskMetadata(BaseModel):
     tenant_id: Optional[str] = Field(None, description="Associated tenant ID")
     user_id: Optional[str] = Field(None, description="User who initiated the task")
     source: Optional[str] = Field(None, description="Source system or component")
-    context: dict[str, Any] = Field(
-        default_factory=dict, description="Additional context"
-    )
+    context: dict[str, Any] = Field(default_factory=dict, description="Additional context")
 
 
 class ProgressInfo(BaseModel):
@@ -92,42 +90,26 @@ class TaskRetryRequest(BaseModel):
 class BulkTaskOperationRequest(BaseModel):
     """Request for bulk task operations"""
 
-    task_ids: list[str] = Field(
-        min_items=1, max_items=100, description="Task IDs to operate on"
-    )
+    task_ids: list[str] = Field(min_items=1, max_items=100, description="Task IDs to operate on")
     operation: TaskOperationType = Field(description="Operation to perform")
-    parameters: Optional[dict[str, Any]] = Field(
-        None, description="Operation-specific parameters"
-    )
-    confirm_destructive: bool = Field(
-        False, description="Confirm destructive operations"
-    )
+    parameters: Optional[dict[str, Any]] = Field(None, description="Operation-specific parameters")
+    confirm_destructive: bool = Field(False, description="Confirm destructive operations")
 
 
 class TaskQueryRequest(BaseModel):
     """Request to query tasks with filters"""
 
-    status: Optional[list[TaskStatus]] = Field(
-        None, description="Filter by task status"
-    )
-    priority: Optional[list[TaskPriority]] = Field(
-        None, description="Filter by priority"
-    )
+    status: Optional[list[TaskStatus]] = Field(None, description="Filter by task status")
+    priority: Optional[list[TaskPriority]] = Field(None, description="Filter by priority")
     task_type: Optional[list[str]] = Field(None, description="Filter by task type")
     tenant_id: Optional[str] = Field(None, description="Filter by tenant ID")
     user_id: Optional[str] = Field(None, description="Filter by user ID")
-    created_after: Optional[datetime] = Field(
-        None, description="Tasks created after this time"
-    )
-    created_before: Optional[datetime] = Field(
-        None, description="Tasks created before this time"
-    )
+    created_after: Optional[datetime] = Field(None, description="Tasks created after this time")
+    created_before: Optional[datetime] = Field(None, description="Tasks created before this time")
     limit: int = Field(50, ge=1, le=1000, description="Maximum number of results")
     offset: int = Field(0, ge=0, description="Number of results to skip")
     order_by: str = Field("created_at", description="Field to order by")
-    order_direction: str = Field(
-        "desc", pattern="^(asc|desc)$", description="Order direction"
-    )
+    order_direction: str = Field("desc", pattern="^(asc|desc)$", description="Order direction")
 
 
 # Response Models
@@ -142,17 +124,13 @@ class TaskStatusResponse(BaseModel):
     # Timing information
     created_at: datetime = Field(description="Task creation timestamp")
     started_at: Optional[datetime] = Field(None, description="Task start timestamp")
-    completed_at: Optional[datetime] = Field(
-        None, description="Task completion timestamp"
-    )
+    completed_at: Optional[datetime] = Field(None, description="Task completion timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     # Progress and results
     progress: ProgressInfo = Field(description="Task progress information")
     result: Optional[dict[str, Any]] = Field(None, description="Task execution result")
-    error: Optional[dict[str, Any]] = Field(
-        None, description="Error information if failed"
-    )
+    error: Optional[dict[str, Any]] = Field(None, description="Error information if failed")
 
     # Retry information
     retry_count: int = Field(0, description="Number of retry attempts")
@@ -161,14 +139,10 @@ class TaskStatusResponse(BaseModel):
 
     # Metadata
     metadata: TaskMetadata = Field(description="Task metadata")
-    dependencies: list[str] = Field(
-        default_factory=list, description="Task dependencies"
-    )
+    dependencies: list[str] = Field(default_factory=list, description="Task dependencies")
 
     # Resource usage
-    execution_time: Optional[float] = Field(
-        None, description="Total execution time in seconds"
-    )
+    execution_time: Optional[float] = Field(None, description="Total execution time in seconds")
     memory_usage: Optional[int] = Field(None, description="Peak memory usage in bytes")
 
 
@@ -180,14 +154,10 @@ class WorkflowStepResponse(BaseModel):
     status: TaskStatus = Field(description="Step execution status")
     order: int = Field(description="Step execution order")
     started_at: Optional[datetime] = Field(None, description="Step start timestamp")
-    completed_at: Optional[datetime] = Field(
-        None, description="Step completion timestamp"
-    )
+    completed_at: Optional[datetime] = Field(None, description="Step completion timestamp")
     result: Optional[dict[str, Any]] = Field(None, description="Step execution result")
     error: Optional[str] = Field(None, description="Step error message")
-    dependencies: list[str] = Field(
-        default_factory=list, description="Step dependencies"
-    )
+    dependencies: list[str] = Field(default_factory=list, description="Step dependencies")
 
 
 class WorkflowStatusResponse(BaseModel):
@@ -206,18 +176,14 @@ class WorkflowStatusResponse(BaseModel):
     # Timing information
     created_at: datetime = Field(description="Workflow creation timestamp")
     started_at: Optional[datetime] = Field(None, description="Workflow start timestamp")
-    completed_at: Optional[datetime] = Field(
-        None, description="Workflow completion timestamp"
-    )
+    completed_at: Optional[datetime] = Field(None, description="Workflow completion timestamp")
 
     # Steps information
     steps: list[WorkflowStepResponse] = Field(description="Workflow steps")
 
     # Metadata
     metadata: TaskMetadata = Field(description="Workflow metadata")
-    context: dict[str, Any] = Field(
-        default_factory=dict, description="Workflow context"
-    )
+    context: dict[str, Any] = Field(default_factory=dict, description="Workflow context")
 
 
 class QueueStatsResponse(BaseModel):
@@ -233,24 +199,16 @@ class QueueStatsResponse(BaseModel):
     dead_letter_tasks: int = Field(description="Tasks in dead letter queue")
 
     # Performance metrics
-    average_processing_time: float = Field(
-        description="Average task processing time in seconds"
-    )
+    average_processing_time: float = Field(description="Average task processing time in seconds")
     throughput_per_minute: float = Field(description="Tasks processed per minute")
     error_rate: float = Field(ge=0, le=1, description="Error rate as decimal")
 
     # Priority breakdown
-    queue_depth_by_priority: dict[str, int] = Field(
-        description="Queue depth by priority level"
-    )
+    queue_depth_by_priority: dict[str, int] = Field(description="Queue depth by priority level")
 
     # Time-based metrics
-    oldest_pending_task: Optional[datetime] = Field(
-        None, description="Timestamp of oldest pending task"
-    )
-    newest_task: Optional[datetime] = Field(
-        None, description="Timestamp of newest task"
-    )
+    oldest_pending_task: Optional[datetime] = Field(None, description="Timestamp of oldest pending task")
+    newest_task: Optional[datetime] = Field(None, description="Timestamp of newest task")
 
 
 class WorkerInfo(BaseModel):
@@ -258,15 +216,11 @@ class WorkerInfo(BaseModel):
 
     worker_id: str = Field(description="Unique worker identifier")
     status: str = Field(description="Worker status")
-    current_task: Optional[str] = Field(
-        None, description="Currently processing task ID"
-    )
+    current_task: Optional[str] = Field(None, description="Currently processing task ID")
     tasks_processed: int = Field(description="Total tasks processed by this worker")
     uptime: float = Field(description="Worker uptime in seconds")
     last_heartbeat: datetime = Field(description="Last heartbeat timestamp")
-    memory_usage: Optional[int] = Field(
-        None, description="Current memory usage in bytes"
-    )
+    memory_usage: Optional[int] = Field(None, description="Current memory usage in bytes")
     cpu_usage: Optional[float] = Field(None, description="Current CPU usage percentage")
 
 
@@ -280,28 +234,16 @@ class WorkerStatsResponse(BaseModel):
     unhealthy_workers: int = Field(description="Unhealthy workers")
 
     # Performance metrics
-    average_task_time: float = Field(
-        description="Average task processing time in seconds"
-    )
-    tasks_per_minute: float = Field(
-        description="Tasks processed per minute across all workers"
-    )
-    worker_utilization: float = Field(
-        ge=0, le=1, description="Worker utilization percentage"
-    )
+    average_task_time: float = Field(description="Average task processing time in seconds")
+    tasks_per_minute: float = Field(description="Tasks processed per minute across all workers")
+    worker_utilization: float = Field(ge=0, le=1, description="Worker utilization percentage")
 
     # Worker details
-    worker_details: list[WorkerInfo] = Field(
-        description="Individual worker information"
-    )
+    worker_details: list[WorkerInfo] = Field(description="Individual worker information")
 
     # Resource usage
-    total_memory_usage: Optional[int] = Field(
-        None, description="Total memory usage across workers"
-    )
-    average_cpu_usage: Optional[float] = Field(
-        None, description="Average CPU usage across workers"
-    )
+    total_memory_usage: Optional[int] = Field(None, description="Total memory usage across workers")
+    average_cpu_usage: Optional[float] = Field(None, description="Average CPU usage across workers")
 
 
 class SystemHealthResponse(BaseModel):
@@ -375,16 +317,12 @@ class TaskMetricsResponse(BaseModel):
     error_trends: dict[str, float] = Field(description="Error rate trends")
 
     # Performance metrics
-    processing_times: dict[str, float] = Field(
-        description="Processing time percentiles"
-    )
+    processing_times: dict[str, float] = Field(description="Processing time percentiles")
     queue_depths: dict[str, int] = Field(description="Queue depth over time")
     throughput: dict[str, float] = Field(description="Throughput metrics")
 
     # Resource usage
-    resource_utilization: dict[str, Any] = Field(
-        description="Resource utilization metrics"
-    )
+    resource_utilization: dict[str, Any] = Field(description="Resource utilization metrics")
     cost_metrics: dict[str, float] = Field(description="Cost-related metrics")
 
 

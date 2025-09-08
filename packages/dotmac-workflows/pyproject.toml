@@ -1,0 +1,41 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "dotmac-workflows"
+version = "1.0.0"
+description = "Base workflow engine for business processes with steps, approvals, rollback, and resumability"
+authors = ["DotMac Team <dev@dotmac.com>"]
+readme = "README.md"
+license = "MIT"
+packages = [{include = "dotmac_workflows", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0"
+mypy = "^1.0.0"
+ruff = "^0.1.0"
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+target-version = "py39"
+line-length = "100"
+select = ["E", "W", "F", "I", "N", "UP"]
+
+[tool.pytest]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

@@ -18,9 +18,7 @@ class PortalAccountBase(BaseModel):
     theme_preference: str = Field(default="light", pattern="^(light|dark|auto)$")
     language_preference: str = Field(default="en", max_length=10)
     timezone_preference: str = Field(default="UTC", max_length=50)
-    session_timeout_minutes: int = Field(
-        default=30, ge=5, le=480
-    )  # 5 minutes to 8 hours
+    session_timeout_minutes: int = Field(default=30, ge=5, le=480)  # 5 minutes to 8 hours
 
 
 class PortalAccountCreate(PortalAccountBase):
@@ -44,9 +42,7 @@ class PortalAccountCreate(PortalAccountBase):
         has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v)
 
         if not (has_upper and has_lower and has_digit and has_special):
-            raise ValueError(
-                "Password must contain uppercase, lowercase, digit, and special character"
-            )
+            raise ValueError("Password must contain uppercase, lowercase, digit, and special character")
         return v
 
 
@@ -124,9 +120,7 @@ class PortalPasswordChangeRequest(BaseModel):
         has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v)
 
         if not (has_upper and has_lower and has_digit and has_special):
-            raise ValueError(
-                "Password must contain uppercase, lowercase, digit, and special character"
-            )
+            raise ValueError("Password must contain uppercase, lowercase, digit, and special character")
         return v
 
 
@@ -157,9 +151,7 @@ class PortalPasswordResetConfirm(BaseModel):
         has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v)
 
         if not (has_upper and has_lower and has_digit and has_special):
-            raise ValueError(
-                "Password must contain uppercase, lowercase, digit, and special character"
-            )
+            raise ValueError("Password must contain uppercase, lowercase, digit, and special character")
         return v
 
 

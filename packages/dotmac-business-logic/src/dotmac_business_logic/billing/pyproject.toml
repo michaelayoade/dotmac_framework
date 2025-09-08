@@ -1,74 +1,72 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
+
 name = "dotmac-billing"
 version = "1.0.0"
 description = "Comprehensive billing system for ISP and service provider applications"
+authors = ["DotMac Framework Team <support@dotmac.dev>"]
 readme = "README.md"
-authors = [
-    {name = "DotMac Framework Team", email = "support@dotmac.dev"}
-]
-license = {text = "MIT"}
+license = "MIT"
+homepage = "https://github.com/dotmac-framework/dotmac-billing"
+repository = "https://github.com/dotmac-framework/dotmac-billing.git"
+documentation = "https://docs.dotmac.com/billing"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Development Status :: 4 - Beta",
     "Topic :: Office/Business :: Financial :: Accounting",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
-    "Topic :: Software Development :: Libraries :: Python Modules"
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-keywords = ["billing", "isp", "subscription", "invoice", "payment", "saas"]
-requires-python = ">=3.9"
-dependencies = [
-    "sqlalchemy>=2.0.0",
-    "pydantic>=2.0.0",
-    "fastapi>=0.100.0",
-    "alembic>=1.12.0",
-    "python-dateutil>=2.8.0"
-]
+packages = [{include = "dotmac", from = "src"}]
 
-[project.optional-dependencies]
-postgresql = ["asyncpg>=0.28.0"]
-mysql = ["aiomysql>=0.2.0"]
-redis = ["redis>=4.5.0"]
-stripe = ["stripe>=5.5.0"]
-paypal = ["paypalrestsdk>=1.13.0"]
-pdf = ["reportlab>=4.0.0", "weasyprint>=59.0"]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "black>=23.0.0",
-    "flake8>=6.0.0",
-    "mypy>=1.5.0"
-]
+[tool.poetry.dependencies]
 
-[project.urls]
-Homepage = "https://github.com/dotmac-framework/billing"
-Documentation = "https://docs.dotmac.dev/billing"
-Repository = "https://github.com/dotmac-framework/billing"
-Issues = "https://github.com/dotmac-framework/billing/issues"
+python = "^3.9"
+sqlalchemy = ">=2.0.0"
+pydantic = ">=2.5.0"
+fastapi = ">=0.110.0"
+alembic = ">=1.11.0"
+python-dateutil = ">=2.8.0"
+
+
+[tool.poetry.group.dev.dependencies]
+
+pytest = ">=7.0.0"
+pytest-asyncio = ">=0.21.0"
+pytest-cov = ">=4.1.0"
+black = ">=23.0.0"
+flake8 = ">=6.0.0"
+mypy = ">=1.5.0"
+[tool.setuptools]
+
+
+
+[tool.setuptools.packages]
 
 [tool.setuptools.packages.find]
+
 where = ["."]
 include = ["dotmac_shared.billing*"]
 
 [tool.setuptools.package-data]
-"dotmac_shared.billing" = ["templates/*.html", "migrations/*.sql", "config/*.yaml"]
+dotmac_shared.billing = ["templates/*.html", "migrations/*.sql", "config/*.yaml"]
 
 [tool.black]
 line-length = 100
-target-version = ['py39', 'py310', 'py311', 'py312']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
+target-version = ["py39", "py310", "py311", "py312"]
+include = "\.pyi?$"
+extend-exclude = "/(
   \.git
   | \.hg
   | \.mypy_cache
@@ -80,15 +78,18 @@ extend-exclude = '''
   | dist
   | migrations
 )/
-'''
+"[tool.mypy]
 
-[tool.mypy]
 python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 
+
+[tool.pytest]
+
 [tool.pytest.ini_options]
+
 minversion = "7.0"
 addopts = "-ra -q --cov=dotmac_shared.billing --cov-report=term-missing"
 testpaths = ["tests"]

@@ -14,7 +14,7 @@ __all__ = [
 
 # Optional Redis adapter
 try:
-    from .redis_streams import RedisConfig, RedisEventBus, create_redis_bus
+    from .redis_streams import RedisConfig, RedisEventBus, create_redis_bus  # noqa: F401
 
     __all__.extend(["RedisConfig", "RedisEventBus", "create_redis_bus"])
 except ImportError:
@@ -22,7 +22,7 @@ except ImportError:
 
 # Optional Kafka adapter
 try:
-    from .kafka import KafkaConfig, KafkaEventBus, create_kafka_bus
+    from .kafka import KafkaConfig, KafkaEventBus, create_kafka_bus  # noqa: F401
 
     __all__.extend(["KafkaConfig", "KafkaEventBus", "create_kafka_bus"])
 except ImportError:

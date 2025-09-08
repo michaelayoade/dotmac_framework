@@ -5,9 +5,6 @@ Provides comprehensive authentication endpoints using RouterFactory patterns.
 from typing import Optional
 from uuid import UUID
 
-from dotmac_shared.api.dependencies import get_current_tenant_id, get_current_user
-from dotmac_shared.auth.services import AuthService
-from dotmac_shared.common.exceptions import standard_exception_handler
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from dotmac.application import RouterFactory
 from dotmac.database.session import get_db_session
 from dotmac.platform.observability.logging import get_logger
+from dotmac_shared.api.dependencies import get_current_tenant_id, get_current_user
+from dotmac_shared.auth.services import AuthService
+from dotmac_shared.common.exceptions import standard_exception_handler
 
 from ..schemas.auth_schemas import (
     ApiKeyCreateSchema,
@@ -68,17 +68,11 @@ def create_auth_router() -> APIRouter:
 
         if not result.success:
             if result.error_code == "ACCOUNT_LOCKED":
-                raise HTTPException(
-                    status_code=status.HTTP_423_LOCKED, detail=result.message
-                )
+                raise HTTPException(status_code=status.HTTP_423_LOCKED, detail=result.message)
             elif result.error_code == "ACCOUNT_INACTIVE":
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail=result.message
-                )
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=result.message)
             else:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail=result.message
-                )
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=result.message)
 
         response_data = {
             "success": result.success,
@@ -87,9 +81,7 @@ def create_auth_router() -> APIRouter:
         }
 
         if result.requires_mfa:
-            response_data.update(
-                {"temp_token": result.temp_token, "user_id": result.user_id}
-            )
+            response_data.update({"temp_token": result.temp_token, "user_id": result.user_id})
         else:
             response_data.update(
                 {
@@ -133,9 +125,7 @@ def create_auth_router() -> APIRouter:
         )
 
         if not result.success:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail=result.message
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=result.message)
 
         return LoginResponseSchema(
             success=True,
@@ -176,9 +166,7 @@ def create_auth_router() -> APIRouter:
         success = await auth_service.logout_user(session_id, client_ip)
 
         if not success:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to logout"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to logout")
 
         return {"message": "Logout successful"}
 
@@ -232,9 +220,7 @@ def create_auth_router() -> APIRouter:
             request.current_session_id = getattr(http_request.state, "session_id", None)
 
         client_ip = http_request.client.host if http_request.client else None
-        success = await auth_service.change_password(
-            user_id=current_user.id, request=request, client_ip=client_ip
-        )
+        success = await auth_service.change_password(user_id=current_user.id, request=request, client_ip=client_ip)
 
         if not success:
             raise HTTPException(
@@ -260,9 +246,7 @@ def create_auth_router() -> APIRouter:
         """
         auth_service = AuthService(db, tenant_id)
 
-        setup_response = await auth_service.setup_mfa(
-            user_id=current_user.id, request=request
-        )
+        setup_response = await auth_service.setup_mfa(user_id=current_user.id, request=request)
 
         return setup_response
 
@@ -281,9 +265,7 @@ def create_auth_router() -> APIRouter:
         """
         auth_service = AuthService(db, tenant_id)
 
-        success = await auth_service.verify_mfa_setup(
-            user_id=current_user.id, mfa_code=mfa_code
-        )
+        success = await auth_service.verify_mfa_setup(user_id=current_user.id, mfa_code=mfa_code)
 
         if not success:
             raise HTTPException(
@@ -309,9 +291,7 @@ def create_auth_router() -> APIRouter:
         """
         auth_service = AuthService(db, tenant_id)
 
-        api_key_response = await auth_service.create_api_key(
-            user_id=current_user.id, request=request
-        )
+        api_key_response = await auth_service.create_api_key(user_id=current_user.id, request=request)
 
         return api_key_response
 
@@ -351,9 +331,7 @@ def create_auth_router() -> APIRouter:
         session = await auth_service.session_repo.get_by_id(session_id)
 
         if not session:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
         return SessionInfoSchema.model_validate(session)
 
@@ -500,9 +478,7 @@ def create_rbac_router() -> APIRouter:
 
         return result
 
-    @router.get(
-        "/users/{user_id}/permissions", response_model=UserPermissionSummarySchema
-    )
+    @router.get("/users/{user_id}/permissions", response_model=UserPermissionSummarySchema)
     @standard_exception_handler
     async def get_user_permissions(
         user_id: UUID,

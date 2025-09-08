@@ -45,13 +45,9 @@ class AuthenticationManager:
 
         except Exception as e:
             logger.error(f"Failed to register {auth_method.value} provider: {e}")
-            raise ServiceError(
-                f"Failed to register authentication provider: {str(e)}"
-            ) from e
+            raise ServiceError(f"Failed to register authentication provider: {str(e)}") from e
 
-    async def authenticate(
-        self, request: AuthenticationRequest
-    ) -> AuthenticationResult:
+    async def authenticate(self, request: AuthenticationRequest) -> AuthenticationResult:
         """Authenticate user using appropriate provider."""
         try:
             # Get the provider for this auth method
@@ -64,9 +60,7 @@ class AuthenticationManager:
                 )
             # Validate request format
             if not provider.validate_request(request):
-                return AuthenticationResult(
-                    success=False, error_message="Invalid authentication request format"
-                )
+                return AuthenticationResult(success=False, error_message="Invalid authentication request format")
             # Perform authentication
             result = await provider.authenticate(request)
 
@@ -77,9 +71,7 @@ class AuthenticationManager:
 
         except Exception as e:
             logger.error(f"Authentication failed: {e}")
-            return AuthenticationResult(
-                success=False, error_message="Authentication failed"
-            )
+            return AuthenticationResult(success=False, error_message="Authentication failed")
 
     async def prepare_authentication(
         self, auth_method: AuthMethodType, request: AuthenticationRequest
@@ -89,9 +81,7 @@ class AuthenticationManager:
             provider = self._get_provider(auth_method)
 
             if not provider:
-                raise ServiceError(
-                    f"Authentication method {auth_method.value} not available"
-                )
+                raise ServiceError(f"Authentication method {auth_method.value} not available")
 
             return await provider.prepare_authentication(request)
 
@@ -99,9 +89,7 @@ class AuthenticationManager:
             logger.error(f"Failed to prepare authentication: {e}")
             raise ServiceError(f"Failed to prepare authentication: {str(e)}") from e
 
-    def get_available_methods(
-        self, portal_id: str
-    ) -> dict[AuthMethodType, dict[str, Any]]:
+    def get_available_methods(self, portal_id: str) -> dict[AuthMethodType, dict[str, Any]]:
         """Get available authentication methods for a portal."""
         available_methods = {}
 
@@ -166,15 +154,9 @@ class AuthenticationManager:
 
         # Register default providers
         try:
-            self.register_provider(
-                AuthMethodType.EMAIL, EmailAuthProvider, email_config
-            )
-            self.register_provider(
-                AuthMethodType.SOCIAL, SocialAuthProvider, social_config
-            )
-            self.register_provider(
-                AuthMethodType.VOUCHER, VoucherAuthProvider, voucher_config
-            )
+            self.register_provider(AuthMethodType.EMAIL, EmailAuthProvider, email_config)
+            self.register_provider(AuthMethodType.SOCIAL, SocialAuthProvider, social_config)
+            self.register_provider(AuthMethodType.VOUCHER, VoucherAuthProvider, voucher_config)
         except Exception as e:
             logger.error(f"Failed to register default providers: {e}")
 
@@ -217,9 +199,7 @@ class AuthenticationManager:
         }
         return config_required.get(auth_method, True)
 
-    async def _log_authentication_attempt(
-        self, request: AuthenticationRequest, result: AuthenticationResult
-    ):
+    async def _log_authentication_attempt(self, request: AuthenticationRequest, result: AuthenticationResult):
         """Log authentication attempt for analytics and security."""
         try:
             log_data = {
@@ -245,9 +225,7 @@ class AuthenticationManager:
         except Exception as e:
             logger.warning(f"Failed to log authentication attempt: {e}")
 
-    def update_provider_config(
-        self, auth_method: AuthMethodType, config: dict[str, Any]
-    ):
+    def update_provider_config(self, auth_method: AuthMethodType, config: dict[str, Any]):
         """Update provider configuration."""
         try:
             if auth_method in self._providers:
@@ -256,15 +234,11 @@ class AuthenticationManager:
                 self.register_provider(auth_method, provider_class, config)
                 logger.info(f"Updated configuration for {auth_method.value} provider")
             else:
-                logger.warning(
-                    f"Cannot update config for unregistered provider: {auth_method.value}"
-                )
+                logger.warning(f"Cannot update config for unregistered provider: {auth_method.value}")
 
         except Exception as e:
             logger.error(f"Failed to update provider config: {e}")
-            raise ServiceError(
-                f"Failed to update provider configuration: {str(e)}"
-            ) from e
+            raise ServiceError(f"Failed to update provider configuration: {str(e)}") from e
 
     def get_provider_status(self, auth_method: AuthMethodType) -> dict[str, Any]:
         """Get detailed status of a specific provider."""
@@ -285,9 +259,7 @@ class AuthenticationManager:
                 "provider_class": type(provider).__name__,
                 "configuration": {
                     key: value
-                    for key, value in self._provider_configs.get(
-                        auth_method, {}
-                    ).items()
+                    for key, value in self._provider_configs.get(auth_method, {}).items()
                     if key
                     not in [
                         "client_secret",

@@ -1,0 +1,37 @@
+[Unit]
+Description=DotMac Framework ISP Platform
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=exec
+User=dotmac
+Group=dotmac
+WorkingDirectory=/opt/dotmac
+Environment=PYTHONPATH=/opt/dotmac/src
+EnvironmentFile=/opt/dotmac/.env.production
+ExecStart=/opt/dotmac/.venv/bin/uvicorn src.dotmac_isp.main:app --host 0.0.0.0 --port 8002 --workers 2
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dotmac-isp
+
+# Security settings
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/dotmac/logs /tmp
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+
+# Resource limits
+LimitNOFILE=32768
+MemoryMax=1G
+CPUQuota=100%
+
+[Install]
+WantedBy=multi-user.target

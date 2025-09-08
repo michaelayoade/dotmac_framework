@@ -1,5 +1,3 @@
-from pydantic import BaseModel
-
 """
 DotMac Core - Foundation package for DotMac Framework.
 
@@ -14,7 +12,9 @@ Eliminates DRY violations by providing a single source of truth
 for common patterns used across the framework.
 """
 
-from .cache import (
+from pydantic import BaseModel as PydanticBaseModel
+
+from dotmac.core.cache import (
     CacheManagerProtocol,
     CacheService,
     MemoryCacheManager,
@@ -23,55 +23,64 @@ from .cache import (
     cached,
     create_cache_service,
 )
-from .config import CacheConfig, DatabaseConfig, SecurityConfig
-from .decorators import retry_on_failure, standard_exception_handler, timeout
-from .logging import get_logger
+from dotmac.core.config import CacheConfig, DatabaseConfig, SecurityConfig
+from dotmac.core.decorators import retry_on_failure, standard_exception_handler, timeout
+from dotmac.core.logging import get_logger
 
 # Import from database.py file (not database/ directory)
 try:
-    from .database import (
+    from dotmac.core.database import (
         AsyncRepository,
         AuditMixin,
         Base,
-        BaseModel,
         BaseRepository,
         DatabaseHealthChecker,
         DatabasePaginator,
+        DBBaseModel,
         TenantBaseModel,
         TimestampMixin,
         TransactionManager,
         UUIDMixin,
     )
 
+    # Compatibility alias for existing code
+    BaseModel = DBBaseModel
+
     _database_available = True
 except ImportError:
     # Database components not available
-    Base = BaseModel = TenantBaseModel = UUIDMixin = TimestampMixin = AuditMixin = None
-    BaseRepository = (
-        AsyncRepository
-    ) = TransactionManager = DatabaseHealthChecker = DatabasePaginator = None
+    Base = DBBaseModel = BaseModel = TenantBaseModel = UUIDMixin = TimestampMixin = AuditMixin = None
+    BaseRepository = AsyncRepository = TransactionManager = DatabaseHealthChecker = (
+        DatabasePaginator
+    ) = None
     _database_available = False
-from .exceptions import (
+from dotmac.core.exceptions import (
     AlreadyExistsError,
     AuthenticationError,
     AuthorizationError,
     BusinessRuleError,
     ConfigurationError,
-    ConnectionError,
     DatabaseError,
     DotMacError,
     EntityNotFoundError,
     ExternalServiceError,
     NotFoundError,
-    PermissionError,
     RateLimitError,
     ServiceError,
     TenantError,
     TenantNotFoundError,
-    TimeoutError,
     ValidationError,
 )
-from .tenant import (
+from dotmac.core.exceptions import (
+    ConnectionError as DotMacConnectionError,
+)
+from dotmac.core.exceptions import (
+    PermissionError as DotMacPermissionError,
+)
+from dotmac.core.exceptions import (
+    TimeoutError as DotMacTimeoutError,
+)
+from dotmac.core.tenant import (
     TenantContext,
     TenantManager,
     TenantMetadata,
@@ -80,11 +89,11 @@ from .tenant import (
     require_current_tenant,
     set_current_tenant,
 )
-from .types import GUID
+from dotmac.core.types import GUID
 
 # Schemas - unified schema definitions (with graceful fallback)
 try:
-    from .schemas import (
+    from dotmac.core.schemas import (
         ActiveEntity,
         AddressMixin,
         BaseCreateSchema,
@@ -132,7 +141,7 @@ except ImportError as e:
     warnings.warn(f"Schemas not fully available: {e}")
     # Fallback - import only base schemas that don't have external dependencies
     try:
-        from .schemas.base_schemas import (
+        from dotmac.core.schemas.base_schemas import (
             BaseCreateSchema,
             BaseEntity,
             BaseResponseSchema,
@@ -188,6 +197,75 @@ def check_database_health():
     return {"status": "ok", "message": "Database health check not implemented"}
 
 
+# Guard helper functions
+def is_database_available() -> bool:
+    """
+    Check if database toolkit is available.
+
+    Returns:
+        bool: True if database components are fully available
+
+    Example:
+        if is_database_available():
+            from dotmac.core import DBBaseModel, TransactionManager
+        else:
+            logger.warning("Database toolkit not available - using fallback")
+    """
+    return _database_available
+
+
+def is_schemas_available() -> bool:
+    """
+    Check if schema definitions are available.
+
+    Returns:
+        bool: True if schemas are fully available
+
+    Example:
+        if is_schemas_available():
+            from dotmac.core import BaseSchema, PaginationSchema
+        else:
+            logger.warning("Schemas not available - using fallback")
+    """
+    return _schemas_available
+
+
+def require_database() -> None:
+    """
+    Require database toolkit to be available or raise ImportError.
+
+    Raises:
+        ImportError: If database toolkit is not available
+
+    Example:
+        require_database()
+        # Safe to use database components now
+        session = get_db_session()
+    """
+    if not _database_available:
+        raise ImportError(
+            "Database toolkit not available. Install with: pip install 'dotmac-core[database]'"
+        )
+
+
+def require_schemas() -> None:
+    """
+    Require schema definitions to be available or raise ImportError.
+
+    Raises:
+        ImportError: If schema definitions are not available
+
+    Example:
+        require_schemas()
+        # Safe to use schema components now
+        from dotmac.core import BaseSchema
+    """
+    if not _schemas_available:
+        raise ImportError(
+            "Schema definitions not available. Install with: pip install 'dotmac-core[schemas]'"
+        )
+
+
 __version__ = "1.0.0"
 
 __all__ = [
@@ -203,7 +281,8 @@ __all__ = [
     "timeout",
     # Database
     "Base",
-    "BaseModel",
+    "DBBaseModel",
+    "BaseModel",  # Compatibility alias for DBBaseModel
     "TenantBaseModel",
     "UUIDMixin",
     "TimestampMixin",
@@ -214,8 +293,8 @@ __all__ = [
     "ValidationError",
     "AuthenticationError",
     "AuthorizationError",
-    "ConnectionError",
-    "TimeoutError",
+    "DotMacConnectionError",
+    "DotMacTimeoutError",
     "RateLimitError",
     "DatabaseError",
     "TenantError",
@@ -226,7 +305,7 @@ __all__ = [
     "AlreadyExistsError",
     "EntityNotFoundError",
     "ExternalServiceError",
-    "PermissionError",
+    "DotMacPermissionError",
     # Cache services
     "CacheService",
     "CacheManagerProtocol",
@@ -240,6 +319,11 @@ __all__ = [
     "get_db",
     "get_db_session",
     "check_database_health",
+    # Guard helpers
+    "is_database_available",
+    "is_schemas_available",
+    "require_database",
+    "require_schemas",
     # Tenant
     "TenantContext",
     "TenantMetadata",

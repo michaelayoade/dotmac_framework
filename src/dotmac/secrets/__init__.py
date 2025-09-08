@@ -72,9 +72,7 @@ class SecretAuditLog:
 
 
 class OpenBaoClient:
-    def __init__(
-        self, vault_url: str, token: str, *, timeout: int = 30, max_retries: int = 3
-    ):
+    def __init__(self, vault_url: str, token: str, *, timeout: int = 30, max_retries: int = 3):
         self.vault_url = vault_url
         self.token = token
         self.timeout = timeout
@@ -116,10 +114,7 @@ class HardenedSecretsManager:
     def __init__(self, environment: Environment, vault_client: OpenBaoClient | None):
         self.environment = environment
         self.vault_client = vault_client
-        if (
-            self.environment in (Environment.PRODUCTION, Environment.STAGING)
-            and self.vault_client is None
-        ):
+        if self.environment in (Environment.PRODUCTION, Environment.STAGING) and self.vault_client is None:
             raise SecretsEnvironmentError("OpenBao/Vault client required in production")
 
     async def get_secret(
@@ -141,9 +136,7 @@ class HardenedSecretsManager:
         path = f"secret/{category}{tenant_path}/{key}"
         return await self.vault_client.get_secret(path, key)
 
-    async def store_secret(
-        self, secret_type: SecretType, category: str, key: str, value: str
-    ) -> None:
+    async def store_secret(self, secret_type: SecretType, category: str, key: str, value: str) -> None:
         if self.environment != Environment.PRODUCTION:
             raise SecretsEnvironmentError("Secret storage not allowed")
         if not self.vault_client:
@@ -151,9 +144,7 @@ class HardenedSecretsManager:
         path = f"secret/{category}/{key}"
         await self.vault_client.store_secret(path, key, value)
 
-    async def rotate_secret(
-        self, secret_type: SecretType, category: str, key: str
-    ) -> str:
+    async def rotate_secret(self, secret_type: SecretType, category: str, key: str) -> str:
         import secrets
 
         new_value = secrets.token_urlsafe(32)
@@ -167,9 +158,7 @@ class HardenedSecretsManager:
     def get_secret_policies(self) -> dict[SecretType, SecretPolicy]:
         return {
             SecretType.JWT_SECRET: SecretPolicy(SecretType.JWT_SECRET),
-            SecretType.DATABASE_CREDENTIAL: SecretPolicy(
-                SecretType.DATABASE_CREDENTIAL
-            ),
+            SecretType.DATABASE_CREDENTIAL: SecretPolicy(SecretType.DATABASE_CREDENTIAL),
         }
 
     async def health_check(self) -> bool:

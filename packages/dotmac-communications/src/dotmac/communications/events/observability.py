@@ -9,6 +9,7 @@ from typing import Any, Optional
 from .message import Event
 
 __all__ = [
+    "EventObservability",
     "ObservabilityHooks",
     "ObservabilityMetrics",
     "create_default_hooks",
@@ -17,6 +18,39 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+
+class EventObservability:
+    """
+    Event observability integration facade.
+    
+    Provides a unified interface for event bus observability features including
+    metrics collection, logging, tracing, and integration with monitoring systems.
+    """
+
+    def __init__(self, hooks: Optional["ObservabilityHooks"] = None):
+        """
+        Initialize event observability.
+        
+        Args:
+            hooks: Custom observability hooks, defaults to basic hooks
+        """
+        self.hooks = hooks
+        self._metrics_collector: Optional["MetricsCollector"] = None
+
+    def get_metrics(self) -> "ObservabilityMetrics":
+        """Get current observability metrics."""
+        if self._metrics_collector:
+            return self._metrics_collector.get_metrics()
+        # Lazy initialization after classes are defined
+        if not self._metrics_collector:
+            self._metrics_collector = MetricsCollector()
+        return self._metrics_collector.get_metrics()
+
+    def reset_metrics(self) -> None:
+        """Reset observability metrics."""
+        if self._metrics_collector:
+            self._metrics_collector.reset_metrics()
 
 
 # Hook function types
@@ -189,7 +223,7 @@ def create_dotmac_observability_hooks(
     tenant_metrics: Optional[Any] = None,
 ) -> ObservabilityHooks:
     """
-    Create observability hooks that integrate with dotmac.observability.
+    Create observability hooks that integrate with dotmac.platform.observability.
 
     This function creates hooks that record metrics using the DotMac
     observability package if it's available.
@@ -213,7 +247,7 @@ def create_dotmac_observability_hooks(
         return create_default_hooks()
 
     class DotMacObservabilityCollector:
-        """Observability collector that integrates with dotmac.observability."""
+        """Observability collector that integrates with dotmac.platform.observability."""
 
         def __init__(self, metrics_registry: Any, tenant_metrics: Any):
             self.metrics_registry = metrics_registry

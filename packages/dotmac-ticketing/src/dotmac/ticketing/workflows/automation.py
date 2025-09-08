@@ -7,7 +7,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +21,17 @@ from .implementations import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# Optional task decorator integration
+def get_task_decorator():
+    """Get task decorator from dotmac.tasks if available."""
+    try:
+        from dotmac.tasks.decorators import task
+        return task
+    except ImportError:
+        logger.debug("dotmac.tasks.decorators not available, using direct execution")
+        return None
 
 
 @dataclass
@@ -108,12 +119,23 @@ class SLAMonitor:
 class TicketAutomationEngine:
     """Engine for executing ticket automation rules and workflows."""
 
-    def __init__(self, db_session_factory: Callable):
+    def __init__(
+        self, 
+        db_session_factory: Callable,
+        config: Optional[dict[str, Any]] = None,
+        enable_background_tasks: bool = True
+    ):
         self.db_session_factory = db_session_factory
+        self.config = config or {}
         self.assignment_rules: list[AutoAssignmentRule] = []
         self.escalation_rules: list[EscalationRule] = []
         self.workflows: dict[str, TicketWorkflow] = {}
         self.sla_monitor = SLAMonitor(db_session_factory)
+        
+        # Task execution configuration
+        self.enable_background_tasks = enable_background_tasks
+        self.task_decorator = get_task_decorator()
+        self.dry_run_mode = self.config.get('dry_run_mode', False)
 
         # Register default workflows
         self._register_default_workflows()
@@ -167,6 +189,13 @@ class TicketAutomationEngine:
                 continue
 
             if await self._rule_matches_ticket(rule.conditions, ticket):
+                if self.dry_run_mode:
+                    logger.info(
+                        f"DRY RUN: Would auto-assign ticket {ticket.id} to {rule.assigned_team} "
+                        f"using rule '{rule.name}'"
+                    )
+                    return
+                
                 # Apply assignment
                 ticket.assigned_team = rule.assigned_team
                 if rule.assigned_user_id:
@@ -186,11 +215,26 @@ class TicketAutomationEngine:
         """Trigger appropriate workflows for a ticket."""
         for workflow_name, workflow in self.workflows.items():
             if await workflow.should_trigger(ticket):
+                if self.dry_run_mode:
+                    logger.info(
+                        f"DRY RUN: Would trigger workflow '{workflow_name}' for ticket {ticket.id}"
+                    )
+                    continue
+                    
                 # Set ticket context and execute workflow
                 workflow.set_ticket_context(ticket, tenant_id, db)
 
-                # Execute workflow in background
-                asyncio.create_task(self._execute_workflow_safe(workflow))
+                # Choose execution method based on configuration
+                if self.enable_background_tasks and self.task_decorator:
+                    # Use task decorator if available
+                    task_func = self.task_decorator(self._execute_workflow_safe)
+                    await task_func(workflow)
+                elif self.enable_background_tasks:
+                    # Use asyncio background task
+                    asyncio.create_task(self._execute_workflow_safe(workflow))
+                else:
+                    # Execute synchronously for testing or debugging
+                    await self._execute_workflow_safe(workflow)
 
                 logger.info(
                     f"Triggered workflow '{workflow_name}' for ticket {ticket.id}"

@@ -1,0 +1,168 @@
+version: '3.8'
+
+# Gate E-0: Support Services Only (Database, Cache, Observability)
+# This is the foundation layer that other services will connect to
+
+services:
+  # ===== CORE INFRASTRUCTURE =====
+  
+  # OpenBao (Vault) for Secrets Management
+  openbao:
+    image: openbao/openbao:2.0.0
+    container_name: gate-e0-openbao
+    ports:
+      - "8200:8200"
+    networks:
+      - gate-e0-network
+    environment:
+      OPENBAO_DEV_ROOT_TOKEN_ID: ${OPENBAO_ROOT_TOKEN:-gate-e0-root-token}
+      OPENBAO_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      OPENBAO_ADDR: http://127.0.0.1:8200
+    cap_add:
+      - IPC_LOCK
+    command: openbao server -dev -dev-root-token-id=${OPENBAO_ROOT_TOKEN:-gate-e0-root-token}
+    healthcheck:
+      test: ["CMD", "openbao", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: gate-e0-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dotmac_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
+      POSTGRES_DB: dotmac_test
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5435:5432"
+    networks:
+      - gate-e0-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dotmac_admin -d dotmac_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: gate-e0-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - gate-e0-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ===== OBSERVABILITY STACK =====
+  
+  # ClickHouse (SigNoz Storage)
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: gate-e0-clickhouse
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    networks:
+      - gate-e0-network
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    environment:
+      - CLICKHOUSE_DB=signoz_traces
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # SigNoz Query Service
+  signoz-query:
+    image: signoz/query-service:0.40.0
+    container_name: gate-e0-signoz-query
+    ports:
+      - "8080:8080"
+    networks:
+      - gate-e0-network
+    environment:
+      - STORAGE=clickhouse
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=9000
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - CLICKHOUSE_DATABASE=signoz_traces
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # SigNoz Frontend
+  signoz-frontend:
+    image: signoz/frontend:0.40.0
+    container_name: gate-e0-signoz-frontend
+    depends_on:
+      signoz-query:
+        condition: service_healthy
+    ports:
+      - "3301:3301"
+    networks:
+      - gate-e0-network
+    environment:
+      - FRONTEND_API_ENDPOINT=http://signoz-query:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3301"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.88.11
+    container_name: gate-e0-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "14250:14250" # Jaeger gRPC receiver
+    networks:
+      - gate-e0-network
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  gate-e0-network:
+    driver: bridge
+    name: gate-e0-network
+
+volumes:
+  postgres_data:
+    name: gate-e0-postgres-data
+  redis_data:
+    name: gate-e0-redis-data
+  clickhouse_data:
+    name: gate-e0-clickhouse-data

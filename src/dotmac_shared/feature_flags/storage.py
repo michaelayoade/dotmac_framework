@@ -52,9 +52,7 @@ class FeatureFlagStorage(ABC):
 class RedisStorage(FeatureFlagStorage):
     """Redis-based storage for feature flags"""
 
-    def __init__(
-        self, redis_url: Optional[str] = None, key_prefix: str = "feature_flags:"
-    ):
+    def __init__(self, redis_url: Optional[str] = None, key_prefix: str = "feature_flags:"):
         self.redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379/0")
         self.key_prefix = key_prefix
         self.redis = None
@@ -210,9 +208,7 @@ class DatabaseStorage(FeatureFlagStorage):
             from .db_models import FeatureFlagModel
 
             async with self.session_factory() as session:
-                result = await session.execute(
-                    select(FeatureFlagModel).where(FeatureFlagModel.key == flag_key)
-                )
+                result = await session.execute(select(FeatureFlagModel).where(FeatureFlagModel.key == flag_key))
                 db_flag = result.scalar_one_or_none()
 
                 if db_flag:
@@ -247,9 +243,7 @@ class DatabaseStorage(FeatureFlagStorage):
 
             async with self.session_factory() as session:
                 # Check if flag exists
-                result = await session.execute(
-                    select(FeatureFlagModel).where(FeatureFlagModel.key == flag.key)
-                )
+                result = await session.execute(select(FeatureFlagModel).where(FeatureFlagModel.key == flag.key))
                 db_flag = result.scalar_one_or_none()
 
                 if db_flag:
@@ -274,9 +268,7 @@ class DatabaseStorage(FeatureFlagStorage):
             from .db_models import FeatureFlagModel
 
             async with self.session_factory() as session:
-                result = await session.execute(
-                    delete(FeatureFlagModel).where(FeatureFlagModel.key == flag_key)
-                )
+                result = await session.execute(delete(FeatureFlagModel).where(FeatureFlagModel.key == flag_key))
                 await session.commit()
                 return result.rowcount > 0
         except Exception as e:

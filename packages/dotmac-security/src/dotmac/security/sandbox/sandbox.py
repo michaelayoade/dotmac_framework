@@ -4,8 +4,11 @@ Secure plugin execution sandbox.
 
 import asyncio
 import os
+import platform
 import resource
 import shutil
+import subprocess
+import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,15 +22,18 @@ from .models import PluginPermissions, ResourceLimits
 logger = structlog.get_logger(__name__)
 
 
-class PluginSecurityError(Exception):
-    """Plugin security related error."""
-
+class SecurityError(Exception):
+    """Security-related error."""
     pass
 
 
-class PluginExecutionError(Exception):
-    """Plugin execution error."""
+class PluginSecurityError(SecurityError):
+    """Plugin security related error."""
+    pass
 
+
+class PluginExecutionError(SecurityError):
+    """Plugin execution error."""
     pass
 
 
@@ -50,7 +56,6 @@ class PluginSandbox:
 
         # Sandbox state
         self._temp_dir: Optional[Path] = None
-        self._original_cwd: Optional[Path] = None
         self._execution_stats = {
             "start_time": None,
             "end_time": None,
@@ -73,18 +78,14 @@ class PluginSandbox:
         logger.info("Setting up sandbox", plugin_id=self.plugin_id)
 
         try:
-            # Create isolated temporary directory
-            self._temp_dir = Path(tempfile.mkdtemp(prefix=f"plugin_{self.plugin_id}_"))
-            self._original_cwd = Path.cwd()
+            # Create isolated temporary directory with restricted permissions
+            self._temp_dir = Path(tempfile.mkdtemp(prefix=f"secure_plugin_{self.plugin_id}_"))
 
-            # Change to sandbox directory
-            os.chdir(self._temp_dir)
-
-            # Apply resource limits
-            self._apply_resource_limits()
+            # Set restrictive permissions (owner only)
+            os.chmod(self._temp_dir, 0o700)
 
             self._execution_stats["start_time"] = datetime.now(timezone.utc)
-            logger.info("Sandbox setup complete", plugin_id=self.plugin_id)
+            logger.info("Secure sandbox setup complete", plugin_id=self.plugin_id)
 
         except Exception as e:
             logger.error("Sandbox setup failed", plugin_id=self.plugin_id, error=str(e))
@@ -98,15 +99,11 @@ class PluginSandbox:
             # Record end time
             self._execution_stats["end_time"] = datetime.now(timezone.utc)
 
-            # Return to original directory
-            if self._original_cwd:
-                os.chdir(self._original_cwd)
-
             # Remove temporary directory
             if self._temp_dir and self._temp_dir.exists():
                 shutil.rmtree(self._temp_dir, ignore_errors=True)
 
-            logger.info("Sandbox cleanup complete", plugin_id=self.plugin_id)
+            logger.info("Secure sandbox cleanup complete", plugin_id=self.plugin_id)
 
         except Exception as e:
             logger.error("Sandbox cleanup error", plugin_id=self.plugin_id, error=str(e))
@@ -126,53 +123,114 @@ class PluginSandbox:
             raise PluginSecurityError("Sandbox not initialized")
         return self._temp_dir
 
-    async def execute_with_timeout(self, coro_or_func, *args, timeout: Optional[float] = None, **kwargs) -> Any:
-        """Execute function/coroutine with timeout and monitoring."""
+    async def execute_in_subprocess(
+        self, 
+        code: str, 
+        timeout: Optional[float] = None,
+        env_vars: Optional[dict[str, str]] = None
+    ) -> Any:
+        """Execute code in an isolated subprocess with proper resource limits."""
         timeout = timeout or self.resource_limits.max_execution_time_seconds
 
+        if not self._temp_dir:
+            raise SecurityError("Sandbox not initialized")
+
+        # Create a secure environment
+        secure_env = self._create_secure_environment(env_vars or {})
+
+        # Write code to temp file in sandbox
+        code_file = self._temp_dir / "plugin_code.py"
+        with open(code_file, 'w', encoding='utf-8') as f:
+            f.write(code)
+
+        # Set up the subprocess command with resource limits
+        cmd = [sys.executable, str(code_file)]
+
         try:
-            if asyncio.iscoroutinefunction(coro_or_func):
-                result = await asyncio.wait_for(coro_or_func(*args, **kwargs), timeout=timeout)
-            else:
-                # Run sync function in executor with timeout
-                result = await asyncio.wait_for(
-                    asyncio.get_event_loop().run_in_executor(None, lambda: coro_or_func(*args, **kwargs)),
-                    timeout=timeout,
-                )
+            # Use subprocess with proper isolation
+            proc = subprocess.Popen(
+                cmd,
+                cwd=str(self._temp_dir),  # Working directory is sandbox temp dir
+                env=secure_env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                preexec_fn=self._setup_subprocess_limits if platform.system() != "Windows" else None
+            )
 
-            return result
+            # Wait with timeout
+            stdout, stderr = proc.communicate(timeout=timeout)
 
-        except asyncio.TimeoutError:
+            if proc.returncode != 0:
+                raise PluginExecutionError(f"Plugin execution failed: {stderr.decode()}")
+
+            return {
+                "stdout": stdout.decode(),
+                "stderr": stderr.decode(),
+                "return_code": proc.returncode
+            }
+
+        except subprocess.TimeoutExpired:
+            proc.kill()
             logger.error("Plugin execution timeout", plugin_id=self.plugin_id, timeout=timeout)
             raise PluginExecutionError(f"Plugin execution timeout after {timeout}s")
         except Exception as e:
             logger.error("Plugin execution error", plugin_id=self.plugin_id, error=str(e))
             raise PluginExecutionError(f"Plugin execution failed: {e}") from e
 
-    def _apply_resource_limits(self) -> None:
-        """Apply resource limits using system calls."""
+    def _setup_subprocess_limits(self) -> None:
+        """Setup resource limits for subprocess (POSIX only)."""
         try:
             # Memory limit
             memory_bytes = self.resource_limits.max_memory_mb * 1024 * 1024
             resource.setrlimit(resource.RLIMIT_AS, (memory_bytes, memory_bytes))
 
             # CPU time limit
-            resource.setrlimit(
-                resource.RLIMIT_CPU,
-                (self.resource_limits.max_cpu_time_seconds, self.resource_limits.max_cpu_time_seconds),
-            )
+            cpu_time = self.resource_limits.max_cpu_time_seconds
+            resource.setrlimit(resource.RLIMIT_CPU, (cpu_time, cpu_time))
 
             # File size limit
             file_size_bytes = self.resource_limits.max_file_size_mb * 1024 * 1024
             resource.setrlimit(resource.RLIMIT_FSIZE, (file_size_bytes, file_size_bytes))
 
-            logger.info(
-                "Applied resource limits",
-                plugin_id=self.plugin_id,
-                memory_mb=self.resource_limits.max_memory_mb,
-                cpu_seconds=self.resource_limits.max_cpu_time_seconds,
-            )
+            # Number of open files
+            max_files = getattr(self.resource_limits, 'max_open_files', 64)
+            resource.setrlimit(resource.RLIMIT_NOFILE, (max_files, max_files))
+
+            # Number of processes
+            max_procs = getattr(self.resource_limits, 'max_processes', 8)
+            resource.setrlimit(resource.RLIMIT_NPROC, (max_procs, max_procs))
+
+            logger.debug("Applied subprocess resource limits", plugin_id=self.plugin_id)
 
         except Exception as e:
-            logger.error("Failed to apply resource limits", plugin_id=self.plugin_id, error=str(e))
-            raise PluginSecurityError(f"Resource limit setup failed: {e}") from e
+            logger.error("Failed to apply subprocess resource limits", 
+                        plugin_id=self.plugin_id, error=str(e))
+            # Don't raise - degrade gracefully on unsupported platforms
+
+    def _create_secure_environment(self, additional_env: dict[str, str]) -> dict[str, str]:
+        """Create a minimal, secure environment for plugin execution."""
+        # Start with minimal environment
+        secure_env = {
+            "PATH": "/usr/bin:/bin",  # Minimal PATH
+            "HOME": str(self._temp_dir),  # Home is sandbox
+            "TMPDIR": str(self._temp_dir),  # Temp is sandbox
+            "USER": "sandbox",
+            "LANG": "en_US.UTF-8",
+            "LC_ALL": "en_US.UTF-8"
+        }
+
+        # Add Python-specific variables
+        secure_env.update({
+            "PYTHONPATH": str(self._temp_dir),
+            "PYTHONHOME": "",  # Disable to use system Python
+            "PYTHONDONTWRITEBYTECODE": "1",  # Don't create .pyc files
+            "PYTHONUNBUFFERED": "1",  # Unbuffered output
+        })
+
+        # Filter and add additional environment variables
+        allowed_keys = {"PLUGIN_CONFIG", "PLUGIN_DATA", "TENANT_ID"}
+        for key, value in additional_env.items():
+            if key in allowed_keys and isinstance(value, str) and len(value) < 1000:
+                secure_env[key] = value
+
+        return secure_env

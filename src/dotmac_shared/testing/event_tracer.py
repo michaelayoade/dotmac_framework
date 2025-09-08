@@ -28,9 +28,7 @@ class EventTracer:
     async def stop_tracing(self):
         """Stop event tracing"""
         self._is_tracing = False
-        logger.info(
-            f"Stopped event tracing. Captured {len(self._traced_events)} events"
-        )
+        logger.info(f"Stopped event tracing. Captured {len(self._traced_events)} events")
 
     async def trace_event(
         self,
@@ -57,11 +55,7 @@ class EventTracer:
 
     async def get_events_by_journey(self, journey_id: str) -> list[dict[str, Any]]:
         """Get all traced events for a specific journey"""
-        journey_events = [
-            event
-            for event in self._traced_events
-            if event.get("journey_id") == journey_id
-        ]
+        journey_events = [event for event in self._traced_events if event.get("journey_id") == journey_id]
 
         # Sort by timestamp
         return sorted(journey_events, key=lambda x: x["timestamp"])
@@ -72,11 +66,7 @@ class EventTracer:
 
     async def get_events_by_service(self, service_name: str) -> list[dict[str, Any]]:
         """Get all traced events from a specific service"""
-        return [
-            event
-            for event in self._traced_events
-            if event.get("service_name") == service_name
-        ]
+        return [event for event in self._traced_events if event.get("service_name") == service_name]
 
     def get_all_events(self) -> list[dict[str, Any]]:
         """Get all traced events"""
@@ -92,8 +82,7 @@ class EventTracer:
             matching_events = [
                 event
                 for event in self._traced_events
-                if event["type"] == event_type
-                and (journey_id is None or event.get("journey_id") == journey_id)
+                if event["type"] == event_type and (journey_id is None or event.get("journey_id") == journey_id)
             ]
 
             if matching_events:
@@ -103,9 +92,7 @@ class EventTracer:
 
         return None
 
-    async def assert_event_sequence(
-        self, expected_sequence: list[str], journey_id: str, timeout: int = 30
-    ):
+    async def assert_event_sequence(self, expected_sequence: list[str], journey_id: str, timeout: int = 30):
         """Assert that events occurred in the expected sequence"""
         start_time = asyncio.get_event_loop().time()
 

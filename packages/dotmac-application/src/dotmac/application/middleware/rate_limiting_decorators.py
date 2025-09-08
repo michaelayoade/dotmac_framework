@@ -1,5 +1,3 @@
-from datetime import datetime
-
 """
 DRY Rate Limiting Decorators
 
@@ -10,18 +8,16 @@ rate limiting middleware for individual router endpoints.
 import functools
 import logging
 from collections.abc import Callable
+from datetime import datetime
 from enum import Enum
+
+from fastapi import HTTPException, Request
+from fastapi.security.utils import get_authorization_scheme_param
 
 
 class RateLimitType(Enum):
     IP_BASED = "ip_based"
     USER_BASED = "user_based"
-
-
-# from dotmac_shared.monitoring.base import get_monitoring
-# TODO: Add monitoring integration once monitoring is consolidated
-from fastapi import HTTPException, Request
-from fastapi.security.utils import get_authorization_scheme_param
 
 logger = logging.getLogger(__name__)
 
@@ -166,12 +162,22 @@ class RateLimitDecorators:
             if authorization:
                 scheme, token = get_authorization_scheme_param(authorization)
                 if scheme.lower() == "bearer" and token:
-                    # Import JWT handling locally to avoid circular imports
-                    from dotmac.platform.auth.jwt_handler import decode_token
+                    # Verify JWT using configured JWTService (issuer/audience/exp/signature)
+                    from dotmac.platform.auth import JWTService, get_auth_service
 
-                    payload = decode_token(token)
-                    return payload.get("sub")
+                    jwt_service = get_auth_service("jwt")
+                    if isinstance(jwt_service, JWTService):
+                        claims = jwt_service.verify_token(
+                            token,
+                            expected_type="access",
+                            expected_audience=jwt_service.default_audience,
+                            expected_issuer=jwt_service.issuer,
+                            verify_exp=True,
+                            verify_signature=True,
+                        )
+                        return claims.get("sub")
         except Exception:
+            # Ignore JWT verification errors - we'll try other methods
             pass
 
         # Try to get from session

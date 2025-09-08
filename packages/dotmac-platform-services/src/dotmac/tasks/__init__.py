@@ -181,15 +181,15 @@ def set_operation_result(operation_id: str, result: Any) -> None:
 
 # For backward compatibility, export everything
 __all__ = [
-    "OperationStatus",
-    "SagaStepStatus",
-    "IdempotencyKey",
-    "SagaStep",
-    "SagaWorkflow",
     "BackgroundOperation",
     "BackgroundOperationsManager",
     "BackgroundOperationsMiddleware",
+    "IdempotencyKey",
     "MemoryStorage",
+    "OperationStatus",
+    "SagaStep",
+    "SagaStepStatus",
+    "SagaWorkflow",
     "add_background_operations_middleware",
     "get_idempotency_key",
     "is_idempotent_request",

@@ -7,9 +7,10 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from dotmac_shared.exceptions import ExceptionContext
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac_shared.exceptions import ExceptionContext
 
 from ..database import async_session_maker as SessionLocal
 from ..database import get_db
@@ -86,14 +87,10 @@ async def execute_with_retry(
             return await operation_func(session)
         except (SQLAlchemyError, ConnectionError) as e:
             if attempt == max_retries:
-                logger.error(
-                    f"Database operation failed after {max_retries} retries: {e}"
-                )
+                logger.error(f"Database operation failed after {max_retries} retries: {e}")
                 raise
 
-            logger.warning(
-                f"Database operation failed (attempt {attempt + 1}/{max_retries + 1}): {e}"
-            )
+            logger.warning(f"Database operation failed (attempt {attempt + 1}/{max_retries + 1}): {e}")
             if attempt < max_retries:
                 await asyncio.sleep(retry_delay * (2**attempt))  # Exponential backoff
 

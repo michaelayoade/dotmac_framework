@@ -265,9 +265,7 @@ class AsyncPlugin(BasePlugin):
 class TenantAwarePlugin(BasePlugin):
     """Base class for plugins that need tenant context."""
 
-    def __init__(
-        self, config: Optional[dict[str, Any]] = None, tenant_id: Optional[UUID] = None
-    ):
+    def __init__(self, config: Optional[dict[str, Any]] = None, tenant_id: Optional[UUID] = None):
         super().__init__(config)
         self.tenant_id = tenant_id
 
@@ -286,9 +284,7 @@ class BillablePlugin(TenantAwarePlugin):
     """Base class for plugins that generate billable usage."""
 
     @abstractmethod
-    async def record_usage(
-        self, usage_type: str, quantity: int, metadata: Optional[dict[str, Any]] = None
-    ) -> bool:
+    async def record_usage(self, usage_type: str, quantity: int, metadata: Optional[dict[str, Any]] = None) -> bool:
         """Record billable usage for this plugin."""
         pass
 

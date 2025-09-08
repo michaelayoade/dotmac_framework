@@ -1,0 +1,166 @@
+# Enhanced OpenTelemetry Collector Configuration with Vault Integration
+# This configuration uses placeholders that are replaced at runtime with Vault credentials
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - http://localhost:3000
+            - http://localhost:3001
+            - http://localhost:3002
+            - http://localhost:8000
+            - http://localhost:8001
+  jaeger:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:14250
+      thrift_http:
+        endpoint: 0.0.0.0:14268
+      thrift_compact:
+        endpoint: 0.0.0.0:6831
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+  
+  memory_limiter:
+    limit_mib: 512
+    spike_limit_mib: 128
+  
+  # Resource processor to add service metadata
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: "production"
+        action: insert
+      - key: service.namespace
+        value: "dotmac"
+        action: insert
+      - key: service.instance.id
+        from_attribute: host.name
+        action: insert
+
+  # Attributes processor for security and compliance
+  attributes:
+    actions:
+      # Remove sensitive data from traces
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+      - key: db.statement
+        action: hash
+      # Add correlation IDs
+      - key: dotmac.tenant_id
+        from_attribute: tenant.id
+        action: insert
+
+  # Probabilistic sampler for cost control
+  probabilistic_sampler:
+    sampling_percentage: 10.0
+
+exporters:
+  # ClickHouse Traces Exporter with Vault-managed credentials
+  clickhousetraces:
+    endpoint: tcp://{{CLICKHOUSE_USERNAME}}:{{CLICKHOUSE_PASSWORD}}@{{CLICKHOUSE_HOST}}:{{CLICKHOUSE_PORT}}/?database=signoz_traces
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 5000
+
+  # ClickHouse Metrics Exporter with Vault-managed credentials  
+  clickhousemetricswrite:
+    endpoint: tcp://{{CLICKHOUSE_USERNAME}}:{{CLICKHOUSE_PASSWORD}}@{{CLICKHOUSE_HOST}}:{{CLICKHOUSE_PORT}}/?database=signoz_metrics
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 5000
+
+  # ClickHouse Logs Exporter with Vault-managed credentials
+  clickhouselogsexporter:
+    endpoint: tcp://{{CLICKHOUSE_USERNAME}}:{{CLICKHOUSE_PASSWORD}}@{{CLICKHOUSE_HOST}}:{{CLICKHOUSE_PORT}}/?database=signoz_logs
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 5000
+
+  # Debug exporter for troubleshooting
+  debug:
+    verbosity: basic
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  # Prometheus metrics exporter for collector self-monitoring
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: "otelcol"
+
+extensions:
+  # Health check extension
+  health_check:
+    endpoint: 0.0.0.0:13133
+  
+  # Performance profiler
+  pprof:
+    endpoint: 0.0.0.0:1777
+  
+  # Zpages for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+  # Memory ballast for performance
+  memory_ballast:
+    size_mib: 256
+
+service:
+  extensions: [health_check, pprof, zpages, memory_ballast]
+  
+  pipelines:
+    traces:
+      receivers: [otlp, jaeger]
+      processors: [memory_limiter, resource, attributes, probabilistic_sampler, batch]
+      exporters: [clickhousetraces]
+    
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [clickhousemetricswrite]
+    
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [clickhouselogsexporter]
+
+  # Telemetry configuration for collector self-monitoring
+  telemetry:
+    logs:
+      level: "info"
+      development: false
+    metrics:
+      level: "basic"
+      address: "0.0.0.0:8888"

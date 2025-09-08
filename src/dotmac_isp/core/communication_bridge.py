@@ -28,11 +28,7 @@ class ISPCommunicationBridge:
         """Ensure strategic plugin system is initialized."""
         if not self._strategic_initialized:
             try:
-                config_path = (
-                    Path(__file__).parent.parent.parent
-                    / "config"
-                    / "communication_plugins.yml"
-                )
+                config_path = Path(__file__).parent.parent.parent / "config" / "communication_plugins.yml"
                 await initialize_plugin_system(str(config_path))
                 self._strategic_initialized = True
                 logger.info("✅ Strategic plugin system initialized for ISP Framework")
@@ -85,9 +81,7 @@ class ISPCommunicationBridge:
                 metadata=metadata or {},
             )
             if result.get("success"):
-                logger.debug(
-                    f"✅ Message sent via strategic plugin system: {channel_type} to {recipient}"
-                )
+                logger.debug(f"✅ Message sent via strategic plugin system: {channel_type} to {recipient}")
                 return result
             else:
                 logger.error(f"Strategic plugin failed: {result.get('error')}")
@@ -143,9 +137,7 @@ class ISPCommunicationBridge:
             logger.error(f"Customer notification failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def _get_customer_recipient(
-        self, customer_id: str, channel_type: str
-    ) -> Optional[str]:
+    async def _get_customer_recipient(self, customer_id: str, channel_type: str) -> Optional[str]:
         """Get customer's recipient address for specified channel."""
         # Placeholder - implement actual customer lookup
         # This would integrate with ISP Framework's customer service
@@ -213,9 +205,7 @@ class ISPCommunicationBridge:
                     {
                         "available": True,
                         "plugins": strategic_status.get("total_plugins", 0),
-                        "channels": list(
-                            strategic_status.get("plugins_by_type", {}).keys()
-                        ),
+                        "channels": list(strategic_status.get("plugins_by_type", {}).keys()),
                     }
                 )
             except Exception as e:
@@ -236,9 +226,7 @@ async def send_notification(
     metadata: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Send notification via strategic plugin system with ISP Framework integration."""
-    return await isp_communication_bridge.send_message(
-        channel_type, recipient, content, metadata
-    )
+    return await isp_communication_bridge.send_message(channel_type, recipient, content, metadata)
 
 
 async def send_customer_notification(
@@ -248,9 +236,7 @@ async def send_customer_notification(
     context: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Send notification to customer via specified channel."""
-    return await isp_communication_bridge.send_customer_notification(
-        customer_id, channel_type, template, context
-    )
+    return await isp_communication_bridge.send_customer_notification(customer_id, channel_type, template, context)
 
 
 async def initialize_isp_communication_system():

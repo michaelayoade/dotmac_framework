@@ -9,9 +9,9 @@ from decimal import Decimal
 from typing import Any, Optional
 
 import httpx
-from dotmac_shared.core.logging import get_logger
 
 from dotmac.application import standard_exception_handler
+from dotmac_shared.core.logging import get_logger
 
 from ...core.plugins.base import PluginError, PluginMeta, PluginStatus, PluginType
 from ...core.plugins.interfaces import DeploymentProviderPlugin
@@ -92,9 +92,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
             # Test connection
             health_result = await self.health_check()
             if not health_result.get("healthy", False):
-                raise PluginError(
-                    f"Coolify health check failed: {health_result.get('error')}"
-                )
+                raise PluginError(f"Coolify health check failed: {health_result.get('error')}")
 
             self.status = PluginStatus.ACTIVE
             self._logger.info("✅ Coolify deployment plugin initialized successfully")
@@ -136,9 +134,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
                 return {
                     "healthy": True,
                     "status": "connected",
-                    "coolify_version": response.headers.get(
-                        "x-coolify-version", "unknown"
-                    ),
+                    "coolify_version": response.headers.get("x-coolify-version", "unknown"),
                     "response_time_ms": response.elapsed.total_seconds() * 1000,
                 }
             else:
@@ -154,16 +150,12 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
     def _load_config(self) -> CoolifyConfig:
         """Load Coolify configuration from plugin config and environment."""
         # Prioritize plugin config over environment variables
-        base_url = self.config.get("base_url") or os.getenv(
-            "COOLIFY_API_URL", "http://localhost:8000"
-        )
+        base_url = self.config.get("base_url") or os.getenv("COOLIFY_API_URL", "http://localhost:8000")
 
         api_token = self.config.get("api_token") or os.getenv("COOLIFY_API_TOKEN")
 
         if not api_token:
-            raise PluginError(
-                "Coolify API token is required (api_token in config or COOLIFY_API_TOKEN env var)"
-            )
+            raise PluginError("Coolify API token is required (api_token in config or COOLIFY_API_TOKEN env var)")
 
         return CoolifyConfig(
             base_url=base_url.rstrip("/"),
@@ -175,9 +167,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
     # Implementation of DeploymentProviderPlugin interface methods
 
     @standard_exception_handler
-    async def provision_infrastructure(
-        self, infrastructure_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def provision_infrastructure(self, infrastructure_config: dict[str, Any]) -> dict[str, Any]:
         """Provision infrastructure (not applicable for Coolify, returns project info)."""
         return {
             "infrastructure_id": self.coolify_config.project_id,
@@ -190,9 +180,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
         }
 
     @standard_exception_handler
-    async def deploy_application(
-        self, app_config: dict[str, Any], infrastructure_id: str
-    ) -> dict[str, Any]:
+    async def deploy_application(self, app_config: dict[str, Any], infrastructure_id: str) -> dict[str, Any]:
         """Deploy application to Coolify."""
         try:
             # Create application first
@@ -216,27 +204,19 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
             raise PluginError(f"Application deployment failed: {e}") from e
 
     @standard_exception_handler
-    async def scale_application(
-        self, deployment_id: str, scaling_config: dict[str, Any]
-    ) -> bool:
+    async def scale_application(self, deployment_id: str, scaling_config: dict[str, Any]) -> bool:
         """Scale application (Coolify handles this automatically based on resource config)."""
         # Coolify doesn't have explicit scaling API, it manages resources automatically
-        self._logger.info(
-            f"Scale request received for {deployment_id}, Coolify manages scaling automatically"
-        )
+        self._logger.info(f"Scale request received for {deployment_id}, Coolify manages scaling automatically")
         return True
 
     @standard_exception_handler
-    async def rollback_deployment(
-        self, deployment_id: str, target_version: str
-    ) -> bool:
+    async def rollback_deployment(self, deployment_id: str, target_version: str) -> bool:
         """Rollback deployment to previous version."""
         try:
             # This would need to be implemented based on Coolify's rollback API
             # For now, return success as Coolify can rollback via dashboard
-            self._logger.warning(
-                f"Rollback requested for {deployment_id} to {target_version}, manual action required"
-            )
+            self._logger.warning(f"Rollback requested for {deployment_id} to {target_version}, manual action required")
             return True
 
         except Exception as e:
@@ -244,9 +224,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
             return False
 
     @standard_exception_handler
-    async def validate_template(
-        self, template_content: dict[str, Any], template_type: str
-    ) -> bool:
+    async def validate_template(self, template_content: dict[str, Any], template_type: str) -> bool:
         """Validate deployment template."""
         if template_type == "docker-compose":
             required_fields = ["name", "docker_compose"]
@@ -284,9 +262,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
             return {"status": "error", "error": str(e)}
 
     @standard_exception_handler
-    async def calculate_deployment_cost(
-        self, deployment_config: dict[str, Any]
-    ) -> Decimal:
+    async def calculate_deployment_cost(self, deployment_config: dict[str, Any]) -> Decimal:
         """Calculate estimated deployment cost (Coolify is typically self-hosted, so minimal cost)."""
         # For Coolify, costs are mainly server costs, not per-app
         # Return minimal cost for resource usage estimation
@@ -323,9 +299,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
         response = await self.client.post("/api/v1/applications", json=payload)
 
         if response.status_code not in [200, 201]:
-            raise PluginError(
-                f"Coolify API error: {response.status_code} - {response.text}"
-            )
+            raise PluginError(f"Coolify API error: {response.status_code} - {response.text}")
 
         result = response.json()
         app_id = result.get("uuid") or result.get("id")
@@ -344,9 +318,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
         response = await self.client.post(f"/api/v1/applications/{app_id}/deploy")
 
         if response.status_code not in [200, 201]:
-            raise PluginError(
-                f"Coolify deploy error: {response.status_code} - {response.text}"
-            )
+            raise PluginError(f"Coolify deploy error: {response.status_code} - {response.text}")
 
         result = response.json()
 
@@ -359,9 +331,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
     # Additional Coolify-specific methods
 
     @standard_exception_handler
-    async def create_database_service(
-        self, db_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def create_database_service(self, db_config: dict[str, Any]) -> dict[str, Any]:
         """Create database service in Coolify."""
         payload = {
             "name": db_config["name"],
@@ -380,9 +350,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
         response = await self.client.post("/api/v1/services/postgresql", json=payload)
 
         if response.status_code not in [200, 201]:
-            raise PluginError(
-                f"Database creation failed: {response.status_code} - {response.text}"
-            )
+            raise PluginError(f"Database creation failed: {response.status_code} - {response.text}")
 
         result = response.json()
         service_id = result.get("uuid") or result.get("id")
@@ -395,9 +363,7 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
         }
 
     @standard_exception_handler
-    async def create_redis_service(
-        self, redis_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def create_redis_service(self, redis_config: dict[str, Any]) -> dict[str, Any]:
         """Create Redis service in Coolify."""
         payload = {
             "name": redis_config["name"],
@@ -406,24 +372,18 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
             "version": redis_config.get("version", "7"),
             "project_uuid": self.coolify_config.project_id,
             "server_uuid": self.coolify_config.server_id,
-            "environment_variables": {
-                "REDIS_PASSWORD": redis_config.get("password", "")
-            },
+            "environment_variables": {"REDIS_PASSWORD": redis_config.get("password", "")},
         }
 
         response = await self.client.post("/api/v1/services/redis", json=payload)
 
         if response.status_code not in [200, 201]:
-            raise PluginError(
-                f"Redis creation failed: {response.status_code} - {response.text}"
-            )
+            raise PluginError(f"Redis creation failed: {response.status_code} - {response.text}")
 
         result = response.json()
         service_id = result.get("uuid") or result.get("id")
 
-        password_part = (
-            f":{redis_config['password']}@" if redis_config.get("password") else "@"
-        )
+        password_part = f":{redis_config['password']}@" if redis_config.get("password") else "@"
         connection_url = f"redis://{password_part}{redis_config['name']}:6379"
 
         return {
@@ -438,14 +398,10 @@ class CoolifyDeploymentPlugin(DeploymentProviderPlugin):
         """Set domain for an application."""
         payload = {"domain": domain, "https": True, "redirect_to_https": True}
 
-        response = await self.client.post(
-            f"/api/v1/applications/{app_id}/domains", json=payload
-        )
+        response = await self.client.post(f"/api/v1/applications/{app_id}/domains", json=payload)
 
         if response.status_code not in [200, 201]:
-            self._logger.error(
-                f"Failed to set domain: {response.status_code} - {response.text}"
-            )
+            self._logger.error(f"Failed to set domain: {response.status_code} - {response.text}")
             return False
 
         return True

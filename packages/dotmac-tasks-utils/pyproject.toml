@@ -1,0 +1,60 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "dotmac-tasks-utils"
+version = "1.0.0"
+description = "Task utilities for DotMac - idempotency, retries, and distributed locking"
+authors = ["DotMac Team <dev@dotmac.com>"]
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/dotmac-framework/dotmac-tasks-utils"
+repository = "https://github.com/dotmac-framework/dotmac-tasks-utils.git"
+documentation = "https://docs.dotmac.com/tasks-utils"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
+
+# Ensure src layout packaging
+packages = [
+    { include = "dotmac_tasks_utils", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+asyncio-throttle = ">=1.0.0"
+typing-extensions = ">=1.0.0"
+pydantic = ">=2.5.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+pytest-mock = "^3.12.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "C4", "B", "A", "YTT", "S", "BLE", "COM", "DTZ", "DJ", "EM", "EXE", "FA", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "ARG", "PTH", "ERA", "PGH", "PL", "TRY", "FLY", "NPY", "PERF", "FURB", "LOG", "RUF"]
+ignore = ["S101", "B008", "DTZ", "A003", "COM812", "ISC001", "S301", "S311", "S110"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004", "SLF001", "EM101", "TRY003", "PT011", "PT012"]

@@ -1,4 +1,5 @@
 """IPAM utilities package."""
+
 try:
     from .network_utils import (
         calculate_network_info,
@@ -18,7 +19,7 @@ try:
 except ImportError as e:
     import warnings
 
-    warnings.warn(f"IPAM network utilities not available: {e}")
+    warnings.warn(f"IPAM network utilities not available: {e}", stacklevel=2)
     validate_cidr = calculate_network_info = None
     find_next_available_subnet = check_ip_in_network = None
     check_network_overlap = suggest_subnet_split = None

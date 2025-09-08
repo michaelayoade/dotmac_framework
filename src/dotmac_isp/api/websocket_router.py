@@ -4,12 +4,12 @@ import json
 import logging
 from typing import Optional
 
-from dotmac_shared.api.rate_limiting_decorators import RateLimitDecorators
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPBearer
 from starlette.websockets import WebSocketState
 
 from dotmac.application import standard_exception_handler
+from dotmac_shared.api.rate_limiting_decorators import RateLimitDecorators
 
 from ..core.websocket_manager import EventType, WebSocketMessage, websocket_manager
 from ..shared.auth import get_current_user_optional, verify_websocket_token
@@ -54,9 +54,7 @@ async def websocket_endpoint(
         )
 
         if not is_allowed:
-            await websocket.close(
-                code=4029, reason="WebSocket connection rate limit exceeded"
-            )
+            await websocket.close(code=4029, reason="WebSocket connection rate limit exceeded")
             return
 
     except Exception as e:
@@ -80,9 +78,7 @@ async def websocket_endpoint(
             final_tenant_id = tenant_id or authenticated_tenant_id
 
             if not final_user_id or not final_tenant_id:
-                await websocket.close(
-                    code=4001, reason="Invalid token or missing user/tenant info"
-                )
+                await websocket.close(code=4001, reason="Invalid token or missing user/tenant info")
                 return
 
         except Exception as e:
@@ -103,9 +99,7 @@ async def websocket_endpoint(
                 data = await websocket.receive_text()
                 message = json.loads(data)
                 # Handle client message
-                await _handle_client_message(
-                    connection_id, message, final_user_id, final_tenant_id
-                )
+                await _handle_client_message(connection_id, message, final_user_id, final_tenant_id)
             except WebSocketDisconnect:
                 logger.info(f"WebSocket client disconnected: {connection_id}")
                 break
@@ -119,9 +113,7 @@ async def websocket_endpoint(
                 )
                 await websocket.send_text(json.dumps(error_message.to_dict()))
             except Exception as e:
-                logger.error(
-                    f"Error handling WebSocket message from {connection_id}: {e}"
-                )
+                logger.error(f"Error handling WebSocket message from {connection_id}: {e}")
                 # Send error notification
                 error_message = WebSocketMessage(
                     event_type=EventType.SYSTEM_NOTIFICATION,
@@ -142,9 +134,7 @@ async def websocket_endpoint(
             await websocket_manager.disconnect(connection_id)
 
 
-async def _handle_client_message(
-    connection_id: str, message: dict, user_id: str, tenant_id: str
-):
+async def _handle_client_message(connection_id: str, message: dict, user_id: str, tenant_id: str):
     """Handle messages received from WebSocket clients."""
     message_type = message.get("type")
 
@@ -225,9 +215,7 @@ async def broadcast_to_tenant(
     """
     # Verify user has permission to broadcast to this tenant
     if current_user and current_user.get("tenant_id") != tenant_id:
-        raise HTTPException(
-            status_code=403, detail="Cannot broadcast to different tenant"
-        )
+        raise HTTPException(status_code=403, detail="Cannot broadcast to different tenant")
 
     # Create WebSocket message
     message = WebSocketMessage(
@@ -239,16 +227,12 @@ async def broadcast_to_tenant(
 
     try:
         # Broadcast message
-        await websocket_manager.broadcast_to_tenant(
-            tenant_id, message, subscription_filter
-        )
+        await websocket_manager.broadcast_to_tenant(tenant_id, message, subscription_filter)
         return {"status": "success", "message": "Broadcast sent"}
 
     except Exception as e:
         logger.error(f"Failed to broadcast to tenant {tenant_id}: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Broadcast failed: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Broadcast failed: {str(e)}") from e
 
 
 @router.post("/broadcast/user/{user_id}")
@@ -272,9 +256,7 @@ async def broadcast_to_user(
         # Check if user is admin or has broadcast permissions
         user_roles = current_user.get("roles", [])
         if "admin" not in user_roles and "broadcast" not in user_roles:
-            raise HTTPException(
-                status_code=403, detail="Cannot broadcast to different user"
-            )
+            raise HTTPException(status_code=403, detail="Cannot broadcast to different user")
 
     # Create WebSocket message
     message = WebSocketMessage(
@@ -291,9 +273,7 @@ async def broadcast_to_user(
 
     except Exception as e:
         logger.error(f"Failed to broadcast to user {user_id}: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Broadcast failed: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Broadcast failed: {str(e)}") from e
 
 
 @router.post("/broadcast/subscription/{subscription}")
@@ -322,16 +302,12 @@ async def broadcast_to_subscription(
 
     try:
         # Broadcast message
-        await websocket_manager.broadcast_to_subscription(
-            subscription, message, tenant_filter
-        )
+        await websocket_manager.broadcast_to_subscription(subscription, message, tenant_filter)
         return {"status": "success", "message": "Broadcast sent"}
 
     except Exception as e:
         logger.error(f"Failed to broadcast to subscription {subscription}: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Broadcast failed: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Broadcast failed: {str(e)}") from e
 
 
 @router.get("/stats")
@@ -345,9 +321,7 @@ async def get_websocket_stats(current_user=Depends(get_current_user_optional)):
 # Event broadcasting helper functions for use by other modules
 
 
-async def broadcast_billing_event(
-    event_type: str, data: dict, tenant_id: str, user_id: Optional[str] = None
-):
+async def broadcast_billing_event(event_type: str, data: dict, tenant_id: str, user_id: Optional[str] = None):
     """
     Broadcast billing-related events.
 
@@ -365,18 +339,12 @@ async def broadcast_billing_event(
     }
 
     websocket_event_type = event_mapping.get(event_type, EventType.BILLING_UPDATE)
-    message = WebSocketMessage(
-        event_type=websocket_event_type, data=data, tenant_id=tenant_id, user_id=user_id
-    )
+    message = WebSocketMessage(event_type=websocket_event_type, data=data, tenant_id=tenant_id, user_id=user_id)
     # Broadcast to billing subscription subscribers
-    await websocket_manager.broadcast_to_subscription(
-        "billing_updates", message, tenant_id
-    )
+    await websocket_manager.broadcast_to_subscription("billing_updates", message, tenant_id)
 
 
-async def broadcast_service_event(
-    event_type: str, data: dict, tenant_id: str, user_id: Optional[str] = None
-):
+async def broadcast_service_event(event_type: str, data: dict, tenant_id: str, user_id: Optional[str] = None):
     """
     Broadcast service-related events.
 
@@ -393,18 +361,12 @@ async def broadcast_service_event(
     }
 
     websocket_event_type = event_mapping.get(event_type, EventType.SYSTEM_NOTIFICATION)
-    message = WebSocketMessage(
-        event_type=websocket_event_type, data=data, tenant_id=tenant_id, user_id=user_id
-    )
+    message = WebSocketMessage(event_type=websocket_event_type, data=data, tenant_id=tenant_id, user_id=user_id)
     # Broadcast to service subscription subscribers
-    await websocket_manager.broadcast_to_subscription(
-        "service_updates", message, tenant_id
-    )
+    await websocket_manager.broadcast_to_subscription("service_updates", message, tenant_id)
 
 
-async def broadcast_network_alert(
-    alert_data: dict, tenant_id: str, severity: str = "medium"
-):
+async def broadcast_network_alert(alert_data: dict, tenant_id: str, severity: str = "medium"):
     """
     Broadcast network alerts.
 
@@ -419,14 +381,10 @@ async def broadcast_network_alert(
         tenant_id=tenant_id,
     )
     # Broadcast to network monitoring subscription subscribers
-    await websocket_manager.broadcast_to_subscription(
-        "network_alerts", message, tenant_id
-    )
+    await websocket_manager.broadcast_to_subscription("network_alerts", message, tenant_id)
 
 
-async def broadcast_ticket_update(
-    ticket_data: dict, tenant_id: str, user_id: Optional[str] = None
-):
+async def broadcast_ticket_update(ticket_data: dict, tenant_id: str, user_id: Optional[str] = None):
     """
     Broadcast ticket updates.
 
@@ -442,6 +400,4 @@ async def broadcast_ticket_update(
         user_id=user_id,
     )
     # Broadcast to support subscription subscribers
-    await websocket_manager.broadcast_to_subscription(
-        "support_updates", message, tenant_id
-    )
+    await websocket_manager.broadcast_to_subscription("support_updates", message, tenant_id)

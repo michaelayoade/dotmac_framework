@@ -7,10 +7,16 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from dotmac_shared.ticketing.core.models import TicketCategory, TicketCreate, TicketPriority, TicketSource
 from sqlalchemy import and_, asc, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+from dotmac_shared.ticketing.core.models import (
+    TicketCategory,
+    TicketCreate,
+    TicketPriority,
+    TicketSource,
+)
 
 from .live_chat_plugin import (
     AgentStatus,

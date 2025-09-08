@@ -1,0 +1,85 @@
+[build-system]
+requires = ["poetry-core"]
+
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "dotmac-observability"
+version = "1.0.0"
+description = "Lightweight metrics and health toolkit for DotMac services"
+authors = ["DotMac Team <dev@dotmac.io>"]
+
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/dotmac-framework/dotmac-observability"
+repository = "https://github.com/dotmac-framework/dotmac-observability.git"
+documentation = "https://docs.dotmac.com/observability"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Monitoring",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0"
+mypy = ">=1.0"
+ruff = ">=0.1.0"
+
+[tool.hatch]
+[tool.hatch.version]
+path = "src/dotmac_observability/__init__.py"
+
+[tool.hatch.build]
+
+[tool.hatch.build.targets]
+[tool.hatch.build.targets.wheel]
+packages = ["src/dotmac_observability"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/README.md", "/CHANGELOG.md"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "B", "UP", "C4", "SIM", "TCH"]
+ignore = ["B008", "N805"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+python_files = ["test_*.py"]
+
+python_classes = ["Test*"]
+
+python_functions = ["test_*"]
+
+addopts = "-v --tb=short --strict-config --strict-markers"
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests"
+]
+
+asyncio_mode = "auto"

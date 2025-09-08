@@ -8,11 +8,12 @@ import urllib.parse
 from datetime import datetime
 from typing import Any, Optional
 
-from dotmac_shared.validation.common_validators import CommonValidators
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import JSON, Boolean, Column, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+
+from dotmac_shared.validation.common_validators import CommonValidators
 
 from .base import BaseModel as DBBaseModel
 
@@ -26,9 +27,7 @@ class PartnerBrandConfig(DBBaseModel):
     __tablename__ = "partner_brand_configs"
 
     # Link to existing partner
-    partner_id = Column(
-        UUID(as_uuid=True), ForeignKey("partners.id"), nullable=False, unique=True
-    )
+    partner_id = Column(UUID(as_uuid=True), ForeignKey("partners.id"), nullable=False, unique=True)
     partner = relationship("Partner", back_populates="brand_config")
 
     # Brand Identity
@@ -188,9 +187,7 @@ class BrandConfigBase(BaseModel):
         try:
             parsed = urllib.parse.urlparse(clean_url)
             if not parsed.scheme or not parsed.netloc:
-                raise ValueError(
-                    f"{info.field_name} must be a valid URL with scheme and domain"
-                )
+                raise ValueError(f"{info.field_name} must be a valid URL with scheme and domain")
 
             # Security: only allow http/https schemes
             if parsed.scheme not in ["http", "https"]:
@@ -205,9 +202,7 @@ class BrandConfigBase(BaseModel):
             field_name = info.field_name
             if field_name == "facebook_url" and "facebook.com" not in netloc:
                 raise ValueError("Facebook URL must be from facebook.com domain")
-            elif field_name == "twitter_url" and not any(
-                domain in netloc for domain in ["twitter.com", "x.com"]
-            ):
+            elif field_name == "twitter_url" and not any(domain in netloc for domain in ["twitter.com", "x.com"]):
                 raise ValueError("Twitter URL must be from twitter.com or x.com domain")
             elif field_name == "linkedin_url" and "linkedin.com" not in netloc:
                 raise ValueError("LinkedIn URL must be from linkedin.com domain")
@@ -242,16 +237,12 @@ class BrandConfigBase(BaseModel):
 
         # Hex color validation
         if not re.match(r"^#[0-9a-f]{6}$", clean_color):
-            raise ValueError(
-                f"{info.field_name} must be a valid 6-digit hex color (e.g., #ff0000)"
-            )
+            raise ValueError(f"{info.field_name} must be a valid 6-digit hex color (e.g., #ff0000)")
 
         # Basic accessibility check - prevent pure black/white extremes for text
         if info.field_name == "text_color":
             if clean_color in ["#000000", "#ffffff"]:
-                raise ValueError(
-                    "Text color should not be pure black or white for accessibility"
-                )
+                raise ValueError("Text color should not be pure black or white for accessibility")
 
         return clean_color
 
@@ -295,14 +286,14 @@ class BrandConfigBase(BaseModel):
             raise ValueError("Domain must be less than 200 characters")
 
         # Enhanced domain validation
-        domain_pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$"
+        domain_pattern = (
+            r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$"
+        )
         if not re.match(domain_pattern, clean_domain):
             raise ValueError("Invalid domain format")
 
         # Security checks
-        if any(
-            blocked in clean_domain for blocked in ["localhost", "127.0.0.1", "::1"]
-        ):
+        if any(blocked in clean_domain for blocked in ["localhost", "127.0.0.1", "::1"]):
             raise ValueError("Cannot use localhost or private IP addresses")
 
         # Must have at least one dot (no top-level domains)
@@ -335,9 +326,7 @@ class BrandConfigBase(BaseModel):
             raise ValueError("Support email must be less than 255 characters")
 
         # Basic format validation
-        if not re.match(
-            r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", clean_email
-        ):
+        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", clean_email):
             raise ValueError("Support email format is invalid")
 
         return clean_email
@@ -417,9 +406,7 @@ class BrandConfigBase(BaseModel):
                 css_lower = css.lower()
                 for pattern in dangerous_patterns:
                     if pattern in css_lower:
-                        raise ValueError(
-                            f"Custom CSS contains dangerous pattern: {pattern}"
-                        )
+                        raise ValueError(f"Custom CSS contains dangerous pattern: {pattern}")
 
         # Validate feature flags
         if "feature_flags" in v:
@@ -484,12 +471,8 @@ class BrandConfigUpdate(BaseModel):
     is_active: Optional[bool] = None
 
     # Apply same validators as base class for non-None values
-    validate_brand_name = field_validator("brand_name")(
-        BrandConfigBase.validate_brand_name.__func__
-    )
-    validate_tagline = field_validator("tagline")(
-        BrandConfigBase.validate_tagline.__func__
-    )
+    validate_brand_name = field_validator("brand_name")(BrandConfigBase.validate_brand_name.__func__)
+    validate_tagline = field_validator("tagline")(BrandConfigBase.validate_tagline.__func__)
     validate_url_fields = field_validator(
         "logo_url",
         "logo_dark_url",
@@ -509,27 +492,15 @@ class BrandConfigUpdate(BaseModel):
         "background_color",
         "text_color",
     )(BrandConfigBase.validate_hex_colors.__func__)
-    validate_font_family = field_validator("font_family")(
-        BrandConfigBase.validate_font_family.__func__
-    )
-    validate_domain = field_validator("custom_domain")(
-        BrandConfigBase.validate_domain.__func__
-    )
-    validate_support_email = field_validator("support_email")(
-        BrandConfigBase.validate_support_email.__func__
-    )
-    validate_support_phone = field_validator("support_phone")(
-        BrandConfigBase.validate_support_phone.__func__
-    )
+    validate_font_family = field_validator("font_family")(BrandConfigBase.validate_font_family.__func__)
+    validate_domain = field_validator("custom_domain")(BrandConfigBase.validate_domain.__func__)
+    validate_support_email = field_validator("support_email")(BrandConfigBase.validate_support_email.__func__)
+    validate_support_phone = field_validator("support_phone")(BrandConfigBase.validate_support_phone.__func__)
     validate_company_legal_name = field_validator("company_legal_name")(
         BrandConfigBase.validate_company_legal_name.__func__
     )
-    validate_address = field_validator("address")(
-        BrandConfigBase.validate_address.__func__
-    )
-    validate_brand_config = field_validator("brand_config")(
-        BrandConfigBase.validate_brand_config.__func__
-    )
+    validate_address = field_validator("address")(BrandConfigBase.validate_address.__func__)
+    validate_brand_config = field_validator("brand_config")(BrandConfigBase.validate_brand_config.__func__)
 
 
 class BrandConfigResponse(BrandConfigBase):

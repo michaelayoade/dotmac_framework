@@ -1,5 +1,3 @@
-from pydantic import BaseModel, ConfigDict, Field
-
 """IPAM API schemas for requests and responses."""
 
 import ipaddress
@@ -7,8 +5,12 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field
+
+from .models import AllocationStatus, NetworkType, ReservationStatus
+
 try:
-    from pydantic import field_validator, model_validator
+    from pydantic import field_validator
 
     PYDANTIC_AVAILABLE = True
 except ImportError:
@@ -45,8 +47,6 @@ if not SHARED_SCHEMAS_AVAILABLE:
 
     else:
         TenantModelSchema = BaseModel
-
-from .models import AllocationStatus, NetworkType, ReservationStatus
 
 if PYDANTIC_AVAILABLE:
     # Network Schemas
@@ -97,8 +97,10 @@ if PYDANTIC_AVAILABLE:
                 for dns_ip in v:
                     try:
                         ipaddress.ip_address(dns_ip)
-                    except ValueError:
-                        raise ValueError(f"Invalid DNS server IP address: {dns_ip}")
+                    except ValueError as e:
+                        raise ValueError(
+                            f"Invalid DNS server IP address: {dns_ip}"
+                        ) from e
             return v or []
 
     class NetworkCreate(NetworkBase):

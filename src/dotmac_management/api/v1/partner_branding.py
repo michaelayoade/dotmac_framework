@@ -15,7 +15,6 @@ import colorsys
 from datetime import datetime, timezone
 from uuid import UUID
 
-from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 from fastapi import APIRouter, Depends, Path, status
 
 from dotmac.application import standard_exception_handler
@@ -24,6 +23,7 @@ from dotmac.application.dependencies.dependencies import (
     get_standard_deps,
 )
 from dotmac.platform.observability.logging import get_logger
+from dotmac_shared.api.rate_limiting_decorators import rate_limit, rate_limit_strict
 
 from ...models.partner import Partner
 from ...models.partner_branding import (
@@ -75,11 +75,7 @@ async def create_brand_config(
         raise EntityNotFoundError(f"Partner {partner_id} not found")
 
     # Check if brand config already exists
-    existing_config = (
-        deps.db.query(PartnerBrandConfig)
-        .filter(PartnerBrandConfig.partner_id == partner_id)
-        .first()
-    )
+    existing_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
 
     if existing_config:
         from dotmac.core.exceptions import BusinessRuleError
@@ -134,11 +130,7 @@ async def get_brand_config(
 ) -> BrandConfigResponse:
     """Retrieve the current brand configuration for a partner."""
 
-    brand_config = (
-        deps.db.query(PartnerBrandConfig)
-        .filter(PartnerBrandConfig.partner_id == partner_id)
-        .first()
-    )
+    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
 
     if not brand_config:
         from dotmac.core.exceptions import EntityNotFoundError
@@ -163,11 +155,7 @@ async def update_brand_config(
 ) -> BrandConfigResponse:
     """Update an existing brand configuration."""
 
-    brand_config = (
-        deps.db.query(PartnerBrandConfig)
-        .filter(PartnerBrandConfig.partner_id == partner_id)
-        .first()
-    )
+    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
 
     if not brand_config:
         from dotmac.core.exceptions import EntityNotFoundError
@@ -180,12 +168,8 @@ async def update_brand_config(
     # Regenerate theme if colors changed
     if any(key in update_data for key in ["primary_color", "secondary_color"]):
         primary_color = update_data.get("primary_color", brand_config.primary_color)
-        secondary_color = update_data.get(
-            "secondary_color", brand_config.secondary_color or primary_color
-        )
-        update_data["theme_config"] = _generate_theme_colors(
-            primary_color, secondary_color
-        )
+        secondary_color = update_data.get("secondary_color", brand_config.secondary_color or primary_color)
+        update_data["theme_config"] = _generate_theme_colors(primary_color, secondary_color)
 
     for field, value in update_data.items():
         if hasattr(brand_config, field):
@@ -217,11 +201,7 @@ async def delete_brand_config(
 ) -> dict:
     """Delete brand configuration for a partner."""
 
-    brand_config = (
-        deps.db.query(PartnerBrandConfig)
-        .filter(PartnerBrandConfig.partner_id == partner_id)
-        .first()
-    )
+    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
 
     if not brand_config:
         from dotmac.core.exceptions import EntityNotFoundError
@@ -256,20 +236,36 @@ async def verify_domain(
 ) -> dict:
     """Verify ownership of a custom domain for partner branding."""
 
-    brand_config = (
-        deps.db.query(PartnerBrandConfig)
-        .filter(PartnerBrandConfig.partner_id == partner_id)
-        .first()
-    )
+    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
 
     if not brand_config or not brand_config.domain_name:
         from dotmac.core.exceptions import BusinessRuleError
 
         raise BusinessRuleError("No domain configured for verification")
 
-    # TODO: Implement actual domain verification logic
-    # For now, simulate verification process
-    verification_successful = True
+    # Use actual domain verification service
+    from ...services.domain_verification_service import (
+        domain_verification_service,
+        VerificationMethod,
+    )
+    
+    try:
+        # Create DNS TXT verification challenge (preferred method)
+        challenge = domain_verification_service.create_verification_challenge(
+            domain=brand_config.domain_name,
+            method=VerificationMethod.DNS_TXT
+        )
+        
+        # Attempt verification
+        verification_successful, error_message = await domain_verification_service.verify_domain_challenge(challenge)
+        
+        if not verification_successful:
+            logger.warning(f"Domain verification failed for {brand_config.domain_name}: {error_message}")
+            
+    except Exception as e:
+        logger.error(f"Domain verification error for {brand_config.domain_name}: {e}")
+        verification_successful = False
+        error_message = str(e)
 
     if verification_successful:
         brand_config.is_domain_verified = True
@@ -286,8 +282,50 @@ async def verify_domain(
         return {
             "success": False,
             "message": f"Domain {brand_config.domain_name} verification failed",
-            "error": "Unable to verify domain ownership",
+            "error": error_message if 'error_message' in locals() else "Unable to verify domain ownership",
         }
+
+
+@router.get(
+    "/{partner_id}/brand/domain-verification-instructions",
+    response_model=dict,
+    summary="Get Domain Verification Instructions",
+    description="Get instructions for verifying domain ownership",
+)
+@standard_exception_handler
+async def get_domain_verification_instructions(
+    partner_id: UUID = Path(..., description="Partner ID"),
+    method: str = "dns_txt",  # dns_txt or http_file
+    deps: StandardDependencies = Depends(get_standard_deps),
+) -> dict:
+    """Get instructions for verifying domain ownership."""
+    
+    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
+    
+    if not brand_config or not brand_config.domain_name:
+        from dotmac.core.exceptions import BusinessRuleError
+        raise BusinessRuleError("No domain configured for verification")
+    
+    from ...services.domain_verification_service import (
+        domain_verification_service,
+        VerificationMethod,
+    )
+    
+    verification_method = VerificationMethod.DNS_TXT if method == "dns_txt" else VerificationMethod.HTTP_FILE
+    
+    # Create a challenge to get instructions
+    challenge = domain_verification_service.create_verification_challenge(
+        domain=brand_config.domain_name,
+        method=verification_method
+    )
+    
+    instructions = domain_verification_service.get_verification_instructions(challenge)
+    
+    return {
+        "domain": brand_config.domain_name,
+        "is_verified": brand_config.is_domain_verified or False,
+        "verification_instructions": instructions,
+    }
 
 
 # ============================================================================
@@ -365,11 +403,7 @@ async def generate_brand_css(
 ) -> str:
     """Generate CSS variables and styles for the partner brand."""
 
-    brand_config = (
-        deps.db.query(PartnerBrandConfig)
-        .filter(PartnerBrandConfig.partner_id == partner_id)
-        .first()
-    )
+    brand_config = deps.db.query(PartnerBrandConfig).filter(PartnerBrandConfig.partner_id == partner_id).first()
 
     if not brand_config:
         from dotmac.core.exceptions import EntityNotFoundError

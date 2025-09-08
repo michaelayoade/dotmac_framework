@@ -6,8 +6,7 @@ Provides unified ticket management with workflows, automation, and integrations.
 """
 
 from .api import (
-    TicketAPI,
-    create_ticket_router,
+    ticketing_router,
 )
 from .core import (
     CommentCreate,
@@ -88,8 +87,7 @@ __all__ = [
     "SLAMonitor",
     "TicketAutomationEngine",
     # API
-    "create_ticket_router",
-    "TicketAPI",
+    "ticketing_router",
     # Integrations
     "TicketNotificationManager",
 ]

@@ -15,6 +15,13 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Optional
 
+from dotmac.database.base import get_db_session
+from dotmac.platform.auth.core.jwt_service import JWTService
+from dotmac.tasks.decorators import TaskExecutionContext
+from dotmac.tasks.engine import Task, TaskConfig, TaskEngine, TaskPriority
+from dotmac.tasks.monitor import TaskMonitor
+from dotmac.tasks.notifications import TaskNotificationService
+from dotmac.tasks.workflow import StepType, Workflow, WorkflowOrchestrator, WorkflowStep
 from dotmac_management.infrastructure import get_adapter_factory
 from dotmac_management.models.tenant import (
     CustomerTenant,
@@ -29,14 +36,6 @@ from dotmac_management.services.tenant_admin_provisioning import (
 )
 from dotmac_shared.core.logging import get_logger
 from dotmac_shared.security.secrets import SecretsManager
-
-from dotmac.database.base import get_db_session
-from dotmac.platform.auth.core.jwt_service import JWTService
-from dotmac.tasks.decorators import TaskExecutionContext
-from dotmac.tasks.engine import Task, TaskConfig, TaskEngine, TaskPriority
-from dotmac.tasks.monitor import TaskMonitor
-from dotmac.tasks.notifications import TaskNotificationService
-from dotmac.tasks.workflow import StepType, Workflow, WorkflowOrchestrator, WorkflowStep
 
 logger = get_logger(__name__)
 
@@ -103,9 +102,7 @@ class EnhancedTenantProvisioningService:
             await self.workflow_orchestrator.initialize()
 
             # Initialize notification service
-            self.notification_service = TaskNotificationService(
-                redis_url=self.redis_url
-            )
+            self.notification_service = TaskNotificationService(redis_url=self.redis_url)
             await self.notification_service.initialize()
 
             # Initialize task monitor
@@ -148,9 +145,7 @@ class EnhancedTenantProvisioningService:
         """
         try:
             # Create comprehensive provisioning workflow
-            workflow = await self._create_provisioning_workflow(
-                tenant_db_id, notification_channels or [], priority
-            )
+            workflow = await self._create_provisioning_workflow(tenant_db_id, notification_channels or [], priority)
 
             # Start workflow execution
             workflow_id = await self.workflow_orchestrator.start_workflow(workflow)
@@ -170,22 +165,16 @@ class EnhancedTenantProvisioningService:
             logger.error(f"Failed to start tenant provisioning: {e}")
             raise
 
-    async def get_provisioning_status(
-        self, workflow_id: str
-    ) -> Optional[dict[str, Any]]:
+    async def get_provisioning_status(self, workflow_id: str) -> Optional[dict[str, Any]]:
         """Get detailed provisioning status and progress."""
         try:
             status = await self.workflow_orchestrator.get_workflow_status(workflow_id)
 
             if status:
                 # Enhance with additional provisioning-specific data
-                status["provisioning_phase"] = self._determine_provisioning_phase(
-                    status
-                )
+                status["provisioning_phase"] = self._determine_provisioning_phase(status)
                 status["estimated_completion"] = self._estimate_completion_time(status)
-                status["troubleshooting_info"] = await self._get_troubleshooting_info(
-                    status
-                )
+                status["troubleshooting_info"] = await self._get_troubleshooting_info(status)
 
             return status
 
@@ -207,9 +196,7 @@ class EnhancedTenantProvisioningService:
                 return False
 
             # Create retry task based on step type
-            retry_task = await self._create_retry_task(
-                workflow_id, step_id, step_status
-            )
+            retry_task = await self._create_retry_task(workflow_id, step_id, step_status)
             if retry_task:
                 task_id = await self.task_engine.enqueue_task(retry_task)
                 logger.info(
@@ -228,9 +215,7 @@ class EnhancedTenantProvisioningService:
             logger.error(f"Failed to retry step {step_id}: {e}")
             return False
 
-    async def cancel_provisioning(
-        self, workflow_id: str, reason: str = "User requested"
-    ) -> bool:
+    async def cancel_provisioning(self, workflow_id: str, reason: str = "User requested") -> bool:
         """Cancel ongoing tenant provisioning with cleanup."""
         try:
             # Cancel workflow
@@ -238,12 +223,8 @@ class EnhancedTenantProvisioningService:
 
             if cancelled:
                 # Start cleanup workflow
-                cleanup_workflow = await self._create_cleanup_workflow(
-                    workflow_id, reason
-                )
-                cleanup_id = await self.workflow_orchestrator.start_workflow(
-                    cleanup_workflow
-                )
+                cleanup_workflow = await self._create_cleanup_workflow(workflow_id, reason)
+                cleanup_id = await self.workflow_orchestrator.start_workflow(cleanup_workflow)
 
                 logger.info(
                     "Provisioning cancelled and cleanup started",
@@ -451,20 +432,14 @@ class EnhancedTenantProvisioningService:
 
         return workflow
 
-    async def _create_cleanup_workflow(
-        self, original_workflow_id: str, reason: str
-    ) -> Workflow:
+    async def _create_cleanup_workflow(self, original_workflow_id: str, reason: str) -> Workflow:
         """Create cleanup workflow for cancelled/failed provisioning."""
 
         workflow_id = f"tenant-cleanup-{original_workflow_id}-{int(time.time())}"
 
         # Get original workflow status to determine what needs cleanup
-        original_status = await self.workflow_orchestrator.get_workflow_status(
-            original_workflow_id
-        )
-        tenant_db_id = (
-            original_status["metadata"]["tenant_db_id"] if original_status else None
-        )
+        original_status = await self.workflow_orchestrator.get_workflow_status(original_workflow_id)
+        tenant_db_id = original_status["metadata"]["tenant_db_id"] if original_status else None
 
         if not tenant_db_id:
             raise ValueError("Cannot create cleanup workflow without tenant ID")
@@ -540,15 +515,11 @@ class EnhancedTenantProvisioningService:
             },
         )
 
-    async def _create_retry_task(
-        self, workflow_id: str, step_id: str, step_status: dict[str, Any]
-    ) -> Optional[Task]:
+    async def _create_retry_task(self, workflow_id: str, step_id: str, step_status: dict[str, Any]) -> Optional[Task]:
         """Create a retry task for a specific failed step."""
         try:
             # Get workflow status to extract step information
-            workflow_status = await self.workflow_orchestrator.get_workflow_status(
-                workflow_id
-            )
+            workflow_status = await self.workflow_orchestrator.get_workflow_status(workflow_id)
             if not workflow_status:
                 return None
 
@@ -686,9 +657,7 @@ class EnhancedTenantProvisioningService:
                     remaining_time += duration
 
             if remaining_time > 0:
-                return (
-                    datetime.now(timezone.utc) + timedelta(seconds=remaining_time)
-                ).isoformat()
+                return (datetime.now(timezone.utc) + timedelta(seconds=remaining_time)).isoformat()
 
             return None
 
@@ -720,9 +689,7 @@ class EnhancedTenantProvisioningService:
                                 "description": "Step took longer than expected to complete",
                             }
                         )
-                        troubleshooting["suggested_actions"].append(
-                            "Retry the failed step or contact support"
-                        )
+                        troubleshooting["suggested_actions"].append("Retry the failed step or contact support")
 
                     elif "connection" in error.lower():
                         troubleshooting["common_issues"].append(
@@ -732,9 +699,7 @@ class EnhancedTenantProvisioningService:
                                 "description": "Network connectivity issues during step execution",
                             }
                         )
-                        troubleshooting["suggested_actions"].append(
-                            "Check network connectivity and retry"
-                        )
+                        troubleshooting["suggested_actions"].append("Check network connectivity and retry")
 
             return troubleshooting
 
@@ -759,9 +724,7 @@ class EnhancedTenantProvisioningService:
         """Task: Validate tenant configuration before provisioning."""
         async with TaskExecutionContext(
             task_name="validate_tenant_configuration",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
         ) as ctx:
             await ctx.update_progress(10, "Loading tenant configuration")
 
@@ -802,9 +765,7 @@ class EnhancedTenantProvisioningService:
         """Task: Create database and Redis resources for tenant."""
         async with TaskExecutionContext(
             task_name="create_tenant_database_resources",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
         ) as ctx:
             await ctx.update_progress(10, "Loading tenant information")
 
@@ -828,12 +789,8 @@ class EnhancedTenantProvisioningService:
 
                 tenant = db.query(CustomerTenant).filter_by(id=tenant_db_id).first()
                 with db_transaction(db):
-                    tenant.database_url = await self.secrets_manager.encrypt(
-                        database_config["url"]
-                    )
-                    tenant.redis_url = await self.secrets_manager.encrypt(
-                        redis_config["url"]
-                    )
+                    tenant.database_url = await self.secrets_manager.encrypt(database_config["url"])
+                    tenant.redis_url = await self.secrets_manager.encrypt(redis_config["url"])
 
             await ctx.update_progress(100, "Database resources created successfully")
 
@@ -846,30 +803,22 @@ class EnhancedTenantProvisioningService:
             }
 
     # Placeholder implementations for remaining tasks...
-    async def _generate_tenant_secrets(
-        self, tenant_db_id: int, task_context: Optional[dict] = None
-    ) -> dict[str, Any]:
+    async def _generate_tenant_secrets(self, tenant_db_id: int, task_context: Optional[dict] = None) -> dict[str, Any]:
         """Task: Generate tenant-specific secrets and encryption keys."""
         # Implementation would generate JWT secrets, encryption keys, etc.
         return {"secrets_generated": True}
 
-    async def _deploy_tenant_containers(
-        self, tenant_db_id: int, task_context: Optional[dict] = None
-    ) -> dict[str, Any]:
+    async def _deploy_tenant_containers(self, tenant_db_id: int, task_context: Optional[dict] = None) -> dict[str, Any]:
         """Task: Deploy tenant container stack via Coolify API."""
         # Implementation would deploy containers using Coolify client
         return {"containers_deployed": True}
 
-    async def _run_tenant_migrations(
-        self, tenant_db_id: int, task_context: Optional[dict] = None
-    ) -> dict[str, Any]:
+    async def _run_tenant_migrations(self, tenant_db_id: int, task_context: Optional[dict] = None) -> dict[str, Any]:
         """Task: Run database migrations for tenant schema."""
         # Implementation would run database migrations
         return {"migrations_completed": True}
 
-    async def _seed_tenant_data(
-        self, tenant_db_id: int, task_context: Optional[dict] = None
-    ) -> dict[str, Any]:
+    async def _seed_tenant_data(self, tenant_db_id: int, task_context: Optional[dict] = None) -> dict[str, Any]:
         """Task: Seed initial data for tenant."""
         # Implementation would seed initial tenant data
         return {"data_seeded": True}
@@ -881,16 +830,12 @@ class EnhancedTenantProvisioningService:
         # Implementation would create tenant admin account
         return {"admin_created": True}
 
-    async def _provision_tenant_license(
-        self, tenant_db_id: int, task_context: Optional[dict] = None
-    ) -> dict[str, Any]:
+    async def _provision_tenant_license(self, tenant_db_id: int, task_context: Optional[dict] = None) -> dict[str, Any]:
         """Task: Provision license contract for tenant."""
         # Implementation would provision license
         return {"license_provisioned": True}
 
-    async def _run_tenant_health_checks(
-        self, tenant_db_id: int, task_context: Optional[dict] = None
-    ) -> dict[str, Any]:
+    async def _run_tenant_health_checks(self, tenant_db_id: int, task_context: Optional[dict] = None) -> dict[str, Any]:
         """Task: Run comprehensive health checks on deployed tenant."""
         # Implementation would run health checks
         return {"health_checks_passed": True}
@@ -938,9 +883,7 @@ class EnhancedTenantProvisioningService:
         # Implementation would cleanup containers via Coolify API
         return {"containers_cleaned": True}
 
-    async def _cleanup_tenant_database(
-        self, tenant_db_id: int, task_context: Optional[dict] = None
-    ) -> dict[str, Any]:
+    async def _cleanup_tenant_database(self, tenant_db_id: int, task_context: Optional[dict] = None) -> dict[str, Any]:
         """Cleanup task: Remove tenant database and Redis resources."""
         # Implementation would cleanup database resources
         return {"database_cleaned": True}
@@ -980,9 +923,7 @@ class EnhancedTenantProvisioningService:
         """
         try:
             # Create comprehensive decommissioning workflow
-            workflow = await self._create_decommissioning_workflow(
-                tenant_db_id, reason, backup_data
-            )
+            workflow = await self._create_decommissioning_workflow(tenant_db_id, reason, backup_data)
 
             # Start workflow execution
             workflow_id = await self.workflow_orchestrator.start_workflow(workflow)
@@ -1002,9 +943,7 @@ class EnhancedTenantProvisioningService:
             logger.error(f"Failed to start tenant decommissioning: {e}")
             raise
 
-    async def _create_decommissioning_workflow(
-        self, tenant_db_id: int, reason: str, backup_data: bool
-    ):
+    async def _create_decommissioning_workflow(self, tenant_db_id: int, reason: str, backup_data: bool):
         """Create comprehensive tenant decommissioning workflow."""
 
         workflow_id = f"tenant-decommission-{tenant_db_id}-{int(time.time())}"
@@ -1160,15 +1099,11 @@ class EnhancedTenantProvisioningService:
         )
 
     # New decommissioning task implementations (extend existing tasks)
-    async def backup_tenant_data(
-        self, tenant_db_id: int, task_context: Optional[dict] = None
-    ) -> dict[str, Any]:
+    async def backup_tenant_data(self, tenant_db_id: int, task_context: Optional[dict] = None) -> dict[str, Any]:
         """Task: Backup tenant data before decommissioning."""
         async with TaskExecutionContext(
             task_name="backup_tenant_data",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
         ) as ctx:
             await ctx.update_progress(10, "Starting tenant data backup")
 
@@ -1202,8 +1137,7 @@ class EnhancedTenantProvisioningService:
             return {
                 "backup_completed": True,
                 "backup_info": backup_info,
-                "total_size_mb": backup_info["database_backup_size_mb"]
-                + backup_info["file_backup_size_mb"],
+                "total_size_mb": backup_info["database_backup_size_mb"] + backup_info["file_backup_size_mb"],
             }
 
     async def finalize_tenant_billing(
@@ -1212,9 +1146,7 @@ class EnhancedTenantProvisioningService:
         """Task: Finalize billing for decommissioned tenant."""
         async with TaskExecutionContext(
             task_name="finalize_tenant_billing",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
         ) as ctx:
             await ctx.update_progress(10, "Calculating final billing")
 
@@ -1249,9 +1181,7 @@ class EnhancedTenantProvisioningService:
         """Task: Send decommissioning notifications."""
         async with TaskExecutionContext(
             task_name="send_decommission_notifications",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
         ) as ctx:
             await ctx.update_progress(20, "Sending reseller notification")
 
@@ -1272,15 +1202,11 @@ class EnhancedTenantProvisioningService:
                 "reason": reason,
             }
 
-    async def stop_tenant_services(
-        self, tenant_db_id: int, task_context: Optional[dict] = None
-    ) -> dict[str, Any]:
+    async def stop_tenant_services(self, tenant_db_id: int, task_context: Optional[dict] = None) -> dict[str, Any]:
         """Task: Stop tenant services before cleanup."""
         async with TaskExecutionContext(
             task_name="stop_tenant_services",
-            progress_callback=task_context.get("progress_callback")
-            if task_context
-            else None,
+            progress_callback=task_context.get("progress_callback") if task_context else None,
         ) as ctx:
             await ctx.update_progress(20, "Stopping application services")
 

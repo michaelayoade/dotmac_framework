@@ -10,8 +10,9 @@ from typing import Any, Optional
 from uuid import UUID
 
 from dotmac_plugins.core.manager import PluginManager
-from dotmac_shared.monitoring import get_monitoring
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from dotmac_shared.monitoring import get_monitoring
 
 from ..core.exceptions import BusinessLogicError, ValidationError
 from ..core.logging import get_logger
@@ -31,9 +32,7 @@ class PluginService:
     Handles plugin lifecycle, licensing, and integration with the plugin system.
     """
 
-    def __init__(
-        self, db: AsyncSession, plugin_manager: PluginManager, monitoring_service=None
-    ):
+    def __init__(self, db: AsyncSession, plugin_manager: PluginManager, monitoring_service=None):
         self.db = db
         self.plugin_manager = plugin_manager
         self.monitoring = monitoring_service or get_monitoring()
@@ -59,9 +58,7 @@ class PluginService:
         Get plugin catalog with filtering.
         Uses DRY repository patterns and caching.
         """
-        logger.info(
-            f"Fetching plugin catalog with filters: category={category}, search={search_query}"
-        )
+        logger.info(f"Fetching plugin catalog with filters: category={category}, search={search_query}")
 
         try:
             # Build filter conditions using DRY query patterns
@@ -139,14 +136,10 @@ class PluginService:
 
                 # Validate license tier is available
                 if not self._is_license_tier_available(plugin, license_tier):
-                    raise ValidationError(
-                        f"License tier {license_tier} not available for plugin"
-                    )
+                    raise ValidationError(f"License tier {license_tier} not available for plugin")
 
                 # Check for existing installation
-                existing_license = await self.get_tenant_plugin_license(
-                    tenant_id, plugin_id
-                )
+                existing_license = await self.get_tenant_plugin_license(tenant_id, plugin_id)
                 if existing_license and existing_license.is_active:
                     raise ValidationError("Plugin is already installed for this tenant")
 
@@ -169,9 +162,7 @@ class PluginService:
                 else:
                     from datetime import timedelta
 
-                    license_data["trial_ends_at"] = datetime.now(
-                        timezone.utc
-                    ) + timedelta(days=plugin.trial_days)
+                    license_data["trial_ends_at"] = datetime.now(timezone.utc) + timedelta(days=plugin.trial_days)
 
                 plugin_license = await self.license_repo.create(license_data)
 
@@ -185,9 +176,7 @@ class PluginService:
 
                 # Update plugin installation count
                 plugin.active_installations += 1
-                await self.plugin_repo.update(
-                    plugin.id, {"active_installations": plugin.active_installations}
-                )
+                await self.plugin_repo.update(plugin.id, {"active_installations": plugin.active_installations})
 
                 logger.info(f"Plugin installed: license_id={plugin_license.id}")
                 return plugin_license
@@ -215,9 +204,7 @@ class PluginService:
                 # Get existing installation
                 installation = await self.license_repo.get_by_id(installation_id)
                 if not installation:
-                    raise ValidationError(
-                        f"Plugin installation {installation_id} not found"
-                    )
+                    raise ValidationError(f"Plugin installation {installation_id} not found")
 
                 # Prepare update data
                 update_data = {}
@@ -229,9 +216,7 @@ class PluginService:
                     # Validate tier change is allowed
                     plugin = await self.get_plugin(installation.plugin_id)
                     if not self._is_license_tier_available(plugin, license_tier):
-                        raise ValidationError(
-                            f"License tier {license_tier} not available"
-                        )
+                        raise ValidationError(f"License tier {license_tier} not available")
 
                     update_data["license_tier"] = license_tier
 
@@ -240,9 +225,7 @@ class PluginService:
                     update_data["version"] = version
 
                 # Update installation
-                updated_installation = await self.license_repo.update(
-                    installation_id, update_data
-                )
+                updated_installation = await self.license_repo.update(installation_id, update_data)
 
                 # Record update event
                 await self._record_plugin_event(
@@ -272,9 +255,7 @@ class PluginService:
                 # Get installation
                 installation = await self.license_repo.get_by_id(installation_id)
                 if not installation:
-                    raise ValidationError(
-                        f"Plugin installation {installation_id} not found"
-                    )
+                    raise ValidationError(f"Plugin installation {installation_id} not found")
 
                 # Mark license as cancelled
                 await self.license_repo.update(
@@ -289,9 +270,7 @@ class PluginService:
                 plugin = await self.get_plugin(installation.plugin_id)
                 if plugin and plugin.active_installations > 0:
                     plugin.active_installations -= 1
-                    await self.plugin_repo.update(
-                        plugin.id, {"active_installations": plugin.active_installations}
-                    )
+                    await self.plugin_repo.update(plugin.id, {"active_installations": plugin.active_installations})
 
                 # Record uninstall event
                 await self._record_plugin_event(
@@ -314,16 +293,12 @@ class PluginService:
     # License and Installation Management
     # ============================================================================
 
-    async def get_tenant_plugin_license(
-        self, tenant_id: UUID, plugin_id: UUID
-    ) -> Optional[PluginLicense]:
+    async def get_tenant_plugin_license(self, tenant_id: UUID, plugin_id: UUID) -> Optional[PluginLicense]:
         """
         Get plugin license for tenant using DRY query patterns.
         """
         try:
-            licenses = await self.license_repo.find_all(
-                tenant_id=tenant_id, plugin_id=plugin_id
-            )
+            licenses = await self.license_repo.find_all(tenant_id=tenant_id, plugin_id=plugin_id)
 
             # Return active license if exists
             active_licenses = [license_ for license_ in licenses if license_.is_active]
@@ -351,9 +326,7 @@ class PluginService:
             logger.error(f"Error fetching plugin installation: {e}")
             return None
 
-    async def get_tenant_plugins(
-        self, tenant_id: UUID, status: Optional[LicenseStatus] = None
-    ) -> list[PluginLicense]:
+    async def get_tenant_plugins(self, tenant_id: UUID, status: Optional[LicenseStatus] = None) -> list[PluginLicense]:
         """
         Get all plugins installed for tenant.
         """
@@ -369,9 +342,7 @@ class PluginService:
             logger.error(f"Error fetching tenant plugins: {e}")
             return []
 
-    async def get_dependent_plugins(
-        self, plugin_id: UUID, tenant_id: UUID
-    ) -> list[PluginLicense]:
+    async def get_dependent_plugins(self, plugin_id: UUID, tenant_id: UUID) -> list[PluginLicense]:
         """
         Get plugins that depend on the specified plugin.
         """
@@ -389,9 +360,7 @@ class PluginService:
             for installation in tenant_plugins:
                 if installation.plugin and installation.is_active:
                     plugin_deps = installation.plugin.dependencies or []
-                    if any(
-                        dep.get("plugin_id") == str(plugin_id) for dep in plugin_deps
-                    ):
+                    if any(dep.get("plugin_id") == str(plugin_id) for dep in plugin_deps):
                         dependent_plugins.append(installation)
 
             return dependent_plugins
@@ -416,9 +385,7 @@ class PluginService:
         """
         try:
             # Validate installation exists and belongs to tenant
-            installation = await self.get_plugin_installation(
-                installation_id, tenant_id
-            )
+            installation = await self.get_plugin_installation(installation_id, tenant_id)
             if not installation:
                 return None
 
@@ -488,9 +455,7 @@ class PluginService:
             await self.usage_repo.create(usage_data)
 
             # Update license usage counter
-            await self.license_repo.update(
-                license_id, {"current_usage": license.current_usage}
-            )
+            await self.license_repo.update(license_id, {"current_usage": license.current_usage})
 
             return True
 
@@ -508,17 +473,14 @@ class PluginService:
         """
         tier_availability = {
             LicenseTier.FREE: plugin.free_tier_available,
-            LicenseTier.BASIC: plugin.basic_price_cents > 0
-            or plugin.free_tier_available,
+            LicenseTier.BASIC: plugin.basic_price_cents > 0 or plugin.free_tier_available,
             LicenseTier.PREMIUM: plugin.premium_price_cents > 0,
             LicenseTier.ENTERPRISE: plugin.enterprise_price_cents > 0,
         }
 
         return tier_availability.get(tier, False)
 
-    async def _validate_plugin_dependencies(
-        self, plugin: Plugin, tenant_id: UUID
-    ) -> None:
+    async def _validate_plugin_dependencies(self, plugin: Plugin, tenant_id: UUID) -> None:
         """
         Validate plugin dependencies are satisfied.
         """
@@ -526,9 +488,7 @@ class PluginService:
             return
 
         # Get tenant's installed plugins
-        tenant_plugins = await self.get_tenant_plugins(
-            tenant_id, status=LicenseStatus.ACTIVE
-        )
+        tenant_plugins = await self.get_tenant_plugins(tenant_id, status=LicenseStatus.ACTIVE)
         installed_plugin_ids = {str(p.plugin_id) for p in tenant_plugins}
 
         # Check required dependencies
@@ -539,13 +499,9 @@ class PluginService:
                 missing_deps.append(dep.get("name", dep_plugin_id))
 
         if missing_deps:
-            raise ValidationError(
-                f"Missing required dependencies: {', '.join(missing_deps)}"
-            )
+            raise ValidationError(f"Missing required dependencies: {', '.join(missing_deps)}")
 
-    async def _filter_plugins_for_tenant(
-        self, plugins: list[Plugin], tenant_id: UUID
-    ) -> list[Plugin]:
+    async def _filter_plugins_for_tenant(self, plugins: list[Plugin], tenant_id: UUID) -> list[Plugin]:
         """
         Filter plugins based on tenant accessibility and permissions.
         """
@@ -582,9 +538,7 @@ class PluginService:
 
 
 # Dependency injection helper following DRY patterns
-def get_plugin_service(
-    db: AsyncSession = None, plugin_manager: PluginManager = None
-) -> PluginService:
+def get_plugin_service(db: AsyncSession = None, plugin_manager: PluginManager = None) -> PluginService:
     """
     Create plugin service instance with dependency injection.
     """

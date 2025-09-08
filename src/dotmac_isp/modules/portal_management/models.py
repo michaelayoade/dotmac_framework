@@ -4,20 +4,22 @@ import enum
 from datetime import datetime, timedelta
 from typing import Optional
 
-from dotmac_isp.shared.database.base import BaseModel
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
+from uuid import uuid4
 from sqlalchemy.orm import relationship
+
+from dotmac_isp.shared.database.base import BaseModel
 
 
 class PortalAccountStatus(enum.Enum):
     """Portal account status enumeration."""
 
-    PENDING_ACTIVATION = ("pending_activation",)
+    PENDING_ACTIVATION = "pending_activation"
     ACTIVE = "active"
-    SUSPENDED = ("suspended",)
+    SUSPENDED = "suspended"
     LOCKED = "locked"
-    EXPIRED = ("expired",)
+    EXPIRED = "expired"
     DISABLED = "disabled"
     DEACTIVATED = "deactivated"  # Legacy - same as disabled
 
@@ -25,9 +27,9 @@ class PortalAccountStatus(enum.Enum):
 class PortalAccountType(enum.Enum):
     """Portal account type enumeration."""
 
-    CUSTOMER = ("customer",)
+    CUSTOMER = "customer"
     TECHNICIAN = "technician"
-    ADMIN = ("admin",)
+    ADMIN = "admin"
     RESELLER = "reseller"
 
 
@@ -39,76 +41,67 @@ class PortalAccount(BaseModel):
     Each customer gets a unique Portal ID that serves as their login credential.
     """
 
-    __tablename__ = ("portal_accounts",)
+    __tablename__ = "portal_accounts"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     __table_args__ = {"extend_existing": True}
 
     # Portal ID - The unique identifier customers use to log in
     portal_id = Column(String(20), unique=True, nullable=False, index=True)
 
     # Account information
-    account_type = Column(
-        String(20), default=PortalAccountType.CUSTOMER.value, nullable=False
-    )
-    status = Column(
-        String(20), default=PortalAccountStatus.PENDING_ACTIVATION.value, nullable=False
-    )
+    account_type = Column(String(20), default=PortalAccountType.CUSTOMER.value, nullable=False)
+    status = Column(String(20), default=PortalAccountStatus.PENDING_ACTIVATION.value, nullable=False)
     # Authentication credentials
-    password_hash = (Column(String(255), nullable=False),)
-    password_reset_token = (Column(String(255), nullable=True),)
+    password_hash = Column(String(255), nullable=False)
+    password_reset_token = Column(String(255), nullable=True)
     password_reset_expires = Column(DateTime(timezone=True), nullable=True)
 
     # Security settings
-    two_factor_enabled = (Column(Boolean, default=False, nullable=False),)
-    two_factor_secret = (Column(String(32), nullable=True),)
+    two_factor_enabled = Column(Boolean, default=False, nullable=False)
+    two_factor_secret = Column(String(32), nullable=True)
     backup_codes = Column(Text, nullable=True)  # JSON array of backup codes
 
     # Account lockout and security
-    failed_login_attempts = (Column(Integer, default=0, nullable=False),)
-    locked_until = (Column(DateTime(timezone=True), nullable=True),)
-    last_successful_login = (Column(DateTime(timezone=True), nullable=True),)
+    failed_login_attempts = Column(Integer, default=0, nullable=False)
+    locked_until = Column(DateTime(timezone=True), nullable=True)
+    last_successful_login = Column(DateTime(timezone=True), nullable=True)
     last_failed_login = Column(DateTime(timezone=True), nullable=True)
 
     # Password policy tracking
-    password_changed_at = (Column(DateTime(timezone=True), nullable=True),)
-    must_change_password = (Column(Boolean, default=True, nullable=False),)
-    password_history = Column(
-        Text, nullable=True
-    )  # JSON array of previous password hashes
+    password_changed_at = Column(DateTime(timezone=True), nullable=True)
+    must_change_password = Column(Boolean, default=True, nullable=False)
+    password_history = Column(Text, nullable=True)  # JSON array of previous password hashes
 
     # Account preferences
-    session_timeout_minutes = (Column(Integer, default=30, nullable=False),)
-    auto_logout_enabled = (Column(Boolean, default=True, nullable=False),)
-    email_notifications = (Column(Boolean, default=True, nullable=False),)
+    session_timeout_minutes = Column(Integer, default=30, nullable=False)
+    auto_logout_enabled = Column(Boolean, default=True, nullable=False)
+    email_notifications = Column(Boolean, default=True, nullable=False)
     sms_notifications = Column(Boolean, default=False, nullable=False)
 
     # Portal customization
-    theme_preference = (Column(String(20), default="light", nullable=False),)
-    language_preference = (Column(String(10), default="en", nullable=False),)
+    theme_preference = Column(String(20), default="light", nullable=False)
+    language_preference = Column(String(10), default="en", nullable=False)
     timezone_preference = Column(String(50), default="UTC", nullable=False)
 
     # Account linking
-    customer_id = (
-        Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True),
-    )
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     # Activation and verification
-    activation_token = (Column(String(255), nullable=True),)
-    activation_expires = (Column(DateTime(timezone=True), nullable=True),)
-    email_verified = (Column(Boolean, default=False, nullable=False),)
+    activation_token = Column(String(255), nullable=True)
+    activation_expires = Column(DateTime(timezone=True), nullable=True)
+    email_verified = Column(Boolean, default=False, nullable=False)
     phone_verified = Column(Boolean, default=False, nullable=False)
 
     # Security audit fields
-    created_by_admin_id = (Column(UUID(as_uuid=True), nullable=True),)
-    last_modified_by_admin_id = (Column(UUID(as_uuid=True), nullable=True),)
+    created_by_admin_id = Column(UUID(as_uuid=True), nullable=True)
+    last_modified_by_admin_id = Column(UUID(as_uuid=True), nullable=True)
     security_notes = Column(Text, nullable=True)
 
     # Relationships
-    customer = (relationship("Customer", foreign_keys=[customer_id]),)
-    user = (relationship("User", foreign_keys=[user_id]),)
-    sessions = relationship(
-        "PortalSession", back_populates="portal_account", cascade="all, delete-orphan"
-    )
+    customer = relationship("Customer", foreign_keys=[customer_id])
+    user = relationship("User", foreign_keys=[user_id])
+    sessions = relationship("PortalSession", back_populates="portal_account", cascade="all, delete-orphan")
     login_attempts = relationship(
         "PortalLoginAttempt",
         back_populates="portal_account",
@@ -130,9 +123,7 @@ class PortalAccount(BaseModel):
         # Generate a secure random 12-character portal ID
         chars = string.ascii_uppercase + string.digits
         # Exclude ambiguous characters
-        chars = (
-            chars.replace("O", "").replace("I", "").replace("0", "").replace("1", "")
-        )
+        chars = chars.replace("O", "").replace("I", "").replace("0", "").replace("1", "")
 
         # Generate with ISP prefix
         portal_id = "ISP" + "".join(secrets.choice(chars) for _ in range(9))
@@ -150,11 +141,7 @@ class PortalAccount(BaseModel):
     @property
     def is_active(self) -> bool:
         """Check if account is active and can log in."""
-        return (
-            self.status == PortalAccountStatus.ACTIVE.value
-            and not self.is_locked
-            and not self.is_deleted
-        )
+        return self.status == PortalAccountStatus.ACTIVE.value and not self.is_locked and not self.is_deleted
 
     @property
     def password_expired(self) -> bool:
@@ -172,12 +159,12 @@ class PortalAccount(BaseModel):
         """Lock the account for specified duration."""
         from datetime import timezone
 
-        self.locked_until = datetime.now(timezone.utc) + timedelta(
-            minutes=duration_minutes
-        )
+        self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)
         self.status = PortalAccountStatus.LOCKED.value
         if reason:
-            self.security_notes = f"{datetime.now(timezone.utc).isoformat()}: Locked - {reason}\n{self.security_notes or ''}"
+            self.security_notes = (
+                f"{datetime.now(timezone.utc).isoformat()}: Locked - {reason}\n{self.security_notes or ''}"
+            )
 
     def unlock_account(self, admin_id: Optional[UUID] = None):
         """Unlock the account."""
@@ -188,7 +175,9 @@ class PortalAccount(BaseModel):
         self.status = PortalAccountStatus.ACTIVE.value
         if admin_id:
             self.last_modified_by_admin_id = admin_id
-            self.security_notes = f"{datetime.now(timezone.utc).isoformat()}: Unlocked by admin\n{self.security_notes or ''}"
+            self.security_notes = (
+                f"{datetime.now(timezone.utc).isoformat()}: Unlocked by admin\n{self.security_notes or ''}"
+            )
 
     def record_failed_login(self):
         """Record a failed login attempt."""
@@ -214,34 +203,27 @@ class PortalSession(BaseModel):
     """Portal session model for tracking active customer sessions."""
 
     __tablename__ = "portal_sessions"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
 
     # Session identification
-    session_token = (Column(String(255), unique=True, nullable=False, index=True),)
-    portal_account_id = Column(
-        UUID(as_uuid=True), ForeignKey("portal_accounts.id"), nullable=False
-    )
+    session_token = Column(String(255), unique=True, nullable=False, index=True)
+    portal_account_id = Column(UUID(as_uuid=True), ForeignKey("portal_accounts.id"), nullable=False)
     # Session metadata
-    ip_address = (Column(String(45), nullable=True),)
-    user_agent = (Column(Text, nullable=True),)
-    device_fingerprint = (Column(String(255), nullable=True),)
-    location_country = (Column(String(2), nullable=True),)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    device_fingerprint = Column(String(255), nullable=True)
+    location_country = Column(String(2), nullable=True)
     location_city = Column(String(100), nullable=True)
 
     # Session timing
-    login_at = (
-        Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow),
-    )
-    last_activity = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
-    )
-    expires_at = (Column(DateTime(timezone=True), nullable=False),)
+    login_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    last_activity = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
     logout_at = Column(DateTime(timezone=True), nullable=True)
 
     # Session state
     is_active = (Column(Boolean, default=True, nullable=False),)
-    logout_reason = Column(
-        String(50), nullable=True
-    )  # manual, timeout, security, admin
+    logout_reason = Column(String(50), nullable=True)  # manual, timeout, security, admin
 
     # Security flags
     suspicious_activity = (Column(Boolean, default=False, nullable=False),)
@@ -296,9 +278,7 @@ class PortalLoginAttempt(BaseModel):
     __tablename__ = "portal_login_attempts"
 
     # Attempt identification
-    portal_account_id = Column(
-        UUID(as_uuid=True), ForeignKey("portal_accounts.id"), nullable=True
-    )
+    portal_account_id = Column(UUID(as_uuid=True), ForeignKey("portal_accounts.id"), nullable=True)
     portal_id_attempted = Column(String(20), nullable=False, index=True)
 
     # Attempt details
@@ -340,26 +320,18 @@ class PortalLoginAttempt(BaseModel):
             score += 25
 
         # Multiple attempts from same IP in short time
-        same_ip_attempts = [
-            a for a in recent_attempts if a.ip_address == self.ip_address
-        ]
+        same_ip_attempts = [a for a in recent_attempts if a.ip_address == self.ip_address]
         if len(same_ip_attempts) > 3:
             score += 30
 
         # New geographic location
         if self.portal_account:
-            previous_locations = [
-                a.country_code for a in recent_attempts if a.success and a.country_code
-            ]
+            previous_locations = [a.country_code for a in recent_attempts if a.success and a.country_code]
             if previous_locations and self.country_code not in previous_locations:
                 score += 20
 
         # No 2FA when available
-        if (
-            self.portal_account
-            and self.portal_account.two_factor_enabled
-            and not self.two_factor_used
-        ):
+        if self.portal_account and self.portal_account.two_factor_enabled and not self.two_factor_used:
             score += 15
 
         return min(score, 100)  # Cap at 100
@@ -379,9 +351,7 @@ class PortalPreferences(BaseModel):
     __tablename__ = "portal_preferences"
 
     # Account linking
-    account_id = Column(
-        String(50), ForeignKey("portal_accounts.id"), nullable=False, unique=True
-    )
+    account_id = Column(String(50), ForeignKey("portal_accounts.id"), nullable=False, unique=True)
     # Display preferences
     theme = (Column(String(20), default="light", nullable=False),)
     language = (Column(String(10), default="en", nullable=False),)

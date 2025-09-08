@@ -73,9 +73,7 @@ class HealthMonitor:
 
         self._monitoring = True
         self._monitor_task = asyncio.create_task(self._monitoring_loop())
-        logger.info(
-            f"Started health monitoring with {self.config.check_interval_seconds}s interval"
-        )
+        logger.info(f"Started health monitoring with {self.config.check_interval_seconds}s interval")
 
     async def stop_monitoring(self):
         """Stop health monitoring."""
@@ -113,9 +111,7 @@ class HealthMonitor:
             # Run health checks in parallel
             tasks = []
             for service_name, service in services:
-                task = asyncio.create_task(
-                    self._check_service_health(service_name, service)
-                )
+                task = asyncio.create_task(self._check_service_health(service_name, service))
                 tasks.append(task)
 
             # Wait for all health checks to complete
@@ -185,9 +181,7 @@ class HealthMonitor:
         if len(history) > self.config.max_history_entries:
             history.pop(0)  # Remove oldest entry
 
-    async def _check_status_changes(
-        self, service_name: str, current_status: ServiceStatus
-    ):
+    async def _check_status_changes(self, service_name: str, current_status: ServiceStatus):
         """Check for service status changes."""
         if not self.config.enable_status_change_alerts:
             return
@@ -214,9 +208,7 @@ class HealthMonitor:
 
         self._last_known_status[service_name] = current_status
 
-    async def _check_health_degradation(
-        self, service_name: str, health_data: dict[str, Any]
-    ):
+    async def _check_health_degradation(self, service_name: str, health_data: dict[str, Any]):
         """Check for health degradation."""
         if not self.config.enable_health_degradation_alerts:
             return
@@ -233,9 +225,7 @@ class HealthMonitor:
             message = f"Service {service_name} response time critically high: {response_time}ms"
         elif response_time > self.config.warning_response_time_ms:
             severity = "medium"
-            message = (
-                f"Service {service_name} response time elevated: {response_time}ms"
-            )
+            message = f"Service {service_name} response time elevated: {response_time}ms"
 
         if severity and message:
             alert = HealthAlert(
@@ -253,9 +243,7 @@ class HealthMonitor:
 
             await self._send_alert(alert)
 
-    async def _check_service_recovery(
-        self, service_name: str, current_status: ServiceStatus
-    ):
+    async def _check_service_recovery(self, service_name: str, current_status: ServiceStatus):
         """Check for service recovery."""
         if not self.config.enable_recovery_alerts:
             return
@@ -278,9 +266,7 @@ class HealthMonitor:
                     message=f"Service {service_name} has recovered and is healthy",
                     severity="low",
                     timestamp=time.time(),
-                    details={
-                        "confirmation_checks": self.config.recovery_confirmation_checks
-                    },
+                    details={"confirmation_checks": self.config.recovery_confirmation_checks},
                 )
 
                 await self._send_alert(alert)
@@ -291,9 +277,7 @@ class HealthMonitor:
             # Service is not ready, reset confirmation count
             self._recovery_confirmations[service_name] = 0
 
-    def _get_status_change_severity(
-        self, previous: ServiceStatus, current: ServiceStatus
-    ) -> str:
+    def _get_status_change_severity(self, previous: ServiceStatus, current: ServiceStatus) -> str:
         """Get severity level for status changes."""
         # Critical: Any service going to ERROR or SHUTDOWN
         if current in [ServiceStatus.ERROR, ServiceStatus.SHUTDOWN]:
@@ -331,13 +315,9 @@ class HealthMonitor:
 
         # Log alert
         log_level = logging.ERROR if alert.severity == "critical" else logging.WARNING
-        logger.log(
-            log_level, f"Health Alert [{alert.severity.upper()}]: {alert.message}"
-        )
+        logger.log(log_level, f"Health Alert [{alert.severity.upper()}]: {alert.message}")
 
-    def get_service_health_history(
-        self, service_name: str, limit: Optional[int] = None
-    ) -> list[dict[str, Any]]:
+    def get_service_health_history(self, service_name: str, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """Get health history for a service."""
         history = self._service_history.get(service_name, [])
 
@@ -346,9 +326,7 @@ class HealthMonitor:
 
         return history.copy()
 
-    def get_recent_alerts(
-        self, limit: int = 50, severity: Optional[str] = None
-    ) -> list[HealthAlert]:
+    def get_recent_alerts(self, limit: int = 50, severity: Optional[str] = None) -> list[HealthAlert]:
         """Get recent health alerts."""
         alerts = self._alert_history.copy()
 
@@ -373,14 +351,8 @@ class HealthMonitor:
         recent_history = history[-10:]  # Last 10 checks
 
         # Calculate metrics
-        response_times = [
-            h.get("response_time_ms")
-            for h in recent_history
-            if h.get("response_time_ms") is not None
-        ]
-        avg_response_time = (
-            sum(response_times) / len(response_times) if response_times else None
-        )
+        response_times = [h.get("response_time_ms") for h in recent_history if h.get("response_time_ms") is not None]
+        avg_response_time = sum(response_times) / len(response_times) if response_times else None
         max_response_time = max(response_times) if response_times else None
 
         # Count status distribution
@@ -395,9 +367,7 @@ class HealthMonitor:
             "service": service_name,
             "latest_check": latest,
             "recent_checks_count": len(recent_history),
-            "avg_response_time_ms": (
-                round(avg_response_time, 2) if avg_response_time else None
-            ),
+            "avg_response_time_ms": (round(avg_response_time, 2) if avg_response_time else None),
             "max_response_time_ms": max_response_time,
             "status_distribution": status_counts,
             "total_history_entries": len(history),
@@ -435,17 +405,11 @@ class HealthMonitor:
             "healthy_services": healthy_count,
             "ready_services": ready_count,
             "error_services": error_count,
-            "health_percentage": (
-                round((healthy_count / total_services * 100), 1)
-                if total_services > 0
-                else 0
-            ),
+            "health_percentage": (round((healthy_count / total_services * 100), 1) if total_services > 0 else 0),
             "monitoring_active": self._monitoring,
             "check_interval_seconds": self.config.check_interval_seconds,
             "total_alerts": len(self._alert_history),
-            "recent_critical_alerts": len(
-                [a for a in self._alert_history[-50:] if a.severity == "critical"]
-            ),
+            "recent_critical_alerts": len([a for a in self._alert_history[-50:] if a.severity == "critical"]),
             "services": services_summary,
         }
 
@@ -461,14 +425,10 @@ class HealthMonitor:
             },
             "statistics": {
                 "services_monitored": len(self._service_history),
-                "total_health_records": sum(
-                    len(history) for history in self._service_history.values()
-                ),
+                "total_health_records": sum(len(history) for history in self._service_history.values()),
                 "total_alerts": len(self._alert_history),
                 "alert_distribution": {
-                    severity: len(
-                        [a for a in self._alert_history if a.severity == severity]
-                    )
+                    severity: len([a for a in self._alert_history if a.severity == severity])
                     for severity in ["low", "medium", "high", "critical"]
                 },
             },

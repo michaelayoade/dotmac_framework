@@ -5,16 +5,16 @@ License management endpoints using RouterFactory patterns.
 
 from typing import Any
 
+from fastapi import Depends, Query
+from pydantic import BaseModel, Field
+
+from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
     StandardDependencies,
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import Depends, Query
-from pydantic import BaseModel, Field
-
-from dotmac.application import RouterFactory, standard_exception_handler
 
 # === License Schemas ===
 
@@ -81,9 +81,9 @@ async def list_licenses(
 
     # Apply filters
     if license_type:
-        licenses = [l for l in licenses if l["license_type"] == license_type]
+        licenses = [license_item for license_item in licenses if license_item["license_type"] == license_type]
     if status:
-        licenses = [l for l in licenses if l["status"] == status]
+        licenses = [license_item for license_item in licenses if license_item["status"] == status]
 
     return licenses[: deps.pagination.size]
 
@@ -141,9 +141,7 @@ async def update_license(
     return {
         "id": license_id,
         "status": "updated",
-        "updated_fields": {
-            k: v for k, v in request.model_dump().items() if v is not None
-        },
+        "updated_fields": {k: v for k, v in request.model_dump().items() if v is not None},
         "updated_by": deps.user_id,
         "message": "License updated successfully",
     }

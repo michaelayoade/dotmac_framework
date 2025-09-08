@@ -271,7 +271,7 @@ http {
         )
 
         # Generate server blocks for each service
-        for service_name, route in self.service_routes.items():
+        for _service_name, route in self.service_routes.items():
             server_block = f"""
     server {{
         listen 443 ssl http2;

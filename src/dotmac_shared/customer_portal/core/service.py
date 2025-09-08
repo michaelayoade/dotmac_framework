@@ -11,13 +11,12 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
+from dotmac.platform.auth import get_auth_service
 from dotmac_business_logic.billing import BillingService
 from dotmac_management.user_management.services.user_service import (
     UserManagementService,
 )
 from dotmac_shared.monitoring import get_monitoring
-
-from dotmac.platform.auth import get_auth_service
 
 from ..adapters.base import CustomerPortalAdapter
 from .auth import PortalAuthenticationManager
@@ -60,20 +59,14 @@ class CustomerPortalService:
         # Initialize existing services
         self.auth_service = get_auth_service()
         self.billing_service = BillingService(tenant_id=str(tenant_id))
-        self.ticket_service = (
-            None  # TODO: Implement TicketService(tenant_id=str(tenant_id))
-        )
+        self.ticket_service = None  # TODO: Implement TicketService(tenant_id=str(tenant_id))
         self.user_service = UserManagementService(tenant_id=str(tenant_id))
         self.monitoring = get_monitoring("customer_portal")
 
         # Initialize portal auth manager
-        self.portal_auth = PortalAuthenticationManager(
-            auth_service=self.auth_service, portal_type=config.portal_type
-        )
+        self.portal_auth = PortalAuthenticationManager(auth_service=self.auth_service, portal_type=config.portal_type)
 
-        logger.info(
-            f"Initialized CustomerPortalService for {config.portal_type} portal"
-        )
+        logger.info(f"Initialized CustomerPortalService for {config.portal_type} portal")
 
     async def get_customer_dashboard(
         self,
@@ -109,9 +102,7 @@ class CustomerPortalService:
         if self.config.service_management_enabled:
             services = await self.adapter.get_customer_services(customer_id)
             dashboard.services = services
-            dashboard.active_services = len(
-                [s for s in services if s.status.value == "active"]
-            )
+            dashboard.active_services = len([s for s in services if s.status.value == "active"])
             dashboard.total_services = len(services)
 
         # Get support tickets using shared ticketing service
@@ -134,11 +125,7 @@ class CustomerPortalService:
             ]
 
         # Get usage summary for ISP customers
-        if (
-            self.config.portal_type == PortalType.ISP_CUSTOMER
-            and self.config.usage_tracking_enabled
-            and include_usage
-        ):
+        if self.config.portal_type == PortalType.ISP_CUSTOMER and self.config.usage_tracking_enabled and include_usage:
             dashboard.usage_summary = await self.adapter.get_usage_summary(customer_id)
 
         # Get platform-specific data
@@ -187,9 +174,7 @@ class CustomerPortalService:
 
         # Update platform-specific fields through adapter
         if profile_update.custom_fields:
-            await self.adapter.update_customer_custom_fields(
-                customer_id, profile_update.custom_fields
-            )
+            await self.adapter.update_customer_custom_fields(customer_id, profile_update.custom_fields)
 
         # Record activity
         self.monitoring.record_http_request(
@@ -268,19 +253,13 @@ class CustomerPortalService:
         balance = await self.billing_service.get_customer_balance(str(customer_id))
 
         # Get recent invoices
-        invoices = await self.billing_service.get_customer_invoices(
-            customer_id=str(customer_id), limit=5
-        )
+        invoices = await self.billing_service.get_customer_invoices(customer_id=str(customer_id), limit=5)
 
         # Get recent payments
-        payments = await self.billing_service.get_customer_payments(
-            customer_id=str(customer_id), limit=5
-        )
+        payments = await self.billing_service.get_customer_payments(customer_id=str(customer_id), limit=5)
 
         # Get payment methods
-        payment_methods = await self.billing_service.get_customer_payment_methods(
-            str(customer_id)
-        )
+        payment_methods = await self.billing_service.get_customer_payment_methods(str(customer_id))
 
         return BillingSummary(
             customer_id=customer_id,

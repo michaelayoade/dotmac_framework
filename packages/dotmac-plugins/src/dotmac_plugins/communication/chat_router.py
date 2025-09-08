@@ -6,6 +6,9 @@ Production-ready chat/communication endpoints using RouterFactory patterns.
 from typing import Any, Optional
 from uuid import UUID
 
+from fastapi import Depends, Query, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel, Field
+
 from dotmac.application import RouterFactory, standard_exception_handler
 from dotmac_shared.api.dependencies import (
     PaginatedDependencies,
@@ -13,8 +16,6 @@ from dotmac_shared.api.dependencies import (
     get_paginated_deps,
     get_standard_deps,
 )
-from fastapi import Depends, Query, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel, Field
 
 # === Chat Schemas ===
 

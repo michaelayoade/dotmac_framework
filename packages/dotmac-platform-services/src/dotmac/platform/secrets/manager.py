@@ -126,10 +126,9 @@ class SecretsManager:
                         raise SecretNotFoundError(f"Secret not found (cached): {path}")
 
                     return cached_value.value
-                else:
-                    self._stats["cache_misses"] += 1
-                    if self.observability_hook:
-                        self.observability_hook.record_cache_miss(path)
+                self._stats["cache_misses"] += 1
+                if self.observability_hook:
+                    self.observability_hook.record_cache_miss(path)
 
             # Fetch from provider
             self._stats["provider_calls"] += 1
@@ -235,16 +234,15 @@ class SecretsManager:
                 created_at=secret_data.get("created_at"),
                 expires_at=secret_data.get("expires_at"),
             )
-        else:
-            # Asymmetric algorithm
-            return JWTKeypair(
-                private_pem=secret_data["private_pem"],
-                public_pem=secret_data["public_pem"],
-                algorithm=algorithm,
-                kid=key_id,
-                created_at=secret_data.get("created_at"),
-                expires_at=secret_data.get("expires_at"),
-            )
+        # Asymmetric algorithm
+        return JWTKeypair(
+            private_pem=secret_data["private_pem"],
+            public_pem=secret_data["public_pem"],
+            algorithm=algorithm,
+            kid=key_id,
+            created_at=secret_data.get("created_at"),
+            expires_at=secret_data.get("expires_at"),
+        )
 
     async def get_symmetric_secret(self, name: str, min_length: int = 32) -> str:
         """

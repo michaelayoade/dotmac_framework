@@ -4,6 +4,7 @@ Replaces dependencies on dotmac_shared decorators
 """
 
 import asyncio
+import builtins
 import logging
 import time
 from collections import defaultdict
@@ -15,7 +16,16 @@ logger = logging.getLogger(__name__)
 
 
 class RateLimiter:
-    """Simple in-memory rate limiter"""
+    """
+    Simple in-memory rate limiter.
+
+    WARNING: This is a process-local rate limiter only. For distributed deployments,
+    use platform-level rate limiting (e.g., nginx, API gateway) or implement a
+    Redis-backed rate limiter for shared state across instances.
+
+    Suitable for single-process applications or as a first line of defense
+    in addition to distributed rate limiting.
+    """
 
     def __init__(self):
         self._calls: dict[str, list] = defaultdict(list)
@@ -80,7 +90,9 @@ def rate_limit(max_calls: int = 100, time_window: int = 60, key_func: Callable |
                 key = f"{func.__name__}:{args[0] if args else 'global'}"
 
             if not _rate_limiter.is_allowed(key, max_calls, time_window):
-                raise Exception(f"Rate limit exceeded: {max_calls} calls per {time_window} seconds")
+                msg = f"Rate limit exceeded: {max_calls} calls per {time_window} seconds"
+
+                raise Exception(msg)
 
             return func(*args, **kwargs)
 
@@ -100,7 +112,7 @@ def standard_exception_handler(func: Callable) -> Callable:
         try:
             return await func(*args, **kwargs)
         except Exception as e:
-            logger.error(f"Exception in {func.__name__}: {e}", exc_info=True)
+            logger.error("Exception in %s: %s", func.__name__, e, exc_info=True)
             # Re-raise the exception - let the calling code handle it
             raise
 
@@ -109,7 +121,7 @@ def standard_exception_handler(func: Callable) -> Callable:
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            logger.error(f"Exception in {func.__name__}: {e}", exc_info=True)
+            logger.error("Exception in %s: %s", func.__name__, e, exc_info=True)
             raise
 
     return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
@@ -189,14 +201,16 @@ def timeout(seconds: float):
         async def async_wrapper(*args, **kwargs) -> Any:
             try:
                 return await asyncio.wait_for(func(*args, **kwargs), timeout=seconds)
-            except asyncio.TimeoutError:
+            except builtins.TimeoutError:
                 from dotmac.core import TimeoutError
 
                 raise TimeoutError(seconds)
 
         # Only works with async functions
         if not asyncio.iscoroutinefunction(func):
-            raise TypeError("timeout decorator can only be used with async functions")
+            msg = "timeout decorator can only be used with async functions"
+
+            raise TypeError(msg)
 
         return async_wrapper
 

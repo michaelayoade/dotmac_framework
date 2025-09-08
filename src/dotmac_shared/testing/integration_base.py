@@ -87,9 +87,7 @@ class IntegrationTestBase:
         """Clean up test customer data"""
         logger.info(f"Cleaning up test customer: {customer_id}")
 
-    async def wait_for_event(
-        self, event_type: str, correlation_id: str, timeout: int = 30
-    ) -> Optional[dict]:
+    async def wait_for_event(self, event_type: str, correlation_id: str, timeout: int = 30) -> Optional[dict]:
         """Wait for a specific event to occur"""
         start_time = asyncio.get_event_loop().time()
 
@@ -99,23 +97,16 @@ class IntegrationTestBase:
 
         return None
 
-    async def assert_event_sequence(
-        self, expected_events: list, correlation_id: str, timeout: int = 30
-    ):
+    async def assert_event_sequence(self, expected_events: list, correlation_id: str, timeout: int = 30):
         """Assert that events occurred in the expected sequence"""
         events = []
         start_time = asyncio.get_event_loop().time()
 
-        while (
-            len(events) < len(expected_events)
-            and (asyncio.get_event_loop().time() - start_time) < timeout
-        ):
+        while len(events) < len(expected_events) and (asyncio.get_event_loop().time() - start_time) < timeout:
             # Poll for events
             await asyncio.sleep(0.1)
 
-        assert len(events) == len(
-            expected_events
-        ), f"Expected {len(expected_events)} events, got {len(events)}"
+        assert len(events) == len(expected_events), f"Expected {len(expected_events)} events, got {len(events)}"
 
     @asynccontextmanager
     async def temporary_service_failure(self, service_name: str):

@@ -540,7 +540,10 @@ class ManagementPlatformAdapter:
                 ["Contact Email", tenant_info.contact_email],
                 ["Subscription Plan", tenant_info.subscription_plan],
                 ["Account Status", tenant_info.status],
-                ["Storage Quota", f"{tenant_info.storage_quota / (1024*1024):.1f} MB"],
+                [
+                    "Storage Quota",
+                    f"{tenant_info.storage_quota / (1024 * 1024):.1f} MB",
+                ],
             ]
 
             onboarding_data["sections"].append(
